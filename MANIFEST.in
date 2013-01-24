@@ -1,0 +1,9 @@
+recursive-include bwp *
+recursive-exclude bwp *.pyc
+recursive-include docs *
+recursive-include example *
+recursive-exclude example *.pyc *.sqlite
+include LICENSE
+include AUTHORS
+include COPYING
+include README

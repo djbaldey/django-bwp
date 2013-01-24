@@ -1,0 +1,6 @@
+.navbar,.subnav,header,footer,.btn{display:none}
+body{background:#FFF;color:#000}
+a{text-decoration:underline;color:#00F}
+div.document{display:block;background-color:#FFF;border:none;border-radius:none;box-shadow:none;margin-bottom:0;min-height:0;padding:0}
+hr{border-color:#000}
+.table{position:relative;width:99.8%;left:.1%;right:auto;border:1px solid #000}

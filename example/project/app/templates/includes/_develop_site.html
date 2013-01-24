@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block content %}
+<h1>
+    Извините, сайт находится в разработке,
+    зайдите на эту страницу позже.
+</h1>
+
+{% if DEBUG %}
+<legend>ТЕСТЫ В РЕЖИМЕ ОТЛАДКИ:</legend>
+
+<form>
+    <h1>Поля ввода значений</h1>
+    <input type="search"> для поиска<br />
+    <input type="number"> для ввода чисел<br />
+    <input type="range"> ползунок<br />
+    <input type="color"> для выбора цвета<br />
+    <input type="tel"> для телефонного номера<br />
+    <input type="url"> для веб-адресов<br />
+    <input type="email"> для почтовых адресов<br />
+    <input type="date"> для выбора календарной даты<br />
+    <input type="month"> для месяца<br />
+    <input type="week"> для недели<br />
+    <input type="time"> для времени<br />
+    <input type="datetime"> для указания даты и времени<br />
+    <input type="datetime-local"> для указания локальных даты и времени<br />
+</form>
+
+
+{% endif %}
+{% endblock %}
+
+

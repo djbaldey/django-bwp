@@ -1,0 +1,741 @@
+# BWP.
+# Copyright (C) 2012 Grigoriy Kramarenko
+# This file is distributed under the same license as the BWP package.
+# Grigoriy Kramarenko <root@rosix.ru>, 2012.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: 0.1.1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2013-01-20 15:33+1100\n"
+"PO-Revision-Date: 2013-01-20 15:33+1100\n"
+"Last-Translator: Grigoriy Kramarenko <root@rosix.ru>\n"
+"Language: RU\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
+
+#: admin.py:74 admin.py:92 admin.py:110 admin.py:195
+#, python-format
+msgid "deleted objects: %s"
+msgstr "удалено объектов: %s"
+
+#: admin.py:75 admin.py:93 admin.py:111 admin.py:196
+msgid "remove selected objects"
+msgstr "удалить выбранные объекты"
+
+#: admin.py:122 models.py:395 models.py:471
+msgid "links"
+msgstr "ссылки"
+
+#: admin.py:123 models.py:422 models.py:467
+msgid "documents"
+msgstr "документы"
+
+#: admin.py:124 models.py:413 models.py:459
+msgid "photos"
+msgstr "фото"
+
+#: admin.py:125 models.py:404 models.py:463
+msgid "videos"
+msgstr "видео"
+
+#: models.py:77
+#, python-format
+msgid ""
+"Thumbnail: %(thumb_width)dx%(thumb_height)d;\n"
+"Thumbnail as square: %(thumb_square)s; Resize: %(resize)s;\n"
+"If resize, then change image as: max width=%(max_width)d; max height="
+"%(max_height)d."
+msgstr ""
+"Миниатюра: %(thumb_width)dx%(thumb_height)d;\n"
+"Миниатюра как квадрат: %(thumb_square)s; Изменять размеры: %(resize)s;\n"
+"Если размеры изменяются, то изображение подгоняется: макс.ширина="
+"%(max_width)d; макс.высота=%(max_height)d."
+
+#: models.py:96
+msgid "certificate"
+msgstr "свидетельство"
+
+#: models.py:97
+msgid "license"
+msgstr "лицензия"
+
+#: models.py:101 models.py:227 models.py:387 models.py:455 models.py:600
+#: models.py:625 models.py:789
+msgid "title"
+msgstr "название"
+
+#: models.py:104
+msgid "full title"
+msgstr "полное название"
+
+#: models.py:109
+msgid "INN"
+msgstr "ИНН"
+
+#: models.py:113
+msgid "KPP"
+msgstr "КПП"
+
+#: models.py:117
+msgid "OGRN"
+msgstr "ОГРН"
+
+#: models.py:120
+msgid "address"
+msgstr "адрес"
+
+#: models.py:123 models.py:208
+msgid "phones"
+msgstr "телефоны"
+
+#: models.py:129
+msgid "identification code of bank"
+msgstr "БИК"
+
+#: models.py:132
+msgid "title of bank"
+msgstr "название банка"
+
+#: models.py:136
+msgid "settlement account"
+msgstr "расчётный счёт"
+
+#: models.py:140
+msgid "correspondent account"
+msgstr "корреспондентский счёт"
+
+#: models.py:145 models.py:793
+msgid "type of document"
+msgstr "вид документа"
+
+#: models.py:149
+msgid "series of document"
+msgstr "серия документа"
+
+#: models.py:153
+msgid "number of document"
+msgstr "номер документа"
+
+#: models.py:157
+msgid "issue of document"
+msgstr "дата выдачи документа"
+
+#: models.py:160
+msgid "organization of issue"
+msgstr "орган выдачи документа"
+
+#: models.py:164
+msgid "code organization of issue"
+msgstr "код органа выдачи"
+
+#: models.py:169 models.py:204
+msgid "web site"
+msgstr "web сайт"
+
+#: models.py:173 models.py:201
+msgid "e-mail address"
+msgstr "адрес e-mail"
+
+#: models.py:176
+msgid "about organization"
+msgstr "об организации"
+
+#: models.py:190
+msgid "first name"
+msgstr "имя"
+
+#: models.py:194
+msgid "middle name"
+msgstr "отчество"
+
+#: models.py:198
+msgid "last name"
+msgstr "фамилия"
+
+#: models.py:211
+msgid "about person"
+msgstr "о персоне"
+
+#: models.py:241
+msgid "label"
+msgstr "метка"
+
+#: models.py:243 models.py:325 models.py:327
+msgid "file"
+msgstr "файл"
+
+#: models.py:272 models.py:274 models.py:360 models.py:373
+msgid "code"
+msgstr "код"
+
+#: models.py:275
+msgid "Set your code for video on the www.youtube.com"
+msgstr "Установите код видео с www.youtube.com"
+
+#: models.py:286 models.py:288
+msgid "image"
+msgstr "изображение"
+
+#: models.py:363 models.py:370 models.py:629
+msgid "country"
+msgstr "страна"
+
+#: models.py:364
+msgid "countries"
+msgstr "страны"
+
+#: models.py:376 models.py:688
+msgid "currency"
+msgstr "валюта"
+
+#: models.py:377
+msgid "currencies"
+msgstr "валюта"
+
+#: models.py:383
+msgid "URL"
+msgstr ""
+
+#: models.py:394
+msgid "link"
+msgstr "ссылка"
+
+#: models.py:399 models.py:403
+msgid "video"
+msgstr "видео"
+
+#: models.py:408 models.py:412 models.py:433
+msgid "photo"
+msgstr "фото"
+
+#: models.py:417 models.py:421
+msgid "document"
+msgstr "документ"
+
+#: models.py:429 models.py:837 models.py:898 models.py:991 models.py:1056
+msgid "user"
+msgstr "пользователь"
+
+#: models.py:437 models.py:524 models.py:557
+msgid "person"
+msgstr "персона"
+
+#: models.py:438
+msgid "persons"
+msgstr "персоны"
+
+#: models.py:451 models.py:509
+msgid "is active"
+msgstr "активно"
+
+#: models.py:481 models.py:650 models.py:861
+msgid "attachment"
+msgstr "вложение"
+
+#: models.py:482
+msgid "attachments"
+msgstr "вложения"
+
+#: models.py:499
+msgid "post"
+msgstr "должность"
+
+#: models.py:500 models.py:531
+msgid "posts"
+msgstr "должности"
+
+#: models.py:506
+msgid "is self"
+msgstr "свои"
+
+#: models.py:515 models.py:553
+msgid "org"
+msgstr "фирма"
+
+#: models.py:516
+msgid "orgs"
+msgstr "фирмы"
+
+#: models.py:527
+msgid "organization"
+msgstr "организация"
+
+#: models.py:534
+msgid "priority"
+msgstr "приоритет"
+
+#: models.py:535
+msgid "Priority for ordering. If '0' then order by title"
+msgstr "Приоритет для сортировки. Если '0', то по названию"
+
+#: models.py:544
+msgid "employee"
+msgstr "сотрудник"
+
+#: models.py:545
+msgid "employees"
+msgstr "сотрудники"
+
+#: models.py:564 models.py:846 models.py:907
+msgid "client"
+msgstr "клиент"
+
+#: models.py:565
+msgid "clients"
+msgstr "клиенты"
+
+#: models.py:604
+msgid "classificator"
+msgstr "классификатор"
+
+#: models.py:608 models.py:637
+msgid "measure"
+msgstr "единица"
+
+#: models.py:609
+msgid "measures"
+msgstr "единицы"
+
+#: models.py:618 models.py:646
+msgid "group"
+msgstr "группа"
+
+#: models.py:619
+msgid "groups of goods"
+msgstr "группы товаров"
+
+#: models.py:632
+msgid "GTD"
+msgstr "ГТД"
+
+#: models.py:642
+msgid "package"
+msgstr "упаковка"
+
+#: models.py:653
+msgid "about"
+msgstr "описание"
+
+#: models.py:657 models.py:680
+msgid "good"
+msgstr "товар"
+
+#: models.py:658
+msgid "goods"
+msgstr "товары"
+
+#: models.py:669
+msgid "no"
+msgstr "нет"
+
+#: models.py:670
+msgid "to add"
+msgstr "начислить"
+
+#: models.py:671
+msgid "to cut"
+msgstr "выделить"
+
+#: models.py:677
+msgid "is acvive"
+msgstr "активно"
+
+#: models.py:684 models.py:708 models.py:752
+msgid "price"
+msgstr "цена"
+
+#: models.py:691
+msgid "NDS"
+msgstr "НДС"
+
+#: models.py:695
+msgid "NDS type"
+msgstr "вид НДС"
+
+#: models.py:698
+msgid "start"
+msgstr "начало"
+
+#: models.py:709
+msgid "prices"
+msgstr "цены"
+
+#: models.py:755
+msgid "count"
+msgstr "количество"
+
+#: models.py:758
+msgid "discount"
+msgstr "скидка"
+
+#: models.py:765
+msgid "specification"
+msgstr "спецификация"
+
+#: models.py:766 models.py:921
+msgid "specifications"
+msgstr "спецификации"
+
+#: models.py:783
+msgid "Contract"
+msgstr "контракт"
+
+#: models.py:784
+msgid "Invoice"
+msgstr "счёт"
+
+#: models.py:785
+msgid "Act"
+msgstr "акт"
+
+#: models.py:796
+msgid "by default"
+msgstr "по-умолчанию"
+
+#: models.py:799
+msgid "template of webodt"
+msgstr "шаблон"
+
+#: models.py:802 models.py:809 models.py:857
+msgid "template"
+msgstr "шаблон"
+
+#: models.py:810
+msgid "templates"
+msgstr "шаблоны"
+
+#: models.py:826 models.py:885 models.py:1045
+msgid "Created"
+msgstr "Создано"
+
+#: models.py:827
+msgid "Signed"
+msgstr "Подписано"
+
+#: models.py:828 models.py:1046
+msgid "Closed"
+msgstr "Закрыто"
+
+#: models.py:829 models.py:888 models.py:1047
+msgid "Removed"
+msgstr "Удалено"
+
+#: models.py:842 models.py:903
+msgid "supplier"
+msgstr "поставщик"
+
+#: models.py:850 models.py:911 models.py:1063
+msgid "state"
+msgstr "состояние"
+
+#: models.py:853 models.py:914 models.py:1066
+msgid "date"
+msgstr "дата"
+
+#: models.py:864 models.py:917 models.py:1005 models.py:1069
+msgid "comment"
+msgstr "комментарий"
+
+#: models.py:867
+msgid "contract"
+msgstr "контракт"
+
+#: models.py:868
+msgid "contracts"
+msgstr "контракты"
+
+#: models.py:872
+#, python-format
+msgid "Contract %(num)s of %(date)s"
+msgstr "Контракт %(num)s от %(date)s"
+
+#: models.py:886
+msgid "Advance"
+msgstr "Аванс"
+
+#: models.py:887
+msgid "Paid"
+msgstr "Оплачено"
+
+#: models.py:924
+#, python-format
+msgid "Invoice %(id)s of %(date)s"
+msgstr "Счёт %(id)s от %(date)s"
+
+#: models.py:931 models.py:1059
+msgid "invoice"
+msgstr "счёт"
+
+#: models.py:932
+msgid "invoices"
+msgstr "счета"
+
+#: models.py:983
+msgid "Cash"
+msgstr "наличные"
+
+#: models.py:984
+msgid "Cashless"
+msgstr "безнал"
+
+#: models.py:985
+msgid "Card"
+msgstr "карта"
+
+#: models.py:995
+msgid "kind of payment"
+msgstr "вид оплаты"
+
+#: models.py:1008
+msgid "confirm"
+msgstr "подтверждено"
+
+#: models.py:1011
+#, python-format
+msgid "Payment %(id)s of invoice %(invoice)s of %(date)s"
+msgstr "Оплата %(id)s по счёту %(invoice)s от %(date)s"
+
+#: models.py:1019
+msgid "payment"
+msgstr "оплата"
+
+#: models.py:1020
+msgid "payments"
+msgstr "оплаты"
+
+#: models.py:1072
+#, python-format
+msgid "Act %(id)s of %(date)s"
+msgstr "Акт %(id)s от %(date)s"
+
+#: models.py:1079
+msgid "act"
+msgstr "акт"
+
+#: models.py:1080
+msgid "acts"
+msgstr "акты"
+
+#: templates/404.html:5
+msgid "Excuse, the page isn't found."
+msgstr "Извините, страница не найдена"
+
+#: templates/500.html:9
+msgid "Internal error of the server."
+msgstr "Внутренняя ошибка сервера"
+
+#: templates/includes/_pager.html:43
+msgid "Older"
+msgstr "Старше"
+
+#: templates/includes/_pager.html:46
+msgid "Newer"
+msgstr "Новее"
+
+#~ msgid "OKEI"
+#~ msgstr "ОКЕИ"
+
+#~ msgid "subject"
+#~ msgstr "тема"
+
+#~ msgid "message"
+#~ msgstr "сообщение"
+
+#~ msgid "Published"
+#~ msgstr "Опубликовано"
+
+#~ msgid "Archived"
+#~ msgstr "Архивное"
+
+#~ msgid "tag"
+#~ msgstr "тэг"
+
+#~ msgid "tags"
+#~ msgstr "тэги"
+
+#~ msgid "created"
+#~ msgstr "создано"
+
+#~ msgid "updated"
+#~ msgstr "обновлено"
+
+#~ msgid "is menu"
+#~ msgstr "меню"
+
+#~ msgid "slug"
+#~ msgstr "слаг"
+
+#~ msgid "file name"
+#~ msgstr "имя файла"
+
+#~ msgid "text"
+#~ msgstr "текст"
+
+#~ msgid "parent"
+#~ msgstr "родитель"
+
+#~ msgid "only one level of an enclosure"
+#~ msgstr "только один уровень вложенности"
+
+#~ msgid "simple page"
+#~ msgstr "страница"
+
+#~ msgid "simple pages"
+#~ msgstr "страницы"
+
+#~ msgid "self org"
+#~ msgstr "своя фирма"
+
+#~ msgid "self orgs"
+#~ msgstr "фирмы (свои)"
+
+#~ msgid "author"
+#~ msgstr "автор"
+
+#~ msgid "authors"
+#~ msgstr "авторы"
+
+#~ msgid "project category"
+#~ msgstr "категория проекта"
+
+#~ msgid "project categories"
+#~ msgstr "категории проектов"
+
+#~ msgid "project state"
+#~ msgstr "состояние проекта"
+
+#~ msgid "project states"
+#~ msgstr "состояния проектов"
+
+#~ msgid "en"
+#~ msgstr "англ."
+
+#~ msgid "ru"
+#~ msgstr "рус."
+
+#~ msgid "licensies"
+#~ msgstr "лицензии"
+
+#~ msgid "category"
+#~ msgstr "категория"
+
+#~ msgid "description"
+#~ msgstr "описание"
+
+#~ msgid "show develop RSS"
+#~ msgstr "показать RSS разработки"
+
+#~ msgid "project"
+#~ msgstr "проект"
+
+#~ msgid "projects"
+#~ msgstr "проекты"
+
+#~ msgid "develop category"
+#~ msgstr "категория разработки"
+
+#~ msgid "develop categories"
+#~ msgstr "категории разработки"
+
+#~ msgid "project author"
+#~ msgstr "автор проекта"
+
+#~ msgid "project authors"
+#~ msgstr "авторы проектов"
+
+#~ msgid "version category"
+#~ msgstr "категория версии"
+
+#~ msgid "version categories"
+#~ msgstr "категории версий"
+
+#~ msgid "number"
+#~ msgstr "номер"
+
+#~ msgid "changelog"
+#~ msgstr "изменения"
+
+#~ msgid "codename"
+#~ msgstr "кодовое имя"
+
+#~ msgid "project version"
+#~ msgstr "версия проекта"
+
+#~ msgid "project versions"
+#~ msgstr "версии проектов"
+
+#~ msgid "donator"
+#~ msgstr "донатор"
+
+#~ msgid "donators"
+#~ msgstr "донаторы"
+
+#~ msgid "donate category"
+#~ msgstr "категория взноса"
+
+#~ msgid "donate categories"
+#~ msgstr "категории взносов"
+
+#~ msgid "summa"
+#~ msgstr "сумма"
+
+#~ msgid "donate"
+#~ msgstr "взнос"
+
+#~ msgid "donates"
+#~ msgstr "взносы"
+
+#~ msgid "announcement"
+#~ msgstr "анонс"
+
+#~ msgid "entry"
+#~ msgstr "запись"
+
+#~ msgid "entries"
+#~ msgstr "записи"
+
+#~ msgid "blog"
+#~ msgstr "блог"
+
+#~ msgid "top of blog"
+#~ msgstr "топ блога"
+
+#~ msgid "representative"
+#~ msgstr "представитель"
+
+#~ msgid "representatives"
+#~ msgstr "представители"
+
+#~ msgid "activity kind"
+#~ msgstr "вид деятельности"
+
+#~ msgid "activity kinds"
+#~ msgstr "виды деятельности"
+
+#~ msgid "activity region"
+#~ msgstr "регион деятельности"
+
+#~ msgid "activity regions"
+#~ msgstr "регионы деятельности"
+
+#~ msgid "regions"
+#~ msgstr "регионы деятельности"
+
+#~ msgid "employee count"
+#~ msgstr "кол-во сотрудников"
+
+#~ msgid "members"
+#~ msgstr "участники"
+
+#~ msgid "event"
+#~ msgstr "событие"
+
+#~ msgid "events"
+#~ msgstr "события"
+
+#~ msgid "appointment"
+#~ msgstr "должность"

@@ -1,0 +1,16 @@
+\.pyc$
+\.tar$
+\.zip$
+\.gz$
+\.gzip$
+\.bz2$
+\.7z$
+\.sqlite$
+\.db$
+^example/static/.*$
+^example/media/.*\.sql$
+^example/media/.*\.log$
+^example/media/.*\.txt$
+^build/.*$
+^dist/.*$
+^django_bwp.egg-info/.*$
