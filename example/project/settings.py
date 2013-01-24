@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""
 ###############################################################################
 # Copyright 2013 Grigoriy Kramarenko.
 ###############################################################################
@@ -34,7 +35,7 @@
 #   вместе с этой программой. Если это не так, см.
 #   <http://www.gnu.org/licenses/>.
 ###############################################################################
-
+"""
 # Django settings for this project.
 
 from django.utils.translation import ugettext_lazy as _
@@ -48,7 +49,7 @@ DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
-    # ('Grigoriy Kramarenko', 'root@rosix.ru'),
+    # ('Webmaster Name', 'example@example.com'),
 )
 MANAGERS = ADMINS
 
