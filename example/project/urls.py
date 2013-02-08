@@ -38,23 +38,12 @@
 """
 from django.conf.urls.defaults import patterns, include, url
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
-from django.shortcuts import redirect
-from bwp.contrib import admin
+from bwp import core as bwp
 
-admin.autodiscover()
+bwp.autodiscover()
 
 urlpatterns = patterns('',
-    url(r'^bwp/', include(admin.site.urls)),
-    url(r'^', include('project.app.urls')),
-)
-
-def homeredirect(request):
-    return redirect('/')
-
-urlpatterns += patterns('django.contrib.auth.views',
-    url(r'^accounts/login/$', 'login', name="login"),
-    url(r'^accounts/logout/$', 'logout', name="logout"),
-    url(r'^accounts/profile/$', homeredirect, name="profile"),
+    url(r'^', include(bwp.site.urls)),
 )
 
 # For develop:

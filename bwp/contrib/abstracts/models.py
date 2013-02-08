@@ -38,9 +38,8 @@
 """
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
-from django.utils.crypto import get_random_string
 
-from bwp.utils.classes import upload_to
+from bwp.utils.classes import upload_to, get_random_string
 from bwp.db import fields
 
 class AbstractOrg(models.Model):
@@ -51,7 +50,6 @@ class AbstractOrg(models.Model):
     )
     inn = models.CharField(
             max_length=16,
-            default= u'*%s' % get_random_string(16),
             verbose_name = _("INN"))
     title = models.CharField(
             max_length=255,
@@ -136,6 +134,9 @@ class AbstractOrg(models.Model):
 
 class AbstractPerson(models.Model):
     """ Абстрактная модель персоны """
+    last_name = models.CharField(
+            max_length=30,
+            verbose_name = _('last name'))
     first_name = models.CharField(
             max_length=30,
             blank=True,
@@ -144,10 +145,6 @@ class AbstractPerson(models.Model):
             max_length=30,
             blank=True,
             verbose_name = _('middle name'))
-    last_name = models.CharField(
-            max_length=30,
-            blank=True,
-            verbose_name = _('last name'))
     phones = models.CharField(
             max_length=200,
             blank=True,

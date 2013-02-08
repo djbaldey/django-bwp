@@ -40,13 +40,13 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.models import User
 
-from bwp.contrib.abstracts.models import AbstractOrg, AbstractPerson
+from bwp.contrib.abstracts.models import AbstractOrg, AbstractPerson, AbstractGroupUnique
 from bwp.db import managers, fields 
 from bwp.utils.classes import upload_to
 
 class Person(AbstractPerson):
     """ Персоналии """
-    IMGAGE_SETTINGS = {
+    IMAGE_SETTINGS = {
         'resize': True,
         'thumb_square': True,
         'thumb_width': 256,
@@ -61,7 +61,7 @@ class Person(AbstractPerson):
     photo = fields.ThumbnailImageField(upload_to=upload_to,
             null=True, blank=True,
             verbose_name=_('photo'),
-            **IMGAGE_SETTINGS)
+            **IMAGE_SETTINGS)
 
     class Meta:
         ordering = ['last_name', 'first_name', 'middle_name']

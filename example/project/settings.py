@@ -203,12 +203,13 @@ INSTALLED_APPS = (
     #~ 'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
+    'bwp.core',
     'bwp.contrib.qualifiers',
     'bwp.contrib.contacts',
+    'bwp.contrib.usersettings',
     'bwp.contrib.reports',
-    'bwp.contrib.admin',
-    'project.auth_fix',
-    'project.app',
+    'bwp.contrib.smallbusiness',
+    'quickapi',
     #~ 'webodt',
 )
 

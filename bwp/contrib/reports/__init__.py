@@ -36,6 +36,9 @@
 #   <http://www.gnu.org/licenses/>.
 ###############################################################################
 """
+from django.utils.translation import ugettext_lazy as _
+__label__ = _('reports')
+
 from bwp.conf import settings
 import os
 

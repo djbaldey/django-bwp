@@ -1,0 +1,115 @@
+{% comment %}<!--
+###############################################################################
+# Copyright 2013 Grigoriy Kramarenko.
+###############################################################################
+# This file is part of BWP.
+#
+#    BWP is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    BWP is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with BWP.  If not, see <http://www.gnu.org/licenses/>.
+#
+# Этот файл — часть BWP.
+#
+#   BWP - свободная программа: вы можете перераспространять ее и/или
+#   изменять ее на условиях Стандартной общественной лицензии GNU в том виде,
+#   в каком она была опубликована Фондом свободного программного обеспечения;
+#   либо версии 3 лицензии, либо (по вашему выбору) любой более поздней
+#   версии.
+#
+#   BWP распространяется в надежде, что она будет полезной,
+#   но БЕЗО ВСЯКИХ ГАРАНТИЙ; даже без неявной гарантии ТОВАРНОГО ВИДА
+#   или ПРИГОДНОСТИ ДЛЯ ОПРЕДЕЛЕННЫХ ЦЕЛЕЙ. Подробнее см. в Стандартной
+#   общественной лицензии GNU.
+#
+#   Вы должны были получить копию Стандартной общественной лицензии GNU
+#   вместе с этой программой. Если это не так, см.
+#   <http://www.gnu.org/licenses/>.
+###############################################################################
+
+-->{% endcomment %}
+{% load i18n l10n bwp_base %}
+{% load url from future %}
+
+<!-- START: block navbar -->
+{% block navbar %}
+<div class="navbar">
+    <div class="navbar-inner">
+        <div class="container">
+            <ul class="nav pull-right">
+                <!-- START: block navbarmenu_right -->
+                {% block navbarmenu_right %}
+                
+                <li class="divider-vertical"></li>
+                <form class="navbar-search pull-left form-search" action="">
+                    <div class="input-append">
+                        <input type="text" class="span2 search-query" name="q" placeholder="Поиск" value="{{ q }}">
+                        <button type="submit" class="btn"><i class="icon-search"></i></button>
+                    </div>
+                </form>
+                {% endblock %}
+                <!-- END: block navbarmenu_right -->
+                
+                <!-- START: block navbar_collapse_btn -->
+                {% block navbar_collapse_btn %}
+                <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </a>
+                {% endblock %}
+                <!-- END: block navbar_collapse_btn -->
+            </ul>
+            
+            <ul class="nav">
+                <!-- START: block navbarmenu_left -->
+                {% block navbarmenu_left %}
+                <li>
+                    <a href="{% url "bwp:index" %}">
+                        <i class="icon-home"> </i> Главная
+                    </a>
+                </li>
+                {% endblock %}
+                <!-- END: block navbarmenu_left -->
+            </ul>
+            
+            <div class="nav-collapse">
+                <ul class="nav">
+                    <!-- START: block navbarmenu_collapse -->
+                    {% block navbarmenu_collapse %}
+                        {% for sp in simplepages|is_active %}
+                            {% if sp.simplepage_set.count %}
+                            <li id="menu-simplepage-{{ sp.id }}" class="dropdown">
+                                <a class="dropdown-toggle" data-toggle="dropdown" href="#menu-simplepage-{{ sp.id }}">
+                                    {{ sp.title }}
+                                    <b class="caret"></b>
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <div style="max-height: 320px; overflow-y: auto;">
+                                {% for a in sp.simplepage_set.all|is_active %}
+                                    <li><a href="{{ a.get_absolute_url }}" title="{{ a.title }}">{{ a.title|truncatewords:5 }}</a></li>
+                                {% endfor %}
+                                    </div>
+                                </ul>
+                            {% else %}
+                                <li><a href="{{ sp.get_absolute_url }}">{{ sp.title }}</a></li>
+                            {% endif %}
+                        {% endfor %}
+                    {% endblock %}
+                    <!-- END: block navbarmenu_collapse -->
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+<!-- END: block navbar -->
+
