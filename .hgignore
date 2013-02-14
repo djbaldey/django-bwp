@@ -13,4 +13,5 @@
 ^example/media/.*\.txt$
 ^build/.*$
 ^dist/.*$
-^django_bwp.egg-info/.*$
+^BWP.egg-info/.*$
+^bwp.egg-info/.*$

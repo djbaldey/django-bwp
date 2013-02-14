@@ -1,4 +1,7 @@
-Business Web Package - online-package for the employer, provides (at the initial stage) standard set of operations with business documents, such as acts, accounts, contracts, goods and prices for them, via the Internet in the form of a web application from a modern browser that supports HTML5, JavaScript, and CSS3.
+Business Web Package
+====================
+
+This is online-package for the employer, provides (at the initial stage) standard set of operations with business documents, such as acts, accounts, contracts, goods and prices for them, via the Internet in the form of a web application from a modern browser that supports HTML5, JavaScript, and CSS3.
 
 At this first stage, BWP repeat functionality known to many applications for Windows: Business PACK.
 
@@ -6,7 +9,7 @@ The successful further development of the project - he stand in the way of web-b
 
 BWP can be installed on any web server (mandatory access for valid HTTPS), which can be run Django project (apache, nginx and other technology WSGI).
 
-Now, the project is in an initial stage of development
+*Now, the project is in an initial stage of development*
 
 This is application tested on Django 1.4
 
