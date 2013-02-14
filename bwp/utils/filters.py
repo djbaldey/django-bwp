@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 ###############################################################################
-# Copyright 2013 Grigoriy Kramarenko.
+# Copyright 2012 Grigoriy Kramarenko.
 ###############################################################################
 # This file is part of BWP.
 #
@@ -36,16 +36,27 @@
 #   <http://www.gnu.org/licenses/>.
 ###############################################################################
 """
-from django.conf.urls.defaults import patterns, include, url
-from django.contrib.staticfiles.urls import staticfiles_urlpatterns
-from django.contrib import admin
+from django.db.models import Q
+import operator
 
-admin.autodiscover()
+def filterQueryset(queryset, search_fields, query):
+    """ Фильтрация """
+    if not search_fields:
+        return queryset.none()
+    def construct_search(field_name):
+        if field_name.startswith('^'):
+            return "%s__istartswith" % field_name[1:]
+        elif field_name.startswith('='):
+            return "%s__iexact" % field_name[1:]
+        elif field_name.startswith('@'):
+            return "%s__search" % field_name[1:]
+        else:
+            return "%s__icontains" % field_name
+    orm_lookups = [construct_search(str(search_field))
+                   for search_field in search_fields]
+    for bit in query.split():
+        or_queries = [Q(**{orm_lookup: bit})
+                      for orm_lookup in orm_lookups]
+        queryset = queryset.filter(reduce(operator.or_, or_queries))
 
-urlpatterns = patterns('',
-    url(r'^', include('bwp.urls')),
-    url(r'^admin/', include(admin.site.urls)),
-)
-
-# For develop:
-urlpatterns += staticfiles_urlpatterns()
+    return queryset

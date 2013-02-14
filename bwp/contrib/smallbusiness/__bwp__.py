@@ -36,62 +36,63 @@
 #   <http://www.gnu.org/licenses/>.
 ###############################################################################
 """
-from bwp import core as admin
 from django.utils.translation import ugettext_lazy as _
+from bwp.sites import site
+from bwp.models import ModelBWP
 from models import *
 
-class PostAdmin(admin.ModelBWP):
+class PostAdmin(ModelBWP):
     list_display = ('__unicode__', 'id')
-admin.site.register(Post, PostAdmin)
+site.register(Post, PostAdmin)
 
-class EmployeeAdmin(admin.ModelBWP):
+class EmployeeAdmin(ModelBWP):
+    list_display = ('__unicode__', 'org', 'id')
+site.register(Employee, EmployeeAdmin)
+
+class ClientAdmin(ModelBWP):
     list_display = ('__unicode__', 'id')
-admin.site.register(Employee, EmployeeAdmin)
+site.register(Client, ClientAdmin)
 
-class ClientAdmin(admin.ModelBWP):
-    list_display = ('__unicode__', 'id')
-admin.site.register(Client, ClientAdmin)
-
-class UnitAdmin(admin.ModelBWP):
+class UnitAdmin(ModelBWP):
     list_display = ('__unicode__', 'id')
     raw_id_fields = ['qualifier']
-admin.site.register(Unit, UnitAdmin)
+site.register(Unit, UnitAdmin)
 
-class GoodGroupAdmin(admin.ModelBWP):
+class GoodGroupAdmin(ModelBWP):
     list_display = ('__unicode__', 'id')
-admin.site.register(GoodGroup, GoodGroupAdmin)
+site.register(GoodGroup, GoodGroupAdmin)
 
-class GoodAdmin(admin.ModelBWP):
+class GoodAdmin(ModelBWP):
     list_display = ('__unicode__', 'id')
     raw_id_fields = ['group', 'unit', 'package']
-admin.site.register(Good, GoodAdmin)
+site.register(Good, GoodAdmin)
 
-class PriceAdmin(admin.ModelBWP):
+class PriceAdmin(ModelBWP):
     list_display = ('__unicode__', 'id')
     raw_id_fields = ['good']
-admin.site.register(Price, PriceAdmin)
+site.register(Price, PriceAdmin)
 
-class SpecAdmin(admin.ModelBWP):
+class SpecAdmin(ModelBWP):
     list_display = ('__unicode__', 'id')
     raw_id_fields = ['price']
-admin.site.register(Spec, SpecAdmin)
+site.register(Spec, SpecAdmin)
 
-class ContractAdmin(admin.ModelBWP):
+class ContractAdmin(ModelBWP):
     list_display = ('__unicode__', 'id')
     raw_id_fields = ['user']
-admin.site.register(Contract, ContractAdmin)
+site.register(Contract, ContractAdmin)
 
-class InvoiceAdmin(admin.ModelBWP):
+class InvoiceAdmin(ModelBWP):
     list_display = ('__unicode__', 'id')
     raw_id_fields = ['user']
-admin.site.register(Invoice, InvoiceAdmin)
+site.register(Invoice, InvoiceAdmin)
 
-class PaymentAdmin(admin.ModelBWP):
+class PaymentAdmin(ModelBWP):
     list_display = ('__unicode__', 'id')
     raw_id_fields = ['user']
-admin.site.register(Payment, PaymentAdmin)
+site.register(Payment, PaymentAdmin)
 
-class ActAdmin(admin.ModelBWP):
+class ActAdmin(ModelBWP):
     list_display = ('__unicode__', 'id')
-admin.site.register(Act, ActAdmin)
+site.register(Act, ActAdmin)
 

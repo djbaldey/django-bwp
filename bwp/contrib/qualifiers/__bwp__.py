@@ -37,41 +37,52 @@
 ###############################################################################
 """
 from django.utils.translation import ugettext_lazy as _
-from bwp import core as admin
+from bwp.sites import site
+from bwp.models import ModelBWP
 from models import *
 
-class CountryAdmin(admin.ModelBWP):
+class CountryAdmin(ModelBWP):
     list_display = ('title', 'code')
+    list_display_css = { 'code': 'input-micro',}
     search_fields = ['title', 'code']
     ordering = ['title']
-admin.site.register(Country, CountryAdmin)
+site.register(Country, CountryAdmin)
 
-class CurrencyAdmin(admin.ModelBWP):
+class CurrencyAdmin(ModelBWP):
     list_display = ('title', 'code',)
+    list_display_css = { 'code': 'input-micro',}
     search_fields = ['title', 'countries__title','code']
     filter_horizontal = ['countries']
-    ordering = ['title']
-admin.site.register(Currency, CurrencyAdmin)
+    ordering = ['title', 'code']
+site.register(Currency, CurrencyAdmin)
 
-class DocumentAdmin(admin.ModelBWP):
+class DocumentAdmin(ModelBWP):
     list_display = ('title', 'code',)
+    list_display_css = { 'code': 'input-micro',}
     search_fields = ['title', 'code','parent__code']
     #~ list_filter = ('parent', )
     raw_id_fields = ['parent']
     ordering = ['title']
-admin.site.register(Document, DocumentAdmin)
+site.register(Document, DocumentAdmin)
 
-class MeasureUnitCategoryAdmin(admin.ModelBWP):
-    list_display = ('__unicode__', 'id')
-admin.site.register(MeasureUnitCategory, MeasureUnitCategoryAdmin)
+class MeasureUnitCategoryAdmin(ModelBWP):
+    list_display = ('title', 'id')
+site.register(MeasureUnitCategory, MeasureUnitCategoryAdmin)
 
-class MeasureUnitGroupAdmin(admin.ModelBWP):
-    list_display = ('__unicode__', 'id')
-admin.site.register(MeasureUnitGroup, MeasureUnitGroupAdmin)
+class MeasureUnitGroupAdmin(ModelBWP):
+    list_display = ('title', 'id')
+site.register(MeasureUnitGroup, MeasureUnitGroupAdmin)
 
-class MeasureUnitAdmin(admin.ModelBWP):
-    list_display = ('__unicode__', 'code')
+class MeasureUnitAdmin(ModelBWP):
+    list_display = ('title', 'note_ru', 'note_iso', 'symbol_ru',
+                    'symbol_iso', 'category','group', 'code')
+    list_display_css = {
+            'code': 'input-micro',
+            'note_ru': 'input-mini',
+            'symbol_ru': 'input-mini',
+            'note_iso': 'input-mini',
+            'symbol_iso': 'input-mini',}
     list_filter = ('category', 'group')
-    search_fields = ['title', 'code',]
-admin.site.register(MeasureUnit, MeasureUnitAdmin)
+    search_fields = ['title', 'code', 'category__title', 'group__title']
+site.register(MeasureUnit, MeasureUnitAdmin)
 

@@ -36,16 +36,16 @@
 #   <http://www.gnu.org/licenses/>.
 ###############################################################################
 """
-from django.conf.urls.defaults import patterns, include, url
-from django.contrib.staticfiles.urls import staticfiles_urlpatterns
-from django.contrib import admin
+from django.contrib.auth.models import User, Group
+from bwp.sites import site
+from bwp.models import ModelBWP
+from django.utils.translation import ugettext_lazy as _
 
-admin.autodiscover()
+class UserAdmin(ModelBWP):
+    list_display = ('__unicode__', 'id')
+    search_fields = ('username', 'email')
+site.register(User, UserAdmin)
 
-urlpatterns = patterns('',
-    url(r'^', include('bwp.urls')),
-    url(r'^admin/', include(admin.site.urls)),
-)
-
-# For develop:
-urlpatterns += staticfiles_urlpatterns()
+class GroupAdmin(ModelBWP):
+    list_display = ('__unicode__', 'id')
+site.register(Group, GroupAdmin)

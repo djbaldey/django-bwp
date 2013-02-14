@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 ###############################################################################
-# Copyright 2013 Grigoriy Kramarenko.
+# Copyright 2012 Grigoriy Kramarenko.
 ###############################################################################
 # This file is part of BWP.
 #
@@ -36,16 +36,7 @@
 #   <http://www.gnu.org/licenses/>.
 ###############################################################################
 """
-from django.conf.urls.defaults import patterns, include, url
-from django.contrib.staticfiles.urls import staticfiles_urlpatterns
-from django.contrib import admin
+from django.utils.translation import ugettext_lazy as _
+from django.conf import settings
 
-admin.autodiscover()
-
-urlpatterns = patterns('',
-    url(r'^', include('bwp.urls')),
-    url(r'^admin/', include(admin.site.urls)),
-)
-
-# For develop:
-urlpatterns += staticfiles_urlpatterns()
+BWP = getattr(settings, 'BWP', {})

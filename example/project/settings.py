@@ -200,17 +200,20 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     # Uncomment the next line to enable the admin:
-    #~ 'django.contrib.admin',
+    'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
-    'bwp.core',
+    
+    ### Обязательные
+    'bwp',
+    'quickapi',
+    #~ 'webodt',
+    ### Необязательные
     'bwp.contrib.qualifiers',
     'bwp.contrib.contacts',
     'bwp.contrib.usersettings',
     'bwp.contrib.reports',
     'bwp.contrib.smallbusiness',
-    'quickapi',
-    #~ 'webodt',
 )
 
 ########################################################################
@@ -222,8 +225,6 @@ WEBODT_TMP_DIR = abspath('..', 'tmp-webodt')
 if not os.path.exists(WEBODT_TMP_DIR):
     os.makedirs(WEBODT_TMP_DIR)
 WEBODT_TEMPLATE_PATH = abspath('templates', 'webodt')
-
-
 
 ########################################################################
 #                   END SETTINGS FOR APPLICATIONS                      #

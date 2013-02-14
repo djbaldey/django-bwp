@@ -195,19 +195,23 @@ class MeasureUnit(AbstractGroup):
     note_ru = models.CharField(
             max_length=50,
             blank=True, null=True,
-            verbose_name = _('notation RU'))
+            verbose_name = _('RU'),
+            help_text = _('notation RU'))
     note_iso = models.CharField(
             max_length=50,
             blank=True, null=True,
-            verbose_name = _('notation ISO'))
+            verbose_name = _('ISO'),
+            help_text = _('notation ISO'))
     symbol_ru = models.CharField(
             max_length=50,
             blank=True, null=True,
-            verbose_name = _('symbolic notation RU'))
+            verbose_name = _('symbol RU'),
+            help_text = _('symbolic notation RU'))
     symbol_iso = models.CharField(
             max_length=50,
             blank=True, null=True,
-            verbose_name = _('symbolic notation ISO'))
+            verbose_name = _('symbol ISO'),
+            help_text = _('symbolic notation ISO'))
     category = models.ForeignKey(
             MeasureUnitCategory,
             null=True, blank=True,

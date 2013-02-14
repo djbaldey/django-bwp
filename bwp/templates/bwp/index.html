@@ -1,0 +1,82 @@
+{% extends "bwp/base.html" %}
+{% load i18n bwp_static bwp_locale %}
+
+{% block bodyclass %}index{% endblock %}
+
+{% block header %}
+<table style="width: 100%; margin: 5px 0; clear: both;">
+    <tr>
+        <td class="span6">
+            <div class="pull-left">
+        {% if app_list %}
+            <span id="menu-app" class="dropdown">
+                <a href="#" data-toggle="dropdown" data-target="#" class="label label-info">Приложения</a>
+
+                <ul class="dropdown-menu" role="menu">
+                {% for app in app_list %}
+                    <li class="dropdown-submenu">
+                        <a tabindex="-1" href="#">{% app_label_locale app.name %}</a>
+                        <ul class="dropdown-menu">
+                        {% for model in app.models %}
+                            <li>
+                                <a href="#" 
+                                    data-model="{{ model.id }}"
+                                    data-tab-id="{{ model.meta.object_name }}"
+                                    data-tab-title="{% app_label_locale app.name %}"
+                                >{{ model.name }}</a>
+                            </li>
+                        {% endfor %}
+                        </ul>
+                    </li>
+                {% endfor %}
+                </ul>
+            </span>
+        {% endif %}
+            
+        {% if func_list %}
+            <span id="menu-func" class="dropdown">
+                <a href="#" data-toggle="dropdown" data-target="#" class="label label-important">Функции</a>
+
+                <ul class="dropdown-menu" role="menu">
+                {% for func in func_list %}
+                    <li class="dropdown-submenu">
+                        <a tabindex="-1" href="#">{{ func.verbose_name }}</a>
+                        <ul class="dropdown-menu">
+                        {% for subfunc in func.functions %}
+                            <li>
+                                <a href="#" 
+                                    data-model="{{ subfunc.id }}"
+                                    data-tab-id="{{ subfunc.meta.object_name }}"
+                                    data-tab-title="{{ subfunc.verbose_name }}"
+                                >{{ subfunc.name }}</a>
+                            </li>
+                        {% endfor %}
+                        </ul>
+                    </li>
+                {% endfor %}
+                </ul>
+            </span>
+        {% endif %}
+            </div>
+        </td>
+        <td class="span6">
+            <div class="pull-right">
+                <span class="label label-success">{{ user }}</span>
+                <a href="{% url logout %}" title="Выход" class="label"><i class="icon-off"></i></a>
+            </div>
+        </td>
+    </tr>
+    <tr>
+        <td id="alert-place" colspan="2"></td>
+    </tr>
+</table>
+{% endblock %}
+
+{% block content %}
+{% if not app_list %}
+    <p>{% trans "You don't have permission to edit anything." %}</p>
+{% else %}
+    <ul id="main-tab" class="nav nav-tabs"></ul>
+    <div id="main-tab-content" class="tab-content"></div>
+{% endif %}
+{% endblock %}

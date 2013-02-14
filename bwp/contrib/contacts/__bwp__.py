@@ -36,7 +36,8 @@
 #   <http://www.gnu.org/licenses/>.
 ###############################################################################
 """
-from bwp.core import ModelBWP, site
+from bwp.sites import site
+from bwp.models import ModelBWP
 from django.utils.translation import ugettext_lazy as _
 from models import *
 

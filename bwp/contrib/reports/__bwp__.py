@@ -37,14 +37,15 @@
 ###############################################################################
 """
 from django.utils.translation import ugettext_lazy as _
-from bwp import core as admin
+from bwp.sites import site
+from bwp.models import ModelBWP
 from models import *
 
-class DocumentAdmin(admin.ModelBWP):
+class DocumentAdmin(ModelBWP):
     list_display = ('__unicode__', 'id')
     raw_id_fields = ('qualifier',)
-admin.site.register(Document, DocumentAdmin)
+site.register(Document, DocumentAdmin)
 
-class TemplateAdmin(admin.ModelBWP):
+class TemplateAdmin(ModelBWP):
     list_display = ('__unicode__', 'id')
-admin.site.register(Template, TemplateAdmin)
+site.register(Template, TemplateAdmin)

@@ -37,9 +37,10 @@
 ###############################################################################
 """
 from django.utils.translation import ugettext_lazy as _
-from bwp import core as admin
+from bwp.sites import site
+from bwp.models import ModelBWP
 from models import *
 
-class TemplateAdmin(admin.ModelBWP):
+class TemplateAdmin(ModelBWP):
     list_display = ('__unicode__', 'id')
-admin.site.register(Template, TemplateAdmin)
+site.register(Template, TemplateAdmin)

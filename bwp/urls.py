@@ -37,15 +37,46 @@
 ###############################################################################
 """
 from django.conf.urls.defaults import patterns, include, url
-from django.contrib.staticfiles.urls import staticfiles_urlpatterns
-from django.contrib import admin
+from django.shortcuts import redirect
 
-admin.autodiscover()
+def autodiscover():
+    """
+    Auto-discover INSTALLED_APPS bwp.py modules and fail silently when
+    not present. This forces an import on them to register any bwp bits they
+    may want.
+    """
+
+    import copy
+    from bwp.conf import settings
+    from bwp.sites import site
+    from django.utils.importlib import import_module
+    from django.utils.module_loading import module_has_submodule
+
+    for app in settings.INSTALLED_APPS:
+        mod = import_module(app)
+        # Attempt to import the app's bwp module.
+        try:
+            before_import_registry = copy.copy(site._registry)
+            import_module('%s.__bwp__' % app)
+        except:
+            # Reset the model registry to the state before the last import as
+            # this import will have to reoccur on the next request and this
+            # could raise NotRegistered and AlreadyRegistered exceptions
+            # (see #8245).
+            site._registry = before_import_registry
+
+            # Decide whether to bubble up this error. If the app just
+            # doesn't have an bwp module, we can ignore the error
+            # attempting to import it, otherwise we want it to bubble up.
+            if module_has_submodule(mod, '__bwp__'):
+                raise
+
+autodiscover()
 
 urlpatterns = patterns('',
-    url(r'^', include('bwp.urls')),
-    url(r'^admin/', include(admin.site.urls)),
+    url(r'^$', 'bwp.views.index', name='index'),
+    url(r'^login/$', 'bwp.views.login', name="login"),
+    url(r'^logout/$', 'bwp.views.logout', name="logout"),
+    url(r'^datatables/$', 'bwp.views.datatables', name="datatables"),
+    url(r'^api/$', 'bwp.views.api', name="api"),
 )
-
-# For develop:
-urlpatterns += staticfiles_urlpatterns()

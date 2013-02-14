@@ -37,13 +37,14 @@
 ###############################################################################
 """
 from django.utils.translation import ugettext_lazy as _
-from bwp import core as admin
+from bwp.sites import site
+from bwp.models import ModelBWP
 from models import *
 
-class GlobalUserSettingsAdmin(admin.ModelBWP):
+class GlobalUserSettingsAdmin(ModelBWP):
     list_display = ('__unicode__', 'id')
-admin.site.register(GlobalUserSettings, GlobalUserSettingsAdmin)
+site.register(GlobalUserSettings, GlobalUserSettingsAdmin)
 
-class UserSettingsAdmin(admin.ModelBWP):
+class UserSettingsAdmin(ModelBWP):
     list_display = ('__unicode__', 'id')
-admin.site.register(UserSettings, UserSettingsAdmin)
+site.register(UserSettings, UserSettingsAdmin)

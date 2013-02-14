@@ -76,54 +76,67 @@ class AbstractOrg(models.Model):
     bank_bik = models.CharField(
             max_length=16,
             blank=True,
-            verbose_name = _("identification code of bank"))
+            verbose_name = _("BIK"),
+            help_text = _("identification code of bank"))
     bank_title = models.TextField(
             blank=True,
-            verbose_name = _("title of bank"))
+            verbose_name = _("title"),
+            help_text = _("title of bank"))
     bank_set_account = models.CharField(
             max_length=32,
             blank=True,
-            verbose_name = _("settlement account"))
+            verbose_name = _("set/account"),
+            help_text = _("settlement account"))
     bank_cor_account = models.CharField(
             max_length=32,
             blank=True,
-            verbose_name = _("correspondent account"))
+            verbose_name = _("cor/account"),
+            help_text = _("correspondent account"))
     # Поля документа клиента
     document_type = models.IntegerField(
             choices=DOCUMENT_CHOICES,
             blank=True, null=True,
-            verbose_name = _("type of document"))
+            verbose_name = _("type"),
+            help_text = _("type of document"))
     document_series = models.CharField(
             max_length=10,
             blank=True,
-            verbose_name = _("series of document"))
+            verbose_name = _("series"),
+            help_text = _("series of document"))
     document_number = models.CharField(
             max_length=16,
             blank=True,
-            verbose_name = _("number of document"))
+            verbose_name = _("number"),
+            help_text = _("number of document"))
     document_date = models.CharField(
             max_length=16,
             blank=True,
-            verbose_name = _("issue of document"))
+            verbose_name = _("issue"),
+            help_text = _("issue of document"))
     document_org = models.TextField(
             blank=True,
-            verbose_name = _("organization of issue"))
+            verbose_name = _("organ"),
+            help_text = _("organization of issue"))
     document_code = models.CharField(
             max_length=16,
             blank=True,
-            verbose_name = _("code organization of issue"))
+            verbose_name = _("code organ"),
+            help_text = _("code organization of issue"))
 
     # прочие поля
     web = models.URLField(
             blank=True,
-            verbose_name = _('web site'))
+            verbose_name = _('site'),
+            help_text = _('web site'))
     email = models.EmailField(
             #~ default='no@example.com',
             blank=True,
-            verbose_name = _('e-mail address'))
+            verbose_name = _('email'),
+            help_text = _('email address'))
     about = fields.HTMLField(
             blank=True,
-            verbose_name = _("about organization"))
+            verbose_name = _("about"),
+            help_text = _("about organization"))
 
     def __unicode__(self):
         return self.title
@@ -154,10 +167,12 @@ class AbstractPerson(models.Model):
             verbose_name = _("address"))
     email = models.EmailField(
             blank=True,
-            verbose_name = _('e-mail address'))
+            verbose_name = _('email'),
+            help_text = _('email address'))
     web = models.URLField(
             blank=True,
-            verbose_name = _('web site'))
+            verbose_name = _('site'),
+            help_text = _('web site'))
     skype = models.CharField(
             max_length=50,
             blank=True,
@@ -167,7 +182,8 @@ class AbstractPerson(models.Model):
             verbose_name = _('jabber'))
     about = models.TextField(
             blank=True,
-            verbose_name = _("about person"))
+            verbose_name = _("about"),
+            help_text = _("about person"))
 
     def __unicode__(self):
         fio = u' '.join(
