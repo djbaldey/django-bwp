@@ -37,20 +37,35 @@
 */
 
 /* GLOBAL VARS */
-var SETTINGS = {};
-
-function readSettings(){
-    if (typeof localStorage == 'undefined' || typeof JSON == 'undefined')
-        { return false; }
-    return $.evalJSON(localStorage.getItem('BWP_SETTINGS')) || SETTINGS;
-}
-
-function storeSettings(){
-    if (typeof localStorage == 'undefined' || typeof JSON == 'undefined')
-        { return false; }
-    string = $.toJSON(SETTINGS)
-    localStorage.setItem('BWP_SETTINGS', string)
-    return string;
+_SETTINGS = { tabs: [], } // default
+var SETTINGS = {
+    values: null,
+    init: function() {
+        if (typeof localStorage == 'undefined' || typeof JSON == 'undefined')
+            { return false; }
+        this.values = $.evalJSON(localStorage.getItem('BWP_SETTINGS')) || _SETTINGS;
+        return this;
+    },
+    // Reading data
+    read: function() {
+        if (this.values == null) { return this.init().values; }
+        return this.values;
+    },
+    // To localStorage
+    save: function() {
+        string = $.toJSON(this.read())
+        localStorage.setItem('BWP_SETTINGS', string)
+        return string;
+    },
+    // Очистка от null в списке вкладок
+    cleanTabs: function() {
+        _tabs = []
+        $.each(this.values.tabs, function(i, item) {
+            if (item) { _tabs.push(item); }
+        });
+        this.values.tabs = _tabs;
+        return this;
+    }
 }
 
 /* One delay for all functions */
@@ -121,6 +136,7 @@ function jsonAPI(args, callback, to_console) {
     });
 };
 
+/* Для вывода в консоль */
 function testLog(text) {
     console.log(text);
 };
@@ -133,8 +149,7 @@ $.extend( $.fn.dataTableExt.oStdClasses, {
 } );
 
 /* API method to get paging information */
-$.fn.dataTableExt.oApi.fnPagingInfo = function ( oSettings )
-{
+$.fn.dataTableExt.oApi.fnPagingInfo = function ( oSettings ) {
     return {
         "iStart":         oSettings._iDisplayStart,
         "iEnd":           oSettings.fnDisplayEnd(),
@@ -226,6 +241,7 @@ $.extend( $.fn.dataTableExt.oPagination, {
 /* Table initialisation */
 function initDataTables(data) {
     table = $('table[data-model="'+data.model+'"]');
+    console.log(data)
     /* Init DataTables */
 	var oTable = table.dataTable({
         "oLanguage": { "sUrl": "static/js/dataTables/1.9.4/"+data.oLanguage+".txt" },
@@ -263,10 +279,16 @@ function initDataTables(data) {
     return false;
 }
 
+/* Добавляет вкладки на рабочую область */
 function addTab() {
     model  = $(this).attr('data-model');
     func   = $(this).attr('data-func');
     object = $(this).attr('data-object');
+    choice = ""
+    if (model) { choice = ' data-model="'+model+'"' }
+    else if (func) { choice = ' data-func="'+func+'"' }
+    else if (object) { choice = ' data-object="'+object+'"' }
+    
     tab_id    = $(this).attr('data-tab-id');
     tab_title = $(this).attr('data-tab-title');
     tab_text  = $(this).attr('data-tab-text');
@@ -283,44 +305,71 @@ function addTab() {
         // Сама вкладка
         html = '<li id="tab-'+tab_id+'">'
             +'<a data-toggle="tab" href="#tab-content-'+tab_id+'"'
+            + choice
             +' title="'+tab_title+'">'
             +tab_text
             +'&nbsp;<button'
             +' data-close="'+tab_id+'"'
             +' class="close">&times;</button></a></li>'
         $('#main-tab').append(html);
-        // Отображаем вкладку
-        $('#main-tab a:last').tab('show');
+        // Отображаем вкладку c небольшой задержкой
+        delay(function() {
+            $('#main-tab a:last').tab('show');
+            contentLoader($('#main-tab a:last')[0])
+        }, 200);
         // Переустанавливаем биндинги на закрытие вкладок и их контента
         $('#main-tab li button.close').unbind('click').click(function() {
-            $('#tab-'+$(this).attr('data-close')).remove();
-            $('#tab-content-'+$(this).attr('data-close')).remove();
-            // Удаляем из хранилища информацилю об открытой вкладке
-            delete SETTINGS.tabs[$(this).attr('data-close')];
-            storeSettings()
+            close_tab_id = $(this).attr('data-close');
+            $('#tab-'+close_tab_id).remove();
+            $('#tab-content-'+close_tab_id).remove();
+            // Удаляем из хранилища информацию об открытой вкладке
+            num = $.inArray(close_tab_id, SETTINGS.values.tabs);
+            if (num > -1) {
+                delete SETTINGS.values.tabs[num];
+                SETTINGS.cleanTabs().save();
+             };
         });
-        // Добавляем вкладку в хранилище
-        if (typeof SETTINGS.tabs == 'undefined') { SETTINGS["tabs"] = {} };
-        SETTINGS.tabs[tab_id] = true;
-        storeSettings();
-        
-        // Загрузка страницы в контент вкладки
-        if (model) {
-            $.getJSON('/datatables/', { model: model, info: true },
-                function(data, status) {
-                    //~ console.log(data);
-                    $('#tab-content-'+tab_id).html(data.html);
-                    initDataTables(data);
-                }
-            );
-        } else if (func) {
-            testLog('Type is func');
-        } else if (object) {
-            testLog('Type is object');
+        // Добавляем вкладку в хранилище, если её там нет
+        // (т.к. эту же функцию использует восстановление сессии). 
+        if ($.inArray(tab_id, SETTINGS.values.tabs) < 0) {
+            SETTINGS.values.tabs.push(tab_id);
+            SETTINGS.save();
         }
+        // Устанавливаем одиночный биндинг на загрузку контента при щелчке на вкладке
+        console.log(tab_id)
+        a = $('#tab-'+tab_id+' a').one('click', function() {contentLoader(this)});
+        console.log(a)
     }
     return true;
 }
+
+function contentLoader(obj) {
+    // Загрузка контента во вкладки
+    model  = $(obj).attr('data-model');
+    func   = $(obj).attr('data-func');
+    object = $(obj).attr('data-object');
+    if (model) {
+        $.getJSON('/datatables/', { model: model, info: true },
+            function(data, status) {
+                //~ console.log(data);
+                $('#tab-content-'+data.model.replace('.', '-')).html(data.html);
+                initDataTables(data);
+            }
+        );
+    } else if (func) {
+        testLog('Type is func');
+    } else if (object) {
+        testLog('Type is object');
+    }
+}
+
+function restoreSession() {
+    $.each(SETTINGS.values.tabs, function(i, item) {
+        $('[data-tab-id='+item+']').trigger('click');
+    });
+}
+
+
 
 function dblClickRow(oTable, nRow) {
     console.log(oTable);
@@ -340,6 +389,7 @@ function fnShowHide( model, iCol ) {
 
 /* Execute something after load page */
 $(document).ready(function($) {
+    SETTINGS.init();
     $(".dropdown-toggle").dropdown();
     $("alert").alert();
     var path = window.location.pathname;
@@ -347,8 +397,7 @@ $(document).ready(function($) {
     else { $('div.navbar a[href="/"]').parents('li').addClass('active');}
     $('#search').focus();
     $('#menu-app li[class!=disabled] a[data-tab-id]').click(addTab);
-    
-    SETTINGS = readSettings();
-    console.log(SETTINGS)
+
+    restoreSession();
 
 });
