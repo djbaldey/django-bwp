@@ -37,7 +37,21 @@
 */
 
 /* GLOBAL VARS */
-var SETTINGS;
+var SETTINGS = {};
+
+function readSettings(){
+    if (typeof localStorage == 'undefined' || typeof JSON == 'undefined')
+        { return false; }
+    return $.evalJSON(localStorage.getItem('BWP_SETTINGS')) || SETTINGS;
+}
+
+function storeSettings(){
+    if (typeof localStorage == 'undefined' || typeof JSON == 'undefined')
+        { return false; }
+    string = $.toJSON(SETTINGS)
+    localStorage.setItem('BWP_SETTINGS', string)
+    return string;
+}
 
 /* One delay for all functions */
 var delay = (function(){
@@ -215,6 +229,7 @@ function initDataTables(data) {
     /* Init DataTables */
 	var oTable = table.dataTable({
         "oLanguage": { "sUrl": "static/js/dataTables/1.9.4/"+data.oLanguage+".txt" },
+        //~ "sScrollY": '400px',
         "bProcessing": data.bProcessing,
         "bServerSide": data.bServerSide,
         "sAjaxSource": data.sAjaxSource,
@@ -227,8 +242,11 @@ function initDataTables(data) {
         "fnRowCallback": function( nRow, aData, iDisplayIndex ) {
             $(nRow).click(function() {
                 console.log(nRow)
-                var aData = oTable.fnGetData( nRow );
                 console.log(aData)
+                var aData = oTable.fnGetData( nRow );
+                console.log(aData);
+                
+                dblClickRow(oTable, nRow)
             });
         },
         "aoColumnDefs": data.aoColumnDefs,
@@ -238,7 +256,7 @@ function initDataTables(data) {
         "bStateSave": data.bStateSave || true,
     });
     /* Apply after */
-    //~ console.log( $(oTable).parent().parent().html())
+    console.log( $($(oTable).attr('id')+'_wrapper'))
     //~ filter = $(oTable).parent().parent().find('.dataTables_filter');
     //~ filter.find('label').text('text');
     //~ console.log(filter.html())
@@ -246,10 +264,12 @@ function initDataTables(data) {
 }
 
 function addTab() {
-    model = $(this).attr('data-model');
-    tab_id = $(this).attr('data-tab-id');
+    model  = $(this).attr('data-model');
+    func   = $(this).attr('data-func');
+    object = $(this).attr('data-object');
+    tab_id    = $(this).attr('data-tab-id');
     tab_title = $(this).attr('data-tab-title');
-    tab_name = $(this).text();
+    tab_text  = $(this).attr('data-tab-text');
     tab = $('#main-tab #tab-'+ tab_id)
     if (tab.length > 0) {
         // Отображаем вкладку
@@ -264,7 +284,7 @@ function addTab() {
         html = '<li id="tab-'+tab_id+'">'
             +'<a data-toggle="tab" href="#tab-content-'+tab_id+'"'
             +' title="'+tab_title+'">'
-            +tab_name
+            +tab_text
             +'&nbsp;<button'
             +' data-close="'+tab_id+'"'
             +' class="close">&times;</button></a></li>'
@@ -275,18 +295,37 @@ function addTab() {
         $('#main-tab li button.close').unbind('click').click(function() {
             $('#tab-'+$(this).attr('data-close')).remove();
             $('#tab-content-'+$(this).attr('data-close')).remove();
+            // Удаляем из хранилища информацилю об открытой вкладке
+            delete SETTINGS.tabs[$(this).attr('data-close')];
+            storeSettings()
         });
+        // Добавляем вкладку в хранилище
+        if (typeof SETTINGS.tabs == 'undefined') { SETTINGS["tabs"] = {} };
+        SETTINGS.tabs[tab_id] = true;
+        storeSettings();
+        
         // Загрузка страницы в контент вкладки
-        args = { model: model }
-        $.getJSON('/datatables/', { model: model, info: true },
-            function(data, status) {
-                //~ console.log(data);
-                $('#tab-content-'+tab_id).html(data.html);
-                initDataTables(data);
-            }
-        );
+        if (model) {
+            $.getJSON('/datatables/', { model: model, info: true },
+                function(data, status) {
+                    //~ console.log(data);
+                    $('#tab-content-'+tab_id).html(data.html);
+                    initDataTables(data);
+                }
+            );
+        } else if (func) {
+            testLog('Type is func');
+        } else if (object) {
+            testLog('Type is object');
+        }
     }
     return true;
+}
+
+function dblClickRow(oTable, nRow) {
+    console.log(oTable);
+    console.log(nRow);
+    //~ $('div.toolbar').html('<button class="btn btn-primary btn-mini">Btn</button>');
 }
 
 /* Table showing and hiding columns */
@@ -294,9 +333,9 @@ function fnShowHide( model, iCol ) {
     table = $('table[data-model="'+model+'"]');
     /* Get the DataTables object again - this is not a recreation, just a get of the object */
     var oTable = table.dataTable();
-     
     var bVis = oTable.fnSettings().aoColumns[iCol].bVisible;
     oTable.fnSetColumnVis( iCol, bVis ? false : true );
+    return false;
 }
 
 /* Execute something after load page */
@@ -308,5 +347,8 @@ $(document).ready(function($) {
     else { $('div.navbar a[href="/"]').parents('li').addClass('active');}
     $('#search').focus();
     $('#menu-app li[class!=disabled] a[data-tab-id]').click(addTab);
+    
+    SETTINGS = readSettings();
+    console.log(SETTINGS)
 
 });

@@ -19,10 +19,11 @@
                         <ul class="dropdown-menu">
                         {% for model in app.models %}
                             <li>
-                                <a href="#" 
+                                <a href="javascript:void(0)" 
                                     data-model="{{ model.id }}"
-                                    data-tab-id="{{ model.meta.object_name }}"
+                                    data-tab-id="{{ model.html_id }}"
                                     data-tab-title="{% app_label_locale app.name %}"
+                                    data-tab-text="{{ model.name }}"
                                 >{{ model.name }}</a>
                             </li>
                         {% endfor %}
@@ -44,10 +45,11 @@
                         <ul class="dropdown-menu">
                         {% for subfunc in func.functions %}
                             <li>
-                                <a href="#" 
-                                    data-model="{{ subfunc.id }}"
-                                    data-tab-id="{{ subfunc.meta.object_name }}"
+                                <a href="javascript:void(0)" 
+                                    data-func="{{ subfunc.id }}"
+                                    data-tab-id="{{ subfunc.html_id }}"
                                     data-tab-title="{{ subfunc.verbose_name }}"
+                                    data-tab-text="{{ subfunc.name }}"
                                 >{{ subfunc.name }}</a>
                             </li>
                         {% endfor %}

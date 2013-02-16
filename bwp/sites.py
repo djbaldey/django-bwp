@@ -171,6 +171,7 @@ class BWPSite(object):
                     info = (app_label, model._meta.module_name)
                     model_dict = {
                         'id': str(model._meta),
+                        'html_id': str(model._meta).replace('.','-'),
                         'meta': model._meta,
                         'name': capfirst(model._meta.verbose_name_plural),
                         'perms': perms,
