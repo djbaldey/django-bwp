@@ -265,7 +265,12 @@
         font-size: 18px;
         line-height: 1.5;
       }
+    }
 
+    /* TABLES */
+    .table-hover tbody tr:hover td,
+    .table-hover tbody tr:hover th {
+      background-color: #EDEDED;
     }
 /* END ALTER BOOTSTRAP */
 

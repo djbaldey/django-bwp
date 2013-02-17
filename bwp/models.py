@@ -346,13 +346,13 @@ class ModelBWP(BaseModelAdmin):
             'model': str(meta)
         }
         temp_dict = params.copy()
-        temp_dict["table_id"] = 'table-model-'+str(meta).replace('.', '-')
+        temp_dict["html_id"] = str(meta).replace('.', '-')
         temp_dict["columns"] = "".join([
             '<th data-toggle="tooltip" class="%s" title="%s">%s</th>' % (list_display_css[x], x[1], x[0])
             for x in list_display ])
         #~ temp_dict["tools"] = '<td colspan="%s">qwerty</td>' % len(temp_dict["columns"])
-        html =  '<table id="%(table_id)s" data-model="%(model)s" '\
-                'class="table table-condensed table-striped table-bordered">'\
+        html =  '<table id="table-model-%(html_id)s" data-model="%(model)s" '\
+                'class="table table-condensed table-striped table-bordered table-hover">'\
                 '<thead>'\
                     '<tr>%(columns)s</tr>'\
                 '</thead>'\
@@ -361,17 +361,18 @@ class ModelBWP(BaseModelAdmin):
                 #~ ' cellspacing="0" cellpadding="0" border="0" style="margin-left: 0px; width: 100%%;"' \
 
         return {
-            'model': params['model'],
-            'perms': self.get_model_perms(request),
-            'html': html % temp_dict,
-            "oLanguage": settings.LANGUAGE_CODE,
-            "bProcessing": True,
-            "bServerSide": True,
-            "sAjaxSource": redirect('bwp.views.datatables')['Location'],
-            "sServerMethod": "POST",
-            "fnServerParams": params.items(),
-            "bLengthChange": True,
-            "sDom": 'lfrtip',
-            "sScrollY": None, # default
+            'model':    params['model'],
+            'html_id':  temp_dict['html_id'],
+            'perms':    self.get_model_perms(request),
+            'html':     html % temp_dict,
+            "oLanguage":    settings.LANGUAGE_CODE,
+            "bProcessing":  True,
+            "bServerSide":  True,
+            "sAjaxSource":  redirect('bwp.views.datatables')['Location'],
+            "sServerMethod":    "POST",
+            "fnServerParams":   params.items(),
+            "bLengthChange":    True,
+            "sDom":         'lfrtip',
+            "sScrollY":     None, # default
             "aoColumnDefs": [ not_bSortable, not_bVisible ],
         }

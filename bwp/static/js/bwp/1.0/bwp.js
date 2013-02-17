@@ -241,7 +241,7 @@ $.extend( $.fn.dataTableExt.oPagination, {
 /* Table initialisation */
 function initDataTables(data) {
     table = $('table[data-model="'+data.model+'"]');
-    console.log(data)
+    //~ console.log(data)
     /* Init DataTables */
 	var oTable = table.dataTable({
         "oLanguage": { "sUrl": "static/js/dataTables/1.9.4/"+data.oLanguage+".txt" },
@@ -256,14 +256,25 @@ function initDataTables(data) {
             });
         },
         "fnRowCallback": function( nRow, aData, iDisplayIndex ) {
-            $(nRow).click(function() {
-                console.log(nRow)
-                console.log(aData)
-                var aData = oTable.fnGetData( nRow );
-                console.log(aData);
-                
-                dblClickRow(oTable, nRow)
-            });
+            $(nRow)
+            .bind("click", function() {
+                $(oTable).find('tbody tr.info').removeClass('info');
+                testLog('click');
+                $(nRow).addClass('info');
+            })
+            //~ .bind("dblclick", function() {
+                //~ dblClickRow(oTable, nRow)
+            //~ });
+        },
+        "fnCreatedRow": function( nRow, aData, iDataIndex ) {
+            html = '<a href="#" data-object="'
+                +data.model+'.'+ aData[0]+'"'
+                +' data-tab-id="'
+                +data.html_id+'-'+ aData[0]+'"'
+                +' data-tab-title="'+aData[1]+'"'
+                +' data-tab-text="'+aData[1]+'"'
+                +'>'+aData[1]+'</a>'
+            $('td:eq(0)', nRow).html(html).find('a').click(addTab);
         },
         "aoColumnDefs": data.aoColumnDefs,
         "sPaginationType": "bootstrap",
@@ -272,7 +283,7 @@ function initDataTables(data) {
         "bStateSave": data.bStateSave || true,
     });
     /* Apply after */
-    console.log( $($(oTable).attr('id')+'_wrapper'))
+    //~ console.log( $($(oTable).attr('id')+'_wrapper'))
     //~ filter = $(oTable).parent().parent().find('.dataTables_filter');
     //~ filter.find('label').text('text');
     //~ console.log(filter.html())
@@ -336,23 +347,24 @@ function addTab() {
             SETTINGS.save();
         }
         // Устанавливаем одиночный биндинг на загрузку контента при щелчке на вкладке
-        console.log(tab_id)
+        //~ console.log(tab_id)
         a = $('#tab-'+tab_id+' a').one('click', function() {contentLoader(this)});
-        console.log(a)
+        //~ console.log(a)
     }
     return true;
 }
 
 function contentLoader(obj) {
-    // Загрузка контента во вкладки
-    model  = $(obj).attr('data-model');
-    func   = $(obj).attr('data-func');
-    object = $(obj).attr('data-object');
+    // Загрузка контента во вкладку
+    $obj = $(obj);
+    model  = $obj.attr('data-model');
+    func   = $obj.attr('data-func');
+    object = $obj.attr('data-object');
     if (model) {
         $.getJSON('/datatables/', { model: model, info: true },
             function(data, status) {
                 //~ console.log(data);
-                $('#tab-content-'+data.model.replace('.', '-')).html(data.html);
+                $('#tab-content-'+data.html_id).html(data.html);
                 initDataTables(data);
             }
         );
@@ -361,6 +373,8 @@ function contentLoader(obj) {
     } else if (object) {
         testLog('Type is object');
     }
+    // Удаление привязки клика на вкладке
+    $obj.unbind('click');
 }
 
 function restoreSession() {
@@ -368,8 +382,6 @@ function restoreSession() {
         $('[data-tab-id='+item+']').trigger('click');
     });
 }
-
-
 
 function dblClickRow(oTable, nRow) {
     console.log(oTable);
