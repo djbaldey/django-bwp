@@ -292,18 +292,23 @@ function initDataTables(data) {
 
 /* Добавляет вкладки на рабочую область */
 function addTab() {
+    
     model  = $(this).attr('data-model');
     func   = $(this).attr('data-func');
     object = $(this).attr('data-object');
     choice = ""
     if (model) { choice = ' data-model="'+model+'"' }
     else if (func) { choice = ' data-func="'+func+'"' }
-    else if (object) { choice = ' data-object="'+object+'"' }
+    else if (object) {
+        choice = ' data-object="'+object+'"';
+        $(this).addClass('muted');
+    }
     
     tab_id    = $(this).attr('data-tab-id');
     tab_title = $(this).attr('data-tab-title');
     tab_text  = $(this).attr('data-tab-text');
-    tab = $('#main-tab #tab-'+ tab_id)
+    tab = $('#main-tab #tab-'+ tab_id);
+    
     if (tab.length > 0) {
         // Отображаем вкладку
         tab.find('a').tab('show');
@@ -325,8 +330,8 @@ function addTab() {
         $('#main-tab').append(html);
         // Отображаем вкладку c небольшой задержкой
         delay(function() {
-            $('#main-tab a:last').tab('show');
-            contentLoader($('#main-tab a:last')[0])
+            a = $('#main-tab a:last').tab('show');
+            contentLoader(a[0]);
         }, 200);
         // Переустанавливаем биндинги на закрытие вкладок и их контента
         $('#main-tab li button.close').unbind('click').click(function() {
@@ -338,7 +343,7 @@ function addTab() {
             if (num > -1) {
                 delete SETTINGS.values.tabs[num];
                 SETTINGS.cleanTabs().save();
-             };
+            };
         });
         // Добавляем вкладку в хранилище, если её там нет
         // (т.к. эту же функцию использует восстановление сессии). 
@@ -354,6 +359,7 @@ function addTab() {
     return true;
 }
 
+/* Загружает во вкладку необходимый контент */
 function contentLoader(obj) {
     // Загрузка контента во вкладку
     $obj = $(obj);
@@ -371,18 +377,23 @@ function contentLoader(obj) {
     } else if (func) {
         testLog('Type is func');
     } else if (object) {
-        testLog('Type is object');
+        args = { method: 'get_object', model:model, object: object }
+        callback = function(json, status, xhr) {
+            jsonAPI(args, callback, 'RUN: function contentLoader(obj)');
+        }
     }
     // Удаление привязки клика на вкладке
     $obj.unbind('click');
 }
 
+/* Восстанавливает вкладки, открытые до обновления страницы */
 function restoreSession() {
     $.each(SETTINGS.values.tabs, function(i, item) {
-        $('[data-tab-id='+item+']').trigger('click');
+        $('[data-tab-id='+item+']').click();
     });
 }
 
+/* Обработчик двойного клика по строке в таблице модели */
 function dblClickRow(oTable, nRow) {
     console.log(oTable);
     console.log(nRow);
@@ -411,5 +422,8 @@ $(document).ready(function($) {
     $('#menu-app li[class!=disabled] a[data-tab-id]').click(addTab);
 
     restoreSession();
-
+    
 });
+
+
+
