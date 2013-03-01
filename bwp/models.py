@@ -44,16 +44,34 @@ from django.contrib.admin.util import quote
 from django.utils.encoding import smart_unicode
 from django.utils.safestring import mark_safe
 from django.utils.text import capfirst
+from django.core import serializers
 from django.core.paginator import Paginator
 from django.contrib.admin.options import BaseModelAdmin
 from django.shortcuts import redirect
 
+from copy import deepcopy
+
 from bwp.utils.filters import filterQueryset
 from bwp.conf import settings
+from bwp.widgets import get_widget_from_field
 
 ADDITION = 1
 CHANGE = 2
 DELETION = 3
+
+def serialize_field(item, field, as_pk=False, with_pk=False):
+    if field == '__unicode__':
+        return unicode(item)
+    else:
+        val = getattr(item, field)
+        if isinstance(val, models.Model):
+            if as_pk:
+                return val.pk
+            elif with_pk:
+                return (val.pk, unicode(val))
+            return unicode(val)
+        else:
+            return val
 
 class LogEntryManager(models.Manager):
     def log_action(self, user_id, content_type_id, object_id,
@@ -106,8 +124,49 @@ class LogEntry(models.Model):
         "Returns the edited object represented by this log entry"
         return self.content_type.get_object_for_this_type(pk=self.object_id)
 
+class ComposeBWP(object):
+    """ Модель для описания вложенных объектов BWP. 
+        multiply_fields = [ ('column_title', ('field_1', 'field_2')) ]
+    """
+    model = None # обязательное
+    list_display = ('__unicode__', 'pk')
+    list_display_css = {'pk': 'input-micro', 'id': 'input-micro'} # by default
+    
+    object_fields = ()
+    editable_fields = ()
+    readonly_fields = ()
+    multiply_fields = ()
+    actions = []
+    ordering = None
+    verbose_name = None
+    #~ form = forms.ModelForm
+    #~ filter_vertical = ()
+    #~ filter_horizontal = ()
+    
+    def __init__(self):
+        if self.model is None:
+            raise NotImplementedError('Set the "model" in %s.' % self.__class__.__name__)
+        self.opts = self.model._meta
+        if self.verbose_name is None:
+            self.verbose_name = self.opts.verbose_name_plural or self.opts.verbose_name
+
 class ModelBWP(BaseModelAdmin):
-    """ Модель для регистрации в BWP. """
+    """ Модель для регистрации в BWP.
+        Наследуются атрибуты:
+        __metaclass__ = forms.MediaDefiningClass
+        raw_id_fields = ()
+        fields = None
+        exclude = None
+        fieldsets = None
+        form = forms.ModelForm
+        filter_vertical = ()
+        filter_horizontal = ()
+        radio_fields = {}
+        prepopulated_fields = {}
+        formfield_overrides = {}
+        readonly_fields = ()
+        ordering = None
+    """
     
     list_display = ('__unicode__', 'pk')
     list_display_css = {'pk': 'input-micro', 'id': 'input-micro'} # by default
@@ -123,6 +182,7 @@ class ModelBWP(BaseModelAdmin):
     save_as = False
     save_on_top = False
     paginator = Paginator
+    compositions = []
     inlines = []
     
     # Custom templates (designed to be over-ridden in subclasses)
@@ -144,6 +204,43 @@ class ModelBWP(BaseModelAdmin):
         self.model = model
         self.opts = model._meta
         self.bwp_site = bwp_site
+        self.fields_is_prepare = False
+    
+    def prepare_fields_and_fieldsets(self):
+        if self.fields_is_prepare:
+            return True
+        #~ print 'prepare_fields_and_fieldsets'
+        if self.fields:
+            self.fields = [ self.opts.get_fields_by_name(name)[0] for name in self.fields ]
+        else:
+            self.fields = [ _tuple[0] for _tuple in self.opts.get_fields_with_model() ]
+
+        dic = dict([ (field.name, field) for field in self.fields ])
+
+        def prepare_widget(field_name):
+            widget = get_widget_from_field(dic[field_name])
+            if not widget.is_configured:
+                if self.list_display_css.has_key(field_name):
+                    new_class = '%s %s' % (widget.attr.get('class', ''), self.list_display_css[field_name])
+                    widget.attr.update({'class': new_class})
+                    widget.is_configured = True
+            return widget
+
+        # To list widgets
+        self.fields = [ prepare_widget(field.name) for field in self.fields ]
+
+        if self.fieldsets:
+            for fs in self.fieldsets:
+                new_fields = []
+                for tuple_or_field in fs[1]['fields']:
+                    if isinstance(tuple_or_field, (tuple, list)):
+                        new_fields.append([ prepare_widget(name) for name in tuple_or_field])
+                    else:
+                        new_fields.append(prepare_widget(tuple_or_field))
+                fs[1]['fields'] = new_fields
+
+        self.fields_is_prepare = True
+        return True
     
     def get_paginator(self, request, queryset, per_page, orphans=0, allow_empty_first_page=True):
         return self.paginator(queryset, per_page, orphans, allow_empty_first_page)
@@ -275,17 +372,81 @@ class ModelBWP(BaseModelAdmin):
         # prepare list with output column data
         # queryset is already paginated here
         display = self.list_display
-        def attr(item, field):
-            if field == '__unicode__':
-                return unicode(item)
-            else:
-                val = getattr(item, field)
-                if isinstance(val, models.Model):
-                    return unicode(val)
-                else:
-                    return val
-        data = [ [ attr(item, field) for field in display ] for item in qs ]
+        data = [ [ serialize_field(item, field) for field in display ] for item in qs ]
         return data
+
+    def object_as_data(self, pk):
+        """ Data = {
+                'model': 'app.model',
+                'pk': 'pk',
+                'html_id': 'app-model-pk',
+                'fields':[({row1_field1},{row1_field2}),{row2_field3},{row3_field4}],
+                'perms':{'add':True, 'change':True, 'delete':True},
+                'comps':[{<compose_1>},{<compose_2>}]
+            }
+            Field = {
+                'name': 'db_name',
+                'hidden': False,
+                'tag': 'input',
+                'attr': {},
+                'value': value,
+                'label': 'Название поля',
+            }
+            Compose = {
+                'model': 'app.model',
+                'html_id': 'app-model',
+                'columns':[('name', 'label'),],
+                'perms':{'add':True, 'change':True, 'delete':True},
+                'actions':[{<action_1>},{<action_2>}]
+            }
+        """
+
+        self.prepare_fields_and_fieldsets()
+
+        obj = self.queryset().select_related().get(pk=pk)
+        model = str(self.opts)
+        html_id = ('%s.%s' %(model, obj.pk)).replace('.','-')
+        data = {'model': model, 'pk': obj.pk, 'html_id': html_id}
+        data['raw_object'] = serializers.serialize('python', [obj])[0]
+
+        def get_dict_widget(widget):
+            dic = widget.get_dict()
+            dic['value'] = serialize_field(obj, dic['name'], as_pk=True)
+            return dic
+
+        # Fields
+        fields = []
+        if self.fieldsets:
+            fields = self.fieldsets
+        else:
+            fields = (( None, { 'classes': '', 'fields': self.fields }), )
+        for f in fields:
+            new_fields = []
+            #~ f[1] = deepcopy(f[1]) # copy original dict with inner objects
+            for tuple_or_widget in f[1]['fields']:
+                if isinstance(tuple_or_widget, (tuple, list)):
+                    new_fields.append([ get_dict_widget(widget) for widget in tuple_or_widget])
+                else:
+                    new_fields.append(get_dict_widget(tuple_or_widget))
+            f[1]['fields'] = new_fields
+        
+        perms = 'NOT IMPLEMENTED'
+        comps = []
+        data.update({'fields':fields, 'perms':perms, 'comps':comps})
+        for compose_model in self.compositions:
+            cmodel = compose_model()
+            all_fields = cmodel.opts.get_fields_with_model()
+            #~ pkeys = getattr(obj,related_field).values_list('pk', flat=True).order_by('pk')
+            #~ model_name = str(bwp_model.opts)
+            #~ data[related_field]
+            pass
+
+        return data
+
+    def new_object(self, post):
+        qs = self.queryset()
+        new = qs.create(**post)
+        return new
 
     def get_context_data(self, request):
 

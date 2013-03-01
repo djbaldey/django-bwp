@@ -38,7 +38,7 @@
 """
 from django.utils.translation import ugettext_lazy as _
 from bwp.sites import site
-from bwp.models import ModelBWP
+from bwp.models import ModelBWP, ComposeBWP
 from models import *
 
 class CountryAdmin(ModelBWP):
@@ -65,13 +65,18 @@ class DocumentAdmin(ModelBWP):
     ordering = ['title']
 site.register(Document, DocumentAdmin)
 
+class MeasureUnitCompose(ComposeBWP):
+    model = MeasureUnit
+
 class MeasureUnitCategoryAdmin(ModelBWP):
     list_display = ('title', 'id')
+    compositions = [MeasureUnitCompose]
 site.register(MeasureUnitCategory, MeasureUnitCategoryAdmin)
 
 class MeasureUnitGroupAdmin(ModelBWP):
     list_display = ('title', 'id')
 site.register(MeasureUnitGroup, MeasureUnitGroupAdmin)
+
 
 class MeasureUnitAdmin(ModelBWP):
     list_display = ('title', 'note_ru', 'note_iso', 'symbol_ru',
@@ -84,5 +89,6 @@ class MeasureUnitAdmin(ModelBWP):
             'symbol_iso': 'input-mini',}
     list_filter = ('category', 'group')
     search_fields = ['title', 'code', 'category__title', 'group__title']
+    
 site.register(MeasureUnit, MeasureUnitAdmin)
 

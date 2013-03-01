@@ -2,12 +2,12 @@
 {% load i18n %}
 {% load url from future %}
 
-{% block breadcrumbs %}<div class="breadcrumbs"><a href="{% url 'bwp.views.index' %}">{% trans 'Home' %}</a></div>{% endblock %}
+{% block breadcrumbs %}<div class="breadcrumbs"><a href="{% url 'bwp_index' %}">{% trans 'Home' %}</a></div>{% endblock %}
 
 {% block content %}
 
 <p>{% trans "Thanks for spending some quality time with the Web site today." %}</p>
 
-<p><a href="{% url 'bwp.views.login' %}">{% trans 'Log in again' %}</a></p>
+<p><a href="{% url 'bwp_login' %}">{% trans 'Log in again' %}</a></p>
 
 {% endblock %}

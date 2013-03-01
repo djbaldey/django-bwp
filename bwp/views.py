@@ -181,26 +181,27 @@ def API_get_settings(request):
 
 @api_required
 @login_required
-def API_model_action(request, app, model, key, pk=None, **kwargs):
+def API_object_action(request, model, key, pk=None, **kwargs):
     """ *Производит действия с экземпляром(ми) указанной модели.*
         
         ##### ЗАПРОС
         Параметры:
         
-        1. **"app"** - уникальное название приложения, например: "auth".
-        2. **"model"** - уникальное название модели, например: "user".
-        3. **"key"** - действие ('add', 'change' либо 'remove').
-        4. **"pk"** - первичный ключ объекта, если необходим.
-        5. и далее: специализированные параметры (SP) для указанного действия.
+        1. **"model"** - уникальное название модели, например: "auth.user".
+        2. **"key"** - действие ('view', 'add', 'change' либо 'remove').
+        3. **"pk"** - первичный ключ объекта, если необходим.
+        4. и далее: специализированные параметры (SP) для указанного действия.
         
         ##### ОТВЕТ
         Формат ключа **"data"**: зависит от выполняемой операции **"key"**.
         
         ##### СПИСОК ДЕЙСТВИЙ
+        - **'get'** - возвращает объект (SP: отсутствует);
         - **'add'** - создаёт новый объект (SP: все нужные поля для заполнения);
-        - **'change'** - изменяет существующий объект (SP: все нужные поля для заполнения);
-        - **'remove'** - удаляет объект (SP: отсутствует);
+        - **'set'** - изменяет существующий объект (SP: все нужные поля для заполнения);
+        - **'del'** - удаляет объект (SP: отсутствует);
     """
+    actions_with_pk = ('get', 'set', 'del')
     session = request.session
     user = request.user
     # Для django-quickapi.
@@ -209,11 +210,18 @@ def API_model_action(request, app, model, key, pk=None, **kwargs):
     if 'jsonData' in post:
         post = kwargs
     
-    return JSONResponse(data=post)
+    model_bwp = site.bwp_dict.get(model)
+    if key in actions_with_pk:
+        obj = model_bwp.object_as_data(pk)
+    else:
+        pass
+        #~ obj = model_bwp.new_object(post)
+    
+    return JSONResponse(data=obj)
 
 QUICKAPI_DEFINED_METHODS = {
     'get_settings': 'bwp.views.API_get_settings',
-    'model_action': 'bwp.views.API_model_action',
+    'object_action': 'bwp.views.API_object_action',
 }
 
 @csrf_exempt

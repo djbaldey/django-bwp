@@ -1,5 +1,6 @@
 {% extends "bwp/base.html" %}
 {% load i18n bwp_static bwp_locale %}
+{% load url from future %}
 
 {% block bodyclass %}index{% endblock %}
 
@@ -64,7 +65,7 @@
         <td class="span6">
             <div class="pull-right">
                 <span class="label label-success">{{ user }}</span>
-                <a href="{% url logout %}" title="Выход" class="label"><i class="icon-off"></i></a>
+                <a href="{% url "bwp_logout" %}" title="Выход" class="label"><i class="icon-off"></i></a>
             </div>
         </td>
     </tr>

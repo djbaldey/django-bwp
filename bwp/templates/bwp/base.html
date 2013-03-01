@@ -64,7 +64,21 @@
 <!-- END: block extrastyle -->
 
 <!-- END: styles -->
-    <script type="text/javascript">window.__admin_media_prefix__ = "{% filter escapejs %}{% static "bwp/" %}{% endfilter %}";</script>
+
+<!-- START: block jsglobalvars -->
+    {% block jsglobalvars %}
+    <script type="text/javascript">
+        /* GLOBAL VARS */
+        window.__bwp_media_prefix__ = "{% filter escapejs %}{% static "bwp/" %}{% endfilter %}";
+        window.AJAX_TIMEOUT = 3000;
+        window.BWP_API_URL = "{% filter escapejs %}{% url "bwp_api" %}{% endfilter %}";
+        window.BWP_DATATABLES_URL = "{% filter escapejs %}{% url "bwp_datatables" %}{% endfilter %}";
+        window.SETTINGS_UNIQUE_KEY = "{% filter escapejs %}{% PROJECT_SHORTNAME %}_{{ user.id|default:0 }}{% endfilter %}";
+        window.USER_ID = "{{ user.id|default:0 }}";
+        window.DEBUG = {{ DEBUG|default:"false"|lower }};
+    </script>
+    {% endblock %}
+<!-- START: block jsglobalvars -->
 </head>
 
 <body class="{% block bodyclass %}home{% endblock %}">
