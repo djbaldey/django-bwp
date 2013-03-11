@@ -59,7 +59,7 @@ ADDITION = 1
 CHANGE = 2
 DELETION = 3
 
-def serialize_field(item, field, as_pk=False, with_pk=False):
+def serialize_field(item, field, as_pk=False, as_option=False):
     if field == '__unicode__':
         return unicode(item)
     else:
@@ -67,10 +67,12 @@ def serialize_field(item, field, as_pk=False, with_pk=False):
         if isinstance(val, models.Model):
             if as_pk:
                 return val.pk
-            elif with_pk:
+            elif as_option:
                 return (val.pk, unicode(val))
             return unicode(val)
         else:
+            if as_option or as_pk:
+                return None
             return val
 
 class LogEntryManager(models.Manager):
@@ -377,8 +379,9 @@ class ModelBWP(BaseModelAdmin):
 
     def object_as_data(self, pk):
         """ Data = {
+                'label': '__unicode__',
                 'model': 'app.model',
-                'pk': 'pk',
+                'object': 'pk',
                 'html_id': 'app-model-pk',
                 'fields':[({row1_field1},{row1_field2}),{row2_field3},{row3_field4}],
                 'perms':{'add':True, 'change':True, 'delete':True},
@@ -389,12 +392,15 @@ class ModelBWP(BaseModelAdmin):
                 'hidden': False,
                 'tag': 'input',
                 'attr': {},
-                'value': value,
                 'label': 'Название поля',
+                'value': value,
+                'datavalue': value,
+                'datalist': options,
             }
             Compose = {
-                'model': 'app.model',
-                'html_id': 'app-model',
+                'label': 'model_compose.verbose_name',
+                'model': 'app.model_compose',
+                'html_id': 'app-model-compose',
                 'columns':[('name', 'label'),],
                 'perms':{'add':True, 'change':True, 'delete':True},
                 'actions':[{<action_1>},{<action_2>}]
@@ -406,12 +412,22 @@ class ModelBWP(BaseModelAdmin):
         obj = self.queryset().select_related().get(pk=pk)
         model = str(self.opts)
         html_id = ('%s.%s' %(model, obj.pk)).replace('.','-')
-        data = {'model': model, 'pk': obj.pk, 'html_id': html_id}
+        data = {'label': unicode(obj), 'model': model, 'object': obj.pk, 'html_id': html_id}
         data['raw_object'] = serializers.serialize('python', [obj])[0]
 
         def get_dict_widget(widget):
             dic = widget.get_dict()
-            dic['value'] = serialize_field(obj, dic['name'], as_pk=True)
+            if model == 'auth.user' and dic['name'] == 'password':
+                dic['value'] = ''
+            else:
+                dic['value'] = serialize_field(obj, dic['name'])
+            dic['datavalue'] = serialize_field(obj, dic['name'], as_pk=True)
+            dic['datalist'] = []
+            option = serialize_field(obj, dic['name'], as_option=True)
+            if option:
+                dic['datalist'].append(option)
+                L = getattr(obj, dic['name']).__class__.objects.exclude(pk=obj.pk)[:10]
+                [ dic['datalist'].append((x.pk, unicode(x))) for x in L ]
             return dic
 
         # Fields
@@ -435,18 +451,58 @@ class ModelBWP(BaseModelAdmin):
         data.update({'fields':fields, 'perms':perms, 'comps':comps})
         for compose_model in self.compositions:
             cmodel = compose_model()
-            all_fields = cmodel.opts.get_fields_with_model()
+            cmodel_label = capfirst(unicode(cmodel.verbose_name))
+            cmodel_name = str(cmodel.opts)
+            cmodel_html_id = ('%s.%s' %(html_id, cmodel_name)).replace('.','-')
+            all_fields = dict([ (_tuple[0], _tuple[0]) for _tuple in cmodel.opts.get_fields_with_model() ])
+            cmodel_columns = []
+            for i, f in enumerate(cmodel.list_display):
+                if f in ('__unicode__', '__str__'):
+                    field = (f, capfirst(ugettext('object')))
+                elif f in ('pk', 'id'):
+                    field = (f, capfirst(ugettext('identificator')))
+                else:
+                    field = (f, capfirst(unicode(all_fields[f].verbose_name)))
+                cmodel_columns.append(field)
+            cmodel_actions = cmodel.actions
+            cmodel_perms = {'add':True, 'change':True, 'delete':True}
+            d = {
+                'label': cmodel_label,
+                'model': cmodel_name,
+                'html_id': cmodel_html_id,
+                'columns': cmodel_columns,
+                'actions': cmodel_actions,
+                'perms': cmodel_perms,
+            }
+            
             #~ pkeys = getattr(obj,related_field).values_list('pk', flat=True).order_by('pk')
             #~ model_name = str(bwp_model.opts)
             #~ data[related_field]
-            pass
+            comps.append(d)
 
         return data
 
-    def new_object(self, post):
+    def object_get(self, pk, user):
+        return self.object_as_data(pk)
+
+    def object_del(self, pk, user):
         qs = self.queryset()
-        new = qs.create(**post)
+        qs.all().filter(pk=pk).delete()
+        return None
+
+    def object_new(self, dict_form_object, post, user):
+        qs = self.queryset()
+        new = qs.create(**dict_form_object)
         return new
+
+    def object_upd(self, pk, dict_form_object, post, user):
+        qs = self.queryset()
+        upd = qs.filter(pk=pk).update(**dict_form_object)
+        return self.object_as_data(pk)
+
+    def compose_upd(self, pk, array_form_compose, post, user):
+        qs = self.queryset()
+        return None
 
     def get_context_data(self, request):
 

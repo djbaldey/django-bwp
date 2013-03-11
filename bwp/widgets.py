@@ -44,6 +44,8 @@ from django.core.serializers.json import DjangoJSONEncoder
 class GeneralWidget(object):
     field = None
     is_configured = False
+    is_required = False
+    is_editable = True
     is_hidden = False
     tag = None
     attr = None
@@ -73,12 +75,21 @@ class GeneralWidget(object):
             'tag': self.tag,
             'attr': self.attr,
         }
-        if self.is_hidden and not self.attr.has_key('hidden'):
-            d['attr']['hidden'] = self.is_hidden
+        
         if hasattr(self, 'select_multiple') and not self.attr.has_key('multiple'):
             d['attr']['multiple'] = self.select_multiple
         if hasattr(self, 'input_type') and not self.attr.has_key('type'):
             d['attr']['type'] = self.input_type
+        if not self.field.editable:
+            d['attr']['disabled'] = True
+        if not self.field.blank:
+            d['attr']['required'] = True
+        if d['name'] in ['password', 'passwd']:
+            d['attr']['type'] = 'password'
+            d['attr']['required'] = False
+        if self.is_hidden:
+            d['attr']['type'] = 'hidden'
+        
         return d
 
 class SelectWidget(GeneralWidget):
@@ -93,6 +104,7 @@ class InputWidget(GeneralWidget):
 
 class HiddenWidget(InputWidget):
     is_hidden = True
+    input_type = 'hidden'
 
 class PasswordWidget(InputWidget):
     tag = 'input'

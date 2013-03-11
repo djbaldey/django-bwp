@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
-"""
 ###############################################################################
-# Copyright 2012 Grigoriy Kramarenko.
+# Copyright 2013 Grigoriy Kramarenko.
 ###############################################################################
 # This file is part of BWP.
 #
@@ -36,30 +35,48 @@
 #   <http://www.gnu.org/licenses/>.
 ###############################################################################
 """
-from django.utils.translation import ugettext_lazy as _
-from django.conf import settings
-import bwp
+jQuery templates use constructs like:
 
-BWP_VERSION             = bwp.__version__
+    {{if condition}} print something{{/if}}
 
-PROJECT_NAME            = getattr(settings, 'PROJECT_NAME',             'PROJECT_NAME')
-PROJECT_SHORTNAME       = getattr(settings, 'PROJECT_SHORTNAME',        'PROJECT_SHORTNAME')
-PROJECT_DESCRIPTION     = getattr(settings, 'PROJECT_DESCRIPTION',      'PROJECT_DESCRIPTION')
+This, of course, completely screws up Django templates,
+because Django thinks {{ and }} mean something.
 
-VERSION                 = getattr(settings, 'VERSION',                  '1.0')
-VERSION_DATE            = getattr(settings, 'VERSION_DATE',             '')
+Wrap {% verbatim %} and {% endverbatim %} around those
+blocks of jQuery templates and this will try its best
+to output the contents with no changes.
+"""
 
-BOOTSTRAP_VERSION       = getattr(settings, 'BOOTSTRAP_VERSION',        '2.3.1')
-JQUERY_VERSION          = getattr(settings, 'JQUERY_VERSION',           '1.9.0')
-JQUERY_UI_VERSION       = getattr(settings, 'JQUERY_UI_VERSION',        '1.10.0')
-JQUERY_JSON_VERSION     = getattr(settings, 'JQUERY_JSON_VERSION',      '2.4')
-DATATABLES_VERSION      = getattr(settings, 'DATATABLES_VERSION',       '1.9.4')
-JS_JINJA_VERSION        = getattr(settings, 'JS_JINJA_VERSION',         '1.0')
+from django import template
 
-AUTHORS                 = getattr(settings, 'AUTHORS',                  [])
-COPYRIGHT               = getattr(settings, 'COPYRIGHT',                'Company Name')
-COPYRIGHT_YEAR          = getattr(settings, 'COPYRIGHT_YEAR',           '2013')
+register = template.Library()
 
-ARRAY_FORM_OBJECT_KEY   = getattr(settings, 'ARRAY_FORM_OBJECT_KEY',    'ARRAY_FORM_OBJECT_KEY')
-ARRAY_FORM_COMPOSE_KEY  = getattr(settings, 'ARRAY_FORM_COMPOSE_KEY',   'ARRAY_FORM_COMPOSE_KEY')
+class VerbatimNode(template.Node):
 
+    def __init__(self, text):
+        self.text = text
+    
+    def render(self, context):
+        return self.text
+
+@register.tag
+def verbatim(parser, token):
+    text = []
+    while 1:
+        token = parser.tokens.pop(0)
+        if token.contents == 'endverbatim':
+            break
+        if token.token_type == template.TOKEN_VAR:
+            text.append('{{ ')
+        elif token.token_type == template.TOKEN_BLOCK:
+            text.append('{% ')
+        elif token.token_type == template.TOKEN_COMMENT:
+            text.append('{# ')
+        text.append(token.contents)
+        if token.token_type == template.TOKEN_VAR:
+            text.append(' }}')
+        elif token.token_type == template.TOKEN_BLOCK:
+            text.append(' %}')
+        elif token.token_type == template.TOKEN_COMMENT:
+            text.append(' #}')
+    return VerbatimNode(''.join(text))

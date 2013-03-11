@@ -37,22 +37,21 @@
 -->{% endcomment %}{% load i18n l10n bwp_base bwp_static bwp_locale %}{% load url from future %}<!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE|default:"en-us" }}" {% if LANGUAGE_BIDI %}dir="rtl"{% endif %}>
 <head>
-    <title>{% PROJECT_SHORTNAME %}: {% block title %}{% filter force_escape %}{% PROJECT_DESCRIPTION %}{% endfilter %}{% endblock %}</title>
+    <title>{% SETTINGS 'PROJECT_SHORTNAME' %}: {% block title %}{% filter force_escape %}{% SETTINGS 'PROJECT_DESCRIPTION' %}{% endfilter %}{% endblock %}</title>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8">
     <meta charset="utf-8">
     <link rel="icon" href="{{ STATIC_URL }}img/favicon.ico" type="image/x-icon">
     <link rel="shortcut icon" href="{{ STATIC_URL }}img/favicon.ico"  type="image/x-icon">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="{% filter force_escape %}{% PROJECT_DESCRIPTION %}{% endfilter %}">
+    <meta name="description" content="{% filter force_escape %}{% SETTINGS 'PROJECT_DESCRIPTION' %}{% endfilter %}">
     <meta name="author" content="{% filter force_escape %}{% AUTHORS %}{% endfilter %}">
-    <meta name="version" content="{% BWP_VERSION %}">
+    <meta name="version" content="{% SETTINGS 'BWP_VERSION' %}">
 
 <!-- START: styles -->
-    <link rel="stylesheet" href="{{ STATIC_URL }}css/bootstrap/{% BOOTSTRAP_VERSION %}/bootstrap.min.css">
-    {% block responsive_style %}<link rel="stylesheet" href="{{ STATIC_URL }}css/bootstrap/{% BOOTSTRAP_VERSION %}/bootstrap-responsive.min.css">{% endblock %}
-    <link rel="stylesheet" href="{{ STATIC_URL }}css/jquery-ui-themes/{% JQUERY_UI_VERSION %}/{{ USERSETTINGS_UI_THEME|default:"start" }}/jquery-ui.css">
-    <link rel="stylesheet" href="{{ STATIC_URL }}css/jqGrid/{% JQGRID_VERSION %}/ui.jqgrid.css" />
-    <link rel="stylesheet" href="{{ STATIC_URL }}css/bwp/{% BWP_VERSION %}/bwp.css">
+    <link rel="stylesheet" href="{{ STATIC_URL }}css/bootstrap/{% SETTINGS 'BOOTSTRAP_VERSION' %}/bootstrap.min.css">
+    {% block responsive_style %}<link rel="stylesheet" href="{{ STATIC_URL }}css/bootstrap/{% SETTINGS 'BOOTSTRAP_VERSION' %}/bootstrap-responsive.min.css">{% endblock %}
+    <link rel="stylesheet" href="{{ STATIC_URL }}css/jquery-ui-themes/{% SETTINGS 'JQUERY_UI_VERSION' %}/{{ USERSETTINGS_UI_THEME|default:"start" }}/jquery-ui.css">
+    <link rel="stylesheet" href="{{ STATIC_URL }}css/bwp/{% SETTINGS 'BWP_VERSION' %}/bwp.css">
     
     <!-- for IE6-8 support of HTML5 elements -->
     <!--[if lt IE 9]>
@@ -73,12 +72,14 @@
         window.AJAX_TIMEOUT = 3000;
         window.BWP_API_URL = "{% filter escapejs %}{% url "bwp_api" %}{% endfilter %}";
         window.BWP_DATATABLES_URL = "{% filter escapejs %}{% url "bwp_datatables" %}{% endfilter %}";
-        window.SETTINGS_UNIQUE_KEY = "{% filter escapejs %}{% PROJECT_SHORTNAME %}_{{ user.id|default:0 }}{% endfilter %}";
+        window.SETTINGS_UNIQUE_KEY = "{% filter escapejs %}{% SETTINGS 'PROJECT_SHORTNAME' %}_{{ user.id|default:0 }}{% endfilter %}";
         window.USER_ID = "{{ user.id|default:0 }}";
-        window.DEBUG = {{ DEBUG|default:"false"|lower }};
+        window.DEBUG = {% filter lower %}{% SETTINGS 'DEBUG' %}{% endfilter %};
+        window.ARRAY_FORM_OBJECT_KEY = "{% SETTINGS 'ARRAY_FORM_OBJECT_KEY' %}";
+        window.ARRAY_FORM_COMPOSE_KEY = "{% SETTINGS 'ARRAY_FORM_COMPOSE_KEY' %}";
     </script>
     {% endblock %}
-<!-- START: block jsglobalvars -->
+<!-- END: block jsglobalvars -->
 </head>
 
 <body class="{% block bodyclass %}home{% endblock %}">
@@ -107,22 +108,47 @@
 <!-- START: block footer -->
         {% block footer %}
         <footer>
-            <p class="mono align-center" >{% filter force_escape %}{% COPYRIGHT %}{% endfilter %} © {% COPYRIGHT_YEARS %}</p>
+            <p class="mono align-center" >{% filter force_escape %}{% SETTINGS 'COPYRIGHT' %}{% endfilter %} © {% COPYRIGHT_YEARS %}</p>
         </footer>
         {% endblock %}
 <!-- END: block footer -->
     </div>
 </div>
 
+<!-- START: block jquerytemplates -->
+    {% block jquerytemplates %}
+    <script type="text/jinja" id="jinja-object-tab-content">
+        {% include "bwp/includes/jinja/_object_tab_content.html" %}
+    </script>
+    <script type="text/jinja" id="jinja-object-form">
+        {% include "bwp/includes/jinja/_object_form.html" %}
+    </script>
+    <script type="text/jinja" id="jinja-comps-form">
+        {% include "bwp/includes/jinja/_comps_form.html" %}
+    </script>
+    <script type="text/jinja" id="jinja-object-form-fields">
+        {% include "bwp/includes/jinja/_object_form_fields.html" %}
+    </script>
+    <script type="text/jinja" id="jinja-button-reset">
+        {% include "bwp/includes/jinja/_button_reset.html" %}
+    </script>
+    <script type="text/jinja" id="jinja-button-save">
+        {% include "bwp/includes/jinja/_button_save.html" %}
+    </script>
+    {% endblock %}
+<!-- END: block jquerytemplates -->
+
 <!-- START: javascript -->
     <!-- Placed at the end of the document so the pages load faster -->
-    <script src="{{ STATIC_URL }}js/jquery/{% JQUERY_VERSION %}/jquery.min.js"></script>
-    <script src="{{ STATIC_URL }}js/jquery-ui/{% JQUERY_UI_VERSION %}/minified/jquery-ui.min.js"></script>
-    <script src="{{ STATIC_URL }}js/jquery-json/2.4/jquery.json.min.js"></script>
-    <script src="{{ STATIC_URL }}js/dataTables/1.9.4/jquery.dataTables.custom.js"></script>
-    <script src="{{ STATIC_URL }}js/bootstrap/{% BOOTSTRAP_VERSION %}/bootstrap.min.js"></script>
+    <script src="{{ STATIC_URL }}js/jquery/{% SETTINGS 'JQUERY_VERSION' %}/jquery.min.js"></script>
+    <script src="{{ STATIC_URL }}js/jquery-ui/{% SETTINGS 'JQUERY_UI_VERSION' %}/minified/jquery-ui.min.js"></script>
+    <script src="{{ STATIC_URL }}js/jquery-json/{% SETTINGS 'JQUERY_JSON_VERSION' %}/jquery.json.min.js"></script>
+    <script src="{{ STATIC_URL }}js/jinja/{% SETTINGS 'JS_JINJA_VERSION' %}/jinja.js"></script>
+    <script src="{{ STATIC_URL }}js/jinja/{% SETTINGS 'JS_JINJA_VERSION' %}/jinja.jquery.js"></script>
+    <script src="{{ STATIC_URL }}js/dataTables/{% SETTINGS 'DATATABLES_VERSION' %}/jquery.dataTables.custom.js"></script>
+    <script src="{{ STATIC_URL }}js/bootstrap/{% SETTINGS 'BOOTSTRAP_VERSION' %}/bootstrap.min.js"></script>
     <script src="{{ STATIC_URL }}js/bwp/django-ajax-csrf.js"></script>
-    <script src="{{ STATIC_URL }}js/bwp/{% VERSION %}/bwp.js"></script>
+    <script src="{{ STATIC_URL }}js/bwp/{% SETTINGS 'VERSION' %}/bwp.js"></script>
     
 <!-- START: block extrajs -->
     {% block extrajs %}{% endblock %}

@@ -1,0 +1,28 @@
+{% load bwp_verbatim %}{% verbatim %}{# Шаблон Jinja #}
+<div class="row-fluid">
+    <div class="btn-group" data-toggle="buttons-radio">
+        <a href="#" class="btn btn-mini active"
+            data-toggle="tab"
+            data-target="#tab-content_{{ data.html_id }}_object">
+            Объект
+        </a>
+    {% for compose in data.comps %}
+        {# Если объект не сохранён в DB, то запрещаем операции с вложениями #}
+        <a href="#" class="btn btn-mini"
+        {% if not data.object %}
+            disabled="disabled"
+        {% else %}
+            data-toggle="tab"
+        {% endif %}
+            data-target="#tab-content_{{ data.html_id }}_{{ compose.html_id }}">
+            {{ compose.label }}
+        </a>
+    {% endfor %}
+    </div>
+    <p></p>
+    <div class="tab-content">
+        {% include "jinja-object-form" %}
+        {% include "jinja-comps-form" %}
+    </div>
+</div>
+{% endverbatim %}

@@ -36,30 +36,33 @@
 #   <http://www.gnu.org/licenses/>.
 ###############################################################################
 """
-from django.utils.translation import ugettext_lazy as _
-from django.conf import settings
-import bwp
 
-BWP_VERSION             = bwp.__version__
+def jquery_form_array(array):
+    """ Преобразование объекта параметров, полученных jQuery:
+        array = form.serializeArray())
+        например:
+        [{name:'a', value:1}, {name:'a', value:2}, {name:'b', value:3}]
+        вернёт:
+        {'a': [1,2], 'b': 3}
+    """
+    d = {}
+    def append(key, value):
+        if key in d.keys():
+            if isinstance(d[key], list):
+                d[key].append(value)
+            else:
+                d[key] = [d[key]]
+                d[key].append(value)
+        else:
+            d[key] = value
+    for i in array:
+        append(i['name'], i['value'])
+    return d
 
-PROJECT_NAME            = getattr(settings, 'PROJECT_NAME',             'PROJECT_NAME')
-PROJECT_SHORTNAME       = getattr(settings, 'PROJECT_SHORTNAME',        'PROJECT_SHORTNAME')
-PROJECT_DESCRIPTION     = getattr(settings, 'PROJECT_DESCRIPTION',      'PROJECT_DESCRIPTION')
-
-VERSION                 = getattr(settings, 'VERSION',                  '1.0')
-VERSION_DATE            = getattr(settings, 'VERSION_DATE',             '')
-
-BOOTSTRAP_VERSION       = getattr(settings, 'BOOTSTRAP_VERSION',        '2.3.1')
-JQUERY_VERSION          = getattr(settings, 'JQUERY_VERSION',           '1.9.0')
-JQUERY_UI_VERSION       = getattr(settings, 'JQUERY_UI_VERSION',        '1.10.0')
-JQUERY_JSON_VERSION     = getattr(settings, 'JQUERY_JSON_VERSION',      '2.4')
-DATATABLES_VERSION      = getattr(settings, 'DATATABLES_VERSION',       '1.9.4')
-JS_JINJA_VERSION        = getattr(settings, 'JS_JINJA_VERSION',         '1.0')
-
-AUTHORS                 = getattr(settings, 'AUTHORS',                  [])
-COPYRIGHT               = getattr(settings, 'COPYRIGHT',                'Company Name')
-COPYRIGHT_YEAR          = getattr(settings, 'COPYRIGHT_YEAR',           '2013')
-
-ARRAY_FORM_OBJECT_KEY   = getattr(settings, 'ARRAY_FORM_OBJECT_KEY',    'ARRAY_FORM_OBJECT_KEY')
-ARRAY_FORM_COMPOSE_KEY  = getattr(settings, 'ARRAY_FORM_COMPOSE_KEY',   'ARRAY_FORM_COMPOSE_KEY')
-
+def jquery_multi_form_array(array):
+    """ Преобразование объекта множества параметров, полученных jQuery:
+        array = []
+        array.push(form1.serializeArray())
+        array.push(form2.serializeArray())
+    """
+    return [ jquery_form_array(a) for a in array ]

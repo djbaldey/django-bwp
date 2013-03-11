@@ -59,7 +59,8 @@ from quickapi.decorators import login_required, api_required
 
 from bwp.sites import site
 from bwp.forms import BWPAuthenticationForm
-from bwp.conf import settings
+from bwp.conf import settings, ARRAY_FORM_OBJECT_KEY, ARRAY_FORM_COMPOSE_KEY
+from bwp.utils.convertors import jquery_form_array, jquery_multi_form_array
 
 from bwp.contrib.usersettings.models import UserSettings
 
@@ -201,23 +202,45 @@ def API_object_action(request, model, key, pk=None, **kwargs):
         - **'set'** - изменяет существующий объект (SP: все нужные поля для заполнения);
         - **'del'** - удаляет объект (SP: отсутствует);
     """
-    actions_with_pk = ('get', 'set', 'del')
+    actions_with_pk = ('get', 'upd', 'del')
     session = request.session
     user = request.user
+    dict_form_object, array_form_compose, data = None, None, None
+
     # Для django-quickapi.
     # Если данные передавались в едином JSON, то заменим словарь параметров
     post = request.POST
     if 'jsonData' in post:
         post = kwargs
-    
+        # Получение заполненных полей объектов
+        if ARRAY_FORM_OBJECT_KEY in post:
+            dict_form_object = jquery_form_array(post[ARRAY_FORM_OBJECT_KEY])
+        elif ARRAY_FORM_COMPOSE_KEY in post:
+            array_form_compose = jquery_multi_form_array(post[ARRAY_FORM_COMPOSE_KEY])
+
     model_bwp = site.bwp_dict.get(model)
-    if key in actions_with_pk:
-        obj = model_bwp.object_as_data(pk)
+
+    # Действия без требования первичного ключа
+    if   key == 'new' and dict_form_object:
+        data = model_bwp.object_new(dict_form_object, post, user)
+
+    # Проверка на присутствие первичного ключа для дальнейших обработчиков
+    elif key not in actions_with_pk or not pk:
+        return JSONResponse(status=400)
+
+    # Далее действия только с обозначенным первичным ключом
+    elif key == 'upd' and dict_form_object:
+        data = model_bwp.object_upd(pk, dict_form_object, post, user)
+    elif key == 'upd' and array_form_compose:
+        data = model_bwp.compose_upd(pk, array_form_compose, post, user)
+    elif key == 'del':
+        data = model_bwp.object_del(pk, user)
+    elif key == 'get':
+        data = model_bwp.object_get(pk, user)
     else:
-        pass
-        #~ obj = model_bwp.new_object(post)
-    
-    return JSONResponse(data=obj)
+        return JSONResponse(status=400)
+
+    return JSONResponse(data=data)
 
 QUICKAPI_DEFINED_METHODS = {
     'get_settings': 'bwp.views.API_get_settings',

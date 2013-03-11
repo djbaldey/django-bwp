@@ -1,0 +1,73 @@
+{% load bwp_verbatim %}{% verbatim %}{# Шаблон Jinja #}
+{% for fieldset in data.fields %}
+<fieldset>
+    {% if fieldset[0] %}
+        <legend>{{ fieldset[0] }}</legend>
+    {% endif %}
+    {% for item in fieldset[1].fields %}
+        {% if (item.tag) %}
+            {% if item.attr.type != 'hidden' %}
+                <div class="control-group">
+                    <label class="control-label" for="{{ data.html_id }}_{{ item.name }}">
+                        {{ item.label }}
+                    </label>
+                    <div class="controls">
+            {% endif %}
+            {% if item.tag == 'input' %}
+                <input id="{{ data.html_id }}_{{ item.name }}"
+                {% for key, val  in item.attr %}
+                    {% if not key in ['value', 'name'] %}
+                        {{ key }}="{{ val }}"
+                    {% endif %}
+                {% endfor %}
+                {% if item.attr.type and item.attr.type == 'checkbox' %}
+                    {% if item.value %}
+                        checked="checked"
+                    {% endif %}
+                {% else %}
+                    value="{{ item.value }}"
+                {% endif %}
+                name="{{ item.name }}">
+            {% elif item.tag == 'select' and not item.attr.multiple %}
+                <div class="input-prepend input-append">
+                    {# Кнопка поиска #}
+                    <button class="btn" type="button" data-toggle="select-for-input">
+                    <i class="icon-search"></i></button>
+                    {# Кнопка названия #}
+                    <button class="btn {{ item.attr['class'] or '' }}" type="button">
+                        {{ item.value or '' }}
+                    </button>
+                    {# Скрытое поле с реальным значением (Primary Key in DB) #}
+                    <input type="hidden" 
+                    {% for key, val  in item.attr %}
+                        {% if not key in ['type', 'value', 'name'] %}
+                            {{ key }}="{{ val }}"
+                        {% endif %}
+                    {% endfor %}
+                    name="{{ item.name }}"
+                    value="{{ item.datavalue or '' }}" />
+                    {# Кнопка сброса #}
+                    <button class="btn" type="button" data-toggle="clear-for-input">
+                        <i class="icon-remove"></i>
+                    </button>
+                </div>
+            {% endif %}
+            {% if item.attr.type != 'hidden' %}
+                    </div>
+                </div>
+            {% endif %}
+        {% endif %}
+    {% endfor %}
+</fieldset>
+{% endfor %}
+{# Кнопки действий #}
+<div class="control-group">
+    <div class="controls">
+        <div class="btn-group">
+            {% include "jinja-button-reset" %}
+            &nbsp;
+            {% include "jinja-button-save" %}
+        </div>
+    </div>
+</div>
+{% endverbatim %}

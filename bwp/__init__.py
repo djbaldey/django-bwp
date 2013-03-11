@@ -36,4 +36,25 @@
 #   <http://www.gnu.org/licenses/>.
 ###############################################################################
 """
-__version__ = "0.1.1"
+__version__ = "0.1.2"
+
+def auto_create_version_links():
+    """ Автоматически создаёт ссылки на статику по актуальной версии BWP """
+    import os
+    cwd = os.getcwd()
+    self_path = os.path.abspath(os.path.dirname(__file__))
+    css_path = os.path.join(self_path, 'static', 'css', 'bwp')
+    src_css_path = os.path.join(css_path, 'src')
+    ver_css_path = os.path.join(css_path, __version__)
+    js_path = os.path.join(self_path, 'static', 'js', 'bwp')
+    src_js_path = os.path.join(js_path, 'src')
+    ver_js_path = os.path.join(js_path, __version__)
+    if not os.path.exists(ver_css_path):
+        os.chdir(css_path)
+        os.symlink('src', __version__)
+    if not os.path.exists(ver_js_path):
+        os.chdir(js_path)
+        os.symlink('src', __version__)
+    os.chdir(cwd)
+
+auto_create_version_links()

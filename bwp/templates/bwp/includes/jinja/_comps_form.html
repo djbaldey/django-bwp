@@ -1,0 +1,33 @@
+{% comment %}
+Compose = {
+                'label': 'model_compose.verbose_name',
+                'model': 'app.model_compose',
+                'html_id': 'app-model-compose',
+                'columns':[('name', 'label'),],
+                'perms':{'add':True, 'change':True, 'delete':True},
+                'actions':[{<action_1>},{<action_2>}]
+            }
+{% endcomment %}{% load bwp_verbatim %}{% verbatim %}{# Шаблон Jinja #}
+{% for compose in data.comps %}
+<div class="tab-pane" id="tab-content_{{ data.html_id }}_{{ compose.html_id }}">
+    <legend>{{ compose.label }}</legend>
+    <div class="btn-toolbar" id="div-actions_{{ data.html_id }}_{{ compose.html_id }}">
+        <button class="btn btn-mini"><i class="icon-plus"></i></button>
+        <button class="btn btn-mini"><i class="icon-minus"></i></button>
+        <button class="btn btn-mini"><i class="icon-edit"></i></button>
+        <button class="btn btn-mini"><i class="icon-plus-sign"></i></button>
+        <button class="btn btn-mini"><i class="icon-exclamation-sign"></i></button>
+    </div>
+    <table class="table table-bordered table-condensed"
+        data-model="{{ data.model }}"
+        data-object="{{ data.object }}"
+        data-compose-model="{{ compose.model }}">
+        <thead>
+            {% for column in compose.columns %}
+                <th name="{{ column[0] }}">{{ column[1] }}</th>
+            {% endfor %}
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+{% endverbatim %}

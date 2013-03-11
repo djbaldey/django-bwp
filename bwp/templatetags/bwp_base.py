@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""
 ###############################################################################
 # Copyright 2013 Grigoriy Kramarenko.
 ###############################################################################
@@ -34,88 +35,30 @@
 #   вместе с этой программой. Если это не так, см.
 #   <http://www.gnu.org/licenses/>.
 ###############################################################################
-
+"""
 from django import template
 from django.core.urlresolvers import reverse
-from bwp.conf import settings
+from bwp import conf
 from datetime import date
 
 register = template.Library()
 
-def return_setting(key, default=''):
-    return getattr(settings, key, default)
-
 @register.simple_tag
-def PROJECT_NAME():
-    return return_setting('PROJECT_NAME')
-
-@register.simple_tag
-def PROJECT_SHORTNAME():
-    return return_setting('PROJECT_SHORTNAME')
-
-@register.simple_tag
-def PROJECT_DESCRIPTION():
-    return return_setting('PROJECT_DESCRIPTION')
-
-@register.simple_tag
-def JQUERY_VERSION():
-    return return_setting('JQUERY_VERSION', '1.9.0')
-
-@register.simple_tag
-def JQUERY_UI_VERSION():
-    return return_setting('JQUERY_UI_VERSION', '1.10.0')
-
-@register.simple_tag
-def JQGRID_VERSION():
-    return return_setting('JQUERY_UI_VERSION', '4.4.4')
-
-@register.simple_tag
-def BOOTSTRAP_VERSION():
-    return return_setting('BOOTSTRAP_VERSION', '2.2.2')
-
-@register.simple_tag
-def BWP_VERSION():
-    return return_setting('BWP_VERSION', '1.0')
-
-@register.simple_tag
-def BWP_VERSION_DATE():
-    return return_setting('BWP_VERSION_DATE')
-
-@register.simple_tag
-def VERSION():
-    return return_setting('VERSION', '1.0')
-
-@register.simple_tag
-def VERSION_DATE():
-    return return_setting('VERSION_DATE')
+def SETTINGS(key):
+    return getattr(conf, key, getattr(conf.settings, key, ''))
 
 @register.simple_tag
 def AUTHORS():
     try:
-        return ' | '.join(settings.AUTHORS)
+        return ' | '.join(conf.AUTHORS)
     except:
         return ''
-
-@register.simple_tag
-def COPYRIGHT():
-    return return_setting('COPYRIGHT')
-
-@register.simple_tag
-def AUTHORS():
-    try:
-        return ' | '.join(settings.AUTHORS)
-    except:
-        return ''
-
-@register.simple_tag
-def COPYRIGHT():
-    return return_setting('COPYRIGHT')
 
 @register.simple_tag
 def COPYRIGHT_YEARS():
     end = date.today().year
     try:
-        start =  settings.COPYRIGHT_YEAR
+        start =  conf.COPYRIGHT_YEAR
     except:
         start = date.today().year
     if start != end:
