@@ -36,25 +36,39 @@
 #   <http://www.gnu.org/licenses/>.
 ###############################################################################
 """
-__version__ = "0.1.2"
+import os
+
+__version__ = (0, 1, 3)
+VERSION = '.'.join([ str(x) for x in __version__ ])
+
+def auto_remove_version_links(path):
+    for f in os.listdir(path):
+        filepath = os.path.join(path, f)
+        if os.path.islink(filepath) and f.count('.') == len(__version__) -1:
+            os.unlink(filepath)
 
 def auto_create_version_links():
-    """ Автоматически создаёт ссылки на статику по актуальной версии BWP """
-    import os
+    """ Автоматически создаёт ссылки на статику по актуальной версии """
     cwd = os.getcwd()
     self_path = os.path.abspath(os.path.dirname(__file__))
+    src_relation = os.path.join('..', '..', '..')
+    
+    src_css_path = os.path.join(src_relation, 'static_src', 'css')
     css_path = os.path.join(self_path, 'static', 'css', 'bwp')
-    src_css_path = os.path.join(css_path, 'src')
-    ver_css_path = os.path.join(css_path, __version__)
+    ver_css_path = os.path.join(css_path, VERSION)
+    
+    src_js_path = os.path.join(src_relation, 'static_src', 'js')
     js_path = os.path.join(self_path, 'static', 'js', 'bwp')
-    src_js_path = os.path.join(js_path, 'src')
-    ver_js_path = os.path.join(js_path, __version__)
+    ver_js_path = os.path.join(js_path, VERSION)
+    
     if not os.path.exists(ver_css_path):
+        auto_remove_version_links(css_path)
         os.chdir(css_path)
-        os.symlink('src', __version__)
+        os.symlink(src_css_path, VERSION)
     if not os.path.exists(ver_js_path):
+        auto_remove_version_links(js_path)
         os.chdir(js_path)
-        os.symlink('src', __version__)
+        os.symlink(src_js_path, VERSION)
     os.chdir(cwd)
 
 auto_create_version_links()

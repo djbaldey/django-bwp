@@ -79,9 +79,10 @@ class BWPSite(object):
 
         # Don't import the humongous validation code unless required
         if bwp_class and settings.DEBUG:
-            from django.contrib.admin.validation import validate
+            from bwp.validation import validate
         else:
             validate = lambda model, bwpclass: None
+        validate = lambda model, bwpclass: None
 
         if isinstance(model_or_iterable, ModelBase):
             model_or_iterable = [model_or_iterable]

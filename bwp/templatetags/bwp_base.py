@@ -48,6 +48,12 @@ def SETTINGS(key):
     return getattr(conf, key, getattr(conf.settings, key, ''))
 
 @register.simple_tag
+def mini_library():
+    if conf.settings.DEBUG:
+        return ''
+    return '.min'
+
+@register.simple_tag
 def AUTHORS():
     try:
         return ' | '.join(conf.AUTHORS)

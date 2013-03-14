@@ -1,0 +1,11 @@
+{% load bwp_verbatim %}{% verbatim %}{# Шаблон Jinja #}
+<li id="tab-{{ data.tabId }}">
+    <a data-toggle="tab" href="#tab-content-{{ data.tabId }}"
+        {% if data.func %}data-func="{{ data.func }}"{% endif %}
+        {% if data.model %}data-model="{{ data.model }}"{% endif %}
+        {% if data.object %}data-object="{{ data.object }}"{% endif %}
+        title="{{ data.tabTitle }}: {{ data.tabText }}"
+        >{{ data.tabText|truncate(20) }}&nbsp;<button data-close="{{ data.tabId }}" class="close">&times;</button>
+    </a>
+</li>
+{% endverbatim %}

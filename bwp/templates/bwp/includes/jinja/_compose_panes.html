@@ -3,7 +3,9 @@ Compose = {
                 'label': 'model_compose.verbose_name',
                 'model': 'app.model_compose',
                 'html_id': 'app-model-compose',
-                'columns':[('name', 'label'),],
+<!--
+                'columns':[{'name': 'name', 'label': 'label', 'tag': 'input', 'type': 'text'},],
+-->
                 'perms':{'add':True, 'change':True, 'delete':True},
                 'actions':[{<action_1>},{<action_2>}]
             }
@@ -22,12 +24,7 @@ Compose = {
         data-model="{{ data.model }}"
         data-object="{{ data.object }}"
         data-compose-model="{{ compose.model }}">
-        <thead>
-            {% for column in compose.columns %}
-                <th name="{{ column[0] }}">{{ column[1] }}</th>
-            {% endfor %}
-        </thead>
-        <tbody></tbody>
+        {# загрузка в таблицу производится позже #}
     </table>
 </div>
 {% endverbatim %}

@@ -1,13 +1,12 @@
-{% extends "bwp/base.html" %}
+{% extends "bwp/login.html" %}
 {% load i18n %}
 {% load url from future %}
 
-{% block breadcrumbs %}<div class="breadcrumbs"><a href="{% url 'bwp_index' %}">{% trans 'Home' %}</a></div>{% endblock %}
-
-{% block content %}
-
-<p>{% trans "Thanks for spending some quality time with the Web site today." %}</p>
-
-<p><a href="{% url 'bwp_login' %}">{% trans 'Log in again' %}</a></p>
-
+{% block login_place %}
+    <div class="align-center">
+        <p class="text-success"><strong>{% trans "Thank You for the work done." %}</strong></p>
+    </div>
+    <div class="align-center">
+        <p><a href="{% url 'bwp_login' %}">{% trans 'Log in again' %}</a></p>
+    </div>
 {% endblock %}

@@ -46,7 +46,6 @@ from django.utils.safestring import mark_safe
 from django.utils.text import capfirst
 from django.core import serializers
 from django.core.paginator import Paginator
-from django.contrib.admin.options import BaseModelAdmin
 from django.shortcuts import redirect
 
 from copy import deepcopy
@@ -55,9 +54,9 @@ from bwp.utils.filters import filterQueryset
 from bwp.conf import settings
 from bwp.widgets import get_widget_from_field
 
-ADDITION = 1
+ADDING = 1
 CHANGE = 2
-DELETION = 3
+DELETE = 3
 
 def serialize_field(item, field, as_pk=False, as_option=False):
     if field == '__unicode__':
@@ -126,92 +125,37 @@ class LogEntry(models.Model):
         "Returns the edited object represented by this log entry"
         return self.content_type.get_object_for_this_type(pk=self.object_id)
 
-class ComposeBWP(object):
-    """ Модель для описания вложенных объектов BWP. 
-        multiply_fields = [ ('column_title', ('field_1', 'field_2')) ]
-    """
-    model = None # обязательное
-    list_display = ('__unicode__', 'pk')
-    list_display_css = {'pk': 'input-micro', 'id': 'input-micro'} # by default
-    
-    object_fields = ()
-    editable_fields = ()
-    readonly_fields = ()
-    multiply_fields = ()
-    actions = []
-    ordering = None
-    verbose_name = None
-    #~ form = forms.ModelForm
-    #~ filter_vertical = ()
-    #~ filter_horizontal = ()
-    
-    def __init__(self):
-        if self.model is None:
-            raise NotImplementedError('Set the "model" in %s.' % self.__class__.__name__)
-        self.opts = self.model._meta
-        if self.verbose_name is None:
-            self.verbose_name = self.opts.verbose_name_plural or self.opts.verbose_name
 
-class ModelBWP(BaseModelAdmin):
-    """ Модель для регистрации в BWP.
-        Наследуются атрибуты:
-        __metaclass__ = forms.MediaDefiningClass
-        raw_id_fields = ()
-        fields = None
-        exclude = None
-        fieldsets = None
-        form = forms.ModelForm
-        filter_vertical = ()
-        filter_horizontal = ()
-        radio_fields = {}
-        prepopulated_fields = {}
-        formfield_overrides = {}
-        readonly_fields = ()
-        ordering = None
-    """
-    
+class BaseModel(object):
+    """ Functionality common to both ModelBWP and ComposeBWP."""
+
     list_display = ('__unicode__', 'pk')
     list_display_css = {'pk': 'input-micro', 'id': 'input-micro'} # by default
     show_column_pk = False
-    list_display_links = ()
-    list_filter = ()
-    list_select_related = False
-    list_per_page = 100
-    list_max_show_all = 200
-    list_editable = ()
+
+    fields = None
+    fieldsets = None
     search_fields = ()
-    date_hierarchy = None
-    save_as = False
-    save_on_top = False
-    paginator = Paginator
-    compositions = []
-    inlines = []
     
-    # Custom templates (designed to be over-ridden in subclasses)
-    add_form_template = None
-    change_form_template = None
-    change_list_template = None
-    delete_confirmation_template = None
-    delete_selected_confirmation_template = None
-    object_history_template = None
-
-    # Actions
+    ordering = None
     actions = []
-    action_form = None
-    actions_on_top = True
-    actions_on_bottom = False
-    actions_selection_counter = True
-
-    def __init__(self, model, bwp_site):
-        self.model = model
-        self.opts = model._meta
-        self.bwp_site = bwp_site
-        self.fields_is_prepare = False
     
-    def prepare_fields_and_fieldsets(self):
-        if self.fields_is_prepare:
-            return True
-        #~ print 'prepare_fields_and_fieldsets'
+    paginator = Paginator
+
+    def set_opts(self):
+        if self.model is None:
+            raise NotImplementedError('Set the "model" in %s.' % self.__class__.__name__)
+        self.opts = self.model._meta
+    
+    def prepare_fields(self):
+        """ Устанавливает виджеты в поля и их наборы, заменяя строчное
+            представление реальными объектами.
+        """
+        try:
+            if self._fields_is_prepare:
+                return True
+        except:
+            pass
         if self.fields:
             self.fields = [ self.opts.get_fields_by_name(name)[0] for name in self.fields ]
         else:
@@ -241,11 +185,67 @@ class ModelBWP(BaseModelAdmin):
                         new_fields.append(prepare_widget(tuple_or_field))
                 fs[1]['fields'] = new_fields
 
-        self.fields_is_prepare = True
+        self._fields_is_prepare = True
         return True
-    
+
     def get_paginator(self, request, queryset, per_page, orphans=0, allow_empty_first_page=True):
         return self.paginator(queryset, per_page, orphans, allow_empty_first_page)
+
+    def queryset(self):
+        return self.model._default_manager.get_query_set()
+
+    def get_ordering(self, request):
+        """
+        Hook for specifying field ordering.
+        """
+        return self.ordering or ()  # otherwise we might try to *None, which is bad ;)
+
+    def order_queryset(self, request, qs=None):
+        """
+        Сортировка определённого, либо общего набора данных.
+        """
+        if qs is None:
+            qs = self.queryset()
+        ordering = self.get_ordering(request)
+        if ordering:
+            qs = qs.order_by(*ordering)
+        return qs
+    
+    def has_add_permission(self, request):
+        """
+        Returns True if the given request has permission to add an object.
+        Can be overriden by the user in subclasses.
+        """
+        opts = self.opts
+        return request.user.has_perm(opts.app_label + '.' + opts.get_add_permission())
+
+    def has_change_permission(self, request, obj=None):
+        """
+        Returns True if the given request has permission to change the given
+        Django model instance, the default implementation doesn't examine the
+        `obj` parameter.
+
+        Can be overriden by the user in subclasses. In such case it should
+        return True if the given request has permission to change the `obj`
+        model instance. If `obj` is None, this should return True if the given
+        request has permission to change *any* object of the given type.
+        """
+        opts = self.opts
+        return request.user.has_perm(opts.app_label + '.' + opts.get_change_permission())
+
+    def has_delete_permission(self, request, obj=None):
+        """
+        Returns True if the given request has permission to change the given
+        Django model instance, the default implementation doesn't examine the
+        `obj` parameter.
+
+        Can be overriden by the user in subclasses. In such case it should
+        return True if the given request has permission to delete the `obj`
+        model instance. If `obj` is None, this should return True if the given
+        request has permission to delete *any* object of the given type.
+        """
+        opts = self.opts
+        return request.user.has_perm(opts.app_label + '.' + opts.get_delete_permission())
 
     def get_model_perms(self, request):
         """
@@ -270,7 +270,7 @@ class ModelBWP(BaseModelAdmin):
             content_type_id = ContentType.objects.get_for_model(object).pk,
             object_id       = object.pk,
             object_repr     = force_unicode(object),
-            action_flag     = ADDITION
+            action_flag     = ADDING
         )
 
     def log_change(self, request, object, message):
@@ -300,11 +300,50 @@ class ModelBWP(BaseModelAdmin):
             content_type_id = ContentType.objects.get_for_model(self.model).pk,
             object_id       = object.pk,
             object_repr     = object_repr,
-            action_flag     = DELETION
+            action_flag     = DELETE
         )
     
+class ComposeBWP(BaseModel):
+    """ Модель для описания вложенных объектов BWP. 
+        multiply_fields = [ ('column_title', ('field_1', 'field_2')) ]
+    """
+
+    verbose_name = None
+    
+    def __init__(self):
+        self.set_opts()
+        self.prepare_fields()
+        if self.verbose_name is None:
+            self.verbose_name = self.opts.verbose_name_plural or self.opts.verbose_name
+
+class ModelBWP(BaseModel):
+    """ Модель для регистрации в BWP.
+        Наследуются атрибуты:
+        __metaclass__ = forms.MediaDefiningClass
+        raw_id_fields = ()
+        fields = None
+        exclude = None
+        fieldsets = None
+        form = forms.ModelForm
+        filter_vertical = ()
+        filter_horizontal = ()
+        radio_fields = {}
+        prepopulated_fields = {}
+        formfield_overrides = {}
+        readonly_fields = ()
+        ordering = None
+    """
+    
+    compositions = []
+
+    def __init__(self, model, bwp_site):
+        self.model = model
+        self.bwp_site = bwp_site
+        self.set_opts()
+        self.prepare_fields()
+    
     def get_ordering(self, request):
-        """ Hook for specifying field ordering. """
+        """ Переопределённый метод базового класса. """
         # Number of columns that are used in sorting
         try:
             i_sorting_cols = int(request.REQUEST.get('iSortingCols', 0))
@@ -337,13 +376,9 @@ class ModelBWP(BaseModelAdmin):
                     ordering.append('%s%s' % (sdir, sc))
             else:
                 ordering.append('%s%s' % (sdir, sortcol))
-        print ordering
         if ordering:
             return ordering
         return self.ordering or reserv
-
-    def queryset(self):
-        return self.model._default_manager.get_query_set()
 
     def filter_queryset(self, request, qs=None):
         """ Returns a filtering QuerySet of all model instances. """
@@ -352,14 +387,6 @@ class ModelBWP(BaseModelAdmin):
         sSearch = request.REQUEST.get('sSearch', None)
         if sSearch:
             qs = filterQueryset(qs, self.search_fields, sSearch)
-        return qs
-    
-    def order_queryset(self, request, qs=None):
-        if qs is None:
-            qs = self.queryset()
-        ordering = self.get_ordering(request)
-        if ordering:
-            qs = qs.order_by(*ordering)
         return qs
 
     def pager_queryset(self, request, qs=None):
@@ -395,19 +422,24 @@ class ModelBWP(BaseModelAdmin):
                 'label': 'Название поля',
                 'value': value,
                 'datavalue': value,
-                'datalist': options,
+                #~ 'datalist': options,
             }
             Compose = {
                 'label': 'model_compose.verbose_name',
                 'model': 'app.model_compose',
                 'html_id': 'app-model-compose',
-                'columns':[('name', 'label'),],
+                'columns':[{column1},{column2}],
                 'perms':{'add':True, 'change':True, 'delete':True},
                 'actions':[{<action_1>},{<action_2>}]
             }
+            Column = {
+                'name': 'db_name',
+                'hidden': False,
+                'tag': 'input',
+                'attr': {},
+                'label': 'Название поля',
+            }
         """
-
-        self.prepare_fields_and_fieldsets()
 
         obj = self.queryset().select_related().get(pk=pk)
         model = str(self.opts)
@@ -560,7 +592,8 @@ class ModelBWP(BaseModelAdmin):
             list_display_css[field] = self.list_display_css.get(it, '')
 
         params = {
-            'model': str(meta)
+            'model': str(meta),
+            'title': unicode(meta.verbose_name).title(),
         }
         temp_dict = params.copy()
         temp_dict["html_id"] = str(meta).replace('.', '-')
@@ -579,6 +612,7 @@ class ModelBWP(BaseModelAdmin):
 
         return {
             'model':    params['model'],
+            'title':    params['title'],
             'html_id':  temp_dict['html_id'],
             'perms':    self.get_model_perms(request),
             'html':     html % temp_dict,

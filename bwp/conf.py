@@ -49,9 +49,9 @@ PROJECT_DESCRIPTION     = getattr(settings, 'PROJECT_DESCRIPTION',      'PROJECT
 VERSION                 = getattr(settings, 'VERSION',                  '1.0')
 VERSION_DATE            = getattr(settings, 'VERSION_DATE',             '')
 
+DJANGO_VERSION          = getattr(settings, 'DJANGO_VERSION',           '1.4')
 BOOTSTRAP_VERSION       = getattr(settings, 'BOOTSTRAP_VERSION',        '2.3.1')
-JQUERY_VERSION          = getattr(settings, 'JQUERY_VERSION',           '1.9.0')
-JQUERY_UI_VERSION       = getattr(settings, 'JQUERY_UI_VERSION',        '1.10.0')
+JQUERY_VERSION          = getattr(settings, 'JQUERY_VERSION',           '1.9.1')
 JQUERY_JSON_VERSION     = getattr(settings, 'JQUERY_JSON_VERSION',      '2.4')
 DATATABLES_VERSION      = getattr(settings, 'DATATABLES_VERSION',       '1.9.4')
 JS_JINJA_VERSION        = getattr(settings, 'JS_JINJA_VERSION',         '1.0')

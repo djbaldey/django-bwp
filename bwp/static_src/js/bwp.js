@@ -36,6 +36,30 @@
 ###############################################################################
 */
 
+////////////////////////////////////////////////////////////////////////
+//                            НАСТРОЙКИ                               //
+////////////////////////////////////////////////////////////////////////
+
+window.SETTINGS = new Settings();
+/* Глобальный объект настроек
+ * Пример использования:
+========================================================================
+if (SETTINGS.init().ready) {
+    SETTINGS.server['obj_on_page'] = 10
+    SETTINGS.local['color'] = '#FFFFFF'
+    SETTINGS.callback = function() { alert('after save') }
+    SETTINGS.save()
+    // либо так:
+    // callback_X = function() { alert('after save') }
+    // SETTINGS.save(callback_X)
+};
+========================================================================
+* запустится callback и сбросится атрибут SETTINGS.callback
+* на дефолтный (undefined), если callback.__not_reset_after__ не определён.
+* .init(callback_Y) - используется только один раз, а для переполучения данных
+* и если это действительно необходимо, используйте .reload(callback_Y)
+* Функции "callback" - необязательны.
+*/
 function Settings(default_callback) {
     /* Установка ссылки на свой объект для вложенных функций */
     self = this;
@@ -182,26 +206,9 @@ function Settings(default_callback) {
     }
 }
 
-/* Глобальный объект настроек
- * Пример использования:
-========================================================================
-if (SETTINGS.init().ready) {
-    SETTINGS.server['obj_on_page'] = 10
-    SETTINGS.local['color'] = '#FFFFFF'
-    SETTINGS.callback = function() { alert('after save') }
-    SETTINGS.save()
-    // либо так:
-    // callback_X = function() { alert('after save') }
-    // SETTINGS.save(callback_X)
-};
-========================================================================
-* запустится callback и сбросится атрибут SETTINGS.callback
-* на дефолтный (undefined), если callback.__not_reset_after__ не определён.
-* .init(callback_Y) - используется только один раз, а для переполучения данных
-* и если это действительно необходимо, используйте .reload(callback_Y)
-* Функции "callback" - необязательны.
-*/
-window.SETTINGS = new Settings();
+////////////////////////////////////////////////////////////////////////
+//                               ОБЩИЕ                                //
+////////////////////////////////////////////////////////////////////////
 
 /* Единая, переопределяемая задержка для действий или функций */
 var delay = (function(){
@@ -217,10 +224,8 @@ function hideAlert() { $('.alert').alert('close'); }
 function showAlert(msg, type, callback) {
     console.log(msg);
     if (!type) { type = 'alert-error' }
-    alert = '<div class="alert '+type+' fade in">\
-    <button type="button" class="close" data-dismiss="alert">×</button>'
-    +'<span class="alert-text">'+msg+'</span></div>'
-    $('#alert-place').html(alert);
+    html = Jinja.render($('#jinja-alert').html(), { msg: msg, type: type });
+    $('#alert-place').html(html);
     $(window).scrollTop(0);
     $('.alert').alert();
     if (callback) { delay(callback, 5000);
@@ -280,107 +285,14 @@ function jsonAPI(args, callback, to_console, sync) {
     return jqxhr
 };
 
-/* Default class modification */
-$.extend( $.fn.dataTableExt.oStdClasses, {
-    "sSortAsc": "header headerSortDown",
-    "sSortDesc": "header headerSortUp",
-    "sSortable": "header"
-} );
+////////////////////////////////////////////////////////////////////////
+//                            DATATABLES                              //
+////////////////////////////////////////////////////////////////////////
 
-/* API method to get paging information */
-$.fn.dataTableExt.oApi.fnPagingInfo = function ( oSettings ) {
-    return {
-        "iStart":         oSettings._iDisplayStart,
-        "iEnd":           oSettings.fnDisplayEnd(),
-        "iLength":        oSettings._iDisplayLength,
-        "iTotal":         oSettings.fnRecordsTotal(),
-        "iFilteredTotal": oSettings.fnRecordsDisplay(),
-        "iPage":          Math.ceil( oSettings._iDisplayStart / oSettings._iDisplayLength ),
-        "iTotalPages":    Math.ceil( oSettings.fnRecordsDisplay() / oSettings._iDisplayLength )
-    };
-}
-
-/* Bootstrap style pagination control */
-$.extend( $.fn.dataTableExt.oPagination, {
-    "bootstrap": {
-        "fnInit": function( oSettings, nPaging, fnDraw ) {
-            var oLang = oSettings.oLanguage.oPaginate;
-            var fnClickHandler = function ( e ) {
-                e.preventDefault();
-                if ( oSettings.oApi._fnPageChange(oSettings, e.data.action) ) {
-                    fnDraw( oSettings );
-                }
-            };
-
-            $(nPaging).addClass('pagination').append(
-                '<ul>'+
-                    '<li class="prev disabled"><a href="#">&larr; '+oLang.sPrevious+'</a></li>'+
-                    '<li class="next disabled"><a href="#">'+oLang.sNext+' &rarr; </a></li>'+
-                '</ul>'
-            );
-            var els = $('a', nPaging);
-            $(els[0]).bind( 'click.DT', { action: "previous" }, fnClickHandler );
-            $(els[1]).bind( 'click.DT', { action: "next" }, fnClickHandler );
-        },
-
-        "fnUpdate": function ( oSettings, fnDraw ) {
-            var iListLength = 5;
-            var oPaging = oSettings.oInstance.fnPagingInfo();
-            var an = oSettings.aanFeatures.p;
-            var i, j, sClass, iStart, iEnd, iHalf=Math.floor(iListLength/2);
-
-            if ( oPaging.iTotalPages < iListLength) {
-                iStart = 1;
-                iEnd = oPaging.iTotalPages;
-            }
-            else if ( oPaging.iPage <= iHalf ) {
-                iStart = 1;
-                iEnd = iListLength;
-            } else if ( oPaging.iPage >= (oPaging.iTotalPages-iHalf) ) {
-                iStart = oPaging.iTotalPages - iListLength + 1;
-                iEnd = oPaging.iTotalPages;
-            } else {
-                iStart = oPaging.iPage - iHalf + 1;
-                iEnd = iStart + iListLength - 1;
-            }
-
-            for ( i=0, iLen=an.length ; i<iLen ; i++ ) {
-                // Remove the middle elements
-                $('li:gt(0)', an[i]).filter(':not(:last)').remove();
-
-                // Add the new list items and their event handlers
-                for ( j=iStart ; j<=iEnd ; j++ ) {
-                    sClass = (j==oPaging.iPage+1) ? 'class="active"' : '';
-                    $('<li '+sClass+'><a href="#">'+j+'</a></li>')
-                        .insertBefore( $('li:last', an[i])[0] )
-                        .bind('click', function (e) {
-                            e.preventDefault();
-                            oSettings._iDisplayStart = (parseInt($('a', this).text(),10)-1) * oPaging.iLength;
-                            fnDraw( oSettings );
-                        } );
-                }
-
-                // Add / remove disabled classes from the static elements
-                if ( oPaging.iPage === 0 ) {
-                    $('li:first', an[i]).addClass('disabled');
-                } else {
-                    $('li:first', an[i]).removeClass('disabled');
-                }
-
-                if ( oPaging.iPage === oPaging.iTotalPages-1 || oPaging.iTotalPages === 0 ) {
-                    $('li:last', an[i]).addClass('disabled');
-                } else {
-                    $('li:last', an[i]).removeClass('disabled');
-                }
-            }
-        }
-    }
-} );
-
-/* Table initialisation */
+/* Инициализация DataTables */
 function initDataTables(data) {
     table = $('table[data-model="'+data.model+'"]');
-    //~ console.log(data)
+    template = $('#jinja-datatables-column-pk').html();
     /* Init DataTables */
     var oTable = table.dataTable({
         "oLanguage": { "sUrl": "static/js/dataTables/1.9.4/"+data.oLanguage+".txt" },
@@ -406,13 +318,7 @@ function initDataTables(data) {
             //~ });
         },
         "fnCreatedRow": function( nRow, aData, iDataIndex ) {
-            html = '<a href="#" data-object="'+aData[0]+'"'
-                +' data-model="'+data.model+'"'
-                +' data-tab-id="'
-                +data.html_id+'-'+ aData[0]+'"'
-                +' data-tab-title="'+aData[1]+'"'
-                +' data-tab-text="'+aData[1]+'"'
-                +'>'+aData[1]+'</a>'
+            html = Jinja.render(template, { data: data, aData: aData });
             $('td:eq(0)', nRow).html(html).find('a').click(addTab);
         },
         "aoColumnDefs": data.aoColumnDefs,
@@ -429,23 +335,33 @@ function initDataTables(data) {
     return false;
 }
 
+/* Обработчик двойного клика по строке в таблице модели */
+function dblClickRow(oTable, nRow) {
+    console.log(oTable);
+    console.log(nRow);
+    //~ $('div.toolbar').html('<button class="btn btn-primary btn-mini">Btn</button>');
+}
+
+/* Table showing and hiding columns */
+function fnShowHide( model, iCol ) {
+    table = $('table[data-model="'+model+'"]');
+    /* Get the DataTables object again - this is not a recreation, just a get of the object */
+    var oTable = table.dataTable();
+    var bVis = oTable.fnSettings().aoColumns[iCol].bVisible;
+    oTable.fnSetColumnVis( iCol, bVis ? false : true );
+    return false;
+}
+
+////////////////////////////////////////////////////////////////////////
+//                              ВКЛАДКИ                               //
+////////////////////////////////////////////////////////////////////////
+
 /* Добавляет вкладки на рабочую область */
 function addTab() {
+    data   = $(this).data();
+    tab_id = data.tabId;
+    if (data.object) { $(this).addClass('muted'); }
     
-    model  = $(this).attr('data-model');
-    func   = $(this).attr('data-func');
-    object = $(this).attr('data-object');
-    choice = ""
-    if (func) { choice += ' data-func="'+func+'"' }
-    if (model) { choice += ' data-model="'+model+'"' }
-    if (object) {
-        choice += ' data-object="'+object+'"';
-        $(this).addClass('muted');
-    }
-    
-    tab_id    = $(this).attr('data-tab-id');
-    tab_title = $(this).attr('data-tab-title');
-    tab_text  = $(this).attr('data-tab-text');
     tab = $('#main-tab #tab-'+ tab_id);
     
     if (tab.length > 0) {
@@ -453,19 +369,10 @@ function addTab() {
         tab.find('a').tab('show');
     } else {
         // Контент вкладки
-        html = '<div class="tab-pane" id="tab-content-'+tab_id+'">'
-            +'<div align="center"><img src="/static/img/ajax-loader.gif" /> загрузка данных...</div>'
-            +'</div>'
+        html = Jinja.render($('#jinja-tab-default-content').html(), { data: data });
         $('#main-tab-content').append(html);
         // Сама вкладка
-        html = '<li id="tab-'+tab_id+'">'
-            +'<a data-toggle="tab" href="#tab-content-'+tab_id+'"'
-            + choice
-            +' title="'+tab_title+'">'
-            +tab_text
-            +'&nbsp;<button'
-            +' data-close="'+tab_id+'"'
-            +' class="close">&times;</button></a></li>'
+        html = Jinja.render($('#jinja-tab').html(), { data: data });
         $('#main-tab').append(html);
         // Отображаем вкладку c небольшой задержкой
         delay(function() {
@@ -527,10 +434,22 @@ function contentLoader(obj) {
     return jqxhr
 }
 
+/* Восстанавливает вкладки, открытые до обновления страницы */
+function restoreSession() {
+    $.each(SETTINGS.local.tabs, function(i, item) {
+        $('[data-tab-id='+item+']').click();
+    });
+}
+
+////////////////////////////////////////////////////////////////////////
+//                              ОБЪЕКТЫ                               //
+////////////////////////////////////////////////////////////////////////
+
 /* Формирует HTML на вкладке объекта */
 function createObjectContent(data) {
     html = Jinja.render($('#jinja-object-tab-content').html(), { data: data });
     $('#tab-content-'+data.html_id).html(html);
+    //~ TODO: сделать загрузку композиций
 };
 
 /* Восстанавливает объект */
@@ -596,29 +515,9 @@ function saveCompose() {
     //~ }
 }
 
-/* Восстанавливает вкладки, открытые до обновления страницы */
-function restoreSession() {
-    $.each(SETTINGS.local.tabs, function(i, item) {
-        $('[data-tab-id='+item+']').click();
-    });
-}
-
-/* Обработчик двойного клика по строке в таблице модели */
-function dblClickRow(oTable, nRow) {
-    console.log(oTable);
-    console.log(nRow);
-    //~ $('div.toolbar').html('<button class="btn btn-primary btn-mini">Btn</button>');
-}
-
-/* Table showing and hiding columns */
-function fnShowHide( model, iCol ) {
-    table = $('table[data-model="'+model+'"]');
-    /* Get the DataTables object again - this is not a recreation, just a get of the object */
-    var oTable = table.dataTable();
-    var bVis = oTable.fnSettings().aoColumns[iCol].bVisible;
-    oTable.fnSetColumnVis( iCol, bVis ? false : true );
-    return false;
-}
+////////////////////////////////////////////////////////////////////////
+//                            ИСПОЛНЕНИЕ                              //
+////////////////////////////////////////////////////////////////////////
 
 /* Execute something after load page */
 $(document).ready(function($) {

@@ -274,6 +274,21 @@
     }
 /* END ALTER BOOTSTRAP */
 
+body.login {
+    background: #eee;
+}
+body.login container {
+    min-height: 300px;
+}
+
+body.login #login {
+    background: white;
+    border: 1px solid #ccc;
+    width: 28em;
+    padding: 40px 20px 20px;
+    margin: auto;
+}
+
 
 hr.soften {
     margin: 1px 0;

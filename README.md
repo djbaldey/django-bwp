@@ -1,5 +1,4 @@
-Business Web Package
---------------------
+# Business Web Package
 
 This is online-package for the employers. BWP provides standard set of
 operations with documents, such as acts, accounts, contracts, goods and

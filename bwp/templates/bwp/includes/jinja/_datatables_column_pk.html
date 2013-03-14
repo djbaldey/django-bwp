@@ -1,0 +1,8 @@
+{% load bwp_verbatim %}{% verbatim %}{# Шаблон Jinja #}
+<a href="#" data-object="{{ aData[0] }}"
+    data-model="{{ data.model }}"
+    data-tab-id="{{ data.html_id }}-{{ aData[0] }}"
+    data-tab-title="{{ data.title }}"
+    data-tab-text="{{ aData[1] }}"
+    >{{ aData[1] }}</a>
+{% endverbatim %}

@@ -6,4 +6,4 @@ recursive-exclude example *.pyc *.sqlite
 include LICENSE
 include AUTHORS
 include COPYING
-include README
+include README.md
