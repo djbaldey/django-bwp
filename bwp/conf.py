@@ -40,7 +40,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
 import bwp
 
-BWP_VERSION             = bwp.__version__
+BWP_VERSION             = bwp.VERSION
 
 PROJECT_NAME            = getattr(settings, 'PROJECT_NAME',             'PROJECT_NAME')
 PROJECT_SHORTNAME       = getattr(settings, 'PROJECT_SHORTNAME',        'PROJECT_SHORTNAME')

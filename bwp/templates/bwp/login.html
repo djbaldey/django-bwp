@@ -2,8 +2,6 @@
 {% load i18n bwp_static bwp_base %}
 {% load url from future %}
 
-{% block extrastyle %}{{ block.super }}<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/bwp/{% SETTINGS 'BWP_VERSION' %}/login.css" />{% endblock %}
-
 {% block bodyclass %}login{% endblock %}
 
 {% block navbar %}{% endblock %}
@@ -23,7 +21,6 @@
             {{ form.non_field_errors|safe }}
         </div>
     {% endif %}
-    
     <form class="form-signin" action="{{ app_path }}" method="post">{% csrf_token %}
         <fieldset>
             <input type="hidden" name="this_is_the_login_form" value="1" />
@@ -43,7 +40,7 @@
 
 {% block extrajs %}
     <script type="text/javascript">
-        document.getElementById('id_username').focus()
+        $('#username').focus();
     </script>
 {% endblock %}
 
