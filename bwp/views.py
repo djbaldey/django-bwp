@@ -151,8 +151,8 @@ def datatables(request):
         model_bwp = site.bwp_dict.get(model)
     if model_bwp:
         if 'info' in request.REQUEST:
-            return get_json_response(model_bwp.get_context_info(request))
-        return get_json_response(model_bwp.get_context_data(request))
+            return get_json_response(model_bwp.datatables_get_info(request))
+        return get_json_response(model_bwp.datatables_get_data(request))
     return get_json_response({'sError': 'No model'})
 
 ########################################################################

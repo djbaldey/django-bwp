@@ -266,19 +266,15 @@ function jsonAPI(args, callback, to_console, sync) {
             // При переадресации нужно отобразить сообщение,
             // а затем выполнить переход по ссылке, добавив параметр для
             // возврата на текущую страницу
-            if (DEBUG) {console.log('jsonAPI status: '+json.status+' message: '+json.message)};
             showAlert(json.message, 'alert-error', function() {
                 window.location.href = json.data.Location
                 .replace(/\?.*$/, "?next=" + window.location.pathname);
             });
         } else if (json.status >=400) {
             // При ошибках извещаем пользователя
-            if (DEBUG) {console.log('jsonAPI status: '+json.status+' message: '+json.message)};
             showAlert(json.message, 'alert-error');
         } else {
-            // При нормальном возврате просто пишем в консоль
-            // пришедшее сообщение
-            if (DEBUG) {console.log(json.message)};;
+            // При нормальном возврате
             return callback(json, status, xhr);
         };
     })

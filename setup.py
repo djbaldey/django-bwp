@@ -13,7 +13,7 @@ setup(
     long_description=README,
     author='Grigoriy Kramarenko',
     author_email='root@rosix.ru',
-    url='http://develop.rosix.ru/bwp/',
+    url='https://bitbucket.org/djbaldey/bwp/',
     license='GNU General Public License v3 or later (GPLv3+)',
     platforms='any',
     zip_safe=False,

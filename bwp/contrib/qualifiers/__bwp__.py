@@ -70,12 +70,12 @@ class MeasureUnitCompose(ComposeBWP):
 
 class MeasureUnitCategoryAdmin(ModelBWP):
     list_display = ('title', 'id')
-    compositions = [MeasureUnitCompose]
+    compositions = [('measureunit_set', MeasureUnitCompose)]
 site.register(MeasureUnitCategory, MeasureUnitCategoryAdmin)
 
 class MeasureUnitGroupAdmin(ModelBWP):
     list_display = ('title', 'id')
-    compositions = [MeasureUnitCompose]
+    compositions = [('measureunit_set', MeasureUnitCompose)]
 site.register(MeasureUnitGroup, MeasureUnitGroupAdmin)
 
 

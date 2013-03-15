@@ -164,6 +164,4 @@ def get_widget_from_field(field):
         attr = {}
     else:
         attr = deepcopy(attr)
-    widget = widget_class(field=field, attr=attr)
-    print widget
-    return widget
+    return widget_class(field=field, attr=attr) # instance
