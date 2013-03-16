@@ -1,0 +1,164 @@
+# -*- coding: utf-8 -*-
+"""
+###############################################################################
+# Copyright 2012 Grigoriy Kramarenko.
+###############################################################################
+# This file is part of BWP.
+#
+#    BWP is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    BWP is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with BWP.  If not, see <http://www.gnu.org/licenses/>.
+#
+# Этот файл — часть BWP.
+#
+#   BWP - свободная программа: вы можете перераспространять ее и/или
+#   изменять ее на условиях Стандартной общественной лицензии GNU в том виде,
+#   в каком она была опубликована Фондом свободного программного обеспечения;
+#   либо версии 3 лицензии, либо (по вашему выбору) любой более поздней
+#   версии.
+#
+#   BWP распространяется в надежде, что она будет полезной,
+#   но БЕЗО ВСЯКИХ ГАРАНТИЙ; даже без неявной гарантии ТОВАРНОГО ВИДА
+#   или ПРИГОДНОСТИ ДЛЯ ОПРЕДЕЛЕННЫХ ЦЕЛЕЙ. Подробнее см. в Стандартной
+#   общественной лицензии GNU.
+#
+#   Вы должны были получить копию Стандартной общественной лицензии GNU
+#   вместе с этой программой. Если это не так, см.
+#   <http://www.gnu.org/licenses/>.
+###############################################################################
+"""
+
+from django.conf import settings
+from django.core.serializers import base
+from django.db import models, DEFAULT_DB_ALIAS
+from django.utils.encoding import smart_unicode, is_protected_type
+
+from django.core.serializers.python import Serializer as OrignSerializer
+
+class SerializerWrapper(object):
+    """ Обёртка вокруг базовых классов Django.
+        Переопределяет их методы.
+    """
+    def handle_field(self, obj, field):
+        value = field._get_val_from_obj(obj)
+        # Protected types (i.e., primitives like None, numbers, dates,
+        # and Decimals) are passed through as is. All other values are
+        # converted to string first.
+        if is_protected_type(value):
+            self._current[field.name] = value
+        elif field.name == 'password':
+            self._current[field.name] = ''
+        else:
+            self._current[field.name] = field.value_to_string(obj)
+    
+    def handle_fk_field(self, obj, field):
+        if self.use_natural_keys:
+            related = getattr(obj, field.name)
+            if related:
+                if hasattr(field.rel.to, 'natural_key'):
+                    value = related.natural_key()
+                else:
+                    value = (related.pk, unicode(related))
+            else:
+                value = None
+        else:
+            value = getattr(obj, field.get_attname())
+        self._current[field.name] = value
+
+    def handle_m2m_field(self, obj, field):
+        if field.rel.through._meta.auto_created:
+            if self.use_natural_keys:
+                if hasattr(field.rel.to, 'natural_key'):
+                    m2m_value = lambda value: value.natural_key()
+                else:
+                    m2m_value = lambda value: (value.pk, unicode(value))
+            else:
+                m2m_value = lambda value: smart_unicode(value._get_pk_val(), strings_only=True)
+            self._current[field.name] = [m2m_value(related)
+                               for related in getattr(obj, field.name).iterator()]
+
+class Serializer(SerializerWrapper, OrignSerializer):
+    """
+    Serializes a QuerySet to basic Python objects.
+    """
+    pass
+
+def Deserializer(object_list, **options):
+    """
+    Deserialize simple Python objects back into Django ORM instances.
+
+    It's expected that you pass the Python objects themselves (instead of a
+    stream or a string) to the constructor
+    """
+    db = options.pop('using', DEFAULT_DB_ALIAS)
+    models.get_apps()
+    for d in object_list:
+        # Look up the model and starting build a dict of data for it.
+        Model = _get_model(d["model"])
+        data = {Model._meta.pk.attname : Model._meta.pk.to_python(d["pk"])}
+        m2m_data = {}
+
+        # Handle each field
+        for (field_name, field_value) in d["fields"].iteritems():
+            if isinstance(field_value, str):
+                field_value = smart_unicode(field_value, options.get("encoding", settings.DEFAULT_CHARSET), strings_only=True)
+
+            field = Model._meta.get_field(field_name)
+
+            # Handle M2M relations
+            if field.rel and isinstance(field.rel, models.ManyToManyRel):
+                if hasattr(field.rel.to._default_manager, 'get_by_natural_key'):
+                    def m2m_convert(value):
+                        if hasattr(value, '__iter__'):
+                            return field.rel.to._default_manager.db_manager(db).get_by_natural_key(*value).pk
+                        else:
+                            return smart_unicode(field.rel.to._meta.pk.to_python(value))
+                else:
+                    m2m_convert = lambda v: smart_unicode(field.rel.to._meta.pk.to_python(v))
+                m2m_data[field.name] = [m2m_convert(pk) for pk in field_value]
+
+            # Handle FK fields
+            elif field.rel and isinstance(field.rel, models.ManyToOneRel):
+                if field_value is not None:
+                    if hasattr(field.rel.to._default_manager, 'get_by_natural_key'):
+                        if hasattr(field_value, '__iter__'):
+                            obj = field.rel.to._default_manager.db_manager(db).get_by_natural_key(*field_value)
+                            value = getattr(obj, field.rel.field_name)
+                            # If this is a natural foreign key to an object that
+                            # has a FK/O2O as the foreign key, use the FK value
+                            if field.rel.to._meta.pk.rel:
+                                value = value.pk
+                        else:
+                            value = field.rel.to._meta.get_field(field.rel.field_name).to_python(field_value)
+                        data[field.attname] = value
+                    else:
+                        data[field.attname] = field.rel.to._meta.get_field(field.rel.field_name).to_python(field_value)
+                else:
+                    data[field.attname] = None
+
+            # Handle all other fields
+            else:
+                data[field.name] = field.to_python(field_value)
+
+        yield base.DeserializedObject(Model(**data), m2m_data)
+
+def _get_model(model_identifier):
+    """
+    Helper to look up a model from an "app_label.module_name" string.
+    """
+    try:
+        Model = models.get_model(*model_identifier.split("."))
+    except TypeError:
+        Model = None
+    if Model is None:
+        raise base.DeserializationError(u"Invalid model identifier: '%s'" % model_identifier)
+    return Model

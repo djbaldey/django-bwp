@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 ###############################################################################
-# Copyright 2013 Grigoriy Kramarenko.
+# Copyright 2012 Grigoriy Kramarenko.
 ###############################################################################
 # This file is part of BWP.
 #
@@ -36,55 +36,37 @@
 #   <http://www.gnu.org/licenses/>.
 ###############################################################################
 """
-from django.db import models
-from django.utils.translation import ugettext_lazy as _
-from django.contrib.auth.models import User
 
-from bwp.contrib.abstracts.models import AbstractOrg, AbstractPerson, AbstractGroupUnique
-from bwp.db import managers, fields
-from bwp.utils.classes import upload_to
+from StringIO import StringIO
 
-class Person(AbstractPerson):
-    """ Персоналии """
-    IMAGE_SETTINGS = {
-        'resize': True,
-        'thumb_square': True,
-        'thumb_width': 256,
-        'thumb_height': 256,
-        'max_width': 1024,
-        'max_height': 1024,
-    }
-    user = models.ForeignKey(
-            User,
-            null=True, blank=True,
-            verbose_name = _('user'))
-    photo = fields.ThumbnailImageField(upload_to=upload_to,
-            null=True, blank=True,
-            verbose_name=_('photo'),
-            **IMAGE_SETTINGS)
+from django.core.serializers.json import *
+from django.core.serializers.json import Serializer as OrignSerializer
 
-    class Meta:
-        ordering = ['last_name', 'first_name', 'middle_name']
-        verbose_name = _('person')
-        verbose_name_plural = _('persons')
+from bwp.serializers.python import SerializerWrapper
+from bwp.serializers.python import Serializer as PythonSerializer
+from bwp.serializers.python import Deserializer as PythonDeserializer
 
-    @property
-    def image(self):
-        return self.photo.image
+from django.utils import simplejson
 
-class Org(AbstractOrg):
-    """ Организации """
-    is_supplier = models.BooleanField(
-            default=False,
-            verbose_name = _("is supplier"))
-    is_active = models.BooleanField(
-            default=True,
-            verbose_name = _("is active"))
+class Serializer(SerializerWrapper, OrignSerializer):
+    """
+    Convert a queryset to JSON.
+    """
+    pass
 
-    admin_objects = models.Manager()
-    objects = managers.ActiveManager()
-
-    class Meta:
-        verbose_name = _("org")
-        verbose_name_plural = _("orgs")
-        unique_together = ('inn',)
+def Deserializer(stream_or_string, **options):
+    """
+    Deserialize a stream or string of JSON data.
+    """
+    if isinstance(stream_or_string, basestring):
+        stream = StringIO(stream_or_string)
+    else:
+        stream = stream_or_string
+    try:
+        for obj in PythonDeserializer(simplejson.load(stream), **options):
+            yield obj
+    except GeneratorExit:
+        raise
+    except Exception, e:
+        # Map to deserializer error
+        raise DeserializationError(e)

@@ -44,12 +44,13 @@ from django.contrib.admin.util import quote
 from django.utils.encoding import smart_unicode
 from django.utils.safestring import mark_safe
 from django.utils.text import capfirst
-from django.core import serializers
+#~ from django.core import serializers
 from django.core.paginator import Paginator
 from django.shortcuts import redirect
 
 from copy import deepcopy
 
+from bwp import serializers
 from bwp.utils.filters import filterQueryset
 from bwp.conf import settings
 from bwp.widgets import get_widget_from_field
@@ -124,7 +125,6 @@ class LogEntry(models.Model):
     def get_edited_object(self):
         "Returns the edited object represented by this log entry"
         return self.content_type.get_object_for_this_type(pk=self.object_id)
-
 
 class BaseModel(object):
     """ Functionality common to both ModelBWP and ComposeBWP."""
@@ -381,12 +381,12 @@ class ComposeBWP(BaseModel):
         # Rows is data compose object
         objects = getattr(obj, self.related_name)
         objects = objects.all()
-        rows = []
-        for o in objects:
-            L = []
-            for field in fields:
-                L.append(serialize_field(o, field, with_pk=True))
-            rows.append(L)
+        rows = serializers.serialize('python', objects, use_natural_keys=True)
+        #~ for o in objects:
+            #~ L = []
+            #~ for field in fields:
+                #~ L.append(serialize_field(o, field, with_pk=True))
+            #~ rows.append(L)
 
         data.update({'cols':cols, 'rows': rows, 'perms':perms, })
         return data
@@ -456,7 +456,7 @@ class ModelBWP(BaseModel):
         model = str(self.opts)
         html_id = ('%s.%s' %(model, obj.pk)).replace('.','-')
         data = {'label': unicode(obj), 'model': model, 'object': obj.pk, 'html_id': html_id}
-        data['raw_object'] = serializers.serialize('python', [obj])[0]
+        data['raw_object'] = serializers.serialize('python', [obj], use_natural_keys=True)[0]
 
         def widget_with_value(widget):
             dic = widget.get_dict()
