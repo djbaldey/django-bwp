@@ -37,4 +37,4 @@
 ###############################################################################
 """
 from django.utils.translation import ugettext_lazy as _
-__label__ = _('user settings')
+__label__ = _('settings of users')

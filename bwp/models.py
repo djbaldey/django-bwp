@@ -114,13 +114,13 @@ class LogEntry(models.Model):
         return _('LogEntry Object')
 
     def is_addition(self):
-        return self.action_flag == ADDITION
+        return self.action_flag == ADDING
 
     def is_change(self):
         return self.action_flag == CHANGE
 
     def is_deletion(self):
-        return self.action_flag == DELETION
+        return self.action_flag == DELETE
 
     def get_edited_object(self):
         "Returns the edited object represented by this log entry"
@@ -362,9 +362,12 @@ class ComposeBWP(BaseModel):
         model = str(self.opts)
         html_id = ('%s.%s.%s' % (related_model_name, obj.pk, self.related_name)
             ).replace('.','-')
-        data = {'label': capfirst(unicode(self.verbose_name)),
-                'model': model, 'related_model': related_model_name,
-                'related_object': obj.pk, 'html_id': html_id}
+        data = {
+            'label': capfirst(unicode(self.verbose_name)),
+            'model': model, 'html_id': html_id,
+            'related_model': related_model_name,
+            'related_object': obj.pk,
+        }
 
         # Permissions
         permissions = 'NOT IMPLEMENTED'
@@ -376,7 +379,7 @@ class ComposeBWP(BaseModel):
 
         # Objects
         objects = getattr(obj, self.related_name)
-        objects = objects.all()
+        objects = objects.select_related().all() #TODO: сделать паджинатор
         objects = serializers.serialize('python', objects, use_natural_keys=True)
 
         data.update({'widgets': widgets, 'objects': objects,

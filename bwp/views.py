@@ -62,7 +62,7 @@ from bwp.forms import BWPAuthenticationForm
 from bwp.conf import settings, ARRAY_FORM_OBJECT_KEY, ARRAY_FORM_COMPOSE_KEY
 from bwp.utils.convertors import jquery_form_array, jquery_multi_form_array
 
-from bwp.contrib.usersettings.models import UserSettings
+from bwp.contrib.usersettings.models import OrgUserSettings, GlobalUserSettings
 
 ########################################################################
 #                               PAGES                                  #

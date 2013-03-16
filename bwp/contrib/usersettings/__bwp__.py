@@ -45,6 +45,6 @@ class GlobalUserSettingsAdmin(ModelBWP):
     list_display = ('__unicode__', 'id')
 site.register(GlobalUserSettings, GlobalUserSettingsAdmin)
 
-class UserSettingsAdmin(ModelBWP):
+class OrgUserSettingsAdmin(ModelBWP):
     list_display = ('__unicode__', 'id')
-site.register(UserSettings, UserSettingsAdmin)
+site.register(OrgUserSettings, OrgUserSettingsAdmin)

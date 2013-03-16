@@ -42,6 +42,9 @@ from django.utils.translation import ugettext_lazy as _
 from bwp.utils.classes import upload_to, get_random_string
 from bwp.db import fields
 
+import datetime
+from unidecode import unidecode
+
 class AbstractOrg(models.Model):
     """ Абстрактная модель организации """
     DOCUMENT_CHOICES = (

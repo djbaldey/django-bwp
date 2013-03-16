@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""
 ###############################################################################
 # Copyright 2013 Grigoriy Kramarenko.
 ###############################################################################
@@ -34,55 +35,71 @@
 #   вместе с этой программой. Если это не так, см.
 #   <http://www.gnu.org/licenses/>.
 ###############################################################################
-from django.db import models
+"""
+from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
-from bwp.abstracts.models import AbstractGroup
+from bwp.sites import site
+from bwp.models import ModelBWP, ComposeBWP
+from models import *
 
-class OKSM(AbstractGroup):
-    """ ОКСМ — Общероссийский классификатор стран мира """
-    code = models.CharField(
-            max_length=3,
-            primary=True,
-            verbose_name = _('code'))
-    symbol2 = models.CharField(
-            max_length=2,
-            unique=True,
-            verbose_name = _('2 symbol code'))
-    symbol3 = models.CharField(
-            max_length=3,
-            unique=True,
-            verbose_name = _('3 symbol code'))
-    full_title = models.CharField(
-            max_length=512,
-            blank=True,
-            verbose_name = _('full title'))
+class OrgCompose(ComposeBWP):
+    model = Org
 
-    def __unicode__(self):
-        return self.title
+class PersonCompose(ComposeBWP):
+    model = Person
 
-    class Meta:
-        ordering = ['title',]
-        verbose_name = _('country')
-        verbose_name_plural = _('OKSM')
+class VideoCodeCompose(ComposeBWP):
+    model = VideoCode
 
-class OKV(AbstractGroup):
-    """ ОКВ — Общероссийский классификатор валют """
-    code = models.CharField(
-            max_length=3,
-            primary=True,
-            verbose_name = _('code'))
-    symbol3 = models.CharField(
-            max_length=3,
-            unique=True,
-            verbose_name = _('3 symbol code'))
-    countries = models.ManyToManyField(
-            blank=True, null=True,
-            verbose_name = _('countries'))
+class ImageCompose(ComposeBWP):
+    model = Image
 
-    def __unicode__(self):
-        return self.title
+class FileCompose(ComposeBWP):
+    model = File
 
-    class Meta:
-        ordering = ['title',]
-        verbose_name = _('currency')
-        verbose_name_plural = _('OKV')
+class GroupAdmin(ModelBWP):
+    compositions = [
+        ('org_set',         OrgCompose),
+        ('person_set',      PersonCompose),
+        ('videocode_set',   VideoCodeCompose),
+        ('image_set',       ImageCompose),
+        ('file_set',        FileCompose),
+    ]
+site.register(Group, GroupAdmin)
+admin.site.register(Group, admin.ModelAdmin)
+
+class GroupUniqueAdmin(ModelBWP):
+    compositions = [
+        ('org_set',         OrgCompose),
+        ('person_set',      PersonCompose),
+        ('videocode_set',   VideoCodeCompose),
+        ('image_set',       ImageCompose),
+        ('file_set',        FileCompose),
+    ]
+site.register(GroupUnique, GroupUniqueAdmin)
+admin.site.register(GroupUnique, admin.ModelAdmin)
+
+class OrgAdmin(ModelBWP):
+    pass
+site.register(Org, OrgAdmin)
+admin.site.register(Org, admin.ModelAdmin)
+
+class PersonAdmin(ModelBWP):
+    pass
+site.register(Person, PersonAdmin)
+admin.site.register(Person, admin.ModelAdmin)
+
+class VideoCodeAdmin(ModelBWP):
+    pass
+site.register(VideoCode, VideoCodeAdmin)
+admin.site.register(VideoCode, admin.ModelAdmin)
+
+class ImageAdmin(ModelBWP):
+    pass
+site.register(Image, ImageAdmin)
+admin.site.register(Image, admin.ModelAdmin)
+
+class FileAdmin(ModelBWP):
+    pass
+site.register(File, FileAdmin)
+admin.site.register(File, admin.ModelAdmin)

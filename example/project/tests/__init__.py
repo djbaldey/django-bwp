@@ -36,53 +36,5 @@
 #   <http://www.gnu.org/licenses/>.
 ###############################################################################
 """
-from django.db import models
 from django.utils.translation import ugettext_lazy as _
-from bwp.contrib.contacts.models import Person, Org
-from bwp.db import fields
-from bwp.conf import settings
-
-class AbstractUserSettings(models.Model):
-    """ Общая модель """
-    person = models.ForeignKey(
-            Person,
-            limit_choices_to={'user__isnull': False},
-            verbose_name=_('person'))
-    json = fields.JSONField(
-            blank=True,
-            verbose_name = _('JSON value'))
-
-    def __unicode__(self):
-        return unicode(self.person)
-
-    class Meta:
-        abstract = True
-
-    @property
-    def value(self):
-        return self.json
-
-class GlobalUserSettings(AbstractUserSettings):
-    """ Глобальные настройки пользователей """
-    class Meta:
-        ordering = ['person',]
-        verbose_name = _('global settings')
-        verbose_name_plural = _('global settings')
-        unique_together = ('person',)
-
-class OrgUserSettings(AbstractUserSettings):
-    """ Настройки пользователей для каждой организации из
-        зарегистрированных как поставщик.
-    """
-    org = models.ForeignKey(
-            Org,
-            null=True, blank=True,
-            limit_choices_to={'is_supplier': True, 'is_active': True},
-            verbose_name=_('org'))
-
-    class Meta:
-        ordering = ['person', 'org',]
-        verbose_name = _('settings')
-        verbose_name_plural = _('org settings')
-        unique_together = ('person', 'org',)
-
+__label__ = _('tests')

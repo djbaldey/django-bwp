@@ -117,7 +117,8 @@ def _add_thumb(s):
         изображения, добавляя '.thumb' в конец и приводя к слагу,
         если это возможно.
     """
-    s = os.path.split(s)
+    # Что-то не так с сохранением путей
+    s = [ x for x in os.path.split(s) ] # from tuple to list
     name, ext = os.path.splitext(s[-1])
     if use_unidecode:
         name = unidecode(unicode(name))

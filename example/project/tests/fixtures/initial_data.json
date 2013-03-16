@@ -1,0 +1,131 @@
+[
+    {
+        "pk": 1,
+        "model": "tests.group",
+        "fields": {
+            "title": "A"
+        }
+    },
+    {
+        "pk": 2,
+        "model": "tests.group",
+        "fields": {
+            "title": "B"
+        }
+    },
+    {
+        "pk": 3,
+        "model": "tests.group",
+        "fields": {
+            "title": "C"
+        }
+    },
+    {
+        "pk": 1,
+        "model": "tests.groupunique",
+        "fields": {
+            "title": "UA"
+        }
+    },
+    {
+        "pk": 2,
+        "model": "tests.groupunique",
+        "fields": {
+            "title": "UB"
+        }
+    },
+    {
+        "pk": 3,
+        "model": "tests.groupunique",
+        "fields": {
+            "title": "UC"
+        }
+    },
+    {
+        "pk": 1,
+        "model": "tests.org",
+        "fields": {
+            "bank_cor_account": "",
+            "document_series": "",
+            "phones": "",
+            "ogrn": "",
+            "inn": "790104620051",
+            "fulltitle": " \u0418\u043d\u0434\u0438\u0432\u0438\u0434\u0443\u0430\u043b\u044c\u043d\u044b\u0439 \u043f\u0440\u0435\u0434\u043f\u0440\u0438\u043d\u0438\u043c\u0430\u0442\u0435\u043b\u044c \u041a\u0440\u0430\u043c\u0430\u0440\u0435\u043d\u043a\u043e \u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439 \u0412\u0438\u043a\u0442\u043e\u0440\u043e\u0432\u0438\u0447",
+            "document_date": "",
+            "web": "",
+            "group": 1,
+            "title": "\u0411\u044e\u0440\u043e \u00abRos'X\u00bb",
+            "document_number": "",
+            "bank_title": "",
+            "bank_set_account": "",
+            "email": "",
+            "address": "",
+            "document_code": "",
+            "document_type": null,
+            "kpp": "",
+            "about": "",
+            "document_org": "",
+            "bank_bik": "",
+            "groupunique": 1
+        }
+    },
+    {
+        "pk": 2,
+        "model": "tests.org",
+        "fields": {
+            "bank_cor_account": "",
+            "document_series": "",
+            "phones": "",
+            "ogrn": "",
+            "inn": "0000000000",
+            "fulltitle": "\u041e\u041e\u041e \u0420\u043e\u0433\u0430 \u0438 \u043a\u043e\u043f\u044b\u0442\u0430",
+            "document_date": "",
+            "web": "",
+            "group": 2,
+            "title": "\u0420\u043e\u0433\u0430 \u0438 \u043a\u043e\u043f\u044b\u0442\u0430",
+            "document_number": "",
+            "bank_title": "",
+            "bank_set_account": "",
+            "email": "",
+            "address": "",
+            "document_code": "",
+            "document_type": null,
+            "kpp": "",
+            "about": "",
+            "document_org": "",
+            "bank_bik": "",
+            "groupunique": 2
+        }
+    },
+    {
+        "pk": 1,
+        "model": "tests.person",
+        "fields": {
+            "web": "",
+            "first_name": "\u0413\u0440\u0438\u0433\u043e\u0440\u0438\u0439",
+            "last_name": "\u041a\u0440\u0430\u043c\u0430\u0440\u0435\u043d\u043a\u043e",
+            "middle_name": "\u0412\u0438\u043a\u0442\u043e\u0440\u043e\u0432\u0438\u0447",
+            "phones": "",
+            "skype": "",
+            "about": "",
+            "orgs": [
+                1
+            ],
+            "groupunique": 1,
+            "address": "",
+            "group": 1,
+            "jabber": "",
+            "email": ""
+        }
+    },
+    {
+        "pk": 1,
+        "model": "tests.videocode",
+        "fields": {
+            "groupunique": 1,
+            "code": "<iframe width=\"560\" height=\"315\" src=\"http://www.youtube.com/embed/AjXdcEiEEeY?list=SP4A40002D34E23630\" frameborder=\"0\" allowfullscreen></iframe>",
+            "group": 1,
+            "label": "\u041c\u0430\u0441\u044f\u043d\u044f \u041c\u043e\u0434\u0435\u043c"
+        }
+    }
+]
