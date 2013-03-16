@@ -367,28 +367,20 @@ class ComposeBWP(BaseModel):
                 'related_object': obj.pk, 'html_id': html_id}
 
         # Permissions
-        perms = 'NOT IMPLEMENTED'
+        permissions = 'NOT IMPLEMENTED'
 
-        # Columns
-        cols = [ self.prepare_widget('pk') ]
-        cols.extend(self.get_widgets())
-        
-        fields = [ x.field.name for x in cols ]
-        print fields
-        
-        cols = [ col.get_dict() for col in cols ]
+        # Widgets
+        widgets = [ self.prepare_widget('pk') ]
+        widgets.extend(self.get_widgets())
+        widgets = [ widget.get_dict() for widget in widgets ]
 
-        # Rows is data compose object
+        # Objects
         objects = getattr(obj, self.related_name)
         objects = objects.all()
-        rows = serializers.serialize('python', objects, use_natural_keys=True)
-        #~ for o in objects:
-            #~ L = []
-            #~ for field in fields:
-                #~ L.append(serialize_field(o, field, with_pk=True))
-            #~ rows.append(L)
+        objects = serializers.serialize('python', objects, use_natural_keys=True)
 
-        data.update({'cols':cols, 'rows': rows, 'perms':perms, })
+        data.update({'widgets': widgets, 'objects': objects,
+                    'permissions': permissions })
         return data
 
 class ModelBWP(BaseModel):
@@ -430,78 +422,49 @@ class ModelBWP(BaseModel):
 
         return compose_instances
 
-    def object_as_data(self, pk):
-        """ Data = {
-                'label': '__unicode__',
-                'model': 'app.model',
-                'object': 'pk',
-                'html_id': 'app-model-pk',
-                'fields':[<field1>,<field2>,<fieldX>] or None if 'fieldsets',
-                'fieldsets':[<fieldset1>,<fieldset2>,<fieldsetX>] or None,
-                'perms':{'add':True, 'change':True, 'delete':True},
-                'comps':[{<compose_1>},{<compose_2>}]
-            }
-            Field = {
-                'name': 'db_name',
-                'hidden': False,
-                'tag': 'input',
-                'attr': {},
-                'label': 'Название поля',
-                'value': value,
-                'datavalue': value,
-                #~ 'datalist': options,
-            }
+    def object_to_python(self, pk):
+        """ Python object with compositions and widgets(sets)
         """
+        # Object
         obj = self.queryset().select_related().get(pk=pk)
         model = str(self.opts)
         html_id = ('%s.%s' %(model, obj.pk)).replace('.','-')
-        data = {'label': unicode(obj), 'model': model, 'object': obj.pk, 'html_id': html_id}
-        data['raw_object'] = serializers.serialize('python', [obj], use_natural_keys=True)[0]
+        data = serializers.serialize('python', [obj], use_natural_keys=True)[0]
+        data.update({'label': unicode(obj), 'html_id': html_id})
 
-        def widget_with_value(widget):
-            dic = widget.get_dict()
-            if model == 'auth.user' and dic['name'] == 'password':
-                dic['value'] = ''
-            else:
-                dic['value'] = serialize_field(obj, dic['name'])
-            dic['datavalue'] = serialize_field(obj, dic['name'], as_pk=True)
-            dic['datalist'] = []
-            option = serialize_field(obj, dic['name'], as_option=True)
-            if option:
-                dic['datalist'].append(option)
-                L = getattr(obj, dic['name']).__class__.objects.exclude(pk=obj.pk)[:10]
-                [ dic['datalist'].append((x.pk, unicode(x))) for x in L ]
-            return dic
-        
-        fieldsets = fields = None
-
-        # Fieldsets
+        # Widgetsets
+        widgetsets = []
         if self.fieldsets:
-            fieldsets = []
             for label, dic in self.get_widgetsets():
                 L = []
                 dic = deepcopy(dic)
                 for group in dic['fields']:
                     if isinstance(group, (tuple, list)):
-                        L.append([ widget_with_value(widget) for widget in group ])
+                        L.append([ widget.get_dict() for widget in group ])
                     else:
-                        L.append(widget_with_value(group))
+                        L.append(group.get_dict())
                 dic['fields'] = L
-                fieldsets.append((label, dic))
+                widgetsets.append((label, dic))
 
-        # Fiels
+        # Widgets
+        widgets = []
         if not self.fieldsets:
-            fields = [ widget_with_value(widget) for widget in self.get_widgets()]
-        
-        perms = 'NOT IMPLEMENTED'
-        comps = []
-        data.update({'fields':fields, 'fieldsets':fieldsets, 'perms':perms, 'comps':comps})
+            widgets = [ widget.get_dict() for widget in self.get_widgets()]
+
+        # Permissions
+        permissions = 'NOT IMPLEMENTED'
+
+        # Compositions
+        compositions = []
         for compose in self.get_compose_instances():
-            comps.append(compose.get_data(obj))
+            compositions.append(compose.get_data(obj))
+
+        data.update({'widgets':widgets, 'widgetsets':widgetsets,
+                    'permissions':permissions, 'compositions':compositions})
         return data
 
     def object_get(self, pk, user):
-        return self.object_as_data(pk)
+        return self.object_to_python(pk)
 
     def object_del(self, pk, user):
         qs = self.queryset()
@@ -516,7 +479,7 @@ class ModelBWP(BaseModel):
     def object_upd(self, pk, dict_form_object, post, user):
         qs = self.queryset()
         upd = qs.filter(pk=pk).update(**dict_form_object)
-        return self.object_as_data(pk)
+        return self.object_get(pk, user)
 
     def compose_upd(self, pk, array_form_compose, post, user):
         qs = self.queryset()
