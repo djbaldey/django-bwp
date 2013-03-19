@@ -1,0 +1,12 @@
+{# Шаблон Underscore #}{% load bwp_verbatim %}{% verbatim %}
+<div class="tab-pane active" id="tab-content-object-pane_{{ id }}">
+    <legend>{{ label }}</legend>
+    <form class="form-horizontal" method="POST" action="javascript:void(0)"
+        data-model="{{ model }}"
+        data-pk="{{ pk }}"
+        id="form-object_{{ id }}">
+{% endverbatim %}
+        {% include "bwp/underscore/_object_form_fields.html" %}
+    </form>
+</div>
+

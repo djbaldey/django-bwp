@@ -1,0 +1,68 @@
+{# Шаблон Underscore #}{% load bwp_verbatim %}{% verbatim %}
+<fieldset>
+    {% _.each(widgets, function(widget) { %}
+        {% if (!widget.hidden) { %}
+            <div class="control-group">
+                <label class="control-label" for="field_{{ id }}_{{ widget.name }}">
+                    {{ widget.label }}
+                </label>
+                <div class="controls">
+        {% } %}
+        {% if ((widget.tag == 'input') || (widget.tag == 'textarea')) { %}
+            {% var _val = _.escape(fields[widget.name]) || '' %}
+            <{{ widget.tag }} id="field_{{ id }}_{{ widget.name }}"
+                name="{{ widget.name }}"
+            {% _.each(widget.attr, function(val, key) { %}
+                {{ key }}="{{ val }}"
+            {% }); %}
+            {% if (widget.attr.type && (widget.attr.type == 'checkbox')) { %}
+                {% if (fields[widget.name]) { %}checked="checked"{% } %}
+            {% } else if (widget.tag == 'textarea') { %}
+                >{{ _val }}</{{ widget.tag }}
+            {% } else { %}
+                value="{{ _val }}"
+            {% } %}>
+        {% } else if ((widget.tag == 'select') && (!widget.attr.multiple)) { %}
+            {% var _val0 = _.escape(fields[widget.name][0]) || '' %}
+            {% var _val1 = _.escape(fields[widget.name][1]) || '' %}
+            <div class="input-prepend input-append">
+                {%/* Кнопка поиска */%}
+                <button class="btn" type="button" data-toggle="select-for-input">
+                <i class="icon-search"></i></button>
+                {%/* Кнопка названия */%}
+                <button class="btn {% widget.attr['class'] || '' %}" type="button">
+                    {{ _val1 }}
+                </button>
+                {%/* Скрытое поле с реальным значением (Primary Key in DB) */%}
+                <input type="hidden" 
+                {% _.each(widget.attr, function(val, key) { %}
+                    {% if (! key in {'type':0, 'name':0}) { %}
+                        {{ key }}="{{ val }}"
+                    {% } %}
+                {% }); %}
+                name="{{ widget.name }}"
+                value="{{ _val0 }}" />
+                {%/* Кнопка сброса */%}
+                <button class="btn" type="button" data-toggle="clear-for-input">
+                    <i class="icon-remove"></i>
+                </button>
+            </div>
+        {% } %}
+        {% if (!widget.hidden) { %}
+                </div>
+            </div>
+        {% } %}
+    {% }); %}
+</fieldset>
+{% endverbatim %}
+
+{# Кнопки действий #}
+<div class="control-group">
+    <div class="controls">
+        <div class="btn-group">
+            {% include "bwp/underscore/_button_reset.html" %}
+            &nbsp;
+            {% include "bwp/underscore/_button_save.html" %}
+        </div>
+    </div>
+</div>

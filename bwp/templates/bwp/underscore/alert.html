@@ -1,0 +1,8 @@
+{# Шаблон Underscore #}{% load bwp_verbatim %}{% verbatim %}
+<div class="alert {{ type }} fade in">
+    <button type="button" class="close" data-dismiss="alert">×</button>
+    <h4>{% if (type=="alert-error") { %}Ошибка!{% } else if (type=="alert-warning") { %}Внимание!{% } else { %}Сообщение.{% } %}</h4>
+    <span class="alert-text">{{ msg }}</span>
+    {% if (type=="alert-error") { %}<h6><i>лог смотрите в консоли JavaScript</i></h6>{% } %}
+</div>
+{% endverbatim %}

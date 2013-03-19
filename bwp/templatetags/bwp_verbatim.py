@@ -67,16 +67,16 @@ def verbatim(parser, token):
         if token.contents == 'endverbatim':
             break
         if token.token_type == template.TOKEN_VAR:
-            text.append('{{ ')
+            text.append(template.VARIABLE_TAG_START)
         elif token.token_type == template.TOKEN_BLOCK:
-            text.append('{% ')
+            text.append(template.BLOCK_TAG_START)
         elif token.token_type == template.TOKEN_COMMENT:
-            text.append('{# ')
+            text.append(template.COMMENT_TAG_START)
         text.append(token.contents)
         if token.token_type == template.TOKEN_VAR:
-            text.append(' }}')
+            text.append(template.VARIABLE_TAG_END)
         elif token.token_type == template.TOKEN_BLOCK:
-            text.append(' %}')
+            text.append(template.BLOCK_TAG_END)
         elif token.token_type == template.TOKEN_COMMENT:
-            text.append(' #}')
+            text.append(template.COMMENT_TAG_END)
     return VerbatimNode(''.join(text))

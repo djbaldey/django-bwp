@@ -36,10 +36,11 @@
 ###############################################################################
 */
 
-
 ////////////////////////////////////////////////////////////////////////
 //                              ОБЪЕКТЫ                               //
 ////////////////////////////////////////////////////////////////////////
+
+var TEMPLATES = {};
 
 /* Глобальный объект объектов DB
  * Пример использования:
@@ -191,7 +192,7 @@ function Objects() {
 /* Формирует HTML на вкладке объекта */
 function createObjectContent(data) {
     if (DEBUG) {console.log('function:'+'createObjectContent')};
-    html = Jinja.render($('#jinja-object-tab-content').html(), { data: data });
+    html = TEMPLATES.tabContentObject(data);
     $('#tab-content_'+data.id).html(html);
     OBJECTS.append(data)
     //~ TODO: сделать загрузку композиций
@@ -435,6 +436,14 @@ function Settings(default_callback) {
     }
 }
 
+/* Настройки шаблонизатора underscore.js в стиле Django */
+_.templateSettings = {
+    interpolate: /\{\{(.+?)\}\}/g,
+    evaluate: /\{\%(.+?)\%\}/g, 
+};
+/* Включение Underscore.string методов в пространство имён Underscore */
+_.mixin(_.str.exports());
+
 
 ////////////////////////////////////////////////////////////////////////
 //                               ОБЩИЕ                                //
@@ -487,7 +496,7 @@ function showAlert(msg, type, callback) {
     if (DEBUG) {console.log('function:'+'showAlert')};
     console.log(msg);
     if (!type) { type = 'alert-error' }
-    html = Jinja.render($('#jinja-alert').html(), { msg: msg, type: type });
+    html = TEMPLATES.alert({ msg: msg, type: type });
     $('#alert-place').html(html);
     $(window).scrollTop(0);
     $('.alert').alert();
@@ -560,10 +569,9 @@ function initDataTables(data) {
     if (DEBUG) {console.log('function:'+'initDataTables')};
     table = function() { return $('table[data-model="'+data.model+'"]');}
     if (table().length < 1) {
-        html = Jinja.render($('#jinja-model-datatables').html(), { data: data });
+        html = TEMPLATES.datatables(data);
         $('#tab-content_'+data.id).html(html);
     };
-    template = $('#jinja-datatables-column-pk').html();
     /* Init DataTables */
     var oTable = table().dataTable({
         "oLanguage": { "sUrl": "static/js/dataTables/1.9.4/"+data.oLanguage+".txt" },
@@ -585,7 +593,7 @@ function initDataTables(data) {
             })
         },
         "fnCreatedRow": function( nRow, aData, iDataIndex ) {
-            html = Jinja.render(template, { data: data, aData: aData });
+            html = TEMPLATES.datatables_pk({ data: data, aData: aData });
             $('td:eq(0)', nRow).html(html).find('a').click(addTab);
         },
         "aoColumnDefs": data.aoColumnDefs,
@@ -633,6 +641,7 @@ function addTab() {
     data['title'] = $(this).attr('title') || '';
     data['text']  = $(this).text();
     data['id'] = data.pk ? validatorID(data.model+'_'+data.pk) : validatorID(data.model);
+    if (!data.pk) {data.pk = null}; // для передачи в шаблон
     if (data.object) { $(this).addClass('muted'); }
 
     tab = $('#main-tab #tab_'+ data.id);
@@ -642,10 +651,10 @@ function addTab() {
         tab.find('a').tab('show');
     } else {
         // Контент вкладки
-        html = Jinja.render($('#jinja-tab-default-content').html(), { data: data });
+        html = TEMPLATES.tabContentDefault(data);
         $('#main-tab-content').append(html);
         // Сама вкладка
-        html = Jinja.render($('#jinja-tab').html(), { data: data });
+        html = TEMPLATES.tab(data);
         $('#main-tab').append(html);
         // Отображаем вкладку c небольшой задержкой
         delay(function() {
@@ -741,6 +750,15 @@ $(document).ready(function($) {
     else { $('div.navbar a[href="/"]').parents('li').addClass('active');}
     */
 
+
+    // Инициализация шаблонов Underscore
+    TEMPLATES.alert = _.template($('#underscore-alert').html());
+    TEMPLATES.tabContentObject = _.template($('#underscore-tab-content-object').html());
+    TEMPLATES.tabContentDefault = _.template($('#underscore-tab-content-default').html());
+    TEMPLATES.tab = _.template($('#underscore-tab').html());
+    TEMPLATES.datatables = _.template($('#underscore-datatables').html());
+    TEMPLATES.datatables_pk = _.template($('#underscore-datatables-pk').html());
+
     // Если настройки готовы, то запускаем все процессы
     if (SETTINGS.init().ready) {
         $('#search').focus();
@@ -753,7 +771,7 @@ $(document).ready(function($) {
         // Биндинги на кнопки
         $('body').on('click', 'button[data-action=reset-object]:enabled', resetObject);
         $('body').on('click', 'button[data-action=save-object]:enabled',  saveObject);
-        $('body').on('submit', 'form[id$=_object]', submitFormObject);
+        $('body').on('submit', 'form[id^=form-object]', submitFormObject);
 
         // Биндинги на поля объектов
         $('body').on('change', 'select[data-type=object_field]:enabled', changeFieldObject);

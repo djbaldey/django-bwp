@@ -1,8 +1,0 @@
-{% load bwp_verbatim %}{% verbatim %}{# Шаблон Jinja #}
-<div class="alert {{ type }} fade in">
-    <button type="button" class="close" data-dismiss="alert">×</button>
-    <h4>{% if type=="alert-error" %}Ошибка!{% elif type=="alert-warning" %}Внимание!{% else %}Сообщение.{% endif %}</h4>
-    <span class="alert-text">{{ msg }}</span>
-    {% if type=="alert-error" %}<h6><i>лог смотрите в консоли JavaScript</i></h6>{% endif %}
-</div>
-{% endverbatim %}

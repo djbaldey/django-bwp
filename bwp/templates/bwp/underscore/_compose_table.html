@@ -1,0 +1,18 @@
+{# Шаблон Underscore #}{% load bwp_verbatim %}{% verbatim %}
+<thead>
+{% _.each(cols, function(col) { %}
+    <th name="{{ col.name }}">{{ col.label }}</th>
+{% }); %}
+</thead>
+<tbody>
+{% _.each(rows, function(row) { %}
+<tr id="{% (row.model+'-'+row.pk).replace(/\./g, '-') %}"
+    data-model="{{ row.model }}"
+    data-pk="{{ row.pk }}">
+    {% _.each(cols, function(col) { %}
+        <td>{{ col }}</td>
+    {% }); %}
+</tr>
+{% }); %}
+</tbody>
+{% endverbatim %}

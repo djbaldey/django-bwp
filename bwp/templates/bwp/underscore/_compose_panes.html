@@ -1,8 +1,8 @@
-{% load bwp_verbatim %}{% verbatim %}{# Шаблон Jinja #}
-{% for compose in data.comps %}
-<div class="tab-pane" id="tab-content_{{ data.id }}_{{ compose.id }}">
+{# Шаблон Underscore #}{% load bwp_verbatim %}{% verbatim %}
+{% _.each(compositions, function(compose) { %}
+<div class="tab-pane" id="tab-content-compose-pane_{{ compose.id }}">
     <legend>{{ compose.label }}</legend>
-    <div class="btn-toolbar" id="div-actions_{{ data.id }}_{{ compose.id }}">
+    <div class="btn-toolbar" id="div-compose-actions_{{ compose.id }}">
         <button class="btn btn-mini"><i class="icon-plus"></i></button>
         <button class="btn btn-mini"><i class="icon-minus"></i></button>
         <button class="btn btn-mini"><i class="icon-edit"></i></button>
@@ -10,10 +10,11 @@
         <button class="btn btn-mini"><i class="icon-exclamation-sign"></i></button>
     </div>
     <table class="table table-bordered table-condensed"
-        data-model="{{ data.model }}"
-        data-pk="{{ data.object }}"
-        data-compose="{{ compose.model }}">
-        {# загрузка в таблицу производится позже #}
+        data-model="{{ compose.model }}"
+        data-pk="{{ compose.pk }}"
+        data-compose="{{ compose.compose }}">
+        {%/* загрузка в таблицу производится позже */%}
     </table>
 </div>
+{% }); %}
 {% endverbatim %}

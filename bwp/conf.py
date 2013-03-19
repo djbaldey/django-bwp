@@ -53,6 +53,8 @@ DJANGO_VERSION          = getattr(settings, 'DJANGO_VERSION',           '1.4')
 BOOTSTRAP_VERSION       = getattr(settings, 'BOOTSTRAP_VERSION',        '2.3.1')
 JQUERY_VERSION          = getattr(settings, 'JQUERY_VERSION',           '1.9.1')
 JQUERY_JSON_VERSION     = getattr(settings, 'JQUERY_JSON_VERSION',      '2.4')
+UNDERSCORE_VERSION      = getattr(settings, 'UNDERSCORE_VERSION',       '1.4.4')
+UNDERSCORE_STRING_VERSION = getattr(settings, 'UNDERSCORE_STRING_VERSION', '2.3.0')
 DATATABLES_VERSION      = getattr(settings, 'DATATABLES_VERSION',       '1.9.4')
 JS_JINJA_VERSION        = getattr(settings, 'JS_JINJA_VERSION',         '1.0')
 

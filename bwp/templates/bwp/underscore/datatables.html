@@ -1,11 +1,11 @@
-{% load bwp_verbatim %}{% verbatim %}{# Шаблон Jinja #}
-<table id="table-model_{{ data.id }}" data-model="{{ data.model }}"
+{# Шаблон Underscore #}{% load bwp_verbatim %}{% verbatim %}
+<table id="table-model_{{ id }}" data-model="{{ model }}"
     class="table table-condensed table-striped table-bordered table-hover">
     <thead>
         <tr>
-        {% for c in data.columns %}
+        {% _.each(columns, function(c) { %}
             <th data-toggle="tooltip" class="{{ c.classes }}" title="{{ c.title }}">{{ c.label }}</th>
-        {% endfor %}
+        {% }); %}
         </tr>
     </thead>
     <tbody></tbody>

@@ -97,41 +97,24 @@
 
 <!-- START: block jstemplates -->
     {% block jstemplates %}
-    <script type="text/jinja" id="jinja-model-datatables">
-        {% include "bwp/includes/jinja/_model_datatables.html" %}
+    <!-- underscore -->
+    <script type="text/x-underscore" id="underscore-datatables">
+        {% include "bwp/underscore/datatables.html" %}
     </script>
-    <script type="text/jinja" id="jinja-object-tab-content">
-        {% include "bwp/includes/jinja/_object_tab_content.html" %}
+    <script type="text/x-underscore" id="underscore-datatables-pk">
+        {% include "bwp/underscore/datatables_pk.html" %}
     </script>
-    <script type="text/jinja" id="jinja-object-form">
-        {% include "bwp/includes/jinja/_object_form.html" %}
+    <script type="text/x-underscore" id="underscore-alert">
+        {% include "bwp/underscore/alert.html" %}
     </script>
-    <script type="text/jinja" id="jinja-object-form-fields">
-        {% include "bwp/includes/jinja/_object_form_fields.html" %}
+    <script type="text/x-underscore" id="underscore-tab">
+        {% include "bwp/underscore/tab.html" %}
     </script>
-    <script type="text/jinja" id="jinja-compose-panes">
-        {% include "bwp/includes/jinja/_compose_panes.html" %}
+    <script type="text/x-underscore" id="underscore-tab-content-object">
+        {% include "bwp/underscore/tab_content_object.html" %}
     </script>
-    <script type="text/jinja" id="jinja-compose-table">
-        {% include "bwp/includes/jinja/_compose_table.html" %}
-    </script>
-    <script type="text/jinja" id="jinja-button-reset">
-        {% include "bwp/includes/jinja/_button_reset.html" %}
-    </script>
-    <script type="text/jinja" id="jinja-button-save">
-        {% include "bwp/includes/jinja/_button_save.html" %}
-    </script>
-    <script type="text/jinja" id="jinja-alert">
-        {% include "bwp/includes/jinja/_alert.html" %}
-    </script>
-    <script type="text/jinja" id="jinja-datatables-column-pk">
-        {% include "bwp/includes/jinja/_datatables_column_pk.html" %}
-    </script>
-    <script type="text/jinja" id="jinja-tab">
-        {% include "bwp/includes/jinja/_tab.html" %}
-    </script>
-    <script type="text/jinja" id="jinja-tab-default-content">
-        {% include "bwp/includes/jinja/_tab_default_content.html" %}
+    <script type="text/x-underscore" id="underscore-tab-content-default">
+        {% include "bwp/underscore/tab_content_default.html" %}
     </script>
     {% endblock %}
 <!-- END: block jstemplates -->
@@ -158,8 +141,9 @@
 {% block libjs %}
     <script src="{{ STATIC_URL }}js/jquery/{% SETTINGS 'JQUERY_VERSION' %}/jquery{% mini_library %}.js"></script>
     <script src="{{ STATIC_URL }}js/jquery-json/{% SETTINGS 'JQUERY_JSON_VERSION' %}/jquery.json{% mini_library %}.js"></script>
-    <script src="{{ STATIC_URL }}js/jinja/{% SETTINGS 'JS_JINJA_VERSION' %}/jinja{% mini_library %}.js"></script>
-    <script src="{{ STATIC_URL }}js/jinja/{% SETTINGS 'JS_JINJA_VERSION' %}/jinja.jquery{% mini_library %}.js"></script>
+    <script src="{{ STATIC_URL }}js/jsrender/{% SETTINGS 'JSRENDER_VERSION' %}/jsrender{% mini_library %}.js"></script>
+    <script src="{{ STATIC_URL }}js/underscore/{% SETTINGS 'UNDERSCORE_VERSION' %}/underscore{% mini_library %}.js"></script>
+    <script src="{{ STATIC_URL }}js/underscore-string/{% SETTINGS 'UNDERSCORE_STRING_VERSION' %}/underscore.string{% mini_library %}.js"></script>
     <script src="{{ STATIC_URL }}js/bootstrap/{% SETTINGS 'BOOTSTRAP_VERSION' %}/bootstrap{% mini_library %}.js"></script>
     <script src="{{ STATIC_URL }}js/dataTables/{% SETTINGS 'DATATABLES_VERSION' %}/jquery.dataTables.custom{% mini_library %}.js"></script>
     <script src="{{ STATIC_URL }}js/dataTables/{% SETTINGS 'DATATABLES_VERSION' %}/jquery.dataTables.bootstrap{% mini_library %}.js"></script>
@@ -175,7 +159,6 @@
     {% endif %}
 {% endblock %}
 <!-- END: block userjs -->
-
 
 <!-- START: block extrajs -->
     {% block extrajs %}{% endblock %}
