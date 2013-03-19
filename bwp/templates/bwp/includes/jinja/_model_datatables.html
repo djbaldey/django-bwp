@@ -1,0 +1,13 @@
+{% load bwp_verbatim %}{% verbatim %}{# Шаблон Jinja #}
+<table id="table-model_{{ data.id }}" data-model="{{ data.model }}"
+    class="table table-condensed table-striped table-bordered table-hover">
+    <thead>
+        <tr>
+        {% for c in data.columns %}
+            <th data-toggle="tooltip" class="{{ c.classes }}" title="{{ c.title }}">{{ c.label }}</th>
+        {% endfor %}
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+{% endverbatim %}

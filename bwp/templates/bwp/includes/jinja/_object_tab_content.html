@@ -3,7 +3,7 @@
     <div class="btn-group" data-toggle="buttons-radio">
         <a href="#" class="btn btn-mini active"
             data-toggle="tab"
-            data-target="#tab-content_{{ data.html_id }}_object">
+            data-target="#tab-content_{{ data.id }}_object">
             Объект
         </a>
     {% for compose in data.comps %}
@@ -14,7 +14,7 @@
         {% else %}
             data-toggle="tab"
         {% endif %}
-            data-target="#tab-content_{{ data.html_id }}_{{ compose.html_id }}">
+            data-target="#tab-content_{{ data.id }}_{{ compose.id }}">
             {{ compose.label }}
         </a>
     {% endfor %}

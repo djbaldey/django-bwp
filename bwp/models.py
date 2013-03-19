@@ -162,7 +162,6 @@ class BaseModel(object):
             текущего класса.
         """
         dic = dict([ (field.name, field) for field in self.get_fields() ])
-        dic['pk'] = self.opts.pk
         widget = get_widget_from_field(dic[field_name])
         if not widget.is_configured:
             if self.list_display_css.has_key(field_name):
@@ -358,24 +357,23 @@ class ComposeBWP(BaseModel):
                 ('real data value', 'frendly value'), # colX
             )
         """
-        related_model_name = str(obj._meta)
-        model = str(self.opts)
-        html_id = ('%s.%s.%s' % (related_model_name, obj.pk, self.related_name)
+        model = str(obj._meta)
+        compose = str(self.opts)
+        html_id = ('%s_%s_%s' % (model, obj.pk, compose)
             ).replace('.','-')
         data = {
-            'label': capfirst(unicode(self.verbose_name)),
-            'model': model, 'html_id': html_id,
-            'related_model': related_model_name,
-            'related_object': obj.pk,
+            'model':    model,
+            'pk':       obj.pk,
+            'id':       html_id,
+            'compose':  compose,
+            'label':    capfirst(unicode(self.verbose_name)),
         }
 
         # Permissions
         permissions = 'NOT IMPLEMENTED'
 
         # Widgets
-        widgets = [ self.prepare_widget('pk') ]
-        widgets.extend(self.get_widgets())
-        widgets = [ widget.get_dict() for widget in widgets ]
+        widgets = [ widget.get_dict() for widget in self.get_widgets() ]
 
         # Objects
         objects = getattr(obj, self.related_name)
@@ -431,9 +429,9 @@ class ModelBWP(BaseModel):
         # Object
         obj = self.queryset().select_related().get(pk=pk)
         model = str(self.opts)
-        html_id = ('%s.%s' %(model, obj.pk)).replace('.','-')
+        html_id = ('%s_%s' %(model, obj.pk)).replace('.','-')
         data = serializers.serialize('python', [obj], use_natural_keys=True)[0]
-        data.update({'label': unicode(obj), 'html_id': html_id})
+        data.update({'label': unicode(obj), 'id': html_id})
 
         # Widgetsets
         widgetsets = []
@@ -613,35 +611,25 @@ class ModelBWP(BaseModel):
             'model': str(meta),
             'title': unicode(meta.verbose_name).title(),
         }
-        temp_dict = params.copy()
-        temp_dict["html_id"] = str(meta).replace('.', '-')
-        temp_dict["columns"] = "".join([
-            '<th data-toggle="tooltip" class="%s" title="%s">%s</th>' % (list_display_css[x], x[1], x[0])
-            for x in list_display ])
-        #~ temp_dict["tools"] = '<td colspan="%s">qwerty</td>' % len(temp_dict["columns"])
-        html =  '<table id="table-model-%(html_id)s" data-model="%(model)s" '\
-                'class="table table-condensed table-striped table-bordered table-hover">'\
-                '<thead>'\
-                    '<tr>%(columns)s</tr>'\
-                '</thead>'\
-                '<tbody></tbody>'\
-                '</table>'
-                #~ ' cellspacing="0" cellpadding="0" border="0" style="margin-left: 0px; width: 100%%;"' \
-
-        return {
-            'model':    params['model'],
-            'title':    params['title'],
-            'html_id':  temp_dict['html_id'],
+        info = {
+            'model': params['model'],
+            'title': params['title'],
+            'id':    str(meta).replace('.', '-'),
+            'columns': [ { 'classes': list_display_css[x], 
+                           'title': x[1],
+                           'label': x[0],
+                         } for x in list_display ],
             'perms':    self.get_model_perms(request),
-            'html':     html % temp_dict,
-            "oLanguage":    settings.LANGUAGE_CODE,
-            "bProcessing":  True,
-            "bServerSide":  True,
-            "sAjaxSource":  redirect('bwp.views.datatables')['Location'],
-            "sServerMethod":    "POST",
-            "fnServerParams":   params.items(),
-            "bLengthChange":    True,
-            "sDom":         'lfrtip',
-            "sScrollY":     None, # default
-            "aoColumnDefs": [ not_bSortable, not_bVisible ],
+            # далее ключи datatables
+            "oLanguage":      settings.LANGUAGE_CODE,
+            "bProcessing":    True,
+            "bServerSide":    True,
+            "sAjaxSource":    redirect('bwp.views.datatables')['Location'],
+            "sServerMethod":  "POST",
+            "fnServerParams": params.items(),
+            "bLengthChange":  True,
+            "sDom":           'lfrtip',
+            "sScrollY":       None, # default
+            "aoColumnDefs":   [ not_bSortable, not_bVisible ],
         }
+        return info

@@ -1,14 +1,4 @@
-{% comment %}
-DataCompose = {
-                'model': 'app.model_compose',
-                'html_id': 'app-model-compose',
-                'cols':[{'name':'name_A', 'label': 'label', 'type':'text', },],
-                'rows':[
-                    {'pk': '1', 'name_A': 'value1', 'name_B': ('value2', 'label2')},
-                    {'pk': '2', 'name_A': 'value3', 'name_B': ('value4', 'label4')},
-                ],
-            }
-{% endcomment %}{% load bwp_verbatim %}{% verbatim %}{# Шаблон Jinja #}
+{% load bwp_verbatim %}{% verbatim %}{# Шаблон Jinja #}
 <thead>
 {% for col in data.cols %}
     <th name="{{ col.name }}">{{ col.label }}</th>
@@ -16,7 +6,9 @@ DataCompose = {
 </thead>
 <tbody>
 {% for row in data.rows %}
-<tr data-object="{{ row.pk }}">
+<tr id="{{ row.model|replace(/\./g, '-') }}-{{ row.pk|replace(/\./g, '-') }}"
+    data-model="{{ row.model }}"
+    data-pk="{{ row.pk }}">
     {% for col in data.cols %}
         <td></td>
     {% endfor %}

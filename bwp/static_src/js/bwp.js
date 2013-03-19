@@ -36,11 +36,239 @@
 ###############################################################################
 */
 
+
+////////////////////////////////////////////////////////////////////////
+//                              ОБЪЕКТЫ                               //
+////////////////////////////////////////////////////////////////////////
+
+/* Глобальный объект объектов DB
+ * Пример использования:
+========================================================================
+OBJECTS.append(object1) // добавление в словарь
+OBJECTS.append([ object1, object2, ... ]) // добавление в словарь
+
+OBJECTS.update(keyobject1, htmlwidget) // изменение объекта на странице
+
+OBJECTS.remove([ keyobject1, keyobject2, ... ]) // пометка на удаление для коммита
+OBJECTS.commit() // отправка на сервер всех изменений по всем моделям
+OBJECTS.commit(keymodel) // отправка на сервер списка всех изменённых объектов одной модели
+OBJECTS.commit([ keyobject1, keyobject2, ... ]) // отправка на сервер списка объектов
+OBJECTS.reload([ keyobject1, keyobject2, ... ]) // перезакгрузка из базы
+========================================================================
+* */
+function Objects() {
+    if (DEBUG) {console.log('function:'+'Objects')};
+    /* Установка ссылки на свой объект для вложенных функций */
+    self = this;
+    /* Хранилища объектов */
+    _objects = {};
+
+    /* Добавление или замена существующих */
+    _append = function(objects) {
+        // преобразовываем единственный в список
+        if ($.type(objects) != 'array') { objects = [objects] };
+        keys = []
+        $.each(objects, function(index, item) {
+            // Обычный объект модели с полями и ключом
+            if (item.pk && item.model && item.fields) {
+                key = item.model+'.'+item.pk;
+                _objects[key] = item;
+                keys.push(key);
+            }
+            // Объект без ключа, т.е. новый
+            else if (item.temppk && item.model && item.fields) {
+                key = item.model+'.'+item.temppk;
+                _objects[key] = item;
+                keys.push(key);
+            }
+            // Объект не подходит ни подо что
+            else {
+                console.log('Ошибка добавления объекта:');
+                console.log(item);
+            };
+        });
+        return keys;
+    };
+    this.append = _append
+
+    /* Фиксация изменений, произведённых на странице */
+    _update = function(key, widget) {
+        name      = $(widget).attr('name');
+        value     = $(widget).attr('value');
+        datavalue = $.data(widget, 'value') || $(widget).attr('data-value');
+
+        if ($.type(name)      === "undefined") {return false;}
+        if ($.type(value)     === "undefined") {return false;}
+        if ($.type(datavalue) === "undefined") {return false;}
+
+        field = _objects[key]['fields'][name];
+        if ($.type(field) === "array") { field = [datavalue, value] }
+        else { field = datavalue };
+        return true;
+    };
+    this.update = _update
+
+    /* Пометка на удаление для коммита или удаление нового,
+     * ещё не созданного на сервере.
+     */
+    _remove = function(keys) {
+        notexists = []
+        $.each(keys, function(index, key) {
+            if (_objects[key]) {
+                if (_objects[key]['new']) {
+                    delete _objects[key];
+                } else { _objects[key]['remove'] = true; };
+            } else { notexists.push(key) };
+        });
+        return notexists;
+    };
+    this.append = _append
+
+    /* Отправка на сервер в синхронном режиме.
+     * Аргументом может выступать:
+     * - название модели, например "auth.user" (сохранит все измененные объекты модели);
+     * - список ключей объектов (сохранит выбранные объекты с изменениями)
+     * Если аргумент отсутствует - сохранит все изменённые объекты.
+     */
+    _commit = function(keys) {
+        objects = []
+        sync = true;
+        args = { method: "commit", objects: objects };
+
+        // Проверка на изменения
+        _valid = function(item) {
+            if (item.change || item.remove || item.new) { return true; };
+            return false;
+        };
+
+        // Выборка всех
+        if ($.type(keys) === "undefined") {
+            $.each(_objects, function(key, item) {
+                if (_valid(item)) { objects.push(item) }
+            });
+        }
+        // Выборка по модели
+        else if ($.type(keys) === "string") {
+            $.each(_objects, function(key, item) {
+                if ((item.model == keys) && (_valid(item))) {
+                    objects.push(item)
+                }
+            });
+        }
+        // Выборка указанных списком
+        else if ($.type(keys) === "array") {
+            $.each(keys, function(index, key) {
+                item = _objects[key]
+                if (_valid(item)) { objects.push(item) }
+            });
+        };
+
+        // Callback ответа сервера
+        cb = function(json, status, xhr) {
+            // Сервер ответил False
+            if (!json.data) { showAlert(json.message) }
+            // Нормальный ответ
+            else {
+                _last_commit = new Date();
+                $.each(keys, function(index, item) {
+                    if (_objects[item]['remove'] || _objects[item]['new']) {
+                        delete _objects[item]
+                    }
+                });
+            }
+        }
+        jqxhr = new jsonAPI(args, cb, 'OBJECTS.commit() call jsonAPI()', sync)
+        return jqxhr;
+    };
+    this.commit = _commit
+
+    /* Загрузка с сервера актуальных данных */
+    // TODO: реализовать
+    _reload = function(keys) {};
+    this.reload = _reload
+}
+
+/* Формирует HTML на вкладке объекта */
+function createObjectContent(data) {
+    if (DEBUG) {console.log('function:'+'createObjectContent')};
+    html = Jinja.render($('#jinja-object-tab-content').html(), { data: data });
+    $('#tab-content_'+data.id).html(html);
+    OBJECTS.append(data)
+    //~ TODO: сделать загрузку композиций
+};
+
+/* Обрабатывает изменения полей объекта */
+function changeFieldObject() {
+    if (DEBUG) {console.log('function:'+'changeFieldObject')};
+    console.log('changeFieldObject()');
+}
+
+/* Восстанавливает объект */
+function resetObject() {
+    if (DEBUG) {console.log('function:'+'resetObject')};
+    console.log('resetObject()');
+}
+
+/* Сохраняет объект в DB */
+function saveObject(self) {
+    if (DEBUG) {console.log('function:'+'saveObject')};
+    $self = $(this); // button
+    //~ model = $self.attr('data-model');
+    //~ object = $self.attr('data-object');
+    //~ html_id = $self.attr('data-html-id');
+    //~ tab = $('#tab-content-'+html_id+'_object')
+    //~ form = $('#form-'+html_id+'_object');
+    //~ if (object) {
+        //~ args = { 
+            //~ method:'object_action', model:model, key:'upd',
+            //~ pk:object, ARRAY_FORM_OBJECT_KEY: form.serializeArray(),
+        //~ }
+        //~ callback = function(json, status, xhr) {
+            //~ var data = json.data;
+            //~ createObjectContent(data);
+        //~ };
+        //~ jqxhr = new jsonAPI(args, callback, 'saveObject() "if (object)" call jsonAPI()');
+    //~ }
+}
+
+/* Сохраняет объект в DB без нажатия на кнопку */
+function submitFormObject() {
+    if (DEBUG) {console.log('function:'+'submitFormObject')};
+    $(this).find('button[data-action=save]:enabled').click();
+}
+
+/* Восстанавливает вложенные объекты */
+function resetCompose() {
+    if (DEBUG) {console.log('function:'+'resetCompose')};
+    console.log('resetCompose()');
+}
+
+/* Сохраняет вложенные объекты в DB */
+function saveCompose() {
+    if (DEBUG) {console.log('function:'+'saveCompose')};
+    $self = $(this); // button
+    //~ model = $self.attr('data-model');
+    //~ object = $self.attr('data-object');
+    //~ html_id = $self.attr('data-html-id');
+    //~ tab = $('#tab-content-'+html_id+'_object')
+    //~ form = $('#form-'+html_id+'**************COMPOSE*********');
+    //~ if (object) {
+        //~ args = { 
+            //~ method:'object_action', model:model, key:'set',
+            //~ pk:object, arrayObjectForm: form.serializeArray(),
+        //~ }
+        //~ callback = function(json, status, xhr) {
+            //~ var data = json.data;
+        //~ };
+        //~ jqxhr = new jsonAPI(args, callback, 'saveObject() "if (object)" call jsonAPI()');
+    //~ }
+}
+
+
 ////////////////////////////////////////////////////////////////////////
 //                            НАСТРОЙКИ                               //
 ////////////////////////////////////////////////////////////////////////
 
-window.SETTINGS = new Settings();
 /* Глобальный объект настроек
  * Пример использования:
 ========================================================================
@@ -61,6 +289,7 @@ if (SETTINGS.init().ready) {
 * Функции "callback" - необязательны.
 */
 function Settings(default_callback) {
+    if (DEBUG) {console.log('function:'+'Settings')};
     /* Установка ссылки на свой объект для вложенных функций */
     self = this;
     /* Проверка возможности исполнения */
@@ -206,22 +435,56 @@ function Settings(default_callback) {
     }
 }
 
+
 ////////////////////////////////////////////////////////////////////////
 //                               ОБЩИЕ                                //
 ////////////////////////////////////////////////////////////////////////
 
 /* Единая, переопределяемая задержка для действий или функций */
 var delay = (function(){
-  var timer = 0;
-  return function(callback, ms){
-    clearTimeout (timer);
-    timer = setTimeout(callback, ms);
-  };
+    if (DEBUG) {console.log('function:'+'delay')};
+    var timer = 0;
+    return function(callback, ms){
+        clearTimeout (timer);
+        timer = setTimeout(callback, ms);
+    };
 })();
 
+/* Генератор идентификаторов, которому можно задавать статические
+ * начало и конец идентификатора, например:
+ *  >> id = generatorID()
+ *  >> "gen1363655293735"
+ *  >> id = generatorID(null, "object")
+ *  >> "gen1363655293736_object"
+ *  >> id = generatorID("object")
+ *  >> "object_gen1363655293737"
+ *  >> id = generatorID("model", "object")
+ *  >> "model_gen1363655293738_object"
+ */
+function generatorID(prefix, postfix) {
+    if (DEBUG) {console.log('function:'+'generatorID')};
+    var result = 'gen';
+    if (prefix) { result += prefix + '_' };
+    result += $.now();
+    if (postfix) { result += '_' + postfix };
+    return validatorID(result);
+}
+
+/* Приводит идентификаторы в позволительный jQuery вид.
+ * В данном приложении он заменяет точки на "-"
+ */
+function validatorID(string) {
+    if (DEBUG) {console.log('function:'+'validatorID')};
+    return string.replace(/[\.,\:,\/, ,\(,\),=,?]/g, "-");
+}
+
 /* Общие функции вывода сообщений */
-function hideAlert() { $('.alert').alert('close'); }
+function hideAlert() {
+    if (DEBUG) {console.log('function:'+'hideAlert')};
+    $('.alert').alert('close');
+}
 function showAlert(msg, type, callback) {
+    if (DEBUG) {console.log('function:'+'showAlert')};
     console.log(msg);
     if (!type) { type = 'alert-error' }
     html = Jinja.render($('#jinja-alert').html(), { msg: msg, type: type });
@@ -235,7 +498,7 @@ function showAlert(msg, type, callback) {
 
 /* Общая функция для работы с django-quickapi */
 function jsonAPI(args, callback, to_console, sync) {
-    if (DEBUG) {console.log($.toJSON(args))};
+    if (DEBUG) {console.log('function:'+'jsonAPI')};
     if (!args) { var args = { method: "get_settings" } };
     if (!callback) { callback = function(json, status, xhr) {} };
     var jqxhr = $.ajax({
@@ -262,24 +525,31 @@ function jsonAPI(args, callback, to_console, sync) {
     // Обработка полученных данных
     .done(function(json, status, xhr) {
         if (to_console) { if (DEBUG) {console.log(to_console)}; };
+        /* При переадресации нужно отобразить сообщение на некоторое время,
+         * а затем выполнить переход по ссылке, добавив GET-параметр для
+         * возврата на текущую страницу
+         */
         if ((json.status >=300) && (json.status <400) && (json.data.Location)) {
-            // При переадресации нужно отобразить сообщение,
-            // а затем выполнить переход по ссылке, добавив параметр для
-            // возврата на текущую страницу
             showAlert(json.message, 'alert-error', function() {
                 window.location.href = json.data.Location
                 .replace(/\?.*$/, "?next=" + window.location.pathname);
             });
-        } else if (json.status >=400) {
-            // При ошибках извещаем пользователя
+        }
+        /* При ошибках извещаем пользователя полученным сообщением */
+        else if (json.status >=400) {
             showAlert(json.message, 'alert-error');
-        } else {
-            // При нормальном возврате
+        }
+        /* При нормальном возврате в debug-режиме выводим в консоль
+         * сообщение
+         */
+        else {
+            if (DEBUG) {console.log($.toJSON(json.message))};
             return callback(json, status, xhr);
         };
     })
     return jqxhr
 };
+
 
 ////////////////////////////////////////////////////////////////////////
 //                            DATATABLES                              //
@@ -287,10 +557,15 @@ function jsonAPI(args, callback, to_console, sync) {
 
 /* Инициализация DataTables */
 function initDataTables(data) {
-    table = $('table[data-model="'+data.model+'"]');
+    if (DEBUG) {console.log('function:'+'initDataTables')};
+    table = function() { return $('table[data-model="'+data.model+'"]');}
+    if (table().length < 1) {
+        html = Jinja.render($('#jinja-model-datatables').html(), { data: data });
+        $('#tab-content_'+data.id).html(html);
+    };
     template = $('#jinja-datatables-column-pk').html();
     /* Init DataTables */
-    var oTable = table.dataTable({
+    var oTable = table().dataTable({
         "oLanguage": { "sUrl": "static/js/dataTables/1.9.4/"+data.oLanguage+".txt" },
         //~ "sScrollY": '400px',
         "bProcessing": data.bProcessing,
@@ -303,15 +578,11 @@ function initDataTables(data) {
             });
         },
         "fnRowCallback": function( nRow, aData, iDisplayIndex ) {
-            $(nRow)
-            .bind("click", function() {
+            $(nRow).bind("click", function() {
                 $(oTable).find('tbody tr.info').removeClass('info');
-                if (DEBUG) { console.log('click') };
+                if (DEBUG) { console.log('addClass("info")') };
                 $(nRow).addClass('info');
             })
-            //~ .bind("dblclick", function() {
-                //~ dblClickRow(oTable, nRow)
-            //~ });
         },
         "fnCreatedRow": function( nRow, aData, iDataIndex ) {
             html = Jinja.render(template, { data: data, aData: aData });
@@ -333,6 +604,7 @@ function initDataTables(data) {
 
 /* Обработчик двойного клика по строке в таблице модели */
 function dblClickRow(oTable, nRow) {
+    if (DEBUG) {console.log('function:'+'dblClickRow')};
     console.log(oTable);
     console.log(nRow);
     //~ $('div.toolbar').html('<button class="btn btn-primary btn-mini">Btn</button>');
@@ -340,6 +612,7 @@ function dblClickRow(oTable, nRow) {
 
 /* Table showing and hiding columns */
 function fnShowHide( model, iCol ) {
+    if (DEBUG) {console.log('function:'+'fnShowHide')};
     table = $('table[data-model="'+model+'"]');
     /* Get the DataTables object again - this is not a recreation, just a get of the object */
     var oTable = table.dataTable();
@@ -348,18 +621,22 @@ function fnShowHide( model, iCol ) {
     return false;
 }
 
+
 ////////////////////////////////////////////////////////////////////////
 //                              ВКЛАДКИ                               //
 ////////////////////////////////////////////////////////////////////////
 
 /* Добавляет вкладки на рабочую область */
 function addTab() {
-    data   = $(this).data();
-    tab_id = data.tabId;
+    if (DEBUG) {console.log('function:'+'addTab')};
+    data          = $(this).data();
+    data['title'] = $(this).attr('title') || '';
+    data['text']  = $(this).text();
+    data['id'] = data.pk ? validatorID(data.model+'_'+data.pk) : validatorID(data.model);
     if (data.object) { $(this).addClass('muted'); }
-    
-    tab = $('#main-tab #tab-'+ tab_id);
-    
+
+    tab = $('#main-tab #tab_'+ data.id);
+    console.log(data)
     if (tab.length > 0) {
         // Отображаем вкладку
         tab.find('a').tab('show');
@@ -374,56 +651,57 @@ function addTab() {
         delay(function() {
             a = $('#main-tab a:last').tab('show');
             contentLoader(a[0]);
-        }, 200);
-        // Переустанавливаем биндинги на закрытие вкладок и их контента
-        $('#main-tab li button.close').unbind('click').click(function() {
-            close_tab_id = $(this).attr('data-close');
-            $('#tab-'+close_tab_id).remove();
-            $('#tab-content-'+close_tab_id).remove();
-            // Удаляем из хранилища информацию об открытой вкладке
-            num = $.inArray(close_tab_id, SETTINGS.local.tabs);
-            if (num > -1) {
-                delete SETTINGS.local.tabs[num];
-                SETTINGS.cleanTabs().save_local();
-            };
-        });
+        }, 50);
         // Добавляем вкладку в хранилище, если её там нет
         // (т.к. эту же функцию использует восстановление сессии). 
-        if ($.inArray(tab_id, SETTINGS.local.tabs) < 0) {
-            SETTINGS.local.tabs.push(tab_id);
+        if ($.inArray(data.id, SETTINGS.local.tabs) < 0) {
+            SETTINGS.local.tabs.push(data.id);
             SETTINGS.save_local();
         }
         // Устанавливаем одиночный биндинг на загрузку контента при щелчке на вкладке
         //~ console.log(tab_id)
-        a = $('#tab-'+tab_id+' a').one('click', function() {contentLoader(this)});
+        a = $('#tab_'+data.id+' a').one('click', function() { contentLoader(this) });
         //~ console.log(a)
     }
     return true;
 }
 
+/* Удаляет вкладки с рабочей области и из локальной памяти */
+function removeTab() {
+    if (DEBUG) {console.log('function:'+'removeTab')};
+    id = validatorID($(this).attr('data-id'));
+    $('#tab_'+id).remove();
+    $('#tab-content_'+id).remove();
+    // Удаляем из хранилища информацию об открытой вкладке
+    num = $.inArray(id, SETTINGS.local.tabs);
+    if (num > -1) {
+        delete SETTINGS.local.tabs[num];
+        SETTINGS.cleanTabs().save_local();
+    };
+}
+
 /* Загружает во вкладку необходимый контент */
 function contentLoader(obj) {
+    if (DEBUG) {console.log('function:'+'contentLoader')};
     // Загрузка контента во вкладку
     $obj = $(obj);
     model  = $obj.attr('data-model');
-    func   = $obj.attr('data-func');
-    object = $obj.attr('data-object');
-    if (object) {
-        args = { method:'object_action', model:model, key:'get', pk:object }
+    pk = $obj.attr('data-pk');
+    // Загрузка объекта модели
+    if (pk) {
+        args = { method:'object_action', model:model, key:'get', pk:pk }
         callback = function(json, status, xhr) {
-            var data = json.data;
-            createObjectContent(data);
+            createObjectContent(json.data);
         };
-        jqxhr = new jsonAPI(args, callback, 'contentLoader(obj) "if (object)" call jsonAPI()');
-    } else if (model) {
-        jqxhr = new $.getJSON(BWP_DATATABLES_URL, { model: model, info: true },
-            function(data, status) {
-                $('#tab-content-'+data.html_id).html(data.html);
-                initDataTables(data);
-            }
-        );
-    } else if (func) {
-        if (DEBUG) { console.log('Type is func') };
+        jqxhr = new jsonAPI(args, callback, 'contentLoader(obj) "if (pk)" call jsonAPI()');
+    }
+    // Загрузка модели приложения (Datatables.net)
+    else if (model) {
+        args = { method:'datatables_info', model: model, info: true }
+        callback = function(json, status, xhr) {
+            initDataTables(json.data);
+        }
+        jqxhr = new jsonAPI(args, callback, 'contentLoader(obj) "if (model)" call jsonAPI()');
     }
     // Удаление привязки клика на вкладке
     $obj.unbind('click');
@@ -432,99 +710,43 @@ function contentLoader(obj) {
 
 /* Восстанавливает вкладки, открытые до обновления страницы */
 function restoreSession() {
+    if (DEBUG) {console.log('function:'+'restoreSession')};
     $.each(SETTINGS.local.tabs, function(i, item) {
         $('[data-tab-id='+item+']').click();
     });
 }
 
-////////////////////////////////////////////////////////////////////////
-//                              ОБЪЕКТЫ                               //
-////////////////////////////////////////////////////////////////////////
-
-/* Формирует HTML на вкладке объекта */
-function createObjectContent(data) {
-    html = Jinja.render($('#jinja-object-tab-content').html(), { data: data });
-    $('#tab-content-'+data.html_id).html(html);
-    //~ TODO: сделать загрузку композиций
-};
-
-/* Восстанавливает объект */
-function resetObject() {
-    console.log('resetObject()');
-    $self = $(this); // button
-    model = $self.attr('data-model');
-    object = $self.attr('data-object');
-    html_id = $self.attr('data-html-id');
-    tab = $('#tab-content-'+html_id+'_object')
-    form = $('#form-'+html_id+'_object');
-    //~ form.resetForm();
-}
-
-/* Сохраняет объект в DB */
-function saveObject(self) {
-    $self = $(this); // button
-    model = $self.attr('data-model');
-    object = $self.attr('data-object');
-    html_id = $self.attr('data-html-id');
-    tab = $('#tab-content-'+html_id+'_object')
-    form = $('#form-'+html_id+'_object');
-    if (object) {
-        args = { 
-            method:'object_action', model:model, key:'upd',
-            pk:object, ARRAY_FORM_OBJECT_KEY: form.serializeArray(),
-        }
-        callback = function(json, status, xhr) {
-            var data = json.data;
-            createObjectContent(data);
-        };
-        jqxhr = new jsonAPI(args, callback, 'saveObject() "if (object)" call jsonAPI()');
-    }
-}
-
-/* Сохраняет объект в DB без нажатия на кнопку */
-function submitFormObject() {
-    $(this).find('button[data-action=save]:enabled').click();
-}
-
-/* Восстанавливает вложенные объекты */
-function resetCompose() {
-    console.log('resetCompose()');
-}
-
-/* Сохраняет вложенные объекты в DB */
-function saveCompose() {
-    $self = $(this); // button
-    model = $self.attr('data-model');
-    object = $self.attr('data-object');
-    html_id = $self.attr('data-html-id');
-    tab = $('#tab-content-'+html_id+'_object')
-    form = $('#form-'+html_id+'**************COMPOSE*********');
-    //~ if (object) {
-        //~ args = { 
-            //~ method:'object_action', model:model, key:'set',
-            //~ pk:object, arrayObjectForm: form.serializeArray(),
-        //~ }
-        //~ callback = function(json, status, xhr) {
-            //~ var data = json.data;
-        //~ };
-        //~ jqxhr = new jsonAPI(args, callback, 'saveObject() "if (object)" call jsonAPI()');
-    //~ }
-}
 
 ////////////////////////////////////////////////////////////////////////
 //                            ИСПОЛНЕНИЕ                              //
 ////////////////////////////////////////////////////////////////////////
 
-/* Execute something after load page */
+/* Выполнение чего-либо после загрузки страницы */
 $(document).ready(function($) {
+    if (DEBUG) {console.log('function:'+'$(document).ready')};
+    /* сначала инициализируем объекты, затем настройки, иначе не работает
+     * TODO: Найти объяснение.
+     */
+    window.OBJECTS = new Objects();
+    window.SETTINGS = new Settings();
+
+    // Инициализация для Bootstrap
     $("alert").alert();
+    $(".dropdown-toggle").dropdown();
+
+    /* Подсветка ссылок навигатора согласно текущего положения
+     * TODO: выяснить необходимость?
+    var path = window.location.pathname;
+    if (path != '/') { $('div.navbar a[href^="'+path+'"]').parents('li').addClass('active');}
+    else { $('div.navbar a[href="/"]').parents('li').addClass('active');}
+    */
+
+    // Если настройки готовы, то запускаем все процессы
     if (SETTINGS.init().ready) {
-        $(".dropdown-toggle").dropdown();
-        var path = window.location.pathname;
-        if (path != '/') { $('div.navbar a[href^="'+path+'"]').parents('li').addClass('active');}
-        else { $('div.navbar a[href="/"]').parents('li').addClass('active');}
         $('#search').focus();
-        $('#menu-app li[class!=disabled] a[data-tab-id]').click(addTab);
+        // Биндинги на открытие-закрытие вкладок и их контента
+        $('#menu-app li[class!=disabled] a[data-model]').click(addTab);
+        $('#main-tab').on('click', 'button.close[data-id]', removeTab)
 
         restoreSession();
 
@@ -532,7 +754,13 @@ $(document).ready(function($) {
         $('body').on('click', 'button[data-action=reset-object]:enabled', resetObject);
         $('body').on('click', 'button[data-action=save-object]:enabled',  saveObject);
         $('body').on('submit', 'form[id$=_object]', submitFormObject);
+
+        // Биндинги на поля объектов
+        $('body').on('change', 'select[data-type=object_field]:enabled', changeFieldObject);
+        $('body').on('change', 'input[data-type=object_field]:enabled', changeFieldObject);
         
-    };
+    } else {
+        console.log("ОШИБКА! Загрузка настроек не удалась.");
+    }
 });
 

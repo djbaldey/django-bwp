@@ -1,19 +1,8 @@
-{% comment %}
-Compose = {
-                'label': 'model_compose.verbose_name',
-                'model': 'app.model_compose',
-                'html_id': 'app-model-compose',
-<!--
-                'columns':[{'name': 'name', 'label': 'label', 'tag': 'input', 'type': 'text'},],
--->
-                'perms':{'add':True, 'change':True, 'delete':True},
-                'actions':[{<action_1>},{<action_2>}]
-            }
-{% endcomment %}{% load bwp_verbatim %}{% verbatim %}{# Шаблон Jinja #}
+{% load bwp_verbatim %}{% verbatim %}{# Шаблон Jinja #}
 {% for compose in data.comps %}
-<div class="tab-pane" id="tab-content_{{ data.html_id }}_{{ compose.html_id }}">
+<div class="tab-pane" id="tab-content_{{ data.id }}_{{ compose.id }}">
     <legend>{{ compose.label }}</legend>
-    <div class="btn-toolbar" id="div-actions_{{ data.html_id }}_{{ compose.html_id }}">
+    <div class="btn-toolbar" id="div-actions_{{ data.id }}_{{ compose.id }}">
         <button class="btn btn-mini"><i class="icon-plus"></i></button>
         <button class="btn btn-mini"><i class="icon-minus"></i></button>
         <button class="btn btn-mini"><i class="icon-edit"></i></button>
@@ -22,8 +11,8 @@ Compose = {
     </div>
     <table class="table table-bordered table-condensed"
         data-model="{{ data.model }}"
-        data-object="{{ data.object }}"
-        data-compose-model="{{ compose.model }}">
+        data-pk="{{ data.object }}"
+        data-compose="{{ compose.model }}">
         {# загрузка в таблицу производится позже #}
     </table>
 </div>

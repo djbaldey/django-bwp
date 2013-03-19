@@ -43,6 +43,7 @@ from bwp.models import ModelBWP, ComposeBWP
 from models import *
 
 class OrgCompose(ComposeBWP):
+    fields = ('title', 'fulltitle')
     model = Org
 
 class PersonCompose(ComposeBWP):

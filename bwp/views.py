@@ -137,7 +137,7 @@ def get_json_response(content, **kwargs):
     add_never_cache_headers(response)
     return response
 
-def datatables(request):
+def datatables(request, model=None, info=None, serialize=True):
     """ Представление для работы с DataTables """
     ctx = {'DEBUG': settings.DEBUG}
     app_dict = {}
@@ -146,13 +146,17 @@ def datatables(request):
         return get_json_response(None)
 
     model_bwp = None
-    if 'model' in request.REQUEST:
-        model = request.REQUEST.get('model')
+    if model or 'model' in request.REQUEST:
+        model = request.REQUEST.get('model', model)
         model_bwp = site.bwp_dict.get(model)
     if model_bwp:
-        if 'info' in request.REQUEST:
-            return get_json_response(model_bwp.datatables_get_info(request))
-        return get_json_response(model_bwp.datatables_get_data(request))
+        if info or 'info' in request.REQUEST:
+            if serialize:
+                return get_json_response(model_bwp.datatables_get_info(request))
+            return model_bwp.datatables_get_info(request)
+        elif serialize:
+            return get_json_response(model_bwp.datatables_get_data(request))
+        return model_bwp.datatables_get_data(request)
     return get_json_response({'sError': 'No model'})
 
 ########################################################################
@@ -242,9 +246,25 @@ def API_object_action(request, model, key, pk=None, **kwargs):
 
     return JSONResponse(data=data)
 
+@api_required
+@login_required
+def API_datatables_info(request, model, **kwargs):
+    """ *Возвращает специализированные для Datatables.net данные.*
+        
+        ##### ЗАПРОС
+        Параметры:
+        
+        1. **"model"** - уникальное название модели, например: "auth.user".
+        
+        ##### ОТВЕТ
+        Формат ключа **"data"**: TODO: расписать.
+    """
+    return JSONResponse(data=datatables(request, model, info=True, serialize=False))
+
 QUICKAPI_DEFINED_METHODS = {
     'get_settings': 'bwp.views.API_get_settings',
     'object_action': 'bwp.views.API_object_action',
+    'datatables_info': 'bwp.views.API_datatables_info',
 }
 
 @csrf_exempt

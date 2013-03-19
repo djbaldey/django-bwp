@@ -5,13 +5,13 @@
         {% if item.tag %}
             {% if item.attr.type != 'hidden' %}
                 <div class="control-group">
-                    <label class="control-label" for="{{ data.html_id }}_{{ item.name }}">
+                    <label class="control-label" for="{{ data.id }}_{{ item.name }}">
                         {{ item.label }}
                     </label>
                     <div class="controls">
             {% endif %}
             {% if item.tag == 'input' %}
-                <input id="{{ data.html_id }}_{{ item.name }}"
+                <input id="{{ data.id }}_{{ item.name }}"
                 {% for key, val  in item.attr %}
                     {% if not key in ['value', 'name'] %}
                         {{ key }}="{{ val }}"
@@ -66,13 +66,13 @@
         {% if item.tag %}
             {% if item.attr.type != 'hidden' %}
                 <div class="control-group">
-                    <label class="control-label" for="{{ data.html_id }}_{{ item.name }}">
+                    <label class="control-label" for="{{ data.id }}_{{ item.name }}">
                         {{ item.label }}
                     </label>
                     <div class="controls">
             {% endif %}
             {% if item.tag == 'input' %}
-                <input id="{{ data.html_id }}_{{ item.name }}"
+                <input id="{{ data.id }}_{{ item.name }}"
                 {% for key, val  in item.attr %}
                     {% if not key in ['value', 'name'] %}
                         {{ key }}="{{ val }}"
