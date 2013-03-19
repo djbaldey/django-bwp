@@ -129,7 +129,7 @@ class LogEntry(models.Model):
 class BaseModel(object):
     """ Functionality common to both ModelBWP and ComposeBWP."""
 
-    list_display = ('__unicode__', 'pk')
+    list_display = ('__unicode__',)
     list_display_css = {'pk': 'input-micro', 'id': 'input-micro'} # by default
     show_column_pk = False
 
