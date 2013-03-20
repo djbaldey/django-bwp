@@ -598,6 +598,7 @@ function initDataTables(data) {
         "aoColumnDefs": data.aoColumnDefs,
         "sPaginationType": "bootstrap",
         "sDom": data.sDom || 'lfrtip',
+        "bFilter": data.bFilter,
         "bLengthChange": data.bLengthChange || true,
         "bStateSave": data.bStateSave || true,
         "fnServerData": function( sUrl, aoData, fnCallback, oSettings ) {

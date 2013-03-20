@@ -735,6 +735,7 @@ class ModelBWP(BaseModel):
             "bLengthChange":  True,
             "sDom":           'lfrtip',
             "sScrollY":       None, # default
+            "bFilter":        bool(self.search_fields),
             "aoColumnDefs":   [ not_bSortable, not_bVisible ],
         }
         return info
