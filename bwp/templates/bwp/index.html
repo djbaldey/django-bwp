@@ -16,16 +16,15 @@
                 <ul class="dropdown-menu" role="menu">
                 {% for app in app_list %}
                     <li class="dropdown-submenu">
-                        <a tabindex="-1" href="#">{% app_label_locale app.name %}</a>
+                        <a tabindex="-1" href="#">{% app_label_locale app.label %}</a>
                         <ul class="dropdown-menu">
                         {% for model in app.models %}
                             <li>
                                 <a href="javascript:void(0)" 
-                                    data-model="{{ model.id }}"
-                                    data-tab-id="{{ model.html_id }}"
-                                    data-tab-title="{% app_label_locale app.name %}"
-                                    data-tab-text="{{ model.name }}"
-                                >{{ model.name }}</a>
+                                    data-model="{{ model.name }}"
+                                    data-id="{{ model.id }}"
+                                    data-title="{% app_label_locale app.label %}"
+                                >{{ model.label }}</a>
                             </li>
                         {% endfor %}
                         </ul>
@@ -48,9 +47,8 @@
                             <li>
                                 <a href="javascript:void(0)" 
                                     data-func="{{ subfunc.id }}"
-                                    data-tab-id="{{ subfunc.html_id }}"
-                                    data-tab-title="{{ subfunc.verbose_name }}"
-                                    data-tab-text="{{ subfunc.name }}"
+                                    data-id="{{ subfunc.html_id }}"
+                                    data-title="{{ subfunc.verbose_name }}"
                                 >{{ subfunc.name }}</a>
                             </li>
                         {% endfor %}

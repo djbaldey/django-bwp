@@ -59,13 +59,6 @@ try:
     f.close()
 except:
     AUTHORS = (u'Webmaster Name', u'Manager Name')
-COPYRIGHT = u'Company Name'
-COPYRIGHT_YEAR = 2010 # start year of copyright
-PROJECT_NAME = u'BWP Example Project'
-PROJECT_SHORTNAME = u'BWP'
-PROJECT_DESCRIPTION = 'Example Project For My Friend'
-VERSION = '1.0'
-VERSION_DATE = '01.01.2013г.'
 
 DATABASES = {
     'default': {
@@ -260,7 +253,7 @@ LOGGING = {
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
-        'KEY_PREFIX': '_%s_' % unicode(PROJECT_SHORTNAME.replace(' ', '_')),
+        'KEY_PREFIX': '_%s_' % 'BWP',
         'LOCATION': [
             '127.0.0.1:11211',
         ]

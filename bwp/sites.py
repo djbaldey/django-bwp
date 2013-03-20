@@ -109,6 +109,9 @@ class BWPSite(object):
             # Instantiate the bwp class to save in the registry
             self._registry[model] = bwp_class(model, self)
 
+            # В модели делаем ссылку на сайт, это нужно для доступа к нему
+            model.site = self
+
     def unregister(self, model_or_iterable):
         """
         Unregisters the given model(s).
@@ -153,14 +156,17 @@ class BWPSite(object):
             raise ImproperlyConfigured("Put 'django.contrib.auth.context_processors.auth' "
                 "in your TEMPLATE_CONTEXT_PROCESSORS setting in order to use the bwp application.")
 
-    @property
-    def bwp_dict(self):
-        return dict([ (str(model._meta), model_bwp) \
-            for model, model_bwp in self._registry.items()
-        ])
-
-    def app_dict(self, request):
-        app_dict = {}
+    def get_registry_items(self, request=None):
+        """
+        Общий метод для проверки привилегий на объекты моделей BWP
+        и моделей приложений. 
+        
+        Если не задан запрос, то возвращает весь список, без учёта
+        привилегий.
+        """
+        if request is None: 
+            return self._registry.items()
+        available = []
         for model, model_bwp in self._registry.items():
             app_label = model._meta.app_label
             has_module_perms = request.user.has_module_perms(app_label)
@@ -169,27 +175,69 @@ class BWPSite(object):
                 perms = model_bwp.get_model_perms(request)
 
                 if True in perms.values():
-                    info = (app_label, model._meta.module_name)
-                    model_dict = {
-                        'id': str(model._meta),
-                        'html_id': str(model._meta).replace('.','-'),
-                        'meta': model._meta,
-                        'name': capfirst(model._meta.verbose_name_plural),
-                        'perms': perms,
-                        'bwp': model_bwp,
-                    }
+                    available.append((model, model_bwp))
+        return available
 
-                    if app_label in app_dict:
-                        app_dict[app_label]['models'].append(model_dict)
-                    else:
-                        app_dict[app_label] = {
-                            'name': app_label.title(),
-                            'has_module_perms': has_module_perms,
-                            'models': [model_dict],
-                        }
+    def bwp_dict(self, request):
+        """
+        Возвращает словарь, где ключом является имя модели BWP,
+        а значением - сама модель, например:
+            {'auth.user': <Model Contacts.UserBWP> }
+        """
+        return dict([ (str(model._meta), model_bwp) \
+            for model, model_bwp in self.get_registry_items(request)
+        ])
+
+    def model_dict(self, request):
+        """
+        Возвращает словарь, где ключом является имя модели приложения,
+        а значением - сама модель, например:
+            {'auth.user':<Model Auth.User>,}
+        """
+        return dict([ (str(model._meta), model) \
+            for model, model_bwp in self.get_registry_items(request)
+        ])
+
+    def app_dict(self, request):
+        """
+        Возвращает сложный словарь, где первым ключом является имя
+        приложения, его значением словарь с ключом `models` - список
+        вложенных моделей:
+        {'auth': { 'models':[<Model Auth.User>,<Model Auth.Group>], ...}
+        """
+        app_dict = {}
+        for model, model_bwp in self.get_registry_items(request):
+            app_label = model._meta.app_label
+            has_module_perms = request.user.has_module_perms(app_label)
+            perms = model_bwp.get_model_perms(request)
+
+            # Разрешения уже проверены в методе get_registry_items(request)
+            info = (app_label, model._meta.module_name)
+            modelname = str(model._meta)
+            model_dict = {
+                'name': modelname,
+                'label': capfirst(model._meta.verbose_name_plural),
+                'id':    modelname.replace('.','-'),
+                'meta':  model._meta,
+                'perms': perms,
+                'bwp':   model_bwp,
+            } 
+
+            if app_label in app_dict:
+                app_dict[app_label]['models'].append(model_dict)
+            else:
+                app_dict[app_label] = {
+                    'name': app_label,
+                    'label': capfirst(app_label),
+                    'has_module_perms': has_module_perms,
+                    'models': [model_dict],
+                }
         return app_dict
 
     def app_list(self, request):
+        """
+        Возвращает отсортированный по названию список моделей приложений.
+        """
         # Sort the apps alphabetically.
         app_list = self.app_dict(request).values()
         app_list.sort(key=lambda x: x['name'])

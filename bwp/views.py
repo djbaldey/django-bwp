@@ -41,8 +41,7 @@ from django.http import HttpResponse
 from django.template import RequestContext
 from django.shortcuts import render_to_response, get_object_or_404, redirect
 from django.contrib.auth import REDIRECT_FIELD_NAME
-from django.contrib.auth.views import login as _login, logout as _logout, \
-    password_change, password_change_done
+from django.contrib.auth.views import login as _login, logout as _logout, password_change, password_change_done
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.cache import add_never_cache_headers
@@ -148,7 +147,7 @@ def datatables(request, model=None, info=None, serialize=True):
     model_bwp = None
     if model or 'model' in request.REQUEST:
         model = request.REQUEST.get('model', model)
-        model_bwp = site.bwp_dict.get(model)
+        model_bwp = site.bwp_dict(request).get(model)
     if model_bwp:
         if info or 'info' in request.REQUEST:
             if serialize:
@@ -222,7 +221,7 @@ def API_object_action(request, model, key, pk=None, **kwargs):
         elif ARRAY_FORM_COMPOSE_KEY in post:
             array_form_compose = jquery_multi_form_array(post[ARRAY_FORM_COMPOSE_KEY])
 
-    model_bwp = site.bwp_dict.get(model)
+    model_bwp = site.bwp_dict(request).get(model)
 
     # Действия без требования первичного ключа
     if   key == 'new' and dict_form_object:

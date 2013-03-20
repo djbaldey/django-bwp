@@ -38,16 +38,19 @@
 """
 from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
-import bwp
+import bwp, os, datetime
 
-BWP_VERSION             = bwp.VERSION
+BWP_VERSION             = bwp.__version__
+VERSION                 = getattr(settings, 'VERSION',                  BWP_VERSION)
+VERSION_DATE            = getattr(settings, 'VERSION_DATE',
+    datetime.datetime.fromtimestamp(
+        os.stat(os.path.join(os.path.abspath(os.path.dirname(__file__)), '__init__.py')).st_mtime
+    ).strftime("%d.%m.%Yг.")
+)
 
-PROJECT_NAME            = getattr(settings, 'PROJECT_NAME',             'PROJECT_NAME')
-PROJECT_SHORTNAME       = getattr(settings, 'PROJECT_SHORTNAME',        'PROJECT_SHORTNAME')
-PROJECT_DESCRIPTION     = getattr(settings, 'PROJECT_DESCRIPTION',      'PROJECT_DESCRIPTION')
-
-VERSION                 = getattr(settings, 'VERSION',                  '1.0')
-VERSION_DATE            = getattr(settings, 'VERSION_DATE',             '')
+PROJECT_NAME            = getattr(settings, 'PROJECT_NAME',             'BWP Default Project')
+PROJECT_SHORTNAME       = getattr(settings, 'PROJECT_SHORTNAME',        'BWP')
+PROJECT_DESCRIPTION     = getattr(settings, 'PROJECT_DESCRIPTION',      'Business Web Package Default Project')
 
 DJANGO_VERSION          = getattr(settings, 'DJANGO_VERSION',           '1.4')
 BOOTSTRAP_VERSION       = getattr(settings, 'BOOTSTRAP_VERSION',        '2.3.1')
@@ -64,4 +67,3 @@ COPYRIGHT_YEAR          = getattr(settings, 'COPYRIGHT_YEAR',           '2013')
 
 ARRAY_FORM_OBJECT_KEY   = getattr(settings, 'ARRAY_FORM_OBJECT_KEY',    'ARRAY_FORM_OBJECT_KEY')
 ARRAY_FORM_COMPOSE_KEY  = getattr(settings, 'ARRAY_FORM_COMPOSE_KEY',   'ARRAY_FORM_COMPOSE_KEY')
-

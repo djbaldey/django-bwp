@@ -207,7 +207,6 @@ function changeFieldObject() {
 /* Восстанавливает объект */
 function resetObject() {
     if (DEBUG) {console.log('function:'+'resetObject')};
-    console.log('resetObject()');
 }
 
 /* Сохраняет объект в DB */
@@ -526,9 +525,9 @@ function jsonAPI(args, callback, to_console, sync) {
             .replace(/\?.*$/, "?next=" + window.location.pathname);
             console.log("1:" + xhr.getResponseHeader('Location'));
         } else {
-            // Иначе заменяем содержимое страницы ответом
-            // TODO: нужно придумать что-то получше...
-            $("html").html(xhr.responseText);
+            // Иначе извещаем пользователя ответом и в консоль
+            console.log("ERROR:" + xhr.responseText);
+            showAlert(_(xhr.responseText).truncate(255), 'alert-error');
         };
     })
     // Обработка полученных данных
@@ -601,6 +600,29 @@ function initDataTables(data) {
         "sDom": data.sDom || 'lfrtip',
         "bLengthChange": data.bLengthChange || true,
         "bStateSave": data.bStateSave || true,
+        "fnServerData": function( sUrl, aoData, fnCallback, oSettings ) {
+            oSettings.jqXHR =  $.ajax( {
+                "url": sUrl,
+                "data": aoData,
+                "method": "post",
+                "success": fnCallback,
+                "dataType": "json",
+                "cache": false
+            })
+            // Обработка ошибок протокола HTTP
+            .fail(function(xhr, status, err) {
+                // Если есть переадресация, то выполняем её
+                if (xhr.getResponseHeader('Location')) {
+                    window.location = xhr.getResponseHeader('Location')
+                    .replace(/\?.*$/, "?next=" + window.location.pathname);
+                    console.log("1:" + xhr.getResponseHeader('Location'));
+                } else {
+                    // Иначе извещаем пользователя ответом и в консоль
+                    console.log("ERROR:" + xhr.responseText);
+                    showAlert(_(xhr.responseText).truncate(255), 'alert-error');
+                };
+            })
+        }
     });
     /* Apply after */
     //~ console.log( $($(oTable).attr('id')+'_wrapper'))
@@ -638,14 +660,13 @@ function fnShowHide( model, iCol ) {
 function addTab() {
     if (DEBUG) {console.log('function:'+'addTab')};
     data          = $(this).data();
-    data['title'] = $(this).attr('title') || '';
-    data['text']  = $(this).text();
+    data['title'] = $(this).attr('title') || $(this).attr('data-title') || '';
+    data['text']  = $(this).attr('data-text') || $(this).text() || data.title;
     data['id'] = data.pk ? validatorID(data.model+'_'+data.pk) : validatorID(data.model);
     if (!data.pk) {data.pk = null}; // для передачи в шаблон
-    if (data.object) { $(this).addClass('muted'); }
+    if (data.pk) { $(this).addClass('muted'); }
 
     tab = $('#main-tab #tab_'+ data.id);
-    console.log(data)
     if (tab.length > 0) {
         // Отображаем вкладку
         tab.find('a').tab('show');
@@ -660,7 +681,7 @@ function addTab() {
         delay(function() {
             a = $('#main-tab a:last').tab('show');
             contentLoader(a[0]);
-        }, 50);
+        }, 1);
         // Добавляем вкладку в хранилище, если её там нет
         // (т.к. эту же функцию использует восстановление сессии). 
         if ($.inArray(data.id, SETTINGS.local.tabs) < 0) {
@@ -721,7 +742,7 @@ function contentLoader(obj) {
 function restoreSession() {
     if (DEBUG) {console.log('function:'+'restoreSession')};
     $.each(SETTINGS.local.tabs, function(i, item) {
-        $('[data-tab-id='+item+']').click();
+        $('[data-id='+item+']').click(); // только приложения в меню
     });
 }
 

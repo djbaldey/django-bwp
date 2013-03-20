@@ -36,7 +36,9 @@
 #   <http://www.gnu.org/licenses/>.
 ###############################################################################
 """
-from django.db import models
+from django.db import models, transaction
+from django.db.models.query import QuerySet
+from django.forms.models import modelform_factory
 from django.utils.translation import ugettext, ugettext_lazy as _ 
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import User
@@ -44,9 +46,11 @@ from django.contrib.admin.util import quote
 from django.utils.encoding import smart_unicode
 from django.utils.safestring import mark_safe
 from django.utils.text import capfirst
-#~ from django.core import serializers
 from django.core.paginator import Paginator
 from django.shortcuts import redirect
+
+from django.http import HttpResponseNotFound
+from quickapi.http import JSONResponse
 
 from copy import deepcopy
 
@@ -143,6 +147,7 @@ class BaseModel(object):
     actions = []
     
     paginator = Paginator
+    site = None
 
     @property
     def opts(self):
@@ -202,13 +207,35 @@ class BaseModel(object):
         """ Возвращает наборы виджетов. """
         return self.widgetsets or self.set_widgetsets()
 
+    def get_instance(self, pk, model_name=None):
+        """ Возвращает зкземпляр указаной модели, либо собственной """
+        if model_name is None:
+            model = self.model
+        else:
+            model = self.site.model_dict(model_name)
+        return model.objects.get(pk=pk)
+
+    def serialize(self, obj, fields=None, use_natural_keys=True):
+        """ Сериализатор в объект(ы) Python, принимает либо один,
+            либо несколько объектов и точно также возвращает.
+        """
+        if fields is None:
+            fields = list(self.display_fields)
+        if isinstance(obj, (QuerySet, list, tuple)):
+            data = serializers.serialize('python', obj, fields=fields,
+                                    use_natural_keys=use_natural_keys)
+        else:
+            data = serializers.serialize('python', [obj], fields=fields,
+                                    use_natural_keys=use_natural_keys)[0]
+        return data
+
     def get_paginator(self, request, queryset, per_page, orphans=0, allow_empty_first_page=True):
         return self.paginator(queryset, per_page, orphans, allow_empty_first_page)
 
-    def queryset(self):
+    def queryset(self, request=None, **kwargs):
         return self.model._default_manager.get_query_set()
 
-    def get_ordering(self, request):
+    def get_ordering(self, request=None, **kwargs):
         """
         Hook for specifying field ordering.
         """
@@ -224,7 +251,85 @@ class BaseModel(object):
         if ordering:
             qs = qs.order_by(*ordering)
         return qs
-    
+
+    def get_http_404(self, request):
+        """ Если запрос на API, то возвращаем JSON, иначе обычный 404 """
+        if request.path == redirect('bwp.views.api')['Location']:
+            return JSONResponse(status=404)
+        return HttpResponseNotFound()
+
+    def get(self, request, pk=None, **kwargs):
+        """ Получает объект согласно привилегий """
+        if pk:
+            try:
+                obj = self.queryset(request, **kwargs).get(pk=pk)
+            except:
+                return self.get_http_404(request)
+            return self.get_object_detail(request, obj, **kwargs)
+        else:
+            return self.get_collection(request, **kwargs)
+
+    def get_object_detail(self, request, obj, **kwargs):
+        """ Метод должен переопределяться, но по-умолчанию такой """
+        data = self.serialize(obj, ['pk'] + list(self.display_fields))
+        return JSONResponse(data=data)
+
+    def get_collection(self, request, **kwargs):
+        """ Метод должен переопределяться, но по-умолчанию такой """
+        qs = self.queryset(request, **kwargs)
+        data = self.serialize(qs, ['pk'] + list(self.display_fields))
+        return JSONResponse(data=data)
+
+    @transaction.commit_manually
+    def commit(self, request, objects, recursive=True, **kwargs):
+        """ Сохрание всех переданных объектов """
+        if not objects:
+            transaction.rollback()
+            return JSONResponse(status=400, message=u"List objects is blank!")
+        try:
+            for data in objects:
+                if getattr(data, 'new', False):
+                    form = self.get_form_instance(request, model_name,
+                                                            data=data)
+                    # TODO: check permissions
+                    if form.is_valid():
+                        form.save()
+                elif getattr(data, 'remove', False):
+                    instance = self.get_instance(data.pk, data.model)
+                    # TODO: check permissions
+                    instance.delete()
+                elif getattr(data, 'pk'): # raise AttributeError()
+                    instance = self.get_instance(data.pk, data.model)
+                    # TODO: check permissions
+                    form = self.get_form_instance(request, model_name,
+                                        data=data, instance=instance)
+                    if form.is_valid():
+                        form.save()
+        except Exception as e:
+            transaction.rollback()
+            return JSONResponse(status=400, message=unicode(e))
+        else:
+            transaction.commit()
+        return JSONResponse(message=u"Commited!")
+
+    def get_form_instance(self, request, model_name, data=None, instance=None):
+        """
+        Возвращает экземпляр формы, которая используются для добавления
+        или редактирования объекта.
+
+        Аргумент `instance` является экземпляром модели `model_name`
+        (принимается только если эта форма будет использоваться для
+        редактирования существующего объекта).
+        """
+        bwp_model = self.site.bwp_dict(request).get(model_name)
+        model = bwp_model.model
+        defaults = {}
+        if bwp_model.form:
+            defaults['form'] = bwp_model.form
+        if bwp_model.fields:
+            defaults['fields'] = bwp_model.fields
+        return modelform_factory(model, **defaults)(data=data, instance=instance)
+
     def has_add_permission(self, request):
         """
         Returns True if the given request has permission to add an object.

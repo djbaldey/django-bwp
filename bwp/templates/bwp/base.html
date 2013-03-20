@@ -88,7 +88,14 @@
 <!-- START: block footer -->
         {% block footer %}
         <footer>
-            <p class="mono align-center" >{% filter force_escape %}{% SETTINGS 'COPYRIGHT' %}{% endfilter %} © {% COPYRIGHT_YEARS %}</p>
+            <p class="mono align-center" >
+            {% filter force_escape %}
+                {% SETTINGS 'COPYRIGHT' %}
+            {% endfilter %} © {% COPYRIGHT_YEARS %}
+            </p>
+            <p class="mono align-center" >
+                версия: <span title="{% SETTINGS 'VERSION_DATE' %}">{% SETTINGS 'VERSION' %}</span>
+            </p>
         </footer>
         {% endblock %}
 <!-- END: block footer -->
@@ -141,7 +148,6 @@
 {% block libjs %}
     <script src="{{ STATIC_URL }}js/jquery/{% SETTINGS 'JQUERY_VERSION' %}/jquery{% mini_library %}.js"></script>
     <script src="{{ STATIC_URL }}js/jquery-json/{% SETTINGS 'JQUERY_JSON_VERSION' %}/jquery.json{% mini_library %}.js"></script>
-    <script src="{{ STATIC_URL }}js/jsrender/{% SETTINGS 'JSRENDER_VERSION' %}/jsrender{% mini_library %}.js"></script>
     <script src="{{ STATIC_URL }}js/underscore/{% SETTINGS 'UNDERSCORE_VERSION' %}/underscore{% mini_library %}.js"></script>
     <script src="{{ STATIC_URL }}js/underscore-string/{% SETTINGS 'UNDERSCORE_STRING_VERSION' %}/underscore.string{% mini_library %}.js"></script>
     <script src="{{ STATIC_URL }}js/bootstrap/{% SETTINGS 'BOOTSTRAP_VERSION' %}/bootstrap{% mini_library %}.js"></script>

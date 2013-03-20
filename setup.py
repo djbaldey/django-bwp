@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 import os
-from bwp import VERSION
+from bwp import __version__
 
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
@@ -8,7 +8,7 @@ README = read('README.md')
 
 setup(
     name='BWP',
-    version=VERSION,
+    version=__version__,
     description='The "Business Web Package" is Django-application. Contains models, templates and other preparations for the fast building of ERP system',
     long_description=README,
     author='Grigoriy Kramarenko',
