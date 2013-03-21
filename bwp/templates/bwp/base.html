@@ -94,7 +94,8 @@
             {% endfilter %} © {% COPYRIGHT_YEARS %}
             </p>
             <p class="mono align-center" >
-                версия: <span title="{% SETTINGS 'VERSION_DATE' %}">{% SETTINGS 'VERSION' %}</span>
+                <a href="http://rosix.ru/project/9/">Версия:<span title="{% SETTINGS 'VERSION_DATE' %}">{% SETTINGS 'VERSION' %}</span></a>
+                <a href="{% filter escapejs %}{% url "bwp_api" %}{% endfilter %}">API:{% SETTINGS 'QUICKAPI_VERSION' %}</a>
             </p>
         </footer>
         {% endblock %}

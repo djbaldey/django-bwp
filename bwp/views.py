@@ -172,8 +172,9 @@ def API_get_settings(request):
         
         ##### ОТВЕТ
         Формат ключа **"data"**:
-        
+        `
         - возвращается словарь с ключами из установленных настроек.
+        `
     """
     if not 'bwp.contrib.usersettings' in settings.INSTALLED_APPS:
         return JSONResponse(status=405,
@@ -185,65 +186,96 @@ def API_get_settings(request):
 
 @api_required
 @login_required
-def API_object_action(request, model, key, pk=None, **kwargs):
-    """ *Производит действия с экземпляром(ми) указанной модели.*
+def API_get_object(request, model, pk=None, **kwargs):
+    """ *Возвращает экземпляр указанной модели.*
         
         ##### ЗАПРОС
         Параметры:
         
         1. **"model"** - уникальное название модели, например: "auth.user".
-        2. **"key"** - действие ('view', 'add', 'change' либо 'remove').
-        3. **"pk"** - первичный ключ объекта, если необходим.
-        4. и далее: специализированные параметры (SP) для указанного действия.
+        2. **"pk"** - первичный ключ объекта, если отсутствует, то вернётся пустой новый объект без pk 
         
         ##### ОТВЕТ
-        Формат ключа **"data"**: зависит от выполняемой операции **"key"**.
-        
-        ##### СПИСОК ДЕЙСТВИЙ
-        - **'get'** - возвращает объект (SP: отсутствует);
-        - **'add'** - создаёт новый объект (SP: все нужные поля для заполнения);
-        - **'set'** - изменяет существующий объект (SP: все нужные поля для заполнения);
-        - **'del'** - удаляет объект (SP: отсутствует);
+        Формат ключа **"data"**:
+        `{
+            TODO: написать
+        }`
     """
-    actions_with_pk = ('get', 'upd', 'del')
     session = request.session
     user = request.user
-    dict_form_object, array_form_compose, data = None, None, None
 
-    # Для django-quickapi.
-    # Если данные передавались в едином JSON, то заменим словарь параметров
-    post = request.POST
-    if 'jsonData' in post:
-        post = kwargs
-        # Получение заполненных полей объектов
-        if ARRAY_FORM_OBJECT_KEY in post:
-            dict_form_object = jquery_form_array(post[ARRAY_FORM_OBJECT_KEY])
-        elif ARRAY_FORM_COMPOSE_KEY in post:
-            array_form_compose = jquery_multi_form_array(post[ARRAY_FORM_COMPOSE_KEY])
-
+    # Получаем модель BWP со стандартной проверкой прав
     model_bwp = site.bwp_dict(request).get(model)
 
-    # Действия без требования первичного ключа
-    if   key == 'new' and dict_form_object:
-        data = model_bwp.object_new(dict_form_object, post, user)
-
-    # Проверка на присутствие первичного ключа для дальнейших обработчиков
-    elif key not in actions_with_pk or not pk:
-        return JSONResponse(status=400)
-
-    # Далее действия только с обозначенным первичным ключом
-    elif key == 'upd' and dict_form_object:
-        data = model_bwp.object_upd(pk, dict_form_object, post, user)
-    elif key == 'upd' and array_form_compose:
-        data = model_bwp.compose_upd(pk, array_form_compose, post, user)
-    elif key == 'del':
-        data = model_bwp.object_del(pk, user)
-    elif key == 'get':
-        data = model_bwp.object_get(pk, user)
+    # Возвращаем новый пустой объект или существующий 
+    if pk is None:
+        # Новый
+        return model_bwp.new(request)
     else:
-        return JSONResponse(status=400)
+        # Существующий
+        return model_bwp.get(request, pk)
 
-    return JSONResponse(data=data)
+@api_required
+@login_required
+def API_get_collection(request, model, compose=None, page=1, per_page=None,
+    query=None, order_by=None, **kwargs):
+    """ *Возвращает коллекцию экземпляров указанной модели.*
+        
+        ##### ЗАПРОС
+        Параметры:
+        
+        1. **"model"** - уникальное название модели, например: "auth.user";
+        2. **"compose"** - уникальное название модели Compose, 
+            объекты которой должны быть возвращены: "group_set",
+            по-умолчанию не используется;
+        3. **"page"** -  номер страницы, по-умолчанию == 1;
+        4. **"per_page"** - количество на странице, по-умолчанию определяется BWP;
+        5. **"query"** - поисковый запрос;
+        6. **"order_by"** - сортировка объектов.
+        
+        ##### ОТВЕТ
+        Формат ключа **"data"**:
+        `{
+            'count': 2,
+            'end_index': 2,
+            'has_next': false,
+            'has_other_pages': false,
+            'has_previous': false,
+            'next_page_number': 2,
+            'num_pages': 1,
+            'number': 1,
+            'object_list': [
+                {
+                    'fields': {'first_name': u'First'},
+                    'model': u'auth.user',
+                    'pk': 1
+                },
+                {
+                    'fields': {'first_name': u'Second'},
+                    'model': u'auth.user',
+                    'pk': 2
+                }
+            ],
+            'previous_page_number': 0,
+            'start_index': 1
+        }`
+    """
+    session = request.session
+    user = request.user
+
+    # Получаем модель BWP со стандартной проверкой прав
+    model_bwp = site.bwp_dict(request).get(model)
+    
+    options = dict(request=request, page=page, query=query, 
+                    per_page=per_page, order_by=order_by)
+    
+    # Возвращаем коллекцию композиции, если указано
+    if compose:
+        compose = model_bwp.compose_dict(**options)
+        return compose.get(**options)
+
+    # Возвращаем коллекцию в JSONResponse
+    return model_bwp.get(**options)
 
 @api_required
 @login_required
@@ -256,14 +288,18 @@ def API_datatables_info(request, model, **kwargs):
         1. **"model"** - уникальное название модели, например: "auth.user".
         
         ##### ОТВЕТ
-        Формат ключа **"data"**: TODO: расписать.
+        Формат ключа **"data"**:
+        `{
+            TODO: расписать.
+        }`
     """
     return JSONResponse(data=datatables(request, model, info=True, serialize=False))
 
 QUICKAPI_DEFINED_METHODS = {
-    'get_settings': 'bwp.views.API_get_settings',
-    'object_action': 'bwp.views.API_object_action',
-    'datatables_info': 'bwp.views.API_datatables_info',
+    'get_settings':     'bwp.views.API_get_settings',
+    'get_object':       'bwp.views.API_get_object',
+    'get_collection':   'bwp.views.API_get_collection',
+    'datatables_info':  'bwp.views.API_datatables_info',
 }
 
 @csrf_exempt

@@ -49,7 +49,8 @@ from django.utils.text import capfirst
 from django.core.paginator import Paginator, Page, PageNotAnInteger, EmptyPage
 from django.shortcuts import redirect
 
-from django.http import HttpResponseNotFound
+from django.http import (HttpResponseNotFound, HttpResponseBadRequest,
+    HttpResponseForbidden)
 from quickapi.http import JSONResponse
 
 from copy import deepcopy
@@ -63,9 +64,24 @@ ADDING = 1
 CHANGE = 2
 DELETE = 3
 
+def is_api(request):
+    return bool(request.path == redirect('bwp.views.api')['Location'])
+
+def get_http_400(self, request):
+    """ Если запрос на API, то возвращаем JSON, иначе обычный 404 """
+    if is_api(request):
+        return JSONResponse(status=400)
+    return HttpResponseBadRequest()
+
+def get_http_403(self, request):
+    """ Если запрос на API, то возвращаем JSON, иначе обычный 404 """
+    if is_api(request):
+        return JSONResponse(status=404)
+    return HttpResponseForbidden()
+
 def get_http_404(self, request):
     """ Если запрос на API, то возвращаем JSON, иначе обычный 404 """
-    if request.path == redirect('bwp.views.api')['Location']:
+    if is_api(request):
         return JSONResponse(status=404)
     return HttpResponseNotFound()
 
@@ -227,21 +243,24 @@ class BaseModel(object):
             model = self.site.model_dict(model_name)
         return model.objects.get(pk=pk)
 
-    def serialize(self, obj, **options):
+    def serialize(self, objects, **options):
         """ Сериализатор в объект(ы) Python, принимает либо один,
             либо несколько объектов или объект паджинации
             и точно также возвращает.
         """
         if not options.has_key('use_natural_keys'):
             options['use_natural_keys'] = True # default
-        if isinstance(obj, (QuerySet, Page, list, tuple)):
-            data = serializers.serialize('python', obj, **options)
+        if isinstance(objects, (QuerySet, Page, list, tuple)):
+            # Список объектов
+            data = serializers.serialize('python', objects, **options)
         else:
-            data = serializers.serialize('python', [obj], **options)[0]
+            # Единственный объект
+            data = serializers.serialize('python', [objects], **options)[0]
         return data
 
     def get_paginator(self, queryset, per_page=None, orphans=0, allow_empty_first_page=True):
-        return self.paginator(queryset, per_page or self.list_per_page, orphans, allow_empty_first_page)
+        per_page = per_page or self.list_per_page
+        return self.paginator(queryset, per_page, orphans, allow_empty_first_page)
 
     def queryset(self, request=None, **kwargs):
         return self.model._default_manager.get_query_set()
@@ -256,6 +275,7 @@ class BaseModel(object):
         """
         Сортировка определённого, либо общего набора данных.
         """
+        
         if queryset is None:
             queryset = self.queryset()
         if ordering is None:
@@ -268,23 +288,22 @@ class BaseModel(object):
         """
         Возвращает объект страницы паджинатора для набора объектов
         """
-        queryset = self.order_queryset(self, request, queryset)
-        paginator = self.get_paginator(queryset)
+        queryset = self.order_queryset(request=request, queryset=queryset)
+        paginator = self.get_paginator(queryset=queryset)
 
         # request может быть пустым
         try:
-            page = request.REQUEST.get('page', page)
+            page = int(request.REQUEST.get('page', page))
         except:
             pass
         try:
-            page_queryset = paginator.page(int(page))
+            page_queryset = paginator.page(page)
         except PageNotAnInteger:
             # If page is not an integer, deliver first page.
             page_queryset = paginator.page(1)
         except EmptyPage:
             # If page is out of range (e.g. 9999), deliver last page of results.
             page_queryset = paginator.page(paginator.num_pages)
-
         return page_queryset
 
     def get_search_query(self, request, search_key=None, **kwargs):
@@ -301,62 +320,89 @@ class BaseModel(object):
         return filterQueryset(queryset, self.search_fields,
             query or self.get_search_query(request,**kwargs))
 
+    def get_bwp_model(self, request, model_name, **kwargs):
+        """ Получает объект модели BWP согласно привилегий """
+        return self.site.bwp_dict(request).get(model_name)
+
     def get(self, request, pk=None, **kwargs):
         """ Получает объект согласно привилегий """
         if pk:
             try:
-                obj = self.queryset(request, **kwargs).get(pk=pk)
+                object = self.queryset(request, **kwargs).get(pk=pk)
             except:
                 return get_http_404(request)
-            return self.get_object_detail(request, obj, **kwargs)
+            return self.get_object_detail(request, object, **kwargs)
         else:
             return self.get_collection(request, **kwargs)
 
-    def get_object_detail(self, request, obj, **kwargs):
-        """ Метод должен переопределяться, но по-умолчанию такой """
-        data = self.serialize(obj)
-        return JSONResponse(data=data)
+    def get_object_detail(self, request, object, **kwargs):
+        """
+        Вызывается для окончательного формирования ответа сервера.
+        """
+        raise NotImplementedError
+
+    def new(self, request, **kwargs):
+        """
+        Получает шаблон объекта согласно привилегий.
+        """
+        if self.has_add_permission(request):
+            return self.get_new_object_detail(request, **kwargs)
+        else:
+            return get_http_403(request)
+
+    def get_new_object_detail(self, request, **kwargs):
+        """
+        Вызывается для окончательного формирования ответа сервера.
+        """
+        raise NotImplementedError
 
     def get_collection(self, request, **kwargs):
-        """ Метод должен переопределяться, но по-умолчанию такой """
+        """ Метод может переопределяться, но по-умолчанию такой """
         qs = self.filter_queryset(request, **kwargs)
         qs = self.page_queryset(request, qs, **kwargs)
         data = self.serialize(qs)
         return JSONResponse(data=data)
 
     @transaction.commit_manually
-    def commit(self, request, objects, recursive=True, **kwargs):
-        """ Сохрание всех переданных объектов """
-        if not objects:
+    def commit(self, request, data, recursive=True, **kwargs):
+        """ Сохрание и/или удаление переданных объектов """
+        if not data:
             transaction.rollback()
-            return JSONResponse(status=400, message=u"List objects is blank!")
+            return JSONResponse(status=400, message=_("List objects is blank!"))
+        model = bwp = None
         try:
-            for data in objects:
-                if getattr(data, 'new', False):
-                    form = self.get_form_instance(request, model_name,
-                                                            data=data)
-                    # TODO: check permissions
-                    if form.is_valid():
-                        form.save()
-                elif getattr(data, 'remove', False):
-                    instance = self.get_instance(data.pk, data.model)
-                    # TODO: check permissions
-                    instance.delete()
-                elif getattr(data, 'pk'): # raise AttributeError()
-                    instance = self.get_instance(data.pk, data.model)
-                    # TODO: check permissions
-                    form = self.get_form_instance(request, model_name,
-                                        data=data, instance=instance)
-                    if form.is_valid():
-                        form.save()
+            for item in data:
+                # Уменьшение ссылок на объекты, если они существуют
+                # в прошлой ротации
+                if model != item.model:
+                    model = item.model
+                    bwp = self.get_bwp_model(request, model)
+                # Новый объект
+                if getattr(item, 'new', False):
+                    if bwp.has_add_permission(request):
+                        form = self.get_form_instance(request, bwp, data=item)
+                        if form.is_valid(): 
+                            form.save()
+                # Удаляемый объект
+                elif getattr(item, 'remove', False):
+                    object = self.get_instance(item.pk, item.model)
+                    if bwp.has_delete_permission(request, object):
+                        object.delete()
+                # Обновляемый объект
+                elif getattr(item, 'pk'): # raise AttributeError()
+                    object = self.get_instance(item.pk, item.model)
+                    if bwp.has_change_permission(request, object):
+                        form = self.get_form_instance(request, bwp, data=item, instance=object)
+                        if form.is_valid():
+                            form.save()
         except Exception as e:
             transaction.rollback()
             return JSONResponse(status=400, message=unicode(e))
         else:
             transaction.commit()
-        return JSONResponse(message=u"Commited!")
+        return JSONResponse(message=_("Commited!"))
 
-    def get_form_instance(self, request, model_name, data=None, instance=None):
+    def get_form_instance(self, request, bwp_model, data=None, instance=None):
         """
         Возвращает экземпляр формы, которая используются для добавления
         или редактирования объекта.
@@ -365,7 +411,6 @@ class BaseModel(object):
         (принимается только если эта форма будет использоваться для
         редактирования существующего объекта).
         """
-        bwp_model = self.site.bwp_dict(request).get(model_name)
         model = bwp_model.model
         defaults = {}
         if bwp_model.form:
@@ -382,29 +427,29 @@ class BaseModel(object):
         opts = self.opts
         return request.user.has_perm(opts.app_label + '.' + opts.get_add_permission())
 
-    def has_change_permission(self, request, obj=None):
+    def has_change_permission(self, request, object=None):
         """
         Returns True if the given request has permission to change the given
         Django model instance, the default implementation doesn't examine the
-        `obj` parameter.
+        `object` parameter.
 
         Can be overriden by the user in subclasses. In such case it should
-        return True if the given request has permission to change the `obj`
-        model instance. If `obj` is None, this should return True if the given
+        return True if the given request has permission to change the `object`
+        model instance. If `object` is None, this should return True if the given
         request has permission to change *any* object of the given type.
         """
         opts = self.opts
         return request.user.has_perm(opts.app_label + '.' + opts.get_change_permission())
 
-    def has_delete_permission(self, request, obj=None):
+    def has_delete_permission(self, request, object=None):
         """
         Returns True if the given request has permission to change the given
         Django model instance, the default implementation doesn't examine the
-        `obj` parameter.
+        `object` parameter.
 
         Can be overriden by the user in subclasses. In such case it should
-        return True if the given request has permission to delete the `obj`
-        model instance. If `obj` is None, this should return True if the given
+        return True if the given request has permission to delete the `object`
+        model instance. If `object` is None, this should return True if the given
         request has permission to delete *any* object of the given type.
         """
         opts = self.opts
@@ -481,7 +526,7 @@ class ComposeBWP(BaseModel):
         if self.verbose_name is None:
             self.verbose_name = self.opts.verbose_name_plural or self.opts.verbose_name
 
-    def get_data(self, obj):
+    def get_compose(self, request, object, **kwargs):
         """ Data = {
                 'label': 'self.verbose_name',
                 'model': 'self.model_name',
@@ -506,28 +551,28 @@ class ComposeBWP(BaseModel):
                 ('real data value', 'frendly value'), # colX
             )
         """
-        model = str(obj._meta)
-        compose = str(self.opts)
-        html_id = ('%s_%s_%s' % (model, obj.pk, compose)
+        model = str(object._meta)
+        compose = self.related_name
+        html_id = ('%s_%s_%s' % (model, object.pk, compose)
             ).replace('.','-')
         data = {
             'model':    model,
-            'pk':       obj.pk,
+            'pk':       object.pk,
             'id':       html_id,
             'compose':  compose,
             'label':    capfirst(unicode(self.verbose_name)),
         }
 
         # Permissions
-        permissions = 'NOT IMPLEMENTED'
+        permissions = self.get_model_perms(request)
 
         # Widgets
         widgets = [ widget.get_dict() for widget in self.get_widgets() ]
 
         # Objects
-        objects = getattr(obj, self.related_name)
-        objects = objects.select_related().all() #TODO: сделать паджинатор
-        objects = serializers.serialize('python', objects, use_natural_keys=True)
+        qs = getattr(object, self.related_name).select_related().all()
+        qs = self.page_queryset(request, qs)
+        objects = self.serialize(qs)
 
         data.update({'widgets': widgets, 'objects': objects,
                     'permissions': permissions })
@@ -550,37 +595,38 @@ class ModelBWP(BaseModel):
         readonly_fields = ()
         ordering = None
     """
-    
+
     compositions = []
 
     def __init__(self, model, bwp_site):
         self.model = model
         self.bwp_site = bwp_site
 
-    def get_compose_instances(self, request=None):
-        compose_instances = []
-        if not self.compositions:
-            pass
-        for related_name, compose_class in self.compositions:
-            compose = compose_class(related_name, self.model, self.bwp_site)
-            if request:
-                if not (compose.has_add_permission(request) or
-                        compose.has_change_permission(request) or
-                        compose.has_delete_permission(request)):
-                    continue
-            compose_instances.append(compose)
+    @property
+    def compose_instances(self):
+        """ Регистрирует экземпляры Compose моделей и/или возвращает их. """
+        if not hasattr(self, 'compose_instances'):
+            self._compose_instances = []
+            if self.compositions:
+                for related_name, compose_class in self.compositions:
+                    compose = compose_class(related_name, self.model, self.bwp_site)
+                    self._compose_instances.append(compose)
+        return self._compose_instances
 
-        return compose_instances
+    def get_object_detail(self, request, object, **kwargs):
+        """ Метод возвращает сериализованный объект в JSONResponse """
+        data = self.get_full_object(request, object)
+        return JSONResponse(data=data)
 
-    def object_to_python(self, pk):
-        """ Python object with compositions and widgets(sets)
-        """
+    def get_full_object(self, request, object, **kwargs):
+        """ Python объект с композициями и виджетами(наборами виджетов). """
         # Object
-        obj = self.queryset().select_related().get(pk=pk)
+        if isinstance(object, (str, int)):
+            object = self.queryset().select_related().get(pk=pk)
         model = str(self.opts)
-        html_id = ('%s_%s' %(model, obj.pk)).replace('.','-')
-        data = serializers.serialize('python', [obj], use_natural_keys=True)[0]
-        data.update({'label': unicode(obj), 'id': html_id})
+        html_id = ('%s_%s' %(model, object.pk)).replace('.','-')
+        data = self.serialize(object)
+        data.update({'label': unicode(object), 'id': html_id})
 
         # Widgetsets
         widgetsets = []
@@ -602,38 +648,42 @@ class ModelBWP(BaseModel):
             widgets = [ widget.get_dict() for widget in self.get_widgets()]
 
         # Permissions
-        permissions = 'NOT IMPLEMENTED'
+        permissions = self.get_model_perms(request)
 
         # Compositions
         compositions = []
-        for compose in self.get_compose_instances():
-            compositions.append(compose.get_data(obj))
+        for compose in self.get_composes(request):
+            
+            compositions.append(compose.get_compose(request, object, **kwargs))
 
         data.update({'widgets':widgets, 'widgetsets':widgetsets,
                     'permissions':permissions, 'compositions':compositions})
         return data
 
-    def object_get(self, pk, user):
-        return self.object_to_python(pk)
+    def get_composes(self, request=None):
+        """ Получает список разрешённых моделей Compose. """
+        compose_instances = []
+        if not self.compositions:
+            return compose_instances
+        for compose in self.compose_instances:
+            if request:
+                # Когда все действия недоступны
+                if not (compose.has_add_permission(request) or
+                        compose.has_change_permission(request) or
+                        compose.has_delete_permission(request)):
+                    continue
+            compose_instances.append(compose)
 
-    def object_del(self, pk, user):
-        qs = self.queryset()
-        qs.all().filter(pk=pk).delete()
-        return None
+        return compose_instances
 
-    def object_new(self, dict_form_object, post, user):
-        qs = self.queryset()
-        new = qs.create(**dict_form_object)
-        return new
-
-    def object_upd(self, pk, dict_form_object, post, user):
-        qs = self.queryset()
-        upd = qs.filter(pk=pk).update(**dict_form_object)
-        return self.object_get(pk, user)
-
-    def compose_upd(self, pk, array_form_compose, post, user):
-        qs = self.queryset()
-        return None
+    def compose_dict(self, request, **kwargs):
+        """
+        Возвращает словарь, где ключом является имя модели Compose,
+        а значением - сама модель, например:
+            {'group_set': <Model Contacts.UserBWP> }
+        """
+        return dict([ (compose.related_name, compose) \
+                    for compose in self.get_composes(request) ])
 
     def datatables_order_queryset(self, request, qs=None):
         """ Переопределённый метод базового класса. """

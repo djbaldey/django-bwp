@@ -720,7 +720,7 @@ function contentLoader(obj) {
     pk = $obj.attr('data-pk');
     // Загрузка объекта модели
     if (pk) {
-        args = { method:'object_action', model:model, key:'get', pk:pk }
+        args = { method:'get_object', model:model, pk:pk }
         callback = function(json, status, xhr) {
             createObjectContent(json.data);
         };

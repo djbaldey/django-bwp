@@ -38,8 +38,9 @@
 """
 from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
-import bwp, os, datetime
+import bwp, os, datetime, quickapi
 
+QUICKAPI_VERSION        = quickapi.__version__
 BWP_VERSION             = bwp.__version__
 VERSION                 = getattr(settings, 'VERSION',                  BWP_VERSION)
 VERSION_DATE            = getattr(settings, 'VERSION_DATE',
