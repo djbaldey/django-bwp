@@ -36,11 +36,13 @@
 #   <http://www.gnu.org/licenses/>.
 ###############################################################################
 """
-
+from StringIO import StringIO
+from types import MethodType 
 from django.conf import settings
 from django.core.serializers import base
 from django.db import models, DEFAULT_DB_ALIAS
 from django.utils.encoding import smart_unicode, is_protected_type
+from django.core.paginator import Page
 
 from django.core.serializers.python import Serializer as OrignSerializer
 
@@ -86,9 +88,64 @@ class SerializerWrapper(object):
             self._current[field.name] = [m2m_value(related)
                                for related in getattr(obj, field.name).iterator()]
 
+    def serialize_queryset(self, queryset, **options):
+        """
+        Практически в точности копирует оригинальный метод serialize,
+        но не запускает в конце метод окончания сериализации
+        """
+        self.options = options
+
+        self.stream = options.pop("stream", StringIO())
+        self.selected_fields = options.pop("fields", None)
+        self.use_natural_keys = options.pop("use_natural_keys", False)
+
+        self.start_serialization()
+        for obj in queryset:
+            self.start_object(obj)
+            # Use the concrete parent class' _meta instead of the object's _meta
+            # This is to avoid local_fields problems for proxy models. Refs #17717.
+            concrete_model = obj._meta.concrete_model
+            for field in concrete_model._meta.local_fields:
+                if field.serialize:
+                    if field.rel is None:
+                        if self.selected_fields is None or field.attname in self.selected_fields:
+                            self.handle_field(obj, field)
+                    else:
+                        if self.selected_fields is None or field.attname[:-3] in self.selected_fields:
+                            self.handle_fk_field(obj, field)
+            for field in concrete_model._meta.many_to_many:
+                if field.serialize:
+                    if self.selected_fields is None or field.attname in self.selected_fields:
+                        self.handle_m2m_field(obj, field)
+            self.end_object(obj)
+        return self.objects
+
+    def serialize(self, queryset, **options):
+        """
+        Serialize a QuerySet or page of Paginator.
+        """
+        if isinstance(queryset, Page):
+            result = {}
+            wanted = ("end_index", "has_next", "has_other_pages", "has_previous",
+                    "next_page_number", "number", "start_index", "previous_page_number")
+            for attr in wanted:
+                v = getattr(queryset, attr)
+                if isinstance(v, MethodType):
+                    result[attr] = v()
+                elif isinstance(v, (str, int)):
+                    result[attr] = v
+            result['count'] = queryset.paginator.count
+            result['num_pages'] = queryset.paginator.num_pages
+            result['object_list'] = self.serialize_queryset(queryset.object_list, **options)
+            self.objects = result
+            self.end_serialization() # Окончательно сериализуем
+        else:
+            super(OrignSerializer, self).serialize(queryset, **options)
+        return self.getvalue()
+
 class Serializer(SerializerWrapper, OrignSerializer):
     """
-    Serializes a QuerySet to basic Python objects.
+    Serializes a QuerySet or page of Paginator to basic Python objects.
     """
     pass
 

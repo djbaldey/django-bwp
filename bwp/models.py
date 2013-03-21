@@ -46,7 +46,7 @@ from django.contrib.admin.util import quote
 from django.utils.encoding import smart_unicode
 from django.utils.safestring import mark_safe
 from django.utils.text import capfirst
-from django.core.paginator import Paginator
+from django.core.paginator import Paginator, Page, PageNotAnInteger, EmptyPage
 from django.shortcuts import redirect
 
 from django.http import HttpResponseNotFound
@@ -62,6 +62,12 @@ from bwp.widgets import get_widget_from_field
 ADDING = 1
 CHANGE = 2
 DELETE = 3
+
+def get_http_404(self, request):
+    """ Если запрос на API, то возвращаем JSON, иначе обычный 404 """
+    if request.path == redirect('bwp.views.api')['Location']:
+        return JSONResponse(status=404)
+    return HttpResponseNotFound()
 
 def serialize_field(item, field, as_pk=False, with_pk=False, as_option=False):
     if field == '__unicode__':
@@ -135,6 +141,8 @@ class BaseModel(object):
 
     list_display = ('__unicode__',)
     list_display_css = {'pk': 'input-micro', 'id': 'input-micro'} # by default
+    list_per_page = 100
+    list_max_show_all = 200
     show_column_pk = False
 
     fields = None
@@ -142,6 +150,7 @@ class BaseModel(object):
     widgets = None
     widgetsets = None
     search_fields = ()
+    search_key = 'query'
     
     ordering = None
     actions = []
@@ -154,6 +163,9 @@ class BaseModel(object):
         if self.model is None:
             raise NotImplementedError('Set the "model" in %s.' % self.__class__.__name__)
         return self.model._meta
+
+    def get_display_fields(self):
+        return getattr(self, "display_fields", self.fields or self.list_display or ())
     
     def get_fields(self):
         """ Возвращает реальные объекты полей """
@@ -215,22 +227,21 @@ class BaseModel(object):
             model = self.site.model_dict(model_name)
         return model.objects.get(pk=pk)
 
-    def serialize(self, obj, fields=None, use_natural_keys=True):
+    def serialize(self, obj, **options):
         """ Сериализатор в объект(ы) Python, принимает либо один,
-            либо несколько объектов и точно также возвращает.
+            либо несколько объектов или объект паджинации
+            и точно также возвращает.
         """
-        if fields is None:
-            fields = list(self.display_fields)
-        if isinstance(obj, (QuerySet, list, tuple)):
-            data = serializers.serialize('python', obj, fields=fields,
-                                    use_natural_keys=use_natural_keys)
+        if not options.has_key('use_natural_keys'):
+            options['use_natural_keys'] = True # default
+        if isinstance(obj, (QuerySet, Page, list, tuple)):
+            data = serializers.serialize('python', obj, **options)
         else:
-            data = serializers.serialize('python', [obj], fields=fields,
-                                    use_natural_keys=use_natural_keys)[0]
+            data = serializers.serialize('python', [obj], **options)[0]
         return data
 
-    def get_paginator(self, request, queryset, per_page, orphans=0, allow_empty_first_page=True):
-        return self.paginator(queryset, per_page, orphans, allow_empty_first_page)
+    def get_paginator(self, queryset, per_page=None, orphans=0, allow_empty_first_page=True):
+        return self.paginator(queryset, per_page or self.list_per_page, orphans, allow_empty_first_page)
 
     def queryset(self, request=None, **kwargs):
         return self.model._default_manager.get_query_set()
@@ -241,22 +252,54 @@ class BaseModel(object):
         """
         return self.ordering or ()  # otherwise we might try to *None, which is bad ;)
 
-    def order_queryset(self, request, qs=None):
+    def order_queryset(self, request, queryset=None, ordering=None, **kwargs):
         """
         Сортировка определённого, либо общего набора данных.
         """
-        if qs is None:
-            qs = self.queryset()
-        ordering = self.get_ordering(request)
+        if queryset is None:
+            queryset = self.queryset()
+        if ordering is None:
+            ordering = self.get_ordering(request)
         if ordering:
-            qs = qs.order_by(*ordering)
-        return qs
+            queryset = queryset.order_by(*ordering)
+        return queryset
 
-    def get_http_404(self, request):
-        """ Если запрос на API, то возвращаем JSON, иначе обычный 404 """
-        if request.path == redirect('bwp.views.api')['Location']:
-            return JSONResponse(status=404)
-        return HttpResponseNotFound()
+    def page_queryset(self, request, queryset=None, page=1, **kwargs):
+        """
+        Возвращает объект страницы паджинатора для набора объектов
+        """
+        queryset = self.order_queryset(self, request, queryset)
+        paginator = self.get_paginator(queryset)
+
+        # request может быть пустым
+        try:
+            page = request.REQUEST.get('page', page)
+        except:
+            pass
+        try:
+            page_queryset = paginator.page(int(page))
+        except PageNotAnInteger:
+            # If page is not an integer, deliver first page.
+            page_queryset = paginator.page(1)
+        except EmptyPage:
+            # If page is out of range (e.g. 9999), deliver last page of results.
+            page_queryset = paginator.page(paginator.num_pages)
+
+        return page_queryset
+
+    def get_search_query(self, request, search_key=None, **kwargs):
+        """ Возвращает значение поискового запроса. """
+        if search_key is None:
+            return request.REQUEST.get(self.search_key, None)
+        else:
+            return request.REQUEST.get(search_key, None)
+
+    def filter_queryset(self, request, queryset=None, query=None, **kwargs):
+        """ Возвращает отфильтрованный QuerySet для всех экземпляров модели. """
+        if queryset is None:
+            queryset = self.queryset(**kwargs)
+        return filterQueryset(queryset, self.search_fields,
+            query or self.get_search_query(request,**kwargs))
 
     def get(self, request, pk=None, **kwargs):
         """ Получает объект согласно привилегий """
@@ -264,20 +307,21 @@ class BaseModel(object):
             try:
                 obj = self.queryset(request, **kwargs).get(pk=pk)
             except:
-                return self.get_http_404(request)
+                return get_http_404(request)
             return self.get_object_detail(request, obj, **kwargs)
         else:
             return self.get_collection(request, **kwargs)
 
     def get_object_detail(self, request, obj, **kwargs):
         """ Метод должен переопределяться, но по-умолчанию такой """
-        data = self.serialize(obj, ['pk'] + list(self.display_fields))
+        data = self.serialize(obj)
         return JSONResponse(data=data)
 
     def get_collection(self, request, **kwargs):
         """ Метод должен переопределяться, но по-умолчанию такой """
-        qs = self.queryset(request, **kwargs)
-        data = self.serialize(qs, ['pk'] + list(self.display_fields))
+        qs = self.filter_queryset(request, **kwargs)
+        qs = self.page_queryset(request, qs, **kwargs)
+        data = self.serialize(qs)
         return JSONResponse(data=data)
 
     @transaction.commit_manually

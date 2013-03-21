@@ -36,9 +36,6 @@
 #   <http://www.gnu.org/licenses/>.
 ###############################################################################
 """
-
-from StringIO import StringIO
-
 from django.core.serializers.json import *
 from django.core.serializers.json import Serializer as OrignSerializer
 
