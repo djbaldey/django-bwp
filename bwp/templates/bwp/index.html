@@ -9,55 +9,14 @@
     <tr>
         <td class="span6">
             <div class="pull-left">
-        {% if app_list %}
-            <span id="menu-app" class="dropdown">
-                <a href="#" data-toggle="dropdown" data-target="#" class="label label-info">Приложения</a>
-
-                <ul class="dropdown-menu" role="menu">
-                {% for app in app_list %}
-                    <li class="dropdown-submenu">
-                        <a tabindex="-1" href="#">{{ app.label }}</a>
-                        <ul class="dropdown-menu">
-                        {% for model in app.models %}
-                            <li>
-                                <a href="javascript:void(0)" 
-                                    data-model="{{ model.name }}"
-                                    data-id="{{ model.name|split:"."|join:"-" }}"
-                                    data-title="{{ app.label }}"
-                                >{{ model.label }}</a>
-                            </li>
-                        {% endfor %}
-                        </ul>
-                    </li>
-                {% endfor %}
-                </ul>
-            </span>
-        {% endif %}
-            
-        {% if func_list %}
-            <span id="menu-func" class="dropdown">
-                <a href="#" data-toggle="dropdown" data-target="#" class="label label-important">Функции</a>
-
-                <ul class="dropdown-menu" role="menu">
-                {% for func in func_list %}
-                    <li class="dropdown-submenu">
-                        <a tabindex="-1" href="#">{{ func.verbose_name }}</a>
-                        <ul class="dropdown-menu">
-                        {% for subfunc in func.functions %}
-                            <li>
-                                <a href="javascript:void(0)" 
-                                    data-func="{{ subfunc.id }}"
-                                    data-id="{{ subfunc.html_id }}"
-                                    data-title="{{ subfunc.verbose_name }}"
-                                >{{ subfunc.name }}</a>
-                            </li>
-                        {% endfor %}
-                        </ul>
-                    </li>
-                {% endfor %}
-                </ul>
-            </span>
-        {% endif %}
+                <span id="menu-app" class="dropdown">
+                    <a href="#" data-toggle="dropdown" data-target="#" class="label label-info">Приложения</a>
+                    <ul class="dropdown-menu" role="menu"></ul>
+                </span>
+                <span id="menu-func" class="dropdown">
+                    <a href="#" data-toggle="dropdown" data-target="#" class="label label-important">Функции</a>
+                    <ul class="dropdown-menu" role="menu"></ul>
+                </span>
             </div>
         </td>
         <td class="span6">
@@ -74,10 +33,6 @@
 {% endblock %}
 
 {% block content %}
-{% if not app_list %}
-    <p>{% trans "You don't have permission to edit anything." %}</p>
-{% else %}
     <ul id="main-tab" class="nav nav-tabs"></ul>
     <div id="main-tab-content" class="tab-content"></div>
-{% endif %}
 {% endblock %}

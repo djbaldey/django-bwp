@@ -537,7 +537,6 @@ class BaseModel(object):
             object_repr     = object_repr,
             action_flag     = DELETE
         )
- 
 
 class ComposeBWP(BaseModel):
     """ Модель для описания вложенных объектов BWP. 

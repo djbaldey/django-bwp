@@ -657,6 +657,19 @@ function fnShowHide( model, iCol ) {
 //                              ВКЛАДКИ                               //
 ////////////////////////////////////////////////////////////////////////
 
+function loadMenuApp() {
+    if (DEBUG) {console.log('function:'+'loadMenuApp')};
+    sync = true;
+    args = { method: "get_apps" }
+    cb = function(json, status, xhr) {
+        html = TEMPLATES.menuApp(json);
+        $('#menu-app ul[role=menu]').html(html);
+        $('#menu-app').show();
+    };
+    jqxhr = new jsonAPI(args, cb, 'loadMenuApp() call jsonAPI()', sync);
+    return jqxhr
+};
+
 /* Добавляет вкладки на рабочую область */
 function addTab() {
     if (DEBUG) {console.log('function:'+'addTab')};
@@ -755,6 +768,15 @@ function restoreSession() {
 /* Выполнение чего-либо после загрузки страницы */
 $(document).ready(function($) {
     if (DEBUG) {console.log('function:'+'$(document).ready')};
+    // Инициализация шаблонов Underscore
+    TEMPLATES.alert             = _.template($('#underscore-alert').html());
+    TEMPLATES.menuApp           = _.template($('#underscore-menu-app').html());
+    TEMPLATES.tabContentObject  = _.template($('#underscore-tab-content-object').html());
+    TEMPLATES.tabContentDefault = _.template($('#underscore-tab-content-default').html());
+    TEMPLATES.tab               = _.template($('#underscore-tab').html());
+    TEMPLATES.datatables        = _.template($('#underscore-datatables').html());
+    TEMPLATES.datatables_pk     = _.template($('#underscore-datatables-pk').html());
+
     /* сначала инициализируем объекты, затем настройки, иначе не работает
      * TODO: Найти объяснение.
      */
@@ -772,14 +794,10 @@ $(document).ready(function($) {
     else { $('div.navbar a[href="/"]').parents('li').addClass('active');}
     */
 
-
-    // Инициализация шаблонов Underscore
-    TEMPLATES.alert = _.template($('#underscore-alert').html());
-    TEMPLATES.tabContentObject = _.template($('#underscore-tab-content-object').html());
-    TEMPLATES.tabContentDefault = _.template($('#underscore-tab-content-default').html());
-    TEMPLATES.tab = _.template($('#underscore-tab').html());
-    TEMPLATES.datatables = _.template($('#underscore-datatables').html());
-    TEMPLATES.datatables_pk = _.template($('#underscore-datatables-pk').html());
+    // Загрузка меню
+    $('#menu-app').hide();
+    $('#menu-func').hide();
+    loadMenuApp()
 
     // Если настройки готовы, то запускаем все процессы
     if (SETTINGS.init().ready) {

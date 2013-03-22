@@ -217,7 +217,7 @@ class BWPSite(object):
             model_name = str(model._meta)
             model_dict = {
                 'name':  model_name,
-                'label': capfirst(model._meta.verbose_name_plural),
+                'label': capfirst(unicode(model._meta.verbose_name_plural)),
                 'perms': perms,
                 'meta':  model_bwp.meta,
                 'bwp':   model_bwp,
@@ -253,7 +253,7 @@ class BWPSite(object):
         app_list = self.app_list(request)
         # Удаляем модели BWP из словарей
         for app in app_list:
-            for dicmodel in app.models:
+            for dicmodel in app['models']:
                 dicmodel.pop('bwp')
         return app_list
 

@@ -73,16 +73,11 @@ def index(request, extra_context={}):
     apps that have been registered in this site.
     """
 
-    ctx = {'DEBUG': settings.DEBUG}
+    ctx = {'DEBUG': settings.DEBUG, 'title': _('bwp')}
     
     user = request.user
     if not user.is_authenticated():
         return redirect('bwp.views.login')
-    
-    ctx.update({
-        'title': _('bwp'),
-        'app_list': site.app_list(request),
-    })
     ctx.update(extra_context)
     return render_to_response('bwp/index.html', ctx,
                             context_instance=RequestContext(request,))
@@ -201,10 +196,10 @@ def API_get_apps(request, device=None, **kwargs):
             TODO: написать
         }`
     """
-    session = request.session
-    user = request.user
-
-    return JSONResponse(data=site.serialize(request))
+    data=site.serialize(request)
+    if not data:
+        return JSONResponse(message=403)
+    return JSONResponse(data=data)
 
 @api_required
 @login_required
@@ -223,8 +218,6 @@ def API_get_object(request, model, pk=None, **kwargs):
             TODO: написать
         }`
     """
-    session = request.session
-    user = request.user
 
     # Получаем модель BWP со стандартной проверкой прав
     model_bwp = site.bwp_dict(request).get(model)
@@ -282,8 +275,6 @@ def API_get_collection(request, model, compose=None, page=1, per_page=None,
             'start_index': 1
         }`
     """
-    session = request.session
-    user = request.user
 
     # Получаем модель BWP со стандартной проверкой прав
     model_bwp = site.bwp_dict(request).get(model)
