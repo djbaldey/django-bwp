@@ -44,6 +44,7 @@ from django.utils.text import capfirst
 from bwp.models import ModelBWP
 from bwp.forms import BWPAuthenticationForm
 from bwp.conf import settings
+from bwp.templatetags.bwp_locale import app_label_locale
 
 
 class AlreadyRegistered(Exception):
@@ -213,13 +214,12 @@ class BWPSite(object):
 
             # Разрешения уже проверены в методе get_registry_items(request)
             info = (app_label, model._meta.module_name)
-            modelname = str(model._meta)
+            model_name = str(model._meta)
             model_dict = {
-                'name': modelname,
+                'name':  model_name,
                 'label': capfirst(model._meta.verbose_name_plural),
-                'id':    modelname.replace('.','-'),
-                'meta':  model._meta,
                 'perms': perms,
+                'meta':  model_bwp.meta,
                 'bwp':   model_bwp,
             } 
 
@@ -228,7 +228,7 @@ class BWPSite(object):
             else:
                 app_dict[app_label] = {
                     'name': app_label,
-                    'label': capfirst(app_label),
+                    'label': app_label_locale(capfirst(app_label)),
                     'has_module_perms': has_module_perms,
                     'models': [model_dict],
                 }
@@ -246,6 +246,15 @@ class BWPSite(object):
         for app in app_list:
             app['models'].sort(key=lambda x: x['name'])
 
+        return app_list
+
+    def serialize(self, request):
+        """ Сериализует все объекты сайта в Python """
+        app_list = self.app_list(request)
+        # Удаляем модели BWP из словарей
+        for app in app_list:
+            for dicmodel in app.models:
+                dicmodel.pop('bwp')
         return app_list
 
 

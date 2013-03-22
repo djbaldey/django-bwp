@@ -125,6 +125,10 @@ def is_active(qs):
     except:
         return qs
 
+@register.filter
+def split(obj, sting):
+    return obj.split(sting)
+
 @register.simple_tag
 def pagination(request, paginator):
     """ paginator.paginator.count

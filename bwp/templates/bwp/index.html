@@ -1,5 +1,5 @@
 {% extends "bwp/base.html" %}
-{% load i18n bwp_static bwp_locale %}
+{% load i18n bwp_base bwp_static bwp_locale %}
 {% load url from future %}
 
 {% block bodyclass %}index{% endblock %}
@@ -16,14 +16,14 @@
                 <ul class="dropdown-menu" role="menu">
                 {% for app in app_list %}
                     <li class="dropdown-submenu">
-                        <a tabindex="-1" href="#">{% app_label_locale app.label %}</a>
+                        <a tabindex="-1" href="#">{{ app.label }}</a>
                         <ul class="dropdown-menu">
                         {% for model in app.models %}
                             <li>
                                 <a href="javascript:void(0)" 
                                     data-model="{{ model.name }}"
-                                    data-id="{{ model.id }}"
-                                    data-title="{% app_label_locale app.label %}"
+                                    data-id="{{ model.name|split:"."|join:"-" }}"
+                                    data-title="{{ app.label }}"
                                 >{{ model.label }}</a>
                             </li>
                         {% endfor %}

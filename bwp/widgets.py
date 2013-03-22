@@ -98,6 +98,9 @@ class SelectWidget(GeneralWidget):
 class SelectMultipleWidget(SelectWidget):
     select_multiple = True
 
+class TextWidget(GeneralWidget):
+    tag = 'textarea'
+
 class InputWidget(GeneralWidget):
     tag = 'input'
     input_type = 'text'
@@ -138,7 +141,7 @@ WIDGETS_FOR_DBFIELD = {
     models.DateTimeField:               (InputWidget, {'class': 'datetimefield'}),
     models.DecimalField:                (InputWidget, {'class': 'decimalfield'}),
     models.EmailField:                  (EmailWidget, None),
-    models.FileField:                   (FileWidget, None),
+    models.FileField:                   (FileWidget,  None),
     models.FilePathField:               (InputWidget, {'class': 'filepathfield'}),
     models.FloatField:                  (InputWidget, {'class': 'floatfield'}),
     models.ImageField:                  (ImageWidget, None),
@@ -149,10 +152,10 @@ WIDGETS_FOR_DBFIELD = {
     models.PositiveIntegerField:        (InputWidget, {'class': 'positiveintegerfield'}),
     models.PositiveSmallIntegerField:   (InputWidget, {'class': 'positivesmallintegerfield'}),
     models.SlugField:                   (InputWidget, {'class': 'slugfield'}),
-    models.SmallIntegerField:           (InputWidget,{'class': 'smallintegerfield'}),
-    models.TextField:                   (InputWidget, None),
+    models.SmallIntegerField:           (InputWidget, {'class': 'smallintegerfield'}),
+    models.TextField:                   (TextWidget,  {'class': 'textfield', "rows": "8",}),
     models.TimeField:                   (InputWidget, {'class': 'timefield'}),
-    models.URLField:                    (URLWidget, None),
+    models.URLField:                    (URLWidget,   None),
 }
 
 def get_widget_from_field(field):

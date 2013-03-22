@@ -155,24 +155,29 @@ class LogEntry(models.Model):
 class BaseModel(object):
     """ Functionality common to both ModelBWP and ComposeBWP."""
 
-    list_display = ('__unicode__',)
-    list_display_css = {'pk': 'input-micro', 'id': 'input-micro'} # by default
-    list_per_page = 100
-    list_max_show_all = 200
-    show_column_pk = False
-
-    fields = None
-    fieldsets = None
-    widgets = None
-    widgetsets = None
-    search_fields = ()
-    search_key = 'query'
+    list_display        = ('__unicode__',)
+    list_display_css    = {'pk': 'input-micro', 'id': 'input-micro'} # by default
+    list_per_page       = 100
+    list_max_show_all   = 200
+    show_column_pk      = False
     
-    ordering = None
-    actions = []
+    fields              = None
+    fieldsets           = None
+    widgets             = None
+    widgetsets          = None
+    search_fields       = ()
+    search_key          = 'query'
     
-    paginator = Paginator
-    site = None
+    ordering            = None
+    actions             = []
+    
+    paginator           = Paginator
+    site                = None
+    
+    # Набор ключей для предоставления метаданных об этой модели.
+    metakeys = ('list_display', 'list_per_page',
+                'list_max_show_all', 'show_column_pk', 'fields',
+                'search_fields', 'search_key', 'ordering')
 
     @property
     def opts(self):
@@ -180,8 +185,25 @@ class BaseModel(object):
             raise NotImplementedError('Set the "model" in %s.' % self.__class__.__name__)
         return self.model._meta
 
-    def get_display_fields(self):
-        return getattr(self, "display_fields", self.fields or self.list_display or ())
+    def get_meta(self):
+        """ Возвращает словарь метаданных об этой модели.
+        
+            Этот метод можно переопределить в наследуемом классе,
+            например, чтобы добавить информацию из наследуемого класса
+        """
+        return dict([ (key, getattr(self, key)) for key in self.metakeys ])
+
+    @property
+    def meta(self):
+        """ Регистрирует в словаре расширенную информацию о данной
+            модели для клиента.
+            
+            Это свойство можно переопределить в наследуемом классе,
+            например, чтобы добавить информацию из наследуемого класса
+        """
+        if not hasattr(self, '_meta'):
+            self._meta = self.get_meta()
+        return self._meta
     
     def get_fields(self):
         """ Возвращает реальные объекты полей """
@@ -361,6 +383,11 @@ class BaseModel(object):
         qs = self.filter_queryset(request, **kwargs)
         qs = self.page_queryset(request, qs, **kwargs)
         data = self.serialize(qs)
+        # преобразовываем список объектов в словарь, для добавления
+        # расширенной информации о модели коллекции
+        if isinstance(data, list):
+            data = {'object_list': data}
+        data['meta'] = self.meta
         return JSONResponse(data=data)
 
     @transaction.commit_manually
@@ -510,7 +537,8 @@ class BaseModel(object):
             object_repr     = object_repr,
             action_flag     = DELETE
         )
-    
+ 
+
 class ComposeBWP(BaseModel):
     """ Модель для описания вложенных объектов BWP. 
         multiply_fields = [ ('column_title', ('field_1', 'field_2')) ]
@@ -525,6 +553,12 @@ class ComposeBWP(BaseModel):
         self.bwp_site = bwp_site
         if self.verbose_name is None:
             self.verbose_name = self.opts.verbose_name_plural or self.opts.verbose_name
+
+    def get_meta(self):
+        """ Возвращает словарь метаданных об этой модели. """
+        dic = dict([ (key, getattr(self, key)) for key in self.metakeys ])
+        dic['related_name'] = self.related_name
+        return dic
 
     def get_compose(self, request, object, **kwargs):
         """ Data = {
@@ -561,6 +595,7 @@ class ComposeBWP(BaseModel):
             'id':       html_id,
             'compose':  compose,
             'label':    capfirst(unicode(self.verbose_name)),
+            'meta':     self.meta,
         }
 
         # Permissions
@@ -597,6 +632,8 @@ class ModelBWP(BaseModel):
     """
 
     compositions = []
+    
+    datatables_list_display = []
 
     def __init__(self, model, bwp_site):
         self.model = model
@@ -605,17 +642,17 @@ class ModelBWP(BaseModel):
     @property
     def compose_instances(self):
         """ Регистрирует экземпляры Compose моделей и/или возвращает их. """
-        if not hasattr(self, 'compose_instances'):
-            self._compose_instances = []
-            if self.compositions:
-                for related_name, compose_class in self.compositions:
-                    compose = compose_class(related_name, self.model, self.bwp_site)
-                    self._compose_instances.append(compose)
+        if not hasattr(self, '_compose_instances'):
+            self._compose_instances = [
+                compose_class(related_name, self.model, self.bwp_site) \
+                for related_name, compose_class in self.compositions or []
+            ]
         return self._compose_instances
 
     def get_object_detail(self, request, object, **kwargs):
         """ Метод возвращает сериализованный объект в JSONResponse """
         data = self.get_full_object(request, object)
+        data['meta'] = self.meta
         return JSONResponse(data=data)
 
     def get_full_object(self, request, object, **kwargs):
@@ -693,10 +730,10 @@ class ModelBWP(BaseModel):
         except ValueError:
             i_sorting_cols = 0
         
-        reserv = [ x for x in self.list_display if x not in ('__unicode__', '__str__')]
+        reserv = [ x for x in self.datatables_list_display if x not in ('__unicode__', '__str__')]
 
         ordering = []
-        order_columns = self.list_display
+        order_columns = self.datatables_list_display
         for i in range(i_sorting_cols):
             # sorting column
             try:
@@ -747,7 +784,7 @@ class ModelBWP(BaseModel):
     def datatables_prepare_results(self, qs):
         # prepare list with output column data
         # queryset is already paginated here
-        display = self.list_display
+        display = self.datatables_list_display
         data = [ [ serialize_field(item, field) for field in display ] for item in qs ]
         return data
 
@@ -781,13 +818,14 @@ class ModelBWP(BaseModel):
         list_display = []
         # принудительная установка первичного ключа в начало списка
         # необходима для чёткого определения его на клиенте
-        if self.list_display[0] != 'pk':
-            self.list_display = ('pk',) + self.list_display
+        self.datatables_list_display = list(self.list_display)
+        if self.datatables_list_display[0] != 'pk':
+            self.datatables_list_display.insert(0,'pk')
         list_display_css = {}
         # Словари параметров колонок
         not_bSortable = {"bSortable": False, "aTargets": [ ]}
         not_bVisible = {"bVisible": False, "aTargets": [ ]}
-        for i, it in enumerate(self.list_display):
+        for i, it in enumerate(self.datatables_list_display):
             if it in ('__unicode__', '__str__'):
                 field = (capfirst(unicode(meta.verbose_name)),
                         capfirst(ugettext('object')))

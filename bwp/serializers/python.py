@@ -143,6 +143,15 @@ class SerializerWrapper(object):
             super(OrignSerializer, self).serialize(queryset, **options)
         return self.getvalue()
 
+    def end_object(self, obj):
+        self.objects.append({
+            "model"  :      smart_unicode(obj._meta),
+            "pk"     :      smart_unicode(obj._get_pk_val(), strings_only=True),
+            "fields":       self._current,
+            "__unicode__" : smart_unicode(obj),
+        })
+        self._current = None
+
 class Serializer(SerializerWrapper, OrignSerializer):
     """
     Serializes a QuerySet or page of Paginator to basic Python objects.

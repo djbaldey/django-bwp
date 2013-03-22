@@ -186,6 +186,28 @@ def API_get_settings(request):
 
 @api_required
 @login_required
+def API_get_apps(request, device=None, **kwargs):
+    """ *Возвращает список из доступных приложений и их моделей.*
+        
+        ##### ЗАПРОС
+        Параметры:
+        
+        1. **"device"** - название устройства для которого есть
+            доступные приложения (нереализовано).
+        
+        ##### ОТВЕТ
+        Формат ключа **"data"**:
+        `{
+            TODO: написать
+        }`
+    """
+    session = request.session
+    user = request.user
+
+    return JSONResponse(data=site.serialize(request))
+
+@api_required
+@login_required
 def API_get_object(request, model, pk=None, **kwargs):
     """ *Возвращает экземпляр указанной модели.*
         
@@ -296,6 +318,7 @@ def API_datatables_info(request, model, **kwargs):
     return JSONResponse(data=datatables(request, model, info=True, serialize=False))
 
 QUICKAPI_DEFINED_METHODS = {
+    'get_apps':         'bwp.views.API_get_apps',
     'get_settings':     'bwp.views.API_get_settings',
     'get_object':       'bwp.views.API_get_object',
     'get_collection':   'bwp.views.API_get_collection',
