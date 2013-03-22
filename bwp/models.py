@@ -175,7 +175,7 @@ class BaseModel(object):
     site                = None
     
     # Набор ключей для предоставления метаданных об этой модели.
-    metakeys = ('list_display', 'list_per_page',
+    metakeys = ('list_display', 'list_display_css', 'list_per_page',
                 'list_max_show_all', 'show_column_pk', 'fields',
                 'search_fields', 'search_key', 'ordering')
 

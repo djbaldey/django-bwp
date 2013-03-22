@@ -40,7 +40,185 @@
 //                              ОБЪЕКТЫ                               //
 ////////////////////////////////////////////////////////////////////////
 
-var TEMPLATES = {};
+// Глобальные хранилища
+var TEMPLATES = {}; // Шаблоны
+var APPS      = {}; // Приложения
+var MODELS    = {}; // Модели
+var COMPOSES  = {}; // Композиции
+var OBJECTS   = {}; // Объекты
+
+/* МодельBWP
+ * Пример использования:
+========================================================================
+model.append(object1) // добавление в словарь одного объекта
+model.append([ object1, object2, ... ]) // добавление в словарь списка объектов
+
+model.update(keyobject1, htmlwidget) // изменение объекта на странице
+
+model.remove([ keyobject1, keyobject2, ... ]) // пометка на удаление для коммита
+model.commit() // отправка на сервер всех изменений по всем моделям
+model.commit(keymodel) // отправка на сервер списка всех изменённых объектов одной модели
+model.commit([ keyobject1, keyobject2, ... ]) // отправка на сервер списка объектов
+model.reload([ keyobject1, keyobject2, ... ]) // перезакгрузка из базы
+========================================================================
+* */
+function Model() {
+    if (DEBUG) {console.log('function:'+'Model')};
+    /* Установка ссылки на свой объект для вложенных функций */
+    self = this;
+    /* Менеджер ссылок для элементов OBJECTS
+     * {'auth.user.1': "i13639443731348017"}
+     */
+    _links   = {};
+    /* Хранилища ссылок на статусы элементов */
+    _redraw  = [];
+    _changed = [];
+    _added   = [];
+    _deleted = [];
+
+    /* Добавление или замена существующих, но новые объекты не
+     * перезаписывают себя, если 
+     */
+    _append = function(objects, silent) {
+        // преобразовываем единственный в список
+        if ($.type(objects) != 'array') { objects = [objects] };
+        tmp_links = []
+        $.each(objects, function(index, item) {
+            var modified = false;
+            /* Проверка присутствия модели элемента в хранилище и
+             * попытка получения ссылки на объект.
+             */
+            if (item.pk) {
+                link = _links[item.model+'.'+item.pk]
+            }
+            /* Элемент существует, помечаем его для рефреша на странице
+             * во всех местах, где он открыт
+             */
+            if (link) {
+                _redraw.push(link);
+                // TODO: finalize
+            }
+            // иначе генерируем новую ссылку
+            else { link = generatorID() };
+            
+            // Записываем в хранилище
+            OBJECTS[link] = {
+                pk:          item.pk,
+                model:       item.model,
+                fields:      item.fields,
+                __unicode__: item.__unicode__,
+            }
+            tmp_links.push(link)
+            
+            /* Если есть композиции, то вызываем эту же функцию для них */
+            if (item.compositions) {
+                // TODO: finalize
+            }
+        });
+        /* Перерисываваем объекты */
+        if (!silent) {
+            _redrawObjects();
+        };
+        return tmp_links;
+    };
+    this.append = _append
+
+    /* Фиксация изменений, произведённых на странице */
+    _update = function(key, widget) {
+        name      = $(widget).attr('name');
+        value     = $(widget).attr('value');
+        datavalue = $.data(widget, 'value') || $(widget).attr('data-value');
+
+        if ($.type(name)      === "undefined") {return false;}
+        if ($.type(value)     === "undefined") {return false;}
+        if ($.type(datavalue) === "undefined") {return false;}
+
+        field = _objects[key]['fields'][name];
+        if ($.type(field) === "array") { field = [datavalue, value] }
+        else { field = datavalue };
+        return true;
+    };
+    this.update = _update
+
+    /* Пометка на удаление для коммита или удаление нового,
+     * ещё не созданного на сервере.
+     */
+    _remove = function(keys) {
+        notexists = []
+        $.each(keys, function(index, key) {
+            if (_objects[key]) {
+                if (_objects[key]['new']) {
+                    delete _objects[key];
+                } else { _objects[key]['remove'] = true; };
+            } else { notexists.push(key) };
+        });
+        return notexists;
+    };
+    this.append = _append
+
+    /* Отправка на сервер в синхронном режиме.
+     * Аргументом может выступать:
+     * - название модели, например "auth.user" (сохранит все измененные объекты модели);
+     * - список ключей объектов (сохранит выбранные объекты с изменениями)
+     * Если аргумент отсутствует - сохранит все изменённые объекты.
+     */
+    _commit = function(keys) {
+        objects = []
+        sync = true;
+        args = { method: "commit", objects: objects };
+
+        // Проверка на изменения
+        _valid = function(item) {
+            if (item.change || item.remove || item.new) { return true; };
+            return false;
+        };
+
+        // Выборка всех
+        if ($.type(keys) === "undefined") {
+            $.each(_objects, function(key, item) {
+                if (_valid(item)) { objects.push(item) }
+            });
+        }
+        // Выборка по модели
+        else if ($.type(keys) === "string") {
+            $.each(_objects, function(key, item) {
+                if ((item.model == keys) && (_valid(item))) {
+                    objects.push(item)
+                }
+            });
+        }
+        // Выборка указанных списком
+        else if ($.type(keys) === "array") {
+            $.each(keys, function(index, key) {
+                item = _objects[key]
+                if (_valid(item)) { objects.push(item) }
+            });
+        };
+
+        // Callback ответа сервера
+        cb = function(json, status, xhr) {
+            // Сервер ответил False
+            if (!json.data) { showAlert(json.message) }
+            // Нормальный ответ
+            else {
+                _last_commit = new Date();
+                $.each(keys, function(index, item) {
+                    if (_objects[item]['remove'] || _objects[item]['new']) {
+                        delete _objects[item]
+                    }
+                });
+            }
+        }
+        jqxhr = new jsonAPI(args, cb, 'OBJECTS.commit() call jsonAPI()', sync)
+        return jqxhr;
+    };
+    this.commit = _commit
+
+    /* Загрузка с сервера актуальных данных */
+    // TODO: реализовать
+    _reload = function(keys) {};
+    this.reload = _reload
+}
 
 /* Глобальный объект объектов DB
  * Пример использования:
@@ -461,21 +639,26 @@ var delay = (function(){
 /* Генератор идентификаторов, которому можно задавать статические
  * начало и конец идентификатора, например:
  *  >> id = generatorID()
- *  >> "gen1363655293735"
+ *  >> "i1363655293735"
  *  >> id = generatorID(null, "object")
  *  >> "gen1363655293736_object"
  *  >> id = generatorID("object")
- *  >> "object_gen1363655293737"
+ *  >> "object_i1363655293737"
  *  >> id = generatorID("model", "object")
- *  >> "model_gen1363655293738_object"
+ *  >> "model_i1363655293738_object"
  */
 function generatorID(prefix, postfix) {
     if (DEBUG) {console.log('function:'+'generatorID')};
-    var result = 'gen';
-    if (prefix) { result += prefix + '_' };
-    result += $.now();
-    if (postfix) { result += '_' + postfix };
-    return validatorID(result);
+    var result = [];
+    var gen = 'i';
+    var m = 1000;
+    var n = 9999;
+    var salt = Math.floor( Math.random() * (n - m + 1) ) + m;
+    gen += $.now() + String(salt);
+    if (prefix) { result.push(prefix)};
+    result.push(gen); 
+    if (postfix) { result.push(postfix) };
+    return validatorID(result.join('_'));
 }
 
 /* Приводит идентификаторы в позволительный jQuery вид.
@@ -821,4 +1004,3 @@ $(document).ready(function($) {
         console.log("ОШИБКА! Загрузка настроек не удалась.");
     }
 });
-
