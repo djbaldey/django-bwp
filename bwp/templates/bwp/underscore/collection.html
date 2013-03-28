@@ -13,6 +13,7 @@
         <tr data-model="{{ obj.model }}" data-pk="{{ obj.pk }}">
             {% _.each(data.widgets, function(c, index) { %}
                 <td class="{{ c.attr['class'] }}">
+                {% if (index == 0) { %}
                     <div class="dropup">
                         <div class="dropdown-toggle" role="button" data-toggle="dropdown" data-target="#">
                         {% if (c.name == '__unicode__') { %}
@@ -27,7 +28,7 @@
                                     data-action="object_open"
                                     data-model="{{ obj.model }}"
                                     data-pk="{{ obj.pk }}">
-                                    <span class="badge badge-important">Открыть</span>
+                                    <i class="icon-edit"> </i> Открыть
                                 </a>
                             </li>
                         {% } %}
@@ -36,7 +37,7 @@
                                     data-action="object_copy"
                                     data-model="{{ obj.model }}"
                                     data-pk="{{ obj.pk }}">
-                                    <span class="badge badge-warning">Копировать</span>
+                                    <i class="icon-plus"> </i> Копировать
                                 </a>
                             </li>
                         {% } %}
@@ -46,12 +47,19 @@
                                     data-action="object_delete"
                                     data-model="{{ obj.model }}"
                                     data-pk="{{ obj.pk }}">
-                                    <span class="badge badge-inverse">Удалить</span>
+                                    <i class="icon-trash"> </i> Удалить
                                 </a>
                             </li>
                         {% } %}
                         </ul>
                     </div>
+                    {% } else { %}
+                        {% if (c.name == '__unicode__') { %}
+                            {{ obj.__unicode__ }}
+                        {% } else { %}
+                            {{ obj.fields[c.name] || c.name }}
+                        {% } %}
+                    {% } %}
                 </td>
             {% }); %}
         </tr>
