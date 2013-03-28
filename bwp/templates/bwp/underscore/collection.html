@@ -1,0 +1,76 @@
+{# Шаблон Underscore #}{% load i18n l10n bwp_verbatim %}{% verbatim %}
+<table data-id="{{ data.id }}"
+    class="table table-condensed table-striped table-bordered table-hover">
+    <thead>
+        <tr>
+        {% _.each(data.widgets, function(c) { %}
+            <th data-toggle="tooltip" class="{{ c.attr['class'] }}" title="{{ c.title }}">{{ c.label }}</th>
+        {% }); %}
+        </tr>
+    </thead>
+    <tbody>
+    {% _.each(data.paginator.object_list, function(obj) { %}
+        <tr data-model="{{ obj.model }}" data-pk="{{ obj.pk }}">
+            {% _.each(data.widgets, function(c, index) { %}
+                <td class="{{ c.attr['class'] }}">
+                    <div class="dropup">
+                        <div class="dropdown-toggle" role="button" data-toggle="dropdown" data-target="#">
+                        {% if (c.name == '__unicode__') { %}
+                            {{ obj.__unicode__ }}
+                        {% } else { %}
+                            {{ obj.fields[c.name] || c.name }}
+                        {% } %}
+                        </div>
+                        <ul class="dropdown-menu" role="menu">
+                        {% if (data.perms.change) { %}
+                            <li><a  tabindex="-1" href="#"
+                                    data-action="object_open"
+                                    data-model="{{ obj.model }}"
+                                    data-pk="{{ obj.pk }}">
+                                    <span class="badge badge-important">Открыть</span>
+                                </a>
+                            </li>
+                        {% } %}
+                        {% if (data.perms.add) { %}
+                            <li><a  tabindex="-1" href="#"
+                                    data-action="object_copy"
+                                    data-model="{{ obj.model }}"
+                                    data-pk="{{ obj.pk }}">
+                                    <span class="badge badge-warning">Копировать</span>
+                                </a>
+                            </li>
+                        {% } %}
+                        {% if (data.perms.delete) { %}
+                            <li class="divider"></li>
+                            <li><a  tabindex="-1" href="#"
+                                    data-action="object_delete"
+                                    data-model="{{ obj.model }}"
+                                    data-pk="{{ obj.pk }}">
+                                    <span class="badge badge-inverse">Удалить</span>
+                                </a>
+                            </li>
+                        {% } %}
+                        </ul>
+                    </div>
+                </td>
+            {% }); %}
+        </tr>
+    {% }); %}
+    </tbody>
+</table>
+<div id="pagination_{{ data.id }}">
+    <div class="pagination pagination-right pagination-mini">
+        <ul>
+            {% _.each(data.paginator.page_range, function(page) { %}
+                {% if (page == data.paginator.number) { %}
+                <li class="active"><a href="#" data-action="collection_page" data-page="{{ page }}" data-id="{{ data.id }}">{{ page }}</a></li>
+                {% } else if (isNaN(page)) { %}
+                <li class="disabled"><a href="#">...</a></li>
+                {% } else { %}
+                <li><a href="#" data-action="collection_page" data-page="{{ page }}" data-id="{{ data.id }}">{{ page }}</a></li>
+                {% } %}
+            {% }); %}
+        </ul>
+    </div>
+</div>
+{% endverbatim %}

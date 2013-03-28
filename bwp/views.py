@@ -58,7 +58,7 @@ from quickapi.decorators import login_required, api_required
 
 from bwp.sites import site
 from bwp.forms import BWPAuthenticationForm
-from bwp.conf import settings, ARRAY_FORM_OBJECT_KEY, ARRAY_FORM_COMPOSE_KEY
+from bwp.conf import settings
 from bwp.utils.convertors import jquery_form_array, jquery_multi_form_array
 
 from bwp.contrib.usersettings.models import OrgUserSettings, GlobalUserSettings
@@ -113,45 +113,6 @@ def logout(request, extra_context={}):
 ########################################################################
 #                             END PAGES                                #
 ########################################################################
-
-def get_json_response(content, **kwargs):
-    """ Конструируем HttpResponse объект. """
-    result = simplejson.dumps(content, ensure_ascii=False,
-                                cls=DjangoJSONEncoder,
-                                indent=4,
-                            ).encode('utf-8', 'ignore')
-    response = HttpResponse(
-                mimetype="application/json",
-                content_type="application/json",
-                **kwargs)
-    if len(result) > 512:
-        response['Content-encoding'] = 'deflate'
-        result = result.encode('zlib')
-    response.write(result)
-    add_never_cache_headers(response)
-    return response
-
-def datatables(request, model=None, info=None, serialize=True):
-    """ Представление для работы с DataTables """
-    ctx = {'DEBUG': settings.DEBUG}
-    app_dict = {}
-    user = request.user
-    if not user.is_authenticated():
-        return get_json_response(None)
-
-    model_bwp = None
-    if model or 'model' in request.REQUEST:
-        model = request.REQUEST.get('model', model)
-        model_bwp = site.bwp_dict(request).get(model)
-    if model_bwp:
-        if info or 'info' in request.REQUEST:
-            if serialize:
-                return get_json_response(model_bwp.datatables_get_info(request))
-            return model_bwp.datatables_get_info(request)
-        elif serialize:
-            return get_json_response(model_bwp.datatables_get_data(request))
-        return model_bwp.datatables_get_data(request)
-    return get_json_response({'sError': 'No model'})
 
 ########################################################################
 #                               API                                    #
@@ -232,8 +193,8 @@ def API_get_object(request, model, pk=None, **kwargs):
 
 @api_required
 @login_required
-def API_get_collection(request, model, compose=None, page=1, per_page=None,
-    query=None, order_by=None, **kwargs):
+def API_get_collection(request, model, pk=None, compose=None, page=1,
+    per_page=None, query=None, order_by=None, fields=None, **kwargs):
     """ *Возвращает коллекцию экземпляров указанной модели.*
         
         ##### ЗАПРОС
@@ -279,41 +240,30 @@ def API_get_collection(request, model, compose=None, page=1, per_page=None,
     # Получаем модель BWP со стандартной проверкой прав
     model_bwp = site.bwp_dict(request).get(model)
     
-    options = dict(request=request, page=page, query=query, 
-                    per_page=per_page, order_by=order_by)
+    options = {
+        'request': request,
+        'page': page,
+        'query': query,
+        'per_page': per_page,
+        'order_by': order_by,
+        'fields': fields,
+        'pk':pk, 
+    }
     
     # Возвращаем коллекцию композиции, если указано
     if compose:
-        compose = model_bwp.compose_dict(**options)
+        dic = model_bwp.compose_dict(request)
+        compose = dic.get(compose)
         return compose.get(**options)
 
     # Возвращаем коллекцию в JSONResponse
     return model_bwp.get(**options)
-
-@api_required
-@login_required
-def API_datatables_info(request, model, **kwargs):
-    """ *Возвращает специализированные для Datatables.net данные.*
-        
-        ##### ЗАПРОС
-        Параметры:
-        
-        1. **"model"** - уникальное название модели, например: "auth.user".
-        
-        ##### ОТВЕТ
-        Формат ключа **"data"**:
-        `{
-            TODO: расписать.
-        }`
-    """
-    return JSONResponse(data=datatables(request, model, info=True, serialize=False))
 
 QUICKAPI_DEFINED_METHODS = {
     'get_apps':         'bwp.views.API_get_apps',
     'get_settings':     'bwp.views.API_get_settings',
     'get_object':       'bwp.views.API_get_object',
     'get_collection':   'bwp.views.API_get_collection',
-    'datatables_info':  'bwp.views.API_datatables_info',
 }
 
 @csrf_exempt

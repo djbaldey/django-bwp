@@ -210,18 +210,9 @@ class BWPSite(object):
         for model, model_bwp in self.get_registry_items(request):
             app_label = model._meta.app_label
             has_module_perms = request.user.has_module_perms(app_label)
-            perms = model_bwp.get_model_perms(request)
 
             # Разрешения уже проверены в методе get_registry_items(request)
-            info = (app_label, model._meta.module_name)
-            model_name = str(model._meta)
-            model_dict = {
-                'name':  model_name,
-                'label': capfirst(unicode(model._meta.verbose_name_plural)),
-                'perms': perms,
-                'meta':  model_bwp.meta,
-                'bwp':   model_bwp,
-            } 
+            model_dict = model_bwp.get_model_info(request, bwp=True)
 
             if app_label in app_dict:
                 app_dict[app_label]['models'].append(model_dict)

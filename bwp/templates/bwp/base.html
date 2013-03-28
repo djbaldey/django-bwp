@@ -64,68 +64,73 @@
 </head>
 
 <body class="{% block bodyclass %}home{% endblock %}">
-
+<div id="wrap">
 {% include "bwp/for_IE.html" %}
 
-<div class="container-fluid">
-    <div class="row-fluid">
-<!-- START: block header -->
-    {% block header %}{% endblock %}
-<!-- END: block header -->
+    <div class="container-fluid">
+        <div class="row-fluid">
+    <!-- START: block header -->
+        {% block header %}{% endblock %}
+    <!-- END: block header -->
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <div class="row-fluid">
+    <!-- START: block content -->
+            {% block content %}{% endblock %}
+    <!-- END: block content -->
+        </div>
     </div>
 </div>
-
-<div class="container-fluid">
-    <div class="row-fluid">
-<!-- START: block content -->
-        {% block content %}{% endblock %}
-<!-- END: block content -->
-    </div>
-</div>
-
-<div class="container-fluid">
-    <div class="row-fluid">
-<!-- START: block footer -->
-        {% block footer %}
-        <footer>
-            <p class="mono align-center" >
-            {% filter force_escape %}
-                {% SETTINGS 'COPYRIGHT' %}
-            {% endfilter %} © {% COPYRIGHT_YEARS %}
-            </p>
-            <p class="mono align-center" >
-                <a href="http://rosix.ru/project/9/">Версия:<span title="{% SETTINGS 'VERSION_DATE' %}">{% SETTINGS 'VERSION' %}</span></a>
-                <a href="{% filter escapejs %}{% url "bwp_api" %}{% endfilter %}">API:{% SETTINGS 'QUICKAPI_VERSION' %}</a>
-            </p>
-        </footer>
-        {% endblock %}
-<!-- END: block footer -->
+<div id="footer">
+    <div class="container-fluid">
+        <div class="row-fluid">
+    <!-- START: block footer -->
+            {% block footer %}
+            <footer>
+                <div class="mono align-center" >
+                {% filter force_escape %}
+                    {% SETTINGS 'COPYRIGHT' %}
+                {% endfilter %} © {% COPYRIGHT_YEARS %}
+                </div>
+                <div class="mono align-center" >
+                    <a href="http://rosix.ru/project/9/">Версия:<span title="{% SETTINGS 'VERSION_DATE' %}">{% SETTINGS 'VERSION' %}</span></a>
+                    <a href="{% filter escapejs %}{% url "bwp_api" %}{% endfilter %}">API:{% SETTINGS 'QUICKAPI_VERSION' %}</a>
+                </div>
+            </footer>
+            {% endblock %}
+    <!-- END: block footer -->
+        </div>
     </div>
 </div>
 
 <!-- START: block jstemplates -->
     {% block jstemplates %}
     <!-- underscore -->
-    <script type="text/x-underscore" id="underscore-menu-app">
-        {% include "bwp/underscore/menu_app.html" %}
-    </script>
-    <script type="text/x-underscore" id="underscore-datatables">
-        {% include "bwp/underscore/datatables.html" %}
-    </script>
-    <script type="text/x-underscore" id="underscore-datatables-pk">
-        {% include "bwp/underscore/datatables_pk.html" %}
-    </script>
     <script type="text/x-underscore" id="underscore-alert">
         {% include "bwp/underscore/alert.html" %}
     </script>
+    <script type="text/x-underscore" id="underscore-menu-app">
+        {% include "bwp/underscore/menu_app.html" %}
+    </script>
+    <script type="text/x-underscore" id="underscore-collection">
+        {% include "bwp/underscore/collection.html" %}
+    </script>
+    <script type="text/x-underscore" id="underscore-layout-model">
+        {% include "bwp/underscore/layout_model.html" %}
+    </script>
+    <script type="text/x-underscore" id="underscore-layout-compose">
+        {% include "bwp/underscore/layout_compose.html" %}
+    </script>
+    <script type="text/x-underscore" id="underscore-layout-item">
+        {% include "bwp/underscore/layout_item.html" %}
+    </script>
+    <script type="text/x-underscore" id="underscore-layout-default">
+        {% include "bwp/underscore/layout_default.html" %}
+    </script>
     <script type="text/x-underscore" id="underscore-tab">
         {% include "bwp/underscore/tab.html" %}
-    </script>
-    <script type="text/x-underscore" id="underscore-tab-content-object">
-        {% include "bwp/underscore/tab_content_object.html" %}
-    </script>
-    <script type="text/x-underscore" id="underscore-tab-content-default">
-        {% include "bwp/underscore/tab_content_default.html" %}
     </script>
     {% endblock %}
 <!-- END: block jstemplates -->
@@ -138,11 +143,8 @@
         window.__bwp_media_prefix__ = "{% filter escapejs %}{% static "bwp/" %}{% endfilter %}";
         window.AJAX_TIMEOUT = 3000;
         window.BWP_API_URL = "{% filter escapejs %}{% url "bwp_api" %}{% endfilter %}";
-        window.BWP_DATATABLES_URL = "{% filter escapejs %}{% url "bwp_datatables" %}{% endfilter %}";
         window.SETTINGS_UNIQUE_KEY = "{% filter escapejs %}{% SETTINGS 'PROJECT_SHORTNAME' %}_{{ user.id|default:0 }}{% endfilter %}";
         window.USER_ID = "{{ user.id|default:0 }}";
-        window.ARRAY_FORM_OBJECT_KEY = "{% SETTINGS 'ARRAY_FORM_OBJECT_KEY' %}";
-        window.ARRAY_FORM_COMPOSE_KEY = "{% SETTINGS 'ARRAY_FORM_COMPOSE_KEY' %}";
         window.DEBUG = Boolean("{% filter yesno:"yes," %}{% SETTINGS 'DEBUG' %}{% endfilter %}");
     </script>
 {% endblock %}
@@ -155,8 +157,6 @@
     <script src="{{ STATIC_URL }}js/underscore/{% SETTINGS 'UNDERSCORE_VERSION' %}/underscore{% mini_library %}.js"></script>
     <script src="{{ STATIC_URL }}js/underscore-string/{% SETTINGS 'UNDERSCORE_STRING_VERSION' %}/underscore.string{% mini_library %}.js"></script>
     <script src="{{ STATIC_URL }}js/bootstrap/{% SETTINGS 'BOOTSTRAP_VERSION' %}/bootstrap{% mini_library %}.js"></script>
-    <script src="{{ STATIC_URL }}js/dataTables/{% SETTINGS 'DATATABLES_VERSION' %}/jquery.dataTables.custom{% mini_library %}.js"></script>
-    <script src="{{ STATIC_URL }}js/dataTables/{% SETTINGS 'DATATABLES_VERSION' %}/jquery.dataTables.bootstrap{% mini_library %}.js"></script>
     <script src="{{ STATIC_URL }}js/django/{% SETTINGS 'DJANGO_VERSION' %}/django-ajax-csrf{% mini_library %}.js"></script>
 {% endblock %}
 <!-- END: block libjs -->

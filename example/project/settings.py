@@ -204,6 +204,7 @@ INSTALLED_APPS = (
     'bwp.contrib.contacts',
     'bwp.contrib.usersettings',
     ### Необязательные
+    'bwp.contrib.qualifiers',
     'project.tests',
 )
 

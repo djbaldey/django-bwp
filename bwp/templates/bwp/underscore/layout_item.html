@@ -1,0 +1,40 @@
+{# Шаблон Underscore #}{% load bwp_verbatim %}{% verbatim %}
+<div class="row-fluid">
+{% if (data.composes.length >0) { %}
+    <div class="btn-group" data-toggle="buttons-radio" data-id="{{ data.id }}">
+        <button class="btn btn-mini btn-primary active"
+            data-toggle="tab"
+            data-target="#itempane_{{ data.id }}">
+            Объект
+        </button>
+    {% _.each(data.composes, function(compose) { %}
+        {%/* Если объект не сохранён в DB, то запрещаем операции с вложениями */%}
+        <button class="btn btn-mini"
+        {% if (!data.pk) { %}
+            disabled="disabled"
+        {% } else { %}
+            data-toggle="tab"
+            data-loading="true"
+        {% } %}
+            data-target="#layout_{{ compose.id }}"
+            data-id="{{ compose.id }}">
+            {{ compose.label }}
+        </button>
+    {% }); %}
+    </div>
+{% } %}
+    <div class="tab-content">
+    {% _.each(data.composes, function(compose) { %}
+        <div class="tab-pane" id="layout_{{ compose.id }}">
+            <div align="center"><img src="/static/img/ajax-loader.gif" /> загрузка данных...</div>
+        </div>
+    {% }); %}
+        <div class="tab-pane active" id="itempane_{{ data.id }}">
+            <legend>{{ data.label }}</legend>
+            <div class="form form-horizontal" data-id="{{ data.id }}">
+        {% endverbatim %}
+                {% include "bwp/underscore/_item_fields.html" %}
+            </div>
+        </div>
+    </div>
+</div>

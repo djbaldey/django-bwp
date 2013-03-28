@@ -43,6 +43,7 @@ from django.core.serializers import base
 from django.db import models, DEFAULT_DB_ALIAS
 from django.utils.encoding import smart_unicode, is_protected_type
 from django.core.paginator import Page
+from bwp.utils.pagers import page_range_dots
 
 from django.core.serializers.python import Serializer as OrignSerializer
 
@@ -61,6 +62,7 @@ class SerializerWrapper(object):
             self._current[field.name] = ''
         else:
             self._current[field.name] = field.value_to_string(obj)
+        return self._current[field.name]
     
     def handle_fk_field(self, obj, field):
         if self.use_natural_keys:
@@ -106,7 +108,7 @@ class SerializerWrapper(object):
             # This is to avoid local_fields problems for proxy models. Refs #17717.
             concrete_model = obj._meta.concrete_model
             for field in concrete_model._meta.local_fields:
-                if field.serialize:
+                #~ if field.serialize: # Чтобы сериализовать поля PK нужно отключить это
                     if field.rel is None:
                         if self.selected_fields is None or field.attname in self.selected_fields:
                             self.handle_field(obj, field)
@@ -136,11 +138,13 @@ class SerializerWrapper(object):
                     result[attr] = v
             result['count'] = queryset.paginator.count
             result['num_pages'] = queryset.paginator.num_pages
+            result['per_page']  = queryset.paginator.per_page
+            result['page_range'] = page_range_dots(queryset)
             result['object_list'] = self.serialize_queryset(queryset.object_list, **options)
             self.objects = result
-            self.end_serialization() # Окончательно сериализуем
         else:
-            super(OrignSerializer, self).serialize(queryset, **options)
+            self.serialize_queryset(queryset, **options)
+        self.end_serialization() # Окончательно сериализуем
         return self.getvalue()
 
     def end_object(self, obj):

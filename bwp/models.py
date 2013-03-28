@@ -157,20 +157,20 @@ class BaseModel(object):
 
     list_display        = ('__unicode__',)
     list_display_css    = {'pk': 'input-micro', 'id': 'input-micro'} # by default
-    list_per_page       = 100
+    list_per_page       = 15
     list_max_show_all   = 200
     show_column_pk      = False
-    
+
     fields              = None
     fieldsets           = None
     widgets             = None
     widgetsets          = None
-    search_fields       = ()
+    search_fields       = None # для запрета поиска пустой кортеж
     search_key          = 'query'
-    
+
     ordering            = None
     actions             = []
-    
+
     paginator           = Paginator
     site                = None
     
@@ -201,22 +201,51 @@ class BaseModel(object):
             Это свойство можно переопределить в наследуемом классе,
             например, чтобы добавить информацию из наследуемого класса
         """
+        self.get_fields() # инициализация полей
+        self.get_search_fields() # инициализация полей
         if not hasattr(self, '_meta'):
             self._meta = self.get_meta()
         return self._meta
-    
+
+    def prepare_meta(self, request):
+        """ Обновляет информацию о метаданных согласно запроса """
+        meta = deepcopy(self.meta)
+        return meta
+
+    def get_model_info(self, request, bwp=False):
+        """ Информация о модели """
+        dic = {
+            'name':  unicode(self.opts),
+            'label': capfirst(unicode(self.opts.verbose_name_plural)),
+            'perms': self.get_model_perms(request),
+            'meta':  self.prepare_meta(request),
+        }
+        if bwp:
+            dic['bwp'] = self
+        
+        return dic
+
+    def get_search_fields(self):
+        """ Устанавливает и возвращает значение полей поиска """
+        if self.search_fields is None:
+            self.search_fields = self.get_fields()
+        return self.search_fields
+
     def get_fields(self):
+        """ Устанавливает и возвращает значение полей объектов """
+        if not self.fields:
+            self.fields = [ _tuple[0].name for _tuple in self.opts.get_fields_with_model() ]
+        return self.fields
+
+    def get_fields_objects(self):
         """ Возвращает реальные объекты полей """
-        if self.fields:
-            return [ self.opts.get_field_by_name(name)[0] for name in self.fields ]
-        else:
-            return [ _tuple[0] for _tuple in self.opts.get_fields_with_model() ]
+        return [ self.opts.get_field_by_name(name)[0] for name in self.get_fields() ]
 
     def prepare_widget(self, field_name):
         """ Возвращает виджет с заменой атрибутов, согласно настроек
             текущего класса.
         """
-        dic = dict([ (field.name, field) for field in self.get_fields() ])
+        dic = dict([ (field.name, field) for field in self.get_fields_objects() ])
         widget = get_widget_from_field(dic[field_name])
         if not widget.is_configured:
             if self.list_display_css.has_key(field_name):
@@ -224,16 +253,20 @@ class BaseModel(object):
                 widget.attr.update({'class': new_class})
                 widget.is_configured = True
         return widget
-    
+
     def set_widgets(self):
         """ Устанавливает и возвращает виджеты. """
-        self.widgets = [ self.prepare_widget(field.name) for field in self.get_fields() ]
+        self.widgets = [ self.prepare_widget(field.name) for field in self.get_fields_objects() ]
         return self.widgets
-    
+
     def get_widgets(self):
         """ Возвращает виджеты. """
         return self.widgets or self.set_widgets()
-    
+
+    def get_list_widgets(self):
+        """ Возвращает виджеты в виде списка словарей, пригодного для JSON """
+        return [ widget.get_dict() for widget in self.get_widgets() ]
+
     def set_widgetsets(self):
         """ Устанавливает и возвращает наборы виджетов. """
         if self.fieldsets:
@@ -244,6 +277,8 @@ class BaseModel(object):
         for label, dic in fieldsets:
             L = []
             dic = deepcopy(dic)
+            if not dic['fields']:
+                continue
             for group in dic['fields']:
                 if isinstance(group, (tuple, list)):
                     L.append([ self.prepare_widget(field) for field in group ])
@@ -252,10 +287,25 @@ class BaseModel(object):
             dic['fields'] = L
             self.widgetsets.append((label, dic))
         return self.widgetsets
-    
+
     def get_widgetsets(self):
         """ Возвращает наборы виджетов. """
         return self.widgetsets or self.set_widgetsets()
+
+    def get_list_widgetsets(self):
+        """ Возвращает наборы виджетов в виде списка, пригодного для JSON """
+        widgetsets = []
+        for label, dic in self.get_widgetsets():
+            L = []
+            dic = deepcopy(dic)
+            for group in dic['fields']:
+                if isinstance(group, (tuple, list)):
+                    L.append([ widget.get_dict() for widget in group ])
+                else:
+                    L.append(group.get_dict())
+            dic['fields'] = L
+            widgetsets.append((label, dic))
+        return widgetsets
 
     def get_instance(self, pk, model_name=None):
         """ Возвращает зкземпляр указаной модели, либо собственной """
@@ -280,7 +330,7 @@ class BaseModel(object):
             data = serializers.serialize('python', [objects], **options)[0]
         return data
 
-    def get_paginator(self, queryset, per_page=None, orphans=0, allow_empty_first_page=True):
+    def get_paginator(self, queryset, per_page=None, orphans=0, allow_empty_first_page=True, **kwargs):
         per_page = per_page or self.list_per_page
         return self.paginator(queryset, per_page, orphans, allow_empty_first_page)
 
@@ -311,7 +361,7 @@ class BaseModel(object):
         Возвращает объект страницы паджинатора для набора объектов
         """
         queryset = self.order_queryset(request=request, queryset=queryset)
-        paginator = self.get_paginator(queryset=queryset)
+        paginator = self.get_paginator(queryset=queryset, **kwargs)
 
         # request может быть пустым
         try:
@@ -335,11 +385,17 @@ class BaseModel(object):
         else:
             return request.REQUEST.get(search_key, None)
 
-    def filter_queryset(self, request, queryset=None, query=None, **kwargs):
+    def filter_queryset(self, request, queryset=None, query=None, fields=None, **kwargs):
         """ Возвращает отфильтрованный QuerySet для всех экземпляров модели. """
         if queryset is None:
             queryset = self.queryset(**kwargs)
-        return filterQueryset(queryset, self.search_fields,
+
+        search_fields = self.get_search_fields()
+        if fields and search_fields:
+            fields = [ x for x in fields if x in search_fields ]
+        else:
+            fields = search_fields
+        return filterQueryset(queryset, fields,
             query or self.get_search_query(request,**kwargs))
 
     def get_bwp_model(self, request, model_name, **kwargs):
@@ -383,11 +439,6 @@ class BaseModel(object):
         qs = self.filter_queryset(request, **kwargs)
         qs = self.page_queryset(request, qs, **kwargs)
         data = self.serialize(qs)
-        # преобразовываем список объектов в словарь, для добавления
-        # расширенной информации о модели коллекции
-        if isinstance(data, list):
-            data = {'object_list': data}
-        data['meta'] = self.meta
         return JSONResponse(data=data)
 
     @transaction.commit_manually
@@ -555,9 +606,28 @@ class ComposeBWP(BaseModel):
 
     def get_meta(self):
         """ Возвращает словарь метаданных об этой модели. """
-        dic = dict([ (key, getattr(self, key)) for key in self.metakeys ])
-        dic['related_name'] = self.related_name
-        return dic
+        meta = dict([ (key, getattr(self, key)) for key in self.metakeys ])
+        meta['widgets'] = self.get_list_widgets()
+        meta['widgetsets'] = []
+        meta['related_name'] = self.related_name
+        meta['related_model'] = str(self.related_model.opts)
+        return meta
+
+    def get(self, request, pk, **kwargs):
+        """ Получает объекты согласно привилегий """
+        return self.get_collection(request, pk, **kwargs)
+    
+    def get_collection(self, request, pk, **kwargs):
+        """ Метод получения вложенных объектов """
+        try:
+            object = self.related_model.queryset(request, **kwargs).get(pk=pk)
+        except:
+            return get_http_404(request)
+        qs = getattr(object, self.related_name).select_related().all()
+        qs = self.filter_queryset(request, qs, **kwargs)
+        qs = self.page_queryset(request, qs, **kwargs)
+        data = self.serialize(qs)
+        return JSONResponse(data=data)
 
     def get_compose(self, request, object, **kwargs):
         """ Data = {
@@ -601,7 +671,7 @@ class ComposeBWP(BaseModel):
         permissions = self.get_model_perms(request)
 
         # Widgets
-        widgets = [ widget.get_dict() for widget in self.get_widgets() ]
+        widgets = self.get_list_widgets()
 
         # Objects
         qs = getattr(object, self.related_name).select_related().all()
@@ -632,18 +702,30 @@ class ModelBWP(BaseModel):
 
     compositions = []
     
-    datatables_list_display = []
-
     def __init__(self, model, bwp_site):
         self.model = model
         self.bwp_site = bwp_site
+
+    def get_meta(self):
+        """ Возвращает словарь метаданных об этой модели. """
+        meta = dict([ (key, getattr(self, key)) for key in self.metakeys ])
+        meta['compositions'] = [ x.get_meta() for x in self.compose_instances ]
+        meta['widgets'] = self.get_list_widgets()
+        meta['widgetsets'] = self.get_list_widgetsets()
+        return meta
+
+    def prepare_meta(self, request):
+        """ Обновляет информацию о метаданных согласно запроса """
+        meta = deepcopy(self.meta)
+        meta['compositions'] = [ x.get_model_info(request, bwp=False) for x in self.get_composes(request) ]
+        return meta
 
     @property
     def compose_instances(self):
         """ Регистрирует экземпляры Compose моделей и/или возвращает их. """
         if not hasattr(self, '_compose_instances'):
             self._compose_instances = [
-                compose_class(related_name, self.model, self.bwp_site) \
+                compose_class(related_name, self, self.bwp_site) \
                 for related_name, compose_class in self.compositions or []
             ]
         return self._compose_instances
@@ -651,7 +733,7 @@ class ModelBWP(BaseModel):
     def get_object_detail(self, request, object, **kwargs):
         """ Метод возвращает сериализованный объект в JSONResponse """
         data = self.get_full_object(request, object)
-        data['meta'] = self.meta
+        #~ data['meta'] = self.meta
         return JSONResponse(data=data)
 
     def get_full_object(self, request, object, **kwargs):
@@ -665,23 +747,10 @@ class ModelBWP(BaseModel):
         data.update({'label': unicode(object), 'id': html_id})
 
         # Widgetsets
-        widgetsets = []
-        if self.fieldsets:
-            for label, dic in self.get_widgetsets():
-                L = []
-                dic = deepcopy(dic)
-                for group in dic['fields']:
-                    if isinstance(group, (tuple, list)):
-                        L.append([ widget.get_dict() for widget in group ])
-                    else:
-                        L.append(group.get_dict())
-                dic['fields'] = L
-                widgetsets.append((label, dic))
+        widgetsets = self.get_list_widgetsets()
 
         # Widgets
-        widgets = []
-        if not self.fieldsets:
-            widgets = [ widget.get_dict() for widget in self.get_widgets()]
+        widgets = self.get_list_widgets()
 
         # Permissions
         permissions = self.get_model_perms(request)
@@ -718,155 +787,5 @@ class ModelBWP(BaseModel):
         а значением - сама модель, например:
             {'group_set': <Model Contacts.UserBWP> }
         """
-        return dict([ (compose.related_name, compose) \
-                    for compose in self.get_composes(request) ])
-
-    def datatables_order_queryset(self, request, qs=None):
-        """ Переопределённый метод базового класса. """
-        # Number of columns that are used in sorting
-        try:
-            i_sorting_cols = int(request.REQUEST.get('iSortingCols', 0))
-        except ValueError:
-            i_sorting_cols = 0
-        
-        reserv = [ x for x in self.datatables_list_display if x not in ('__unicode__', '__str__')]
-
-        ordering = []
-        order_columns = self.datatables_list_display
-        for i in range(i_sorting_cols):
-            # sorting column
-            try:
-                i_sort_col = int(request.REQUEST.get('iSortCol_%s' % i))
-            except ValueError:
-                i_sort_col = 0
-            # sorting order
-            s_sort_dir = request.REQUEST.get('sSortDir_%s' % i)
-
-            sdir = '-' if s_sort_dir == 'desc' else ''
-            
-            try:
-                sortcol = order_columns[i_sort_col]
-                if sortcol in ('__unicode__', '__str__'):
-                    continue
-            except:
-                continue
-            if isinstance(sortcol, list):
-                for sc in sortcol:
-                    ordering.append('%s%s' % (sdir, sc))
-            else:
-                ordering.append('%s%s' % (sdir, sortcol))
-        
-        if qs is None:
-            qs = self.queryset()
-        ordering = ordering or self.ordering or reserv
-        if ordering:
-            qs = qs.order_by(*ordering)
-        return qs
-
-    def datatables_filter_queryset(self, request, qs=None):
-        """ Returns a filtering QuerySet of all model instances. """
-        if qs is None:
-            qs = self.queryset()
-        sSearch = request.REQUEST.get('sSearch', None)
-        if sSearch:
-            qs = filterQueryset(qs, self.search_fields, sSearch)
-        return qs
-
-    def datatables_pager_queryset(self, request, qs=None):
-        if qs is None:
-            qs = self.queryset()
-        limit = min(int(request.REQUEST.get('iDisplayLength', 25)), 100)
-        start = int(request.REQUEST.get('iDisplayStart', 0))
-        offset = start + limit
-        return qs[start:offset]
-
-    def datatables_prepare_results(self, qs):
-        # prepare list with output column data
-        # queryset is already paginated here
-        display = self.datatables_list_display
-        data = [ [ serialize_field(item, field) for field in display ] for item in qs ]
-        return data
-
-    def datatables_get_data(self, request):
-
-        qs = self.queryset()
-
-        # number of records before filtering
-        total_records = qs.count()
-
-        qs = self.datatables_filter_queryset(request, qs)
-
-        # number of records after filtering
-        total_display_records = qs.count()
-
-        qs = self.datatables_order_queryset(request, qs)
-        qs = self.datatables_pager_queryset(request, qs)
-
-        # prepare output data
-        aaData = self.datatables_prepare_results(qs)
-
-        return {
-            'sEcho': int(request.REQUEST.get('sEcho', 0)),
-            'iTotalRecords': total_records,
-            'iTotalDisplayRecords': total_display_records,
-            'aaData': aaData
-        }
-
-    def datatables_get_info(self, request):
-        meta = self.opts
-        list_display = []
-        # принудительная установка первичного ключа в начало списка
-        # необходима для чёткого определения его на клиенте
-        self.datatables_list_display = list(self.list_display)
-        if self.datatables_list_display[0] != 'pk':
-            self.datatables_list_display.insert(0,'pk')
-        list_display_css = {}
-        # Словари параметров колонок
-        not_bSortable = {"bSortable": False, "aTargets": [ ]}
-        not_bVisible = {"bVisible": False, "aTargets": [ ]}
-        for i, it in enumerate(self.datatables_list_display):
-            if it in ('__unicode__', '__str__'):
-                field = (capfirst(unicode(meta.verbose_name)),
-                        capfirst(ugettext('object')))
-                # Несортируемые колонки
-                not_bSortable["aTargets"].append(i)
-            elif it in ('pk', 'id'):
-                field = ('#', capfirst(ugettext('identificator')))
-                # Первичный ключ может отображаться, если это указано
-                # явно в модели bwp
-                if not self.show_column_pk and it == 'pk':
-                    not_bVisible["aTargets"].append(i)
-            else:
-                f = meta.get_field_by_name(it)[0]
-                field = (capfirst(unicode(f.verbose_name)),
-                        capfirst(unicode(f.help_text or f.verbose_name)))
-            list_display.append(field)
-            list_display_css[field] = self.list_display_css.get(it, '')
-
-        params = {
-            'model': str(meta),
-            'title': unicode(meta.verbose_name).title(),
-        }
-        info = {
-            'model': params['model'],
-            'title': params['title'],
-            'id':    str(meta).replace('.', '-'),
-            'columns': [ { 'classes': list_display_css[x], 
-                           'title': x[1],
-                           'label': x[0],
-                         } for x in list_display ],
-            'perms':    self.get_model_perms(request),
-            # далее ключи datatables
-            "oLanguage":      settings.LANGUAGE_CODE,
-            "bProcessing":    True,
-            "bServerSide":    True,
-            "sAjaxSource":    redirect('bwp.views.datatables')['Location'],
-            "sServerMethod":  "POST",
-            "fnServerParams": params.items(),
-            "bLengthChange":  True,
-            "sDom":           'lfrtip',
-            "sScrollY":       None, # default
-            "bFilter":        bool(self.search_fields),
-            "aoColumnDefs":   [ not_bSortable, not_bVisible ],
-        }
-        return info
+        composes = self.get_composes(request)
+        return dict([ (compose.related_name, compose) for compose in composes ])

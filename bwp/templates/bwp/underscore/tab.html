@@ -1,11 +1,11 @@
 {# Шаблон Underscore #}{% load bwp_verbatim %}{% verbatim %}
-<li id="tab_{{ id }}">
+{% var _text = _(data.label).truncate(15); %}
+<li id="tab_{{ data.id }}">
     <a data-toggle="tab"
-        href="#tab-content_{{ id }}"
-        {% if (model) { %}data-model="{{ model }}"{% } %}
-        {% if (pk) { %}data-pk="{{ pk }}"{% } %}
-        title="{{ title }}: {{ text }}" {% var _text = _(text).truncate(10); %}
-        >{{ _text }}&nbsp;<button data-id="{{ id }}" class="close">&times;</button>
+        href="#layout_{{ data.id }}"
+        data-id="{{ data.id }}"
+        title="{{ data.title }}"
+        >{{ _text }}&nbsp;<button data-id="{{ data.id }}" class="close">&times;</button>
     </a>
 </li>
 {% endverbatim %}

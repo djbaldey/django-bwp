@@ -39,342 +39,278 @@
 ////////////////////////////////////////////////////////////////////////
 //                              ОБЪЕКТЫ                               //
 ////////////////////////////////////////////////////////////////////////
+var NEWITEMKEY = 'newItem';
 
-// Глобальные хранилища
-var TEMPLATES = {}; // Шаблоны
-var APPS      = {}; // Приложения
-var MODELS    = {}; // Модели
-var COMPOSES  = {}; // Композиции
-var OBJECTS   = {}; // Объекты
+// Глобальные хранилища-регистраторы
+window.TEMPLATES = {}; // Шаблоны
+window.REGISTER  = {}; // Регистр приложений, моделей, композиций и объектов
 
-/* МодельBWP
- * Пример использования:
-========================================================================
-model.append(object1) // добавление в словарь одного объекта
-model.append([ object1, object2, ... ]) // добавление в словарь списка объектов
-
-model.update(keyobject1, htmlwidget) // изменение объекта на странице
-
-model.remove([ keyobject1, keyobject2, ... ]) // пометка на удаление для коммита
-model.commit() // отправка на сервер всех изменений по всем моделям
-model.commit(keymodel) // отправка на сервер списка всех изменённых объектов одной модели
-model.commit([ keyobject1, keyobject2, ... ]) // отправка на сервер списка объектов
-model.reload([ keyobject1, keyobject2, ... ]) // перезакгрузка из базы
-========================================================================
-* */
-function Model() {
-    if (DEBUG) {console.log('function:'+'Model')};
-    /* Установка ссылки на свой объект для вложенных функций */
-    self = this;
-    /* Менеджер ссылок для элементов OBJECTS
-     * {'auth.user.1': "i13639443731348017"}
-     */
-    _links   = {};
-    /* Хранилища ссылок на статусы элементов */
-    _redraw  = [];
-    _changed = [];
-    _added   = [];
-    _deleted = [];
-
-    /* Добавление или замена существующих, но новые объекты не
-     * перезаписывают себя, если 
-     */
-    _append = function(objects, silent) {
-        // преобразовываем единственный в список
-        if ($.type(objects) != 'array') { objects = [objects] };
-        tmp_links = []
-        $.each(objects, function(index, item) {
-            var modified = false;
-            /* Проверка присутствия модели элемента в хранилище и
-             * попытка получения ссылки на объект.
-             */
-            if (item.pk) {
-                link = _links[item.model+'.'+item.pk]
-            }
-            /* Элемент существует, помечаем его для рефреша на странице
-             * во всех местах, где он открыт
-             */
-            if (link) {
-                _redraw.push(link);
-                // TODO: finalize
-            }
-            // иначе генерируем новую ссылку
-            else { link = generatorID() };
-            
-            // Записываем в хранилище
-            OBJECTS[link] = {
-                pk:          item.pk,
-                model:       item.model,
-                fields:      item.fields,
-                __unicode__: item.__unicode__,
-            }
-            tmp_links.push(link)
-            
-            /* Если есть композиции, то вызываем эту же функцию для них */
-            if (item.compositions) {
-                // TODO: finalize
-            }
-        });
-        /* Перерисываваем объекты */
-        if (!silent) {
-            _redrawObjects();
-        };
-        return tmp_links;
-    };
-    this.append = _append
-
-    /* Фиксация изменений, произведённых на странице */
-    _update = function(key, widget) {
-        name      = $(widget).attr('name');
-        value     = $(widget).attr('value');
-        datavalue = $.data(widget, 'value') || $(widget).attr('data-value');
-
-        if ($.type(name)      === "undefined") {return false;}
-        if ($.type(value)     === "undefined") {return false;}
-        if ($.type(datavalue) === "undefined") {return false;}
-
-        field = _objects[key]['fields'][name];
-        if ($.type(field) === "array") { field = [datavalue, value] }
-        else { field = datavalue };
-        return true;
-    };
-    this.update = _update
-
-    /* Пометка на удаление для коммита или удаление нового,
-     * ещё не созданного на сервере.
-     */
-    _remove = function(keys) {
-        notexists = []
-        $.each(keys, function(index, key) {
-            if (_objects[key]) {
-                if (_objects[key]['new']) {
-                    delete _objects[key];
-                } else { _objects[key]['remove'] = true; };
-            } else { notexists.push(key) };
-        });
-        return notexists;
-    };
-    this.append = _append
-
-    /* Отправка на сервер в синхронном режиме.
-     * Аргументом может выступать:
-     * - название модели, например "auth.user" (сохранит все измененные объекты модели);
-     * - список ключей объектов (сохранит выбранные объекты с изменениями)
-     * Если аргумент отсутствует - сохранит все изменённые объекты.
-     */
-    _commit = function(keys) {
-        objects = []
-        sync = true;
-        args = { method: "commit", objects: objects };
-
-        // Проверка на изменения
-        _valid = function(item) {
-            if (item.change || item.remove || item.new) { return true; };
-            return false;
-        };
-
-        // Выборка всех
-        if ($.type(keys) === "undefined") {
-            $.each(_objects, function(key, item) {
-                if (_valid(item)) { objects.push(item) }
-            });
-        }
-        // Выборка по модели
-        else if ($.type(keys) === "string") {
-            $.each(_objects, function(key, item) {
-                if ((item.model == keys) && (_valid(item))) {
-                    objects.push(item)
-                }
-            });
-        }
-        // Выборка указанных списком
-        else if ($.type(keys) === "array") {
-            $.each(keys, function(index, key) {
-                item = _objects[key]
-                if (_valid(item)) { objects.push(item) }
-            });
-        };
-
-        // Callback ответа сервера
-        cb = function(json, status, xhr) {
-            // Сервер ответил False
-            if (!json.data) { showAlert(json.message) }
-            // Нормальный ответ
-            else {
-                _last_commit = new Date();
-                $.each(keys, function(index, item) {
-                    if (_objects[item]['remove'] || _objects[item]['new']) {
-                        delete _objects[item]
-                    }
-                });
-            }
-        }
-        jqxhr = new jsonAPI(args, cb, 'OBJECTS.commit() call jsonAPI()', sync)
-        return jqxhr;
-    };
-    this.commit = _commit
-
-    /* Загрузка с сервера актуальных данных */
-    // TODO: реализовать
-    _reload = function(keys) {};
-    this.reload = _reload
-}
-
-/* Глобальный объект объектов DB
- * Пример использования:
-========================================================================
-OBJECTS.append(object1) // добавление в словарь
-OBJECTS.append([ object1, object2, ... ]) // добавление в словарь
-
-OBJECTS.update(keyobject1, htmlwidget) // изменение объекта на странице
-
-OBJECTS.remove([ keyobject1, keyobject2, ... ]) // пометка на удаление для коммита
-OBJECTS.commit() // отправка на сервер всех изменений по всем моделям
-OBJECTS.commit(keymodel) // отправка на сервер списка всех изменённых объектов одной модели
-OBJECTS.commit([ keyobject1, keyobject2, ... ]) // отправка на сервер списка объектов
-OBJECTS.reload([ keyobject1, keyobject2, ... ]) // перезакгрузка из базы
-========================================================================
-* */
-function Objects() {
-    if (DEBUG) {console.log('function:'+'Objects')};
-    /* Установка ссылки на свой объект для вложенных функций */
-    self = this;
-    /* Хранилища объектов */
-    _objects = {};
-
-    /* Добавление или замена существующих */
-    _append = function(objects) {
-        // преобразовываем единственный в список
-        if ($.type(objects) != 'array') { objects = [objects] };
-        keys = []
-        $.each(objects, function(index, item) {
-            // Обычный объект модели с полями и ключом
-            if (item.pk && item.model && item.fields) {
-                key = item.model+'.'+item.pk;
-                _objects[key] = item;
-                keys.push(key);
-            }
-            // Объект без ключа, т.е. новый
-            else if (item.temppk && item.model && item.fields) {
-                key = item.model+'.'+item.temppk;
-                _objects[key] = item;
-                keys.push(key);
-            }
-            // Объект не подходит ни подо что
-            else {
-                console.log('Ошибка добавления объекта:');
-                console.log(item);
-            };
-        });
-        return keys;
-    };
-    this.append = _append
-
-    /* Фиксация изменений, произведённых на странице */
-    _update = function(key, widget) {
-        name      = $(widget).attr('name');
-        value     = $(widget).attr('value');
-        datavalue = $.data(widget, 'value') || $(widget).attr('data-value');
-
-        if ($.type(name)      === "undefined") {return false;}
-        if ($.type(value)     === "undefined") {return false;}
-        if ($.type(datavalue) === "undefined") {return false;}
-
-        field = _objects[key]['fields'][name];
-        if ($.type(field) === "array") { field = [datavalue, value] }
-        else { field = datavalue };
-        return true;
-    };
-    this.update = _update
-
-    /* Пометка на удаление для коммита или удаление нового,
-     * ещё не созданного на сервере.
-     */
-    _remove = function(keys) {
-        notexists = []
-        $.each(keys, function(index, key) {
-            if (_objects[key]) {
-                if (_objects[key]['new']) {
-                    delete _objects[key];
-                } else { _objects[key]['remove'] = true; };
-            } else { notexists.push(key) };
-        });
-        return notexists;
-    };
-    this.append = _append
-
-    /* Отправка на сервер в синхронном режиме.
-     * Аргументом может выступать:
-     * - название модели, например "auth.user" (сохранит все измененные объекты модели);
-     * - список ключей объектов (сохранит выбранные объекты с изменениями)
-     * Если аргумент отсутствует - сохранит все изменённые объекты.
-     */
-    _commit = function(keys) {
-        objects = []
-        sync = true;
-        args = { method: "commit", objects: objects };
-
-        // Проверка на изменения
-        _valid = function(item) {
-            if (item.change || item.remove || item.new) { return true; };
-            return false;
-        };
-
-        // Выборка всех
-        if ($.type(keys) === "undefined") {
-            $.each(_objects, function(key, item) {
-                if (_valid(item)) { objects.push(item) }
-            });
-        }
-        // Выборка по модели
-        else if ($.type(keys) === "string") {
-            $.each(_objects, function(key, item) {
-                if ((item.model == keys) && (_valid(item))) {
-                    objects.push(item)
-                }
-            });
-        }
-        // Выборка указанных списком
-        else if ($.type(keys) === "array") {
-            $.each(keys, function(index, key) {
-                item = _objects[key]
-                if (_valid(item)) { objects.push(item) }
-            });
-        };
-
-        // Callback ответа сервера
-        cb = function(json, status, xhr) {
-            // Сервер ответил False
-            if (!json.data) { showAlert(json.message) }
-            // Нормальный ответ
-            else {
-                _last_commit = new Date();
-                $.each(keys, function(index, item) {
-                    if (_objects[item]['remove'] || _objects[item]['new']) {
-                        delete _objects[item]
-                    }
-                });
-            }
-        }
-        jqxhr = new jsonAPI(args, cb, 'OBJECTS.commit() call jsonAPI()', sync)
-        return jqxhr;
-    };
-    this.commit = _commit
-
-    /* Загрузка с сервера актуальных данных */
-    // TODO: реализовать
-    _reload = function(keys) {};
-    this.reload = _reload
-}
-
-/* Формирует HTML на вкладке объекта */
-function createObjectContent(data) {
-    if (DEBUG) {console.log('function:'+'createObjectContent')};
-    html = TEMPLATES.tabContentObject(data);
-    $('#tab-content_'+data.id).html(html);
-    OBJECTS.append(data)
-    //~ TODO: сделать загрузку композиций
+/* класс: Приложение BWP */
+function App(data) {
+    this.has_module_perms = data.has_module_perms;
+    this.name = data.name;
+    this.id = validatorID(this.name);
+    this.label = data.label;
+    this.title = 'Приложение:'+ this.label;
+    _models = [];
+    this.models = _models;
+    // Init
+    app = this;
+    $.each(data.models, function(index, item) {
+        _models.push(new Model(app, item));
+    });
+    // Register
+    REGISTER[this.id] = this;
 };
+
+function renderCollection(object) {
+    if (DEBUG) {console.log('function:'+'renderCollection')};
+    if (object instanceof Item) {  
+        return '';
+    }
+    html = TEMPLATES.collection({data:object})
+    $('#collection_'+object.id).html(html)
+    return html
+}
+
+function renderLayout(object) {
+    if (DEBUG) {console.log('function:'+'renderLayout')};
+    if (object instanceof Model) {  
+        template = TEMPLATES.layoutModel
+    }
+    else if (object instanceof Compose) {  
+        template = TEMPLATES.layoutCompose
+    }
+    else if (object instanceof Item) {  
+        template = TEMPLATES.layoutItem
+    }
+    html = template({data:object})
+    $('#layout_'+object.id).html(html)
+    return html
+}
+
+/* класс: Модель BWP */
+function Model(app, data) {
+    this.app   = app;
+    this.perms = data.perms;
+    this.meta  = data.meta;
+    this.name  = data.name;
+    this.model = this.name;
+    this.id    = validatorID(this.model);
+    this.label = data.label;
+    this.title = this.app.label +': '+ this.label;
+    this.query = null;
+    this.paginator = {};
+    _composes     = {};
+    this.composes = _composes
+    _widgets = [];
+    this.widgets = _widgets;
+    model = this;
+    // Init
+    if (data.meta.compositions) {
+        $.each(data.meta.compositions, function(index, item) {
+            _composes[item.meta.related_name] = item;
+        });
+    }
+    $.each(model.meta.list_display, function(i, name) {
+        if (name == '__unicode__') {
+            _widgets.push({name:name, label: model.label, attr:{}})
+        } else {
+            $.each(model.meta.widgets, function(ii, widget) {
+                if (name == widget.name) { _widgets.push(widget) };
+            });
+        }
+    });
+    // Register
+    REGISTER[this.id] = this;
+};
+
+/* класс: Композиция */
+function Compose(item, data) {
+    this.item     = item;
+    this.editable = Boolean(this.item.pk);
+    this.perms    = data.perms;
+    this.meta     = data.meta;
+    this.name     = this.meta.related_name;
+    this.compose  = this.name;
+    this.model = this.meta.related_model;
+    this.id    = validatorID([this.item.id, this.name]);
+    this.label = data.label;
+    this.title = this.item.label +': '+ this.label;
+    this.query = null;
+    this.paginator = null;
+    _widgets = [];
+    this.widgets = _widgets;
+    compose = this;
+    // Init
+    $.each(compose.meta.list_display, function(i, name) {
+        if (name == '__unicode__') {
+            _widgets.push({name:name, label: compose.label, attr:{}})
+        } else {
+            $.each(compose.meta.widgets, function(ii, widget) {
+                if (name == widget.name) { _widgets.push(widget) };
+            });
+        }
+    });
+    // Register
+    REGISTER[this.id] = this;
+};
+
+/* класс: Объект */
+function Item(data) {
+    this.model = REGISTER[validatorID(data.model)];
+    this.pk    = data.pk;
+    this.id    = this.pk ? validatorID(data.model+'.'+this.pk) : generatorID(NEWITEMKEY);
+    this.__unicode__ = data.__unicode__;
+    this.label       = this.__unicode__;
+    this.title = this.model.label +': '+ this.label;
+    _fields     = data.fields;
+    this.fields = _fields;
+    _tmpfields     = {};
+    this.tmpfields = _tmpfields;
+    _composes = [];
+    this.composes = _composes;
+    this.widgets = this.model.meta.widgets;
+    object = this;
+    // Init
+    if (this.model.composes) {
+        $.each(this.model.composes, function(rel_name, item) {
+            _composes.push(new Compose(object, item));
+        });
+    }
+    // register
+    REGISTER[this.id] = this;
+};
+
+function objectOpen() {
+    if (DEBUG) {console.log('function:'+'objectOpen')};
+    $this = $(this);
+    data = $this.data();
+    if (!data.model) { return false };
+    object = REGISTER[data.id];
+    if (object) {
+        tabAdd(object);
+        return null
+    }
+    args = {
+        "method"  : "get_object",
+        "model"   : data.model,
+        "pk"      : data.pk || null,
+    }
+    cb = function(json, status, xhr) {
+        object = new Item(json.data);
+        $this.data('id', object.id);
+        tabAdd(object);
+    }
+    jqxhr = new jsonAPI(args, cb, 'objectOpen() call jsonAPI()')
+    return jqxhr
+}
+
+function objectNew() {
+    if (DEBUG) {console.log('function:'+'objectNew')};
+    $this = $(this);
+    data = $this.data();
+    object = REGISTER[data.id];
+}
+
+function objectCopy() {
+    if (DEBUG) {console.log('function:'+'objectCopy')};
+    $this = $(this);
+    data = $this.data();
+    object = REGISTER[data.id];
+}
+
+function objectDelete() {
+    if (DEBUG) {console.log('function:'+'objectDelete')};
+    $this = $(this);
+    data = $this.data();
+    object = REGISTER[data.id];
+}
+
+function objectSave() {
+    if (DEBUG) {console.log('function:'+'objectSave')};
+    $this = $(this);
+    data = $this.data();
+    object = REGISTER[data.id];
+}
+
+function mutedObjectRow(object) {
+    if (DEBUG) {console.log('function:'+'mutedObjectRow')};
+    $('tr[data-model="'+object.model.name+'"][data-pk="'+object.pk+'"]')
+        .addClass('muted');
+}
+
+function unmutedObjectRow(object) {
+    if (DEBUG) {console.log('function:'+'unmutedObjectRow')};
+    $('tr[data-model="'+object.model.name+'"][data-pk="'+object.pk+'"]')
+        .removeClass('muted');
+}
+
+/* Функция получает коллекцию с сервера и перерисовывает цель
+ * коллекции модели/композиции, для которых она вызывалась
+ */
+function getCollection(object) {
+    if (DEBUG) {console.log('function:'+'getCollection')};
+    args = {
+        "method"  : "get_collection",
+        "model"   : object.model,
+        "compose" : object.compose       || null,
+        "order_by": object.meta.ordering || null,
+    }
+    args[object.meta.search_key] = object.query || null;
+    if (object.item) {
+        args["pk"] = object.item.pk || 0;
+    };
+    if (object.paginator) {
+        args["page"]    = object.paginator.page     || 1;
+        args["per_page"]= object.paginator.per_page || null;
+    };
+    cb = function(json, status, xhr) {
+        object.paginator = json.data;
+        html = renderCollection(object);
+        //~ console.log(html)
+    }
+    jqxhr = new jsonAPI(args, cb, 'getCollection() call jsonAPI()')
+    return jqxhr
+}
+
+function collectionFilter() {
+    if (DEBUG) {console.log('function:'+'collectionFilter')};
+    search = this;
+    data   = $(search).data();
+    object = REGISTER[data['id']];
+    object.query = $(search).val() || null;
+
+    jqxhr = getCollection(object);
+    return jqxhr
+}
+
+function collectionCount() {
+    if (DEBUG) {console.log('function:'+'collectionCount')};
+    data   = $(this).data();
+    object = REGISTER[data['id']];
+    if (object.paginator) {
+        object.paginator.page = 1;
+        object.paginator.per_page = $(this).val() || $(this)
+            .data()['count'] || object.meta.list_per_page;
+        $('[data-placeholder=collection_count][data-id='+object.id+']')
+            .text(object.paginator.per_page)
+    };
+    jqxhr = getCollection(object);
+    return jqxhr
+}
+
+function collectionPage() {
+    if (DEBUG) {console.log('function:'+'collectionPage')};
+    data   = $(this).data();
+    object = REGISTER[data['id']];
+    if (object.paginator) {
+        object.paginator.page = $(this).val() || $(this).data()['page'] || 1;
+    };
+
+    jqxhr = getCollection(object);
+    return jqxhr
+}
 
 /* Обрабатывает изменения полей объекта */
 function changeFieldObject() {
@@ -383,30 +319,14 @@ function changeFieldObject() {
 }
 
 /* Восстанавливает объект */
-function resetObject() {
-    if (DEBUG) {console.log('function:'+'resetObject')};
+function objectReset() {
+    if (DEBUG) {console.log('function:'+'objectReset')};
 }
 
 /* Сохраняет объект в DB */
 function saveObject(self) {
     if (DEBUG) {console.log('function:'+'saveObject')};
     $self = $(this); // button
-    //~ model = $self.attr('data-model');
-    //~ object = $self.attr('data-object');
-    //~ html_id = $self.attr('data-html-id');
-    //~ tab = $('#tab-content-'+html_id+'_object')
-    //~ form = $('#form-'+html_id+'_object');
-    //~ if (object) {
-        //~ args = { 
-            //~ method:'object_action', model:model, key:'upd',
-            //~ pk:object, ARRAY_FORM_OBJECT_KEY: form.serializeArray(),
-        //~ }
-        //~ callback = function(json, status, xhr) {
-            //~ var data = json.data;
-            //~ createObjectContent(data);
-        //~ };
-        //~ jqxhr = new jsonAPI(args, callback, 'saveObject() "if (object)" call jsonAPI()');
-    //~ }
 }
 
 /* Сохраняет объект в DB без нажатия на кнопку */
@@ -420,28 +340,6 @@ function resetCompose() {
     if (DEBUG) {console.log('function:'+'resetCompose')};
     console.log('resetCompose()');
 }
-
-/* Сохраняет вложенные объекты в DB */
-function saveCompose() {
-    if (DEBUG) {console.log('function:'+'saveCompose')};
-    $self = $(this); // button
-    //~ model = $self.attr('data-model');
-    //~ object = $self.attr('data-object');
-    //~ html_id = $self.attr('data-html-id');
-    //~ tab = $('#tab-content-'+html_id+'_object')
-    //~ form = $('#form-'+html_id+'**************COMPOSE*********');
-    //~ if (object) {
-        //~ args = { 
-            //~ method:'object_action', model:model, key:'set',
-            //~ pk:object, arrayObjectForm: form.serializeArray(),
-        //~ }
-        //~ callback = function(json, status, xhr) {
-            //~ var data = json.data;
-        //~ };
-        //~ jqxhr = new jsonAPI(args, callback, 'saveObject() "if (object)" call jsonAPI()');
-    //~ }
-}
-
 
 ////////////////////////////////////////////////////////////////////////
 //                            НАСТРОЙКИ                               //
@@ -658,15 +556,17 @@ function generatorID(prefix, postfix) {
     if (prefix) { result.push(prefix)};
     result.push(gen); 
     if (postfix) { result.push(postfix) };
-    return validatorID(result.join('_'));
+    return validatorID(result);
 }
 
 /* Приводит идентификаторы в позволительный jQuery вид.
- * В данном приложении он заменяет точки на "-"
+ * В данном приложении он заменяет точки на "-".
+ * На вход может принимать список или строку
  */
-function validatorID(string) {
+function validatorID(id) {
+    if ($.type(id) === 'array') {id = id.join('_')};
     if (DEBUG) {console.log('function:'+'validatorID')};
-    return string.replace(/[\.,\:,\/, ,\(,\),=,?]/g, "-");
+    return id.replace(/[\.,\:,\/, ,\(,\),=,?]/g, "-");
 }
 
 /* Общие функции вывода сообщений */
@@ -743,100 +643,6 @@ function jsonAPI(args, callback, to_console, sync) {
 
 
 ////////////////////////////////////////////////////////////////////////
-//                            DATATABLES                              //
-////////////////////////////////////////////////////////////////////////
-
-/* Инициализация DataTables */
-function initDataTables(data) {
-    if (DEBUG) {console.log('function:'+'initDataTables')};
-    table = function() { return $('table[data-model="'+data.model+'"]');}
-    if (table().length < 1) {
-        html = TEMPLATES.datatables(data);
-        $('#tab-content_'+data.id).html(html);
-    };
-    /* Init DataTables */
-    var oTable = table().dataTable({
-        "oLanguage": { "sUrl": "static/js/dataTables/1.9.4/"+data.oLanguage+".txt" },
-        //~ "sScrollY": '400px',
-        "bProcessing": data.bProcessing,
-        "bServerSide": data.bServerSide,
-        "sAjaxSource": data.sAjaxSource,
-        "sServerMethod": data.sServerMethod,
-        "fnServerParams": function ( aoData ) {
-            $.each(data.fnServerParams, function(i,val) {
-                aoData.push( { "name": val[0], "value": val[1] } );
-            });
-        },
-        "fnRowCallback": function( nRow, aData, iDisplayIndex ) {
-            $(nRow).bind("click", function() {
-                $(oTable).find('tbody tr.info').removeClass('info');
-                if (DEBUG) { console.log('addClass("info")') };
-                $(nRow).addClass('info');
-            })
-        },
-        "fnCreatedRow": function( nRow, aData, iDataIndex ) {
-            html = TEMPLATES.datatables_pk({ data: data, aData: aData });
-            $('td:eq(0)', nRow).html(html).find('a').click(addTab);
-        },
-        "aoColumnDefs": data.aoColumnDefs,
-        "sPaginationType": "bootstrap",
-        "sDom": data.sDom || 'lfrtip',
-        "bFilter": data.bFilter,
-        "bLengthChange": data.bLengthChange || true,
-        "bStateSave": data.bStateSave || true,
-        "fnServerData": function( sUrl, aoData, fnCallback, oSettings ) {
-            oSettings.jqXHR =  $.ajax( {
-                "url": sUrl,
-                "data": aoData,
-                "method": "post",
-                "success": fnCallback,
-                "dataType": "json",
-                "cache": false
-            })
-            // Обработка ошибок протокола HTTP
-            .fail(function(xhr, status, err) {
-                // Если есть переадресация, то выполняем её
-                if (xhr.getResponseHeader('Location')) {
-                    window.location = xhr.getResponseHeader('Location')
-                    .replace(/\?.*$/, "?next=" + window.location.pathname);
-                    console.log("1:" + xhr.getResponseHeader('Location'));
-                } else {
-                    // Иначе извещаем пользователя ответом и в консоль
-                    console.log("ERROR:" + xhr.responseText);
-                    showAlert(_(xhr.responseText).truncate(255), 'alert-error');
-                };
-            })
-        }
-    });
-    /* Apply after */
-    //~ console.log( $($(oTable).attr('id')+'_wrapper'))
-    //~ filter = $(oTable).parent().parent().find('.dataTables_filter');
-    //~ filter.find('label').text('text');
-    //~ console.log(filter.html())
-    return false;
-}
-
-/* Обработчик двойного клика по строке в таблице модели */
-function dblClickRow(oTable, nRow) {
-    if (DEBUG) {console.log('function:'+'dblClickRow')};
-    console.log(oTable);
-    console.log(nRow);
-    //~ $('div.toolbar').html('<button class="btn btn-primary btn-mini">Btn</button>');
-}
-
-/* Table showing and hiding columns */
-function fnShowHide( model, iCol ) {
-    if (DEBUG) {console.log('function:'+'fnShowHide')};
-    table = $('table[data-model="'+model+'"]');
-    /* Get the DataTables object again - this is not a recreation, just a get of the object */
-    var oTable = table.dataTable();
-    var bVis = oTable.fnSettings().aoColumns[iCol].bVisible;
-    oTable.fnSetColumnVis( iCol, bVis ? false : true );
-    return false;
-}
-
-
-////////////////////////////////////////////////////////////////////////
 //                              ВКЛАДКИ                               //
 ////////////////////////////////////////////////////////////////////////
 
@@ -845,7 +651,11 @@ function loadMenuApp() {
     sync = true;
     args = { method: "get_apps" }
     cb = function(json, status, xhr) {
-        html = TEMPLATES.menuApp(json);
+        apps = [];
+        $.each(json.data, function(index, item) {
+            apps.push(new App(item));
+        });
+        html = TEMPLATES.menuApp({data:apps});
         $('#menu-app ul[role=menu]').html(html);
         $('#menu-app').show();
     };
@@ -854,51 +664,51 @@ function loadMenuApp() {
 };
 
 /* Добавляет вкладки на рабочую область */
-function addTab() {
-    if (DEBUG) {console.log('function:'+'addTab')};
-    data          = $(this).data();
-    data['title'] = $(this).attr('title') || $(this).attr('data-title') || '';
-    data['text']  = $(this).attr('data-text') || $(this).text() || data.title;
-    data['id'] = data.pk ? validatorID(data.model+'_'+data.pk) : validatorID(data.model);
-    if (!data.pk) {data.pk = null}; // для передачи в шаблон
-    if (data.pk) { $(this).addClass('muted'); }
+function tabAdd(obj) {
+    if (DEBUG) {console.log('function:'+'tabAdd')};
+    data = $(this).data();
+    if (obj instanceof Item) { data = obj };
+    object = REGISTER[data.id] || data;
+    mutedObjectRow(object);
 
-    tab = $('#main-tab #tab_'+ data.id);
+    tab = $('#main-tab #tab_'+ object.id);
     if (tab.length > 0) {
         // Отображаем вкладку
         tab.find('a').tab('show');
     } else {
         // Контент вкладки
-        html = TEMPLATES.tabContentDefault(data);
+        html = TEMPLATES.layoutDefault({data: object});
         $('#main-tab-content').append(html);
         // Сама вкладка
-        html = TEMPLATES.tab(data);
+        html = TEMPLATES.tab({data: object});
         $('#main-tab').append(html);
         // Отображаем вкладку c небольшой задержкой
         delay(function() {
             a = $('#main-tab a:last').tab('show');
-            contentLoader(a[0]);
+            loadLayout(a[0]);
         }, 1);
         // Добавляем вкладку в хранилище, если её там нет
         // (т.к. эту же функцию использует восстановление сессии). 
-        if ($.inArray(data.id, SETTINGS.local.tabs) < 0) {
-            SETTINGS.local.tabs.push(data.id);
+        if ((object.id.indexOf(NEWITEMKEY) == -1)&&($.inArray(object.id, SETTINGS.local.tabs) < 0)) {
+            SETTINGS.local.tabs.push(object.id);
             SETTINGS.save_local();
         }
         // Устанавливаем одиночный биндинг на загрузку контента при щелчке на вкладке
         //~ console.log(tab_id)
-        a = $('#tab_'+data.id+' a').one('click', function() { contentLoader(this) });
+        a = $('#tab_'+object.id+' a').one('click', function() { loadLayout(this) });
         //~ console.log(a)
     }
     return true;
 }
 
 /* Удаляет вкладки с рабочей области и из локальной памяти */
-function removeTab() {
-    if (DEBUG) {console.log('function:'+'removeTab')};
+function tabRemove() {
+    if (DEBUG) {console.log('function:'+'tabRemove')};
     id = validatorID($(this).attr('data-id'));
     $('#tab_'+id).remove();
-    $('#tab-content_'+id).remove();
+    $('#layout_'+id).remove();
+    object = REGISTER[id];
+    if (object) { unmutedObjectRow(object) };
     // Удаляем из хранилища информацию об открытой вкладке
     num = $.inArray(id, SETTINGS.local.tabs);
     if (num > -1) {
@@ -907,39 +717,33 @@ function removeTab() {
     };
 }
 
-/* Загружает во вкладку необходимый контент */
-function contentLoader(obj) {
-    if (DEBUG) {console.log('function:'+'contentLoader')};
-    // Загрузка контента во вкладку
+/* Загружает во вкладку необходимый макет модели или объекта */
+function loadLayout(obj) {
+    if (DEBUG) {console.log('function:'+'loadLayout')};
     $obj = $(obj);
-    model  = $obj.attr('data-model');
-    pk = $obj.attr('data-pk');
-    // Загрузка объекта модели
-    if (pk) {
-        args = { method:'get_object', model:model, pk:pk }
-        callback = function(json, status, xhr) {
-            createObjectContent(json.data);
-        };
-        jqxhr = new jsonAPI(args, callback, 'contentLoader(obj) "if (pk)" call jsonAPI()');
+    data = $obj.data();
+    object = REGISTER[validatorID(data.id)];
+    html = renderLayout(object);
+    // Одиночные биндинги на загрузку коллекций объекта
+    if (object instanceof Item) {
+        $('#layout_'+object.id+' button[data-loading=true]')
+        .one('click', function() { loadLayout(this) });
     }
-    // Загрузка модели приложения (Datatables.net)
-    else if (model) {
-        args = { method:'datatables_info', model: model, info: true }
-        callback = function(json, status, xhr) {
-            initDataTables(json.data);
-        }
-        jqxhr = new jsonAPI(args, callback, 'contentLoader(obj) "if (model)" call jsonAPI()');
+    // Загрузка коллекции
+    else if ((object instanceof Model) || (object instanceof Compose)) {
+        jqxhr = getCollection(object);
     }
-    // Удаление привязки клика на вкладке
-    $obj.unbind('click');
-    return jqxhr
+    // Удаление атрибута загрузки
+    $obj.removeAttr("data-loading");
+    return $obj
 }
 
 /* Восстанавливает вкладки, открытые до обновления страницы */
 function restoreSession() {
     if (DEBUG) {console.log('function:'+'restoreSession')};
     $.each(SETTINGS.local.tabs, function(i, item) {
-        $('[data-id='+item+']').click(); // только приложения в меню
+        // только приложения в меню
+        $('#menu-app li[class!=disabled] a[data-id='+item+']').click();
     });
 }
 
@@ -954,16 +758,22 @@ $(document).ready(function($) {
     // Инициализация шаблонов Underscore
     TEMPLATES.alert             = _.template($('#underscore-alert').html());
     TEMPLATES.menuApp           = _.template($('#underscore-menu-app').html());
-    TEMPLATES.tabContentObject  = _.template($('#underscore-tab-content-object').html());
-    TEMPLATES.tabContentDefault = _.template($('#underscore-tab-content-default').html());
+    TEMPLATES.collection        = _.template($('#underscore-collection').html());
+    TEMPLATES.layoutModel       = _.template($('#underscore-layout-model').html());
+    TEMPLATES.layoutCompose     = _.template($('#underscore-layout-compose').html());
+    TEMPLATES.layoutItem        = _.template($('#underscore-layout-item').html());
+    TEMPLATES.layoutDefault     = _.template($('#underscore-layout-default').html());
     TEMPLATES.tab               = _.template($('#underscore-tab').html());
-    TEMPLATES.datatables        = _.template($('#underscore-datatables').html());
-    TEMPLATES.datatables_pk     = _.template($('#underscore-datatables-pk').html());
+
+    // Загрузка меню
+    $('#menu-app').hide();
+    $('#menu-func').hide();
+    loadMenuApp()
 
     /* сначала инициализируем объекты, затем настройки, иначе не работает
      * TODO: Найти объяснение.
      */
-    window.OBJECTS = new Objects();
+    //~ window.OBJECTS = new Objects();
     window.SETTINGS = new Settings();
 
     // Инициализация для Bootstrap
@@ -977,28 +787,36 @@ $(document).ready(function($) {
     else { $('div.navbar a[href="/"]').parents('li').addClass('active');}
     */
 
-    // Загрузка меню
-    $('#menu-app').hide();
-    $('#menu-func').hide();
-    loadMenuApp()
-
     // Если настройки готовы, то запускаем все процессы
     if (SETTINGS.init().ready) {
         $('#search').focus();
         // Биндинги на открытие-закрытие вкладок и их контента
-        $('#menu-app li[class!=disabled] a[data-model]').click(addTab);
-        $('#main-tab').on('click', 'button.close[data-id]', removeTab)
+        $('#menu-app li[class!=disabled] a').click(tabAdd);
+        $('#main-tab').on('click', 'button.close[data-id]', tabRemove)
 
         restoreSession();
-
-        // Биндинги на кнопки
-        $('body').on('click', 'button[data-action=reset-object]:enabled', resetObject);
-        $('body').on('click', 'button[data-action=save-object]:enabled',  saveObject);
-        $('body').on('submit', 'form[id^=form-object]', submitFormObject);
 
         // Биндинги на поля объектов
         $('body').on('change', 'select[data-type=object_field]:enabled', changeFieldObject);
         $('body').on('change', 'input[data-type=object_field]:enabled', changeFieldObject);
+
+        // Биндинг на фильтрацию, паджинацию и количество в коллекциях
+        $('body').on('keyup',  '[data-action=collection_filter]:enabled', collectionFilter);
+        $('body').on('change', '[data-action=collection_filter]:enabled', collectionFilter);
+        $('body').on('change', '[data-action=collection_count]:enabled',  collectionCount);
+        $('body').on('click',  '[data-action=collection_count]',          collectionCount);
+        $('body').on('change', '[data-action=collection_page]:enabled',   collectionPage);
+        $('body').on('click',  '[data-action=collection_page]',           collectionPage);
+        
+        // Биндинги на кнопки
+        $('body').on('click','[data-action=object_open]',   objectOpen);
+        $('body').on('click','[data-action=object_new]',    objectNew);
+        $('body').on('click','[data-action=object_copy]',   objectCopy);
+        $('body').on('click','[data-action=object_delete]', objectDelete);
+        $('body').on('click','[data-action=object_reset]',                objectReset);
+        $('body').on('click','button[data-action=object_reset]:enabled',  objectReset);
+        $('body').on('click','[data-action=object_save]',               objectSave);
+        $('body').on('click','button[data-action=object_save]:enabled', objectSave);
         
     } else {
         console.log("ОШИБКА! Загрузка настроек не удалась.");
