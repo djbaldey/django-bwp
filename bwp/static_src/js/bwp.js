@@ -809,13 +809,13 @@ $(document).ready(function($) {
         $('body').on('click',  '[data-action=collection_page]',           collectionPage);
         
         // Биндинги на кнопки
-        $('body').on('click','[data-action=object_open]',   objectOpen);
-        $('body').on('click','[data-action=object_new]',    objectNew);
-        $('body').on('click','[data-action=object_copy]',   objectCopy);
-        $('body').on('click','[data-action=object_delete]', objectDelete);
-        $('body').on('click','[data-action=object_reset]',                objectReset);
+        $('body').on('click','a[data-action=object_open]',   objectOpen);
+        $('body').on('click','a[data-action=object_new]',    objectNew);
+        $('body').on('click','a[data-action=object_copy]',   objectCopy);
+        $('body').on('click','a[data-action=object_delete]', objectDelete);
+        $('body').on('click','a[data-action=object_reset]',                objectReset);
         $('body').on('click','button[data-action=object_reset]:enabled',  objectReset);
-        $('body').on('click','[data-action=object_save]',               objectSave);
+        $('body').on('click','a[data-action=object_save]',               objectSave);
         $('body').on('click','button[data-action=object_save]:enabled', objectSave);
         
     } else {
