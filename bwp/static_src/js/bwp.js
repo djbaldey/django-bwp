@@ -234,6 +234,20 @@ function objectSave() {
     object = REGISTER[data.id];
 }
 
+function objectChange() {
+    if (DEBUG) {console.log('function:'+'objectChange')};
+    $this = $(this);
+    data = $this.data();
+    object = REGISTER[data.id];
+}
+
+function objectReset() {
+    if (DEBUG) {console.log('function:'+'objectReset')};
+    $this = $(this);
+    data = $this.data();
+    object = REGISTER[data.id];
+}
+
 function mutedObjectRow(object) {
     if (DEBUG) {console.log('function:'+'mutedObjectRow')};
     $('tr[data-model="'+object.model.name+'"][data-pk="'+object.pk+'"]')
@@ -312,34 +326,6 @@ function collectionPage() {
     return jqxhr
 }
 
-/* Обрабатывает изменения полей объекта */
-function changeFieldObject() {
-    if (DEBUG) {console.log('function:'+'changeFieldObject')};
-    console.log('changeFieldObject()');
-}
-
-/* Восстанавливает объект */
-function objectReset() {
-    if (DEBUG) {console.log('function:'+'objectReset')};
-}
-
-/* Сохраняет объект в DB */
-function saveObject(self) {
-    if (DEBUG) {console.log('function:'+'saveObject')};
-    $self = $(this); // button
-}
-
-/* Сохраняет объект в DB без нажатия на кнопку */
-function submitFormObject() {
-    if (DEBUG) {console.log('function:'+'submitFormObject')};
-    $(this).find('button[data-action=save]:enabled').click();
-}
-
-/* Восстанавливает вложенные объекты */
-function resetCompose() {
-    if (DEBUG) {console.log('function:'+'resetCompose')};
-    console.log('resetCompose()');
-}
 
 ////////////////////////////////////////////////////////////////////////
 //                            НАСТРОЙКИ                               //
@@ -796,27 +782,21 @@ $(document).ready(function($) {
 
         restoreSession();
 
-        // Биндинги на поля объектов
-        $('body').on('change', 'select[data-type=object_field]:enabled', changeFieldObject);
-        $('body').on('change', 'input[data-type=object_field]:enabled', changeFieldObject);
-
         // Биндинг на фильтрацию, паджинацию и количество в коллекциях
-        $('body').on('keyup',  '[data-action=collection_filter]:enabled', collectionFilter);
-        $('body').on('change', '[data-action=collection_filter]:enabled', collectionFilter);
-        $('body').on('change', '[data-action=collection_count]:enabled',  collectionCount);
-        $('body').on('click',  '[data-action=collection_count]',          collectionCount);
-        $('body').on('change', '[data-action=collection_page]:enabled',   collectionPage);
-        $('body').on('click',  '[data-action=collection_page]',           collectionPage);
+        $('body').on('keyup',  '[data-action=collection_filter]', collectionFilter);
+        $('body').on('change', '[data-action=collection_filter]', collectionFilter);
+        $('body').on('click',  '[data-action=collection_count]',  collectionCount);
+        $('body').on('change', '[data-action=collection_page]',   collectionPage);
+        $('body').on('click',  '[data-action=collection_page]',   collectionPage);
         
-        // Биндинги на кнопки
-        $('body').on('click','a[data-action=object_open]',   objectOpen);
-        $('body').on('click','a[data-action=object_new]',    objectNew);
-        $('body').on('click','a[data-action=object_copy]',   objectCopy);
-        $('body').on('click','a[data-action=object_delete]', objectDelete);
-        $('body').on('click','a[data-action=object_reset]',                objectReset);
-        $('body').on('click','button[data-action=object_reset]:enabled',  objectReset);
-        $('body').on('click','a[data-action=object_save]',               objectSave);
-        $('body').on('click','button[data-action=object_save]:enabled', objectSave);
+        // Биндинги на кнопки и ссылки
+        $('body').on('click', '[data-action=object_open]',   objectOpen);
+        $('body').on('click', '[data-action=object_new]',    objectNew);
+        $('body').on('click', '[data-action=object_copy]',   objectCopy);
+        $('body').on('click', '[data-action=object_delete]', objectDelete);
+        $('body').on('click', '[data-action=object_reset]',  objectReset);
+        $('body').on('click', '[data-action=object_save]',   objectSave);
+        $('body').on('change','[data-action=object_change]', objectChange);
         
     } else {
         console.log("ОШИБКА! Загрузка настроек не удалась.");
