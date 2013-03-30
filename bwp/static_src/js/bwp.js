@@ -50,7 +50,7 @@ window.REGISTER  = {}; // Регистр приложений, моделей, �
 ////////////////////////////////////////////////////////////////////////
 
 /* класс: Приложение BWP */
-function App(data) {
+function classApp(data) {
     this.has_module_perms = data.has_module_perms;
     this.name = data.name;
     this.id = validatorID(this.name);
@@ -61,14 +61,14 @@ function App(data) {
     // Init
     app = this;
     $.each(data.models, function(index, item) {
-        _models.push(new Model(app, item));
+        _models.push(new classModel(app, item));
     });
     // Register
     REGISTER[this.id] = this;
 };
 
 /* класс: Модель BWP */
-function Model(app, data) {
+function classModel(app, data) {
     this.app   = app;
     this.perms = data.perms;
     this.meta  = data.meta;
@@ -105,7 +105,7 @@ function Model(app, data) {
 };
 
 /* класс: Композиция */
-function Compose(item, data) {
+function classCompose(item, data) {
     this.item     = item;
     this.editable = Boolean(this.item.pk);
     this.perms    = data.perms;
@@ -137,7 +137,7 @@ function Compose(item, data) {
 };
 
 /* класс: Объект */
-function Subject(data) {
+function classObject(data) {
     this.model = REGISTER[validatorID(data.model)];
     this.pk    = data.pk;
     this.id    = this.pk ? validatorID(data.model+'.'+this.pk) : generatorID(NEWITEMKEY);
@@ -151,11 +151,11 @@ function Subject(data) {
     _composes = [];
     this.composes = _composes;
     this.widgets = this.model.meta.widgets;
-    subject = this;
+    object = this;
     // Init
     if (this.model.composes) {
         $.each(this.model.composes, function(rel_name, item) {
-            _composes.push(new Compose(subject, item));
+            _composes.push(new classCompose(object, item));
         });
     }
     // register
@@ -169,7 +169,7 @@ function Subject(data) {
 /* Отрисовка коллекций моделей и композиций */
 function handlerCollectionRender(instance) {
     if (DEBUG) {console.log('function:'+'handlerCollectionRender')};
-    if (instance instanceof Subject) {  
+    if (instance instanceof classObject) {  
         return '';
     }
     html = TEMPLATES.collection({data:instance})
@@ -180,14 +180,14 @@ function handlerCollectionRender(instance) {
 /* Отрисовка макета модели, композиции или объекта */
 function handlerLayoutRender(instance) {
     if (DEBUG) {console.log('function:'+'handlerLayoutRender')};
-    if (instance instanceof Model) {  
+    if (instance instanceof classModel) {  
         template = TEMPLATES.layoutModel
     }
-    else if (instance instanceof Compose) {  
+    else if (instance instanceof classCompose) {  
         template = TEMPLATES.layoutCompose
     }
-    else if (instance instanceof Subject) {  
-        template = TEMPLATES.layoutSubject
+    else if (instance instanceof classObject) {  
+        template = TEMPLATES.layoutObject
     }
     html = template({data:instance})
     $('#layout_'+instance.id).html(html)
@@ -204,14 +204,14 @@ function handlerCommitInstance(instanse) {
 }
 
 /* Обработчик события открытия объекта */
-function eventSubjectOpen() {
-    if (DEBUG) {console.log('function:'+'eventSubjectOpen')};
+function eventObjectOpen() {
+    if (DEBUG) {console.log('function:'+'eventObjectOpen')};
     $this = $(this);
     data = $this.data();
     if (!data.model) { return false };
-    subject = REGISTER[data.id];
-    if (subject) {
-        handlerTabOpen(subject);
+    object = REGISTER[data.id];
+    if (object) {
+        handlerTabOpen(object);
         return null
     }
     args = {
@@ -220,42 +220,42 @@ function eventSubjectOpen() {
         "pk"      : data.pk || null,
     }
     cb = function(json, status, xhr) {
-        subject = new Subject(json.data);
-        $this.data('id', subject.id);
-        handlerTabOpen(subject);
+        object = new classObject(json.data);
+        $this.data('id', object.id);
+        handlerTabOpen(object);
     }
-    jqxhr = new jsonAPI(args, cb, 'eventSubjectOpen() call jsonAPI()')
+    jqxhr = new jsonAPI(args, cb, 'eventObjectOpen() call jsonAPI()')
     return jqxhr
 }
 
 /* Обработчик события создания объекта */
-function eventSubjectNew() {
-    if (DEBUG) {console.log('function:'+'eventSubjectNew')};
+function eventObjectNew() {
+    if (DEBUG) {console.log('function:'+'eventObjectNew')};
     $this = $(this);
     data = $this.data();
-    subject = REGISTER[data.id];
+    object = REGISTER[data.id];
 }
 
 /* Обработчик события копирования объекта */
-function eventSubjectCopy() {
-    if (DEBUG) {console.log('function:'+'eventSubjectCopy')};
+function eventObjectCopy() {
+    if (DEBUG) {console.log('function:'+'eventObjectCopy')};
     $this = $(this);
     data = $this.data();
-    subject = REGISTER[data.id];
-    create = function(subject) {
+    object = REGISTER[data.id];
+    create = function(object) {
         _data = {};
-        _data['model'] = subject.model.model;
-        _data['fields'] = subject.fields;
-        _data['__unicode__'] = subject.__unicode__;
+        _data['model'] = object.model.model;
+        _data['fields'] = object.fields;
+        _data['__unicode__'] = object.__unicode__;
         data = {};
         $.extend(true, data, _data);
-        newsubject = new Subject(data);
-        newsubject.model.fix[newsubject.id] = newsubject
-        $this.data('id', newsubject.id);
-        handlerTabOpen(newsubject);
-        return newsubject
+        newobject = new classObject(data);
+        newobject.model.fix[newobject.id] = newobject
+        $this.data('id', newobject.id);
+        handlerTabOpen(newobject);
+        return newobject
     };
-    if (subject) { return create(subject); }
+    if (object) { return create(object); }
     else {
         args = {
             "method"  : "get_object",
@@ -263,60 +263,60 @@ function eventSubjectCopy() {
             "pk"      : data.pk || 0,
         }
         cb = function(json, status, xhr) {
-            subject = new Subject(json.data);
-            newsubject = create(subject)
-            $this.data('id', newsubject.id);
-            handlerTabOpen(newsubject);
+            object = new classObject(json.data);
+            newobject = create(object)
+            $this.data('id', newobject.id);
+            handlerTabOpen(newobject);
         }
-        jqxhr = new jsonAPI(args, cb, 'eventSubjectCopy() call jsonAPI()')
+        jqxhr = new jsonAPI(args, cb, 'eventObjectCopy() call jsonAPI()')
         return jqxhr
     }
 }
 
 /* Обработчик события удаления объекта */
-function eventSubjectDelete() {
-    if (DEBUG) {console.log('function:'+'eventSubjectDelete')};
+function eventObjectDelete() {
+    if (DEBUG) {console.log('function:'+'eventObjectDelete')};
     $this = $(this);
     data = $this.data();
-    subject = REGISTER[data.id];
+    object = REGISTER[data.id];
 }
 
 /* Обработчик события изменения объекта */
-function eventSubjectChange() {
-    if (DEBUG) {console.log('function:'+'eventSubjectChange')};
+function eventObjectChange() {
+    if (DEBUG) {console.log('function:'+'eventObjectChange')};
     $this = $(this);
     data = $this.data();
-    subject = REGISTER[data.id];
+    object = REGISTER[data.id];
 }
 
 /* Обработчик события восстановления объекта */
-function eventSubjectReset() {
-    if (DEBUG) {console.log('function:'+'eventSubjectReset')};
+function eventObjectReset() {
+    if (DEBUG) {console.log('function:'+'eventObjectReset')};
     $this = $(this);
     data = $this.data();
-    subject = REGISTER[data.id];
+    object = REGISTER[data.id];
 }
 
 /* Обработчик события удаления объекта */
-function eventSubjectSave() {
-    if (DEBUG) {console.log('function:'+'eventSubjectSave')};
+function eventObjectSave() {
+    if (DEBUG) {console.log('function:'+'eventObjectSave')};
     $this = $(this);
     data = $this.data();
-    subject = REGISTER[data.id];
-    handlerCommitInstance(subject)
+    object = REGISTER[data.id];
+    handlerCommitInstance(object)
 }
 
 /* Функция мутирования строки объекта */
-function handlerSubjectRowMuted(subject) {
-    if (DEBUG) {console.log('function:'+'handlerSubjectRowMuted')};
-    $('tr[data-model="'+subject.model.name+'"][data-pk="'+subject.pk+'"]')
+function handlerObjectRowMuted(object) {
+    if (DEBUG) {console.log('function:'+'handlerObjectRowMuted')};
+    $('tr[data-model="'+object.model.name+'"][data-pk="'+object.pk+'"]')
         .addClass('muted');
 }
 
 /* Функция удаления мутирования строки объекта */
-function handlerSubjectRowUnmuted(subject) {
-    if (DEBUG) {console.log('function:'+'handlerSubjectRowUnmuted')};
-    $('tr[data-model="'+subject.model.name+'"][data-pk="'+subject.pk+'"]')
+function handlerObjectRowUnmuted(object) {
+    if (DEBUG) {console.log('function:'+'handlerObjectRowUnmuted')};
+    $('tr[data-model="'+object.model.name+'"][data-pk="'+object.pk+'"]')
         .removeClass('muted');
 }
 
@@ -699,7 +699,7 @@ function loadMenuApp() {
     cb = function(json, status, xhr) {
         apps = [];
         $.each(json.data, function(index, item) {
-            apps.push(new App(item));
+            apps.push(new classApp(item));
         });
         html = TEMPLATES.menuApp({data:apps});
         $('#menu-app ul[role=menu]').html(html);
@@ -712,7 +712,7 @@ function loadMenuApp() {
 /* Открывает вкладку на рабочей области */
 function handlerTabOpen(data) {
     if (DEBUG) {console.log('function:'+'handlerTabOpen')};
-    handlerSubjectRowMuted(data);
+    handlerObjectRowMuted(data);
 
     tab = $('#main-tab #tab_'+ data.id);
     if (tab.length > 0) {
@@ -758,7 +758,7 @@ function handlerTabClose(data) {
     $('#tab_'+data.id).remove();
     $('#layout_'+data.id).remove();
     instance = REGISTER[data.id];
-    if (instance) { handlerSubjectRowUnmuted(instance) };
+    if (instance) { handlerObjectRowUnmuted(instance) };
     // Удаляем из хранилища информацию об открытой вкладке
     num = $.inArray(data.id, SETTINGS.local.tabs);
     if (num > -1) {
@@ -781,12 +781,12 @@ function handlerLayoutLoad(instance) {
     if (DEBUG) {console.log('function:'+'handlerLayoutLoad')};
     html = handlerLayoutRender(instance);
     // Одиночные биндинги на загрузку коллекций объекта
-    if (instance instanceof Subject) {
+    if (instance instanceof classObject) {
         $('#layout_'+instance.id+' button[data-loading=true]')
         .one('click', eventLayoutLoad);
     }
     // Загрузка коллекции
-    else if ((instance instanceof Model) || (instance instanceof Compose)) {
+    else if ((instance instanceof classModel) || (instance instanceof classCompose)) {
         jqxhr = handlerCollectionGet(instance);
     }
 }
@@ -825,7 +825,7 @@ $(document).ready(function($) {
     TEMPLATES.collection        = _.template($('#underscore-collection').html());
     TEMPLATES.layoutModel       = _.template($('#underscore-layout-model').html());
     TEMPLATES.layoutCompose     = _.template($('#underscore-layout-compose').html());
-    TEMPLATES.layoutSubject     = _.template($('#underscore-layout-item').html());
+    TEMPLATES.layoutObject     = _.template($('#underscore-layout-item').html());
     TEMPLATES.layoutDefault     = _.template($('#underscore-layout-default').html());
     TEMPLATES.tab               = _.template($('#underscore-tab').html());
 
@@ -865,13 +865,13 @@ $(document).ready(function($) {
         $('body').on('click',  '[data-action=collection_page]',   eventCollectionPage);
         
         // Биндинги на кнопки и ссылки
-        $('body').on('click', '[data-action=subject_open]',   eventSubjectOpen);
-        $('body').on('click', '[data-action=subject_new]',    eventSubjectNew);
-        $('body').on('click', '[data-action=subject_copy]',   eventSubjectCopy);
-        $('body').on('click', '[data-action=subject_delete]', eventSubjectDelete);
-        $('body').on('change','[data-action=subject_change]', eventSubjectChange);
-        $('body').on('click', '[data-action=subject_reset]',  eventSubjectReset);
-        $('body').on('click', '[data-action=subject_save]',   eventSubjectSave);
+        $('body').on('click', '[data-action=object_open]',   eventObjectOpen);
+        $('body').on('click', '[data-action=object_new]',    eventObjectNew);
+        $('body').on('click', '[data-action=object_copy]',   eventObjectCopy);
+        $('body').on('click', '[data-action=object_delete]', eventObjectDelete);
+        $('body').on('change','[data-action=object_change]', eventObjectChange);
+        $('body').on('click', '[data-action=object_reset]',  eventObjectReset);
+        $('body').on('click', '[data-action=object_save]',   eventObjectSave);
         
     } else {
         console.log("ОШИБКА! Загрузка настроек не удалась.");

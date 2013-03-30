@@ -25,7 +25,7 @@
                         <ul class="dropdown-menu" role="menu">
                         {% if (data.perms.change) { %}
                             <li><a  tabindex="-1" href="#"
-                                    data-action="subject_open"
+                                    data-action="object_open"
                                     data-model="{{ obj.model }}"
                                     data-pk="{{ obj.pk }}">
                                     <i class="icon-edit"> </i> Открыть
@@ -34,7 +34,7 @@
                         {% } %}
                         {% if (data.perms.add) { %}
                             <li><a  tabindex="-1" href="#"
-                                    data-action="subject_copy"
+                                    data-action="object_copy"
                                     data-model="{{ obj.model }}"
                                     data-pk="{{ obj.pk }}">
                                     <i class="icon-plus"> </i> Копировать
@@ -44,7 +44,7 @@
                         {% if (data.perms.delete) { %}
                             <li class="divider"></li>
                             <li><a  tabindex="-1" href="#"
-                                    data-action="subject_delete"
+                                    data-action="object_delete"
                                     data-model="{{ obj.model }}"
                                     data-pk="{{ obj.pk }}">
                                     <i class="icon-trash"> </i> Удалить
