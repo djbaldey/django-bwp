@@ -46,8 +46,308 @@ window.TEMPLATES = {}; // Шаблоны
 window.REGISTER  = {}; // Регистр приложений, моделей, композиций и объектов
 
 ////////////////////////////////////////////////////////////////////////
+//                            НАСТРОЙКИ                               //
+////////////////////////////////////////////////////////////////////////
+
+/* Настройки шаблонизатора underscore.js в стиле Django */
+_.templateSettings = {
+    interpolate: /\{\{(.+?)\}\}/g,
+    evaluate: /\{\%(.+?)\%\}/g, 
+};
+
+/* Включение Underscore.string методов в пространство имён Underscore */
+_.mixin(_.str.exports());
+
+////////////////////////////////////////////////////////////////////////
+//                               ОБЩИЕ                                //
+////////////////////////////////////////////////////////////////////////
+
+/* Единая, переопределяемая задержка для действий или функций */
+var delay = (function(){
+    if (DEBUG) {console.log('function:'+'delay')};
+    var timer = 0;
+    return function(callback, ms){
+        clearTimeout (timer);
+        timer = setTimeout(callback, ms);
+    };
+})();
+
+/* Генератор идентификаторов, которому можно задавать статические
+ * начало и конец идентификатора, например:
+ *  >> id = generatorID()
+ *  >> "i1363655293735"
+ *  >> id = generatorID(null, "object")
+ *  >> "gen1363655293736_object"
+ *  >> id = generatorID("object")
+ *  >> "object_i1363655293737"
+ *  >> id = generatorID("model", "object")
+ *  >> "model_i1363655293738_object"
+ */
+function generatorID(prefix, postfix) {
+    if (DEBUG) {console.log('function:'+'generatorID')};
+    var result = [];
+    var gen = 'i';
+    var m = 1000;
+    var n = 9999;
+    var salt = Math.floor( Math.random() * (n - m + 1) ) + m;
+    gen += $.now() + String(salt);
+    if (prefix) { result.push(prefix)};
+    result.push(gen); 
+    if (postfix) { result.push(postfix) };
+    return validatorID(result);
+}
+
+/* Приводит идентификаторы в позволительный jQuery вид.
+ * В данном приложении он заменяет точки на "-".
+ * На вход может принимать список или строку
+ */
+function validatorID(id) {
+    if ($.type(id) === 'array') {id = id.join('_')};
+    if (DEBUG) {console.log('function:'+'validatorID')};
+    return id.replace(/[\.,\:,\/, ,\(,\),=,?]/g, "-");
+}
+
+/* Общие функции вывода сообщений */
+function handlerHideAlert() {
+    if (DEBUG) {console.log('function:'+'handlerHideAlert')};
+    $('.alert').alert('close');
+}
+function handlerShowAlert(msg, type, callback) {
+    if (DEBUG) {console.log('function:'+'handlerShowAlert')};
+    console.log(msg);
+    if (!type) { type = 'alert-error' }
+    html = TEMPLATES.alert({ msg: msg, type: type });
+    $('#alert-place').html(html);
+    $(window).scrollTop(0);
+    $('.alert').alert();
+    if (callback) { delay(callback, 5000); }
+    else { delay(handlerHideAlert, 5000); }
+    return false;
+}
+
+/* Общая функция для работы с django-quickapi */
+function jsonAPI(args, callback, to_console, sync) {
+    if (DEBUG) {console.log('function:'+'jsonAPI')};
+    if (!args) { var args = { method: "get_settings" } };
+    if (!callback) { callback = function(json, status, xhr) {} };
+    var jqxhr = $.ajax({
+        type: "POST",
+        async: !sync,
+        timeout: AJAX_TIMEOUT,
+        url: BWP_API_URL,
+        data: 'jsonData=' + $.toJSON(args),
+        dataType: 'json'
+    })
+    // Обработка ошибок протокола HTTP
+    .fail(function(xhr, status, err) {
+        // Если есть переадресация, то выполняем её
+        if (xhr.getResponseHeader('Location')) {
+            window.location = xhr.getResponseHeader('Location')
+            .replace(/\?.*$/, "?next=" + window.location.pathname);
+            console.log("1:" + xhr.getResponseHeader('Location'));
+        } else {
+            // Иначе извещаем пользователя ответом и в консоль
+            console.log("ERROR:" + xhr.responseText);
+            handlerShowAlert(_(xhr.responseText).truncate(255), 'alert-error');
+        };
+    })
+    // Обработка полученных данных
+    .done(function(json, status, xhr) {
+        if (to_console) { if (DEBUG) {console.log(to_console)}; };
+        /* При переадресации нужно отобразить сообщение на некоторое время,
+         * а затем выполнить переход по ссылке, добавив GET-параметр для
+         * возврата на текущую страницу
+         */
+        if ((json.status >=300) && (json.status <400) && (json.data.Location)) {
+            handlerShowAlert(json.message, 'alert-error', function() {
+                window.location.href = json.data.Location
+                .replace(/\?.*$/, "?next=" + window.location.pathname);
+            });
+        }
+        /* При ошибках извещаем пользователя полученным сообщением */
+        else if (json.status >=400) {
+            handlerShowAlert(json.message, 'alert-error');
+        }
+        /* При нормальном возврате в debug-режиме выводим в консоль
+         * сообщение
+         */
+        else {
+            if (DEBUG) {console.log($.toJSON(json.message))};
+            return callback(json, status, xhr);
+        };
+    })
+    return jqxhr
+};
+
+////////////////////////////////////////////////////////////////////////
 //                             "КЛАССЫ"                               //
 ////////////////////////////////////////////////////////////////////////
+
+/* класс: Настройки
+ * Пример использования:
+========================================================================
+if (SETTINGS.init().ready) {
+    SETTINGS.server['obj_on_page'] = 10
+    SETTINGS.local['color'] = '#FFFFFF'
+    SETTINGS.callback = function() { alert('after save') }
+    SETTINGS.save()
+    // либо так:
+    // callback_X = function() { alert('after save') }
+    // SETTINGS.save(callback_X)
+};
+========================================================================
+* запустится callback и сбросится атрибут SETTINGS.callback
+* на дефолтный (undefined), если callback.__not_reset_after__ не определён.
+* .init(callback_Y) - используется только один раз, а для переполучения данных
+* и если это действительно необходимо, используйте .reload(callback_Y)
+* Функции "callback" - необязательны.
+*/
+function classSettings(default_callback) {
+    if (DEBUG) {console.log('function:'+'Settings')};
+    /* Установка ссылки на свой объект для вложенных функций */
+    self = this;
+    /* Проверка возможности исполнения */
+    if (typeof localStorage == 'undefined' || typeof $.evalJSON == 'undefined')
+        { return {}; }
+
+    _unique_key = SETTINGS_UNIQUE_KEY;
+
+    /* Настройки по-умолчанию */
+    _server = {}; // непосредственный объект хранения
+    _local = { tabs:[], };  // непосредственный объект хранения
+    _values = { 'server': _server, 'local': _local }; // ссылки на хранилища
+
+    /* Пока с сервера не получены данные */
+    _values_is_set = false;
+    _responseServer = null;
+
+    /* Атрибут SETTINGS.ready - показывает готовность */
+    this.__defineGetter__('ready', function() { return _values_is_set; })
+
+    /* В этом атрибуте можно задавать функцию, которая будет исполняться
+     * всякий раз в конце методов: save() и reload(),
+     * а также при первичной инициализации, обащаясь к all, server, local
+     * При этом функция может не перезаписываться на умолчальную после
+     * её исполнения, для этого в callback нужен положительный атрибут
+     * __not_reset_after__
+     */
+    _callback = default_callback; // functions
+    _run_callback = function() {
+        if (_callback) {
+            _callback();
+            if (!_callback.__not_reset_after__) {
+                _callback = default_callback;
+            };
+        };
+    };
+
+    this.callback = _callback
+
+    /* Дата последнего сохранения на сервере */
+    _last_set_server =  null; // Date()
+    this.last_set = _last_set_server;
+
+    /* Дата последнего получения с сервера */
+    _last_get_server =  null; // Date()
+    this.last_get = _last_get_server;
+
+    /* Метод получения данных из localStorage и ServerStorage */
+    _init = function(callback) {
+        if (callback) { _callback = callback; }
+        _values_is_set = false;
+        _local = $.evalJSON(localStorage.getItem(_unique_key)) || _local;
+        _get_server();
+        return self;
+    };
+    /* Публичный метод */
+    this.init = _init;
+
+    /* Принудительное получение данных изо всех хранилищ */
+    this.reload = _init;
+
+    /* Проверка первичной инициализации */
+    _check_init = function() { if (!_values_is_set) { _init(); } return self; };
+
+    /* Публичные атрибуты краткого, облегчённого доступа к данным хранилищ.
+     * Включают проверку первичной инициализации.
+     * Атрибут SETTINGS.all - все настройки
+     */
+    this.__defineGetter__('all', function() { _check_init(); return _values; })
+    /* Атрибут SETTINGS.server - настройки ServerStorage */
+    this.__defineGetter__('server', function() { _check_init(); return _server; })
+    /* Атрибут SETTINGS.local - настройки localStorage */
+    this.__defineGetter__('local', function() { _check_init(); return _local; })
+
+    /* Сохранение в localStorage и ServerStorage. Вторым аргументом можно
+     * передавать какую именно настройку ('server' или 'local') требуется
+     * сохранить.
+     */
+    this.save = function(callback, only) {
+        if (callback) { _callback = callback; }
+        if (only != 'local') {
+            _set_server(); // Сначала на сервер,
+        }
+        if (only != 'server') { // затем в локалсторадж
+            localStorage.setItem(_unique_key, $.toJSON(self.local))
+        };
+        _run_callback(); // RUN CALLBACK IF EXIST!!!
+        return self;
+    };
+
+    this.save_server = function(callback) { return self.save(callback, 'server'); };
+    this.save_local  = function(callback) { return self.save(callback, 'local'); };
+
+    /* Загрузка настроек в ServerStorage.
+     * Асинхронный метод, просто отправляем на сервер данные,
+     * не дожидаясь результата.
+     * Но если данные не будут сохранены на сервере, то в браузере
+     * появится сообщение об ошибке (обработка ошибок в протоколе 
+     * django-quickapi) через jsonAPI(). Подразумевается, что это позволит
+     * работать при нестабильных соединениях.
+     */
+    _set_server = function() {
+        sync = false;
+        _responseServer = null;
+        args = { method: "set_settings", settings: self.server }
+        cb = function(json, status, xhr) {
+            if (!json.data) { handlerShowAlert(json.message) }
+            else {
+                _last_set_server = new Date();
+                _responseServer = json;
+            }
+        }
+        jqxhr = new jsonAPI(args, cb, 'SETTINGS.set_server() call jsonAPI()', sync)
+        return [_last_set_server, _responseServer, jqxhr]
+    };
+
+    /* Получение настроек из ServerStorage.
+     * Синхронный метод, на котором все события браузера останавливаются
+     */
+    _get_server = function() {
+        sync = true;
+        _responseServer = null;
+        args = { method: "get_settings" }
+        cb = function(json, status, xhr) {
+            _server = json.data;
+            _last_get_server = new Date();
+            _responseServer = json;
+            _values_is_set = true;
+            _run_callback(); // RUN CALLBACK IF EXIST!!!
+            }
+        jqxhr = new jsonAPI(args, cb, 'SETTINGS.get_server() call jsonAPI()', sync);
+        return [_last_get_server, _responseServer, jqxhr]
+    };
+
+    // Очистка от null в списке вкладок
+    this.cleanTabs = function() {
+        _tabs = []
+        $.each(_local.tabs, function(i, item) {
+            if (item) { _tabs.push(item); }
+        });
+        _local.tabs = _tabs;
+        return self;
+    }
+}
 
 /* класс: Приложение BWP */
 function classApp(data) {
@@ -388,312 +688,11 @@ function eventCollectionPage() {
 }
 
 ////////////////////////////////////////////////////////////////////////
-//                            НАСТРОЙКИ                               //
-////////////////////////////////////////////////////////////////////////
-
-/* Глобальный объект настроек
- * Пример использования:
-========================================================================
-if (SETTINGS.init().ready) {
-    SETTINGS.server['obj_on_page'] = 10
-    SETTINGS.local['color'] = '#FFFFFF'
-    SETTINGS.callback = function() { alert('after save') }
-    SETTINGS.save()
-    // либо так:
-    // callback_X = function() { alert('after save') }
-    // SETTINGS.save(callback_X)
-};
-========================================================================
-* запустится callback и сбросится атрибут SETTINGS.callback
-* на дефолтный (undefined), если callback.__not_reset_after__ не определён.
-* .init(callback_Y) - используется только один раз, а для переполучения данных
-* и если это действительно необходимо, используйте .reload(callback_Y)
-* Функции "callback" - необязательны.
-*/
-function Settings(default_callback) {
-    if (DEBUG) {console.log('function:'+'Settings')};
-    /* Установка ссылки на свой объект для вложенных функций */
-    self = this;
-    /* Проверка возможности исполнения */
-    if (typeof localStorage == 'undefined' || typeof $.evalJSON == 'undefined')
-        { return {}; }
-
-    _unique_key = SETTINGS_UNIQUE_KEY;
-
-    /* Настройки по-умолчанию */
-    _server = {}; // непосредственный объект хранения
-    _local = { tabs:[], };  // непосредственный объект хранения
-    _values = { 'server': _server, 'local': _local }; // ссылки на хранилища
-
-    /* Пока с сервера не получены данные */
-    _values_is_set = false;
-    _responseServer = null;
-
-    /* Атрибут SETTINGS.ready - показывает готовность */
-    this.__defineGetter__('ready', function() { return _values_is_set; })
-
-    /* В этом атрибуте можно задавать функцию, которая будет исполняться
-     * всякий раз в конце методов: save() и reload(),
-     * а также при первичной инициализации, обащаясь к all, server, local
-     * При этом функция может не перезаписываться на умолчальную после
-     * её исполнения, для этого в callback нужен положительный атрибут
-     * __not_reset_after__
-     */
-    _callback = default_callback; // functions
-    _run_callback = function() {
-        if (_callback) {
-            _callback();
-            if (!_callback.__not_reset_after__) {
-                _callback = default_callback;
-            };
-        };
-    };
-
-    this.callback = _callback
-
-    /* Дата последнего сохранения на сервере */
-    _last_set_server =  null; // Date()
-    this.last_set = _last_set_server;
-
-    /* Дата последнего получения с сервера */
-    _last_get_server =  null; // Date()
-    this.last_get = _last_get_server;
-
-    /* Метод получения данных из localStorage и ServerStorage */
-    _init = function(callback) {
-        if (callback) { _callback = callback; }
-        _values_is_set = false;
-        _local = $.evalJSON(localStorage.getItem(_unique_key)) || _local;
-        _get_server();
-        return self;
-    };
-    /* Публичный метод */
-    this.init = _init;
-
-    /* Принудительное получение данных изо всех хранилищ */
-    this.reload = _init;
-
-    /* Проверка первичной инициализации */
-    _check_init = function() { if (!_values_is_set) { _init(); } return self; };
-
-    /* Публичные атрибуты краткого, облегчённого доступа к данным хранилищ.
-     * Включают проверку первичной инициализации.
-     * Атрибут SETTINGS.all - все настройки
-     */
-    this.__defineGetter__('all', function() { _check_init(); return _values; })
-    /* Атрибут SETTINGS.server - настройки ServerStorage */
-    this.__defineGetter__('server', function() { _check_init(); return _server; })
-    /* Атрибут SETTINGS.local - настройки localStorage */
-    this.__defineGetter__('local', function() { _check_init(); return _local; })
-
-    /* Сохранение в localStorage и ServerStorage. Вторым аргументом можно
-     * передавать какую именно настройку ('server' или 'local') требуется
-     * сохранить.
-     */
-    this.save = function(callback, only) {
-        if (callback) { _callback = callback; }
-        if (only != 'local') {
-            _set_server(); // Сначала на сервер,
-        }
-        if (only != 'server') { // затем в локалсторадж
-            localStorage.setItem(_unique_key, $.toJSON(self.local))
-        };
-        _run_callback(); // RUN CALLBACK IF EXIST!!!
-        return self;
-    };
-
-    this.save_server = function(callback) { return self.save(callback, 'server'); };
-    this.save_local  = function(callback) { return self.save(callback, 'local'); };
-
-    /* Загрузка настроек в ServerStorage.
-     * Асинхронный метод, просто отправляем на сервер данные,
-     * не дожидаясь результата.
-     * Но если данные не будут сохранены на сервере, то в браузере
-     * появится сообщение об ошибке (обработка ошибок в протоколе 
-     * django-quickapi) через jsonAPI(). Подразумевается, что это позволит
-     * работать при нестабильных соединениях.
-     */
-    _set_server = function() {
-        sync = false;
-        _responseServer = null;
-        args = { method: "set_settings", settings: self.server }
-        cb = function(json, status, xhr) {
-            if (!json.data) { showAlert(json.message) }
-            else {
-                _last_set_server = new Date();
-                _responseServer = json;
-            }
-        }
-        jqxhr = new jsonAPI(args, cb, 'SETTINGS.set_server() call jsonAPI()', sync)
-        return [_last_set_server, _responseServer, jqxhr]
-    };
-
-    /* Получение настроек из ServerStorage.
-     * Синхронный метод, на котором все события браузера останавливаются
-     */
-    _get_server = function() {
-        sync = true;
-        _responseServer = null;
-        args = { method: "get_settings" }
-        cb = function(json, status, xhr) {
-            _server = json.data;
-            _last_get_server = new Date();
-            _responseServer = json;
-            _values_is_set = true;
-            _run_callback(); // RUN CALLBACK IF EXIST!!!
-            }
-        jqxhr = new jsonAPI(args, cb, 'SETTINGS.get_server() call jsonAPI()', sync);
-        return [_last_get_server, _responseServer, jqxhr]
-    };
-
-    // Очистка от null в списке вкладок
-    this.cleanTabs = function() {
-        _tabs = []
-        $.each(_local.tabs, function(i, item) {
-            if (item) { _tabs.push(item); }
-        });
-        _local.tabs = _tabs;
-        return self;
-    }
-}
-
-/* Настройки шаблонизатора underscore.js в стиле Django */
-_.templateSettings = {
-    interpolate: /\{\{(.+?)\}\}/g,
-    evaluate: /\{\%(.+?)\%\}/g, 
-};
-
-/* Включение Underscore.string методов в пространство имён Underscore */
-_.mixin(_.str.exports());
-
-////////////////////////////////////////////////////////////////////////
-//                               ОБЩИЕ                                //
-////////////////////////////////////////////////////////////////////////
-
-/* Единая, переопределяемая задержка для действий или функций */
-var delay = (function(){
-    if (DEBUG) {console.log('function:'+'delay')};
-    var timer = 0;
-    return function(callback, ms){
-        clearTimeout (timer);
-        timer = setTimeout(callback, ms);
-    };
-})();
-
-/* Генератор идентификаторов, которому можно задавать статические
- * начало и конец идентификатора, например:
- *  >> id = generatorID()
- *  >> "i1363655293735"
- *  >> id = generatorID(null, "object")
- *  >> "gen1363655293736_object"
- *  >> id = generatorID("object")
- *  >> "object_i1363655293737"
- *  >> id = generatorID("model", "object")
- *  >> "model_i1363655293738_object"
- */
-function generatorID(prefix, postfix) {
-    if (DEBUG) {console.log('function:'+'generatorID')};
-    var result = [];
-    var gen = 'i';
-    var m = 1000;
-    var n = 9999;
-    var salt = Math.floor( Math.random() * (n - m + 1) ) + m;
-    gen += $.now() + String(salt);
-    if (prefix) { result.push(prefix)};
-    result.push(gen); 
-    if (postfix) { result.push(postfix) };
-    return validatorID(result);
-}
-
-/* Приводит идентификаторы в позволительный jQuery вид.
- * В данном приложении он заменяет точки на "-".
- * На вход может принимать список или строку
- */
-function validatorID(id) {
-    if ($.type(id) === 'array') {id = id.join('_')};
-    if (DEBUG) {console.log('function:'+'validatorID')};
-    return id.replace(/[\.,\:,\/, ,\(,\),=,?]/g, "-");
-}
-
-/* Общие функции вывода сообщений */
-function hideAlert() {
-    if (DEBUG) {console.log('function:'+'hideAlert')};
-    $('.alert').alert('close');
-}
-function showAlert(msg, type, callback) {
-    if (DEBUG) {console.log('function:'+'showAlert')};
-    console.log(msg);
-    if (!type) { type = 'alert-error' }
-    html = TEMPLATES.alert({ msg: msg, type: type });
-    $('#alert-place').html(html);
-    $(window).scrollTop(0);
-    $('.alert').alert();
-    if (callback) { delay(callback, 5000);
-    } else { delay(hideAlert, 5000); }
-    return false;
-}
-
-/* Общая функция для работы с django-quickapi */
-function jsonAPI(args, callback, to_console, sync) {
-    if (DEBUG) {console.log('function:'+'jsonAPI')};
-    if (!args) { var args = { method: "get_settings" } };
-    if (!callback) { callback = function(json, status, xhr) {} };
-    var jqxhr = $.ajax({
-        type: "POST",
-        async: !sync,
-        timeout: AJAX_TIMEOUT,
-        url: BWP_API_URL,
-        data: 'jsonData=' + $.toJSON(args),
-        dataType: 'json'
-    })
-    // Обработка ошибок протокола HTTP
-    .fail(function(xhr, status, err) {
-        // Если есть переадресация, то выполняем её
-        if (xhr.getResponseHeader('Location')) {
-            window.location = xhr.getResponseHeader('Location')
-            .replace(/\?.*$/, "?next=" + window.location.pathname);
-            console.log("1:" + xhr.getResponseHeader('Location'));
-        } else {
-            // Иначе извещаем пользователя ответом и в консоль
-            console.log("ERROR:" + xhr.responseText);
-            showAlert(_(xhr.responseText).truncate(255), 'alert-error');
-        };
-    })
-    // Обработка полученных данных
-    .done(function(json, status, xhr) {
-        if (to_console) { if (DEBUG) {console.log(to_console)}; };
-        /* При переадресации нужно отобразить сообщение на некоторое время,
-         * а затем выполнить переход по ссылке, добавив GET-параметр для
-         * возврата на текущую страницу
-         */
-        if ((json.status >=300) && (json.status <400) && (json.data.Location)) {
-            showAlert(json.message, 'alert-error', function() {
-                window.location.href = json.data.Location
-                .replace(/\?.*$/, "?next=" + window.location.pathname);
-            });
-        }
-        /* При ошибках извещаем пользователя полученным сообщением */
-        else if (json.status >=400) {
-            showAlert(json.message, 'alert-error');
-        }
-        /* При нормальном возврате в debug-режиме выводим в консоль
-         * сообщение
-         */
-        else {
-            if (DEBUG) {console.log($.toJSON(json.message))};
-            return callback(json, status, xhr);
-        };
-    })
-    return jqxhr
-};
-
-
-////////////////////////////////////////////////////////////////////////
 //                              ВКЛАДКИ                               //
 ////////////////////////////////////////////////////////////////////////
 
-function loadMenuApp() {
-    if (DEBUG) {console.log('function:'+'loadMenuApp')};
+function handlerMenuAppLoad() {
+    if (DEBUG) {console.log('function:'+'handlerMenuAppLoad')};
     sync = true;
     args = { method: "get_apps" }
     cb = function(json, status, xhr) {
@@ -705,7 +704,7 @@ function loadMenuApp() {
         $('#menu-app ul[role=menu]').html(html);
         $('#menu-app').show();
     };
-    jqxhr = new jsonAPI(args, cb, 'loadMenuApp() call jsonAPI()', sync);
+    jqxhr = new jsonAPI(args, cb, 'handlerMenuAppLoad() call jsonAPI()', sync);
     return jqxhr
 };
 
@@ -811,7 +810,6 @@ function restoreSession() {
     });
 }
 
-
 ////////////////////////////////////////////////////////////////////////
 //                            ИСПОЛНЕНИЕ                              //
 ////////////////////////////////////////////////////////////////////////
@@ -832,10 +830,10 @@ $(document).ready(function($) {
     // Загрузка меню
     $('#menu-app').hide();
     $('#menu-func').hide();
-    loadMenuApp()
+    handlerMenuAppLoad()
 
     /* Инициализируем настройки */
-    window.SETTINGS = new Settings();
+    window.SETTINGS = new classSettings();
 
     // Инициализация для Bootstrap
     $("alert").alert();
