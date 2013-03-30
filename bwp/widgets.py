@@ -153,7 +153,7 @@ WIDGETS_FOR_DBFIELD = {
     models.PositiveSmallIntegerField:   (InputWidget, {'class': 'positivesmallintegerfield'}),
     models.SlugField:                   (InputWidget, {'class': 'slugfield'}),
     models.SmallIntegerField:           (InputWidget, {'class': 'smallintegerfield'}),
-    models.TextField:                   (TextWidget,  {'class': 'textfield', "rows": "8",}),
+    models.TextField:                   (TextWidget,  {'class': 'textfield', "rows": "3",}),
     models.TimeField:                   (InputWidget, {'class': 'timefield'}),
     models.URLField:                    (URLWidget,   None),
 }

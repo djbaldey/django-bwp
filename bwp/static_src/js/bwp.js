@@ -37,13 +37,17 @@
 */
 
 ////////////////////////////////////////////////////////////////////////
-//                              ОБЪЕКТЫ                               //
+//                             КОНСТАНТЫ                              //
 ////////////////////////////////////////////////////////////////////////
 var NEWITEMKEY = 'newItem';
 
 // Глобальные хранилища-регистраторы
 window.TEMPLATES = {}; // Шаблоны
 window.REGISTER  = {}; // Регистр приложений, моделей, композиций и объектов
+
+////////////////////////////////////////////////////////////////////////
+//                             "КЛАССЫ"                               //
+////////////////////////////////////////////////////////////////////////
 
 /* класс: Приложение BWP */
 function App(data) {
@@ -63,32 +67,6 @@ function App(data) {
     REGISTER[this.id] = this;
 };
 
-function renderCollection(object) {
-    if (DEBUG) {console.log('function:'+'renderCollection')};
-    if (object instanceof Item) {  
-        return '';
-    }
-    html = TEMPLATES.collection({data:object})
-    $('#collection_'+object.id).html(html)
-    return html
-}
-
-function renderLayout(object) {
-    if (DEBUG) {console.log('function:'+'renderLayout')};
-    if (object instanceof Model) {  
-        template = TEMPLATES.layoutModel
-    }
-    else if (object instanceof Compose) {  
-        template = TEMPLATES.layoutCompose
-    }
-    else if (object instanceof Item) {  
-        template = TEMPLATES.layoutItem
-    }
-    html = template({data:object})
-    $('#layout_'+object.id).html(html)
-    return html
-}
-
 /* класс: Модель BWP */
 function Model(app, data) {
     this.app   = app;
@@ -100,7 +78,8 @@ function Model(app, data) {
     this.label = data.label;
     this.title = this.app.label +': '+ this.label;
     this.query = null;
-    this.paginator = {};
+    this.fix = {};
+    this.paginator = null;
     _composes     = {};
     this.composes = _composes
     _widgets = [];
@@ -138,6 +117,7 @@ function Compose(item, data) {
     this.label = data.label;
     this.title = this.item.label +': '+ this.label;
     this.query = null;
+    this.fix = {};
     this.paginator = null;
     _widgets = [];
     this.widgets = _widgets;
@@ -157,7 +137,7 @@ function Compose(item, data) {
 };
 
 /* класс: Объект */
-function Item(data) {
+function Subject(data) {
     this.model = REGISTER[validatorID(data.model)];
     this.pk    = data.pk;
     this.id    = this.pk ? validatorID(data.model+'.'+this.pk) : generatorID(NEWITEMKEY);
@@ -171,25 +151,67 @@ function Item(data) {
     _composes = [];
     this.composes = _composes;
     this.widgets = this.model.meta.widgets;
-    object = this;
+    subject = this;
     // Init
     if (this.model.composes) {
         $.each(this.model.composes, function(rel_name, item) {
-            _composes.push(new Compose(object, item));
+            _composes.push(new Compose(subject, item));
         });
     }
     // register
     REGISTER[this.id] = this;
 };
 
-function objectOpen() {
-    if (DEBUG) {console.log('function:'+'objectOpen')};
+////////////////////////////////////////////////////////////////////////
+//                         ФУНКЦИИ С "КЛАССАМИ"                       //
+////////////////////////////////////////////////////////////////////////
+
+/* Отрисовка коллекций моделей и композиций */
+function handlerCollectionRender(instance) {
+    if (DEBUG) {console.log('function:'+'handlerCollectionRender')};
+    if (instance instanceof Subject) {  
+        return '';
+    }
+    html = TEMPLATES.collection({data:instance})
+    $('#collection_'+instance.id).html(html)
+    return html
+}
+
+/* Отрисовка макета модели, композиции или объекта */
+function handlerLayoutRender(instance) {
+    if (DEBUG) {console.log('function:'+'handlerLayoutRender')};
+    if (instance instanceof Model) {  
+        template = TEMPLATES.layoutModel
+    }
+    else if (instance instanceof Compose) {  
+        template = TEMPLATES.layoutCompose
+    }
+    else if (instance instanceof Subject) {  
+        template = TEMPLATES.layoutSubject
+    }
+    html = template({data:instance})
+    $('#layout_'+instance.id).html(html)
+    return html
+}
+
+/* Обработчик события удаления объекта */
+function handlerCommitInstance(instanse) {
+    if (DEBUG) {console.log('function:'+'handlerCommitInstance')};
+    is_changed = false;
+    $.each(instance.fix, function(name, value) {
+        
+    });
+}
+
+/* Обработчик события открытия объекта */
+function eventSubjectOpen() {
+    if (DEBUG) {console.log('function:'+'eventSubjectOpen')};
     $this = $(this);
     data = $this.data();
     if (!data.model) { return false };
-    object = REGISTER[data.id];
-    if (object) {
-        tabAdd(object);
+    subject = REGISTER[data.id];
+    if (subject) {
+        handlerTabOpen(subject);
         return null
     }
     args = {
@@ -198,134 +220,172 @@ function objectOpen() {
         "pk"      : data.pk || null,
     }
     cb = function(json, status, xhr) {
-        object = new Item(json.data);
-        $this.data('id', object.id);
-        tabAdd(object);
+        subject = new Subject(json.data);
+        $this.data('id', subject.id);
+        handlerTabOpen(subject);
     }
-    jqxhr = new jsonAPI(args, cb, 'objectOpen() call jsonAPI()')
+    jqxhr = new jsonAPI(args, cb, 'eventSubjectOpen() call jsonAPI()')
     return jqxhr
 }
 
-function objectNew() {
-    if (DEBUG) {console.log('function:'+'objectNew')};
+/* Обработчик события создания объекта */
+function eventSubjectNew() {
+    if (DEBUG) {console.log('function:'+'eventSubjectNew')};
     $this = $(this);
     data = $this.data();
-    object = REGISTER[data.id];
+    subject = REGISTER[data.id];
 }
 
-function objectCopy() {
-    if (DEBUG) {console.log('function:'+'objectCopy')};
+/* Обработчик события копирования объекта */
+function eventSubjectCopy() {
+    if (DEBUG) {console.log('function:'+'eventSubjectCopy')};
     $this = $(this);
     data = $this.data();
-    object = REGISTER[data.id];
+    subject = REGISTER[data.id];
+    create = function(subject) {
+        _data = {};
+        _data['model'] = subject.model.model;
+        _data['fields'] = subject.fields;
+        _data['__unicode__'] = subject.__unicode__;
+        data = {};
+        $.extend(true, data, _data);
+        newsubject = new Subject(data);
+        newsubject.model.fix[newsubject.id] = newsubject
+        $this.data('id', newsubject.id);
+        handlerTabOpen(newsubject);
+        return newsubject
+    };
+    if (subject) { return create(subject); }
+    else {
+        args = {
+            "method"  : "get_object",
+            "model"   : data.model,
+            "pk"      : data.pk || 0,
+        }
+        cb = function(json, status, xhr) {
+            subject = new Subject(json.data);
+            newsubject = create(subject)
+            $this.data('id', newsubject.id);
+            handlerTabOpen(newsubject);
+        }
+        jqxhr = new jsonAPI(args, cb, 'eventSubjectCopy() call jsonAPI()')
+        return jqxhr
+    }
 }
 
-function objectDelete() {
-    if (DEBUG) {console.log('function:'+'objectDelete')};
+/* Обработчик события удаления объекта */
+function eventSubjectDelete() {
+    if (DEBUG) {console.log('function:'+'eventSubjectDelete')};
     $this = $(this);
     data = $this.data();
-    object = REGISTER[data.id];
+    subject = REGISTER[data.id];
 }
 
-function objectSave() {
-    if (DEBUG) {console.log('function:'+'objectSave')};
+/* Обработчик события изменения объекта */
+function eventSubjectChange() {
+    if (DEBUG) {console.log('function:'+'eventSubjectChange')};
     $this = $(this);
     data = $this.data();
-    object = REGISTER[data.id];
+    subject = REGISTER[data.id];
 }
 
-function objectChange() {
-    if (DEBUG) {console.log('function:'+'objectChange')};
+/* Обработчик события восстановления объекта */
+function eventSubjectReset() {
+    if (DEBUG) {console.log('function:'+'eventSubjectReset')};
     $this = $(this);
     data = $this.data();
-    object = REGISTER[data.id];
+    subject = REGISTER[data.id];
 }
 
-function objectReset() {
-    if (DEBUG) {console.log('function:'+'objectReset')};
+/* Обработчик события удаления объекта */
+function eventSubjectSave() {
+    if (DEBUG) {console.log('function:'+'eventSubjectSave')};
     $this = $(this);
     data = $this.data();
-    object = REGISTER[data.id];
+    subject = REGISTER[data.id];
+    handlerCommitInstance(subject)
 }
 
-function mutedObjectRow(object) {
-    if (DEBUG) {console.log('function:'+'mutedObjectRow')};
-    $('tr[data-model="'+object.model.name+'"][data-pk="'+object.pk+'"]')
+/* Функция мутирования строки объекта */
+function handlerSubjectRowMuted(subject) {
+    if (DEBUG) {console.log('function:'+'handlerSubjectRowMuted')};
+    $('tr[data-model="'+subject.model.name+'"][data-pk="'+subject.pk+'"]')
         .addClass('muted');
 }
 
-function unmutedObjectRow(object) {
-    if (DEBUG) {console.log('function:'+'unmutedObjectRow')};
-    $('tr[data-model="'+object.model.name+'"][data-pk="'+object.pk+'"]')
+/* Функция удаления мутирования строки объекта */
+function handlerSubjectRowUnmuted(subject) {
+    if (DEBUG) {console.log('function:'+'handlerSubjectRowUnmuted')};
+    $('tr[data-model="'+subject.model.name+'"][data-pk="'+subject.pk+'"]')
         .removeClass('muted');
 }
 
 /* Функция получает коллекцию с сервера и перерисовывает цель
  * коллекции модели/композиции, для которых она вызывалась
  */
-function getCollection(object) {
-    if (DEBUG) {console.log('function:'+'getCollection')};
+function handlerCollectionGet(instance) {
+    if (DEBUG) {console.log('function:'+'handlerCollectionGet')};
     args = {
         "method"  : "get_collection",
-        "model"   : object.model,
-        "compose" : object.compose       || null,
-        "order_by": object.meta.ordering || null,
+        "model"   : instance.model,
+        "compose" : instance.compose       || null,
+        "order_by": instance.meta.ordering || null,
     }
-    args[object.meta.search_key] = object.query || null;
-    if (object.item) {
-        args["pk"] = object.item.pk || 0;
+    args[instance.meta.search_key] = instance.query || null;
+    if (instance.item) {
+        args["pk"] = instance.item.pk || 0;
     };
-    if (object.paginator) {
-        args["page"]    = object.paginator.page     || 1;
-        args["per_page"]= object.paginator.per_page || null;
+    if (instance.paginator) {
+        args["page"]    = instance.paginator.page     || 1;
+        args["per_page"]= instance.paginator.per_page || null;
     };
     cb = function(json, status, xhr) {
-        object.paginator = json.data;
-        html = renderCollection(object);
+        instance.paginator = json.data;
+        html = handlerCollectionRender(instance);
         //~ console.log(html)
     }
-    jqxhr = new jsonAPI(args, cb, 'getCollection() call jsonAPI()')
+    jqxhr = new jsonAPI(args, cb, 'handlerCollectionGet() call jsonAPI()')
     return jqxhr
 }
 
-function collectionFilter() {
-    if (DEBUG) {console.log('function:'+'collectionFilter')};
-    search = this;
-    data   = $(search).data();
-    object = REGISTER[data['id']];
-    object.query = $(search).val() || null;
-
-    jqxhr = getCollection(object);
+/* Обработчик события фильтрации коллекции */
+function eventCollectionFilter() {
+    if (DEBUG) {console.log('function:'+'eventCollectionFilter')};
+    search         = this;
+    data           = $(search).data();
+    instance       = REGISTER[data['id']];
+    instance.query = $(search).val() || null;
+    jqxhr          = handlerCollectionGet(instance);
     return jqxhr
 }
 
-function collectionCount() {
-    if (DEBUG) {console.log('function:'+'collectionCount')};
-    data   = $(this).data();
-    object = REGISTER[data['id']];
-    if (object.paginator) {
-        object.paginator.page = 1;
-        object.paginator.per_page = $(this).val() || $(this)
-            .data()['count'] || object.meta.list_per_page;
-        $('[data-placeholder=collection_count][data-id='+object.id+']')
-            .text(object.paginator.per_page)
+/* Обработчик события установки размера коллекции на странице */
+function eventCollectionCount() {
+    if (DEBUG) {console.log('function:'+'eventCollectionCount')};
+    data     = $(this).data();
+    instance = REGISTER[data['id']];
+    if (instance.paginator) {
+        instance.paginator.page = 1;
+        instance.paginator.per_page = $(this).val() || $(this)
+            .data()['count'] || instance.meta.list_per_page;
+        $('[data-placeholder=collection_count][data-id='+instance.id+']')
+            .text(instance.paginator.per_page)
     };
-    jqxhr = getCollection(object);
+    jqxhr = handlerCollectionGet(instance);
     return jqxhr
 }
 
-function collectionPage() {
-    if (DEBUG) {console.log('function:'+'collectionPage')};
-    data   = $(this).data();
-    object = REGISTER[data['id']];
-    if (object.paginator) {
-        object.paginator.page = $(this).val() || $(this).data()['page'] || 1;
+/* Обработчик события паджинации коллекции */
+function eventCollectionPage() {
+    if (DEBUG) {console.log('function:'+'eventCollectionPage')};
+    data     = $(this).data();
+    instance = REGISTER[data['id']];
+    if (instance.paginator) {
+        instance.paginator.page = $(this).val() || $(this).data()['page'] || 1;
     };
-
-    jqxhr = getCollection(object);
+    jqxhr = handlerCollectionGet(instance);
     return jqxhr
 }
-
 
 ////////////////////////////////////////////////////////////////////////
 //                            НАСТРОЙКИ                               //
@@ -502,9 +562,9 @@ _.templateSettings = {
     interpolate: /\{\{(.+?)\}\}/g,
     evaluate: /\{\%(.+?)\%\}/g, 
 };
+
 /* Включение Underscore.string методов в пространство имён Underscore */
 _.mixin(_.str.exports());
-
 
 ////////////////////////////////////////////////////////////////////////
 //                               ОБЩИЕ                                //
@@ -649,79 +709,97 @@ function loadMenuApp() {
     return jqxhr
 };
 
-/* Добавляет вкладки на рабочую область */
-function tabAdd(obj) {
-    if (DEBUG) {console.log('function:'+'tabAdd')};
-    data = $(this).data();
-    if (obj instanceof Item) { data = obj };
-    object = REGISTER[data.id] || data;
-    mutedObjectRow(object);
+/* Открывает вкладку на рабочей области */
+function handlerTabOpen(data) {
+    if (DEBUG) {console.log('function:'+'handlerTabOpen')};
+    handlerSubjectRowMuted(data);
 
-    tab = $('#main-tab #tab_'+ object.id);
+    tab = $('#main-tab #tab_'+ data.id);
     if (tab.length > 0) {
         // Отображаем вкладку
         tab.find('a').tab('show');
     } else {
         // Контент вкладки
-        html = TEMPLATES.layoutDefault({data: object});
+        html = TEMPLATES.layoutDefault({data: data});
         $('#main-tab-content').append(html);
         // Сама вкладка
-        html = TEMPLATES.tab({data: object});
+        html = TEMPLATES.tab({data: data});
         $('#main-tab').append(html);
         // Отображаем вкладку c небольшой задержкой
         delay(function() {
-            a = $('#main-tab a:last').tab('show');
-            loadLayout(a[0]);
+            $('#main-tab a:last').tab('show').click();
         }, 1);
         // Добавляем вкладку в хранилище, если её там нет
         // (т.к. эту же функцию использует восстановление сессии). 
-        if ((object.id.indexOf(NEWITEMKEY) == -1)&&($.inArray(object.id, SETTINGS.local.tabs) < 0)) {
-            SETTINGS.local.tabs.push(object.id);
+        if ((data.id.indexOf(NEWITEMKEY) == -1)&&($.inArray(data.id, SETTINGS.local.tabs) < 0)) {
+            SETTINGS.local.tabs.push(data.id);
             SETTINGS.save_local();
         }
         // Устанавливаем одиночный биндинг на загрузку контента при щелчке на вкладке
         //~ console.log(tab_id)
-        a = $('#tab_'+object.id+' a').one('click', function() { loadLayout(this) });
+        a = $('#tab_'+data.id+' a').one('click', eventLayoutLoad);
         //~ console.log(a)
     }
     return true;
 }
 
-/* Удаляет вкладки с рабочей области и из локальной памяти */
-function tabRemove() {
-    if (DEBUG) {console.log('function:'+'tabRemove')};
-    id = validatorID($(this).attr('data-id'));
-    $('#tab_'+id).remove();
-    $('#layout_'+id).remove();
-    object = REGISTER[id];
-    if (object) { unmutedObjectRow(object) };
+/* Обработчик события открытия вкладки */
+function eventTabOpen() {
+    if (DEBUG) {console.log('function:'+'eventTabOpen')};
+    data = $(this).data();
+    data = REGISTER[data.id] || data;
+    handlerTabOpen(data)
+    return true;
+}
+
+/* Закрывает вкладку, удаляя её с рабочей области и из настроек */
+function handlerTabClose(data) {
+    if (DEBUG) {console.log('function:'+'handlerTabClose')};
+    $('#tab_'+data.id).remove();
+    $('#layout_'+data.id).remove();
+    instance = REGISTER[data.id];
+    if (instance) { handlerSubjectRowUnmuted(instance) };
     // Удаляем из хранилища информацию об открытой вкладке
-    num = $.inArray(id, SETTINGS.local.tabs);
+    num = $.inArray(data.id, SETTINGS.local.tabs);
     if (num > -1) {
         delete SETTINGS.local.tabs[num];
         SETTINGS.cleanTabs().save_local();
     };
 }
 
-/* Загружает во вкладку необходимый макет модели или объекта */
-function loadLayout(obj) {
-    if (DEBUG) {console.log('function:'+'loadLayout')};
-    $obj = $(obj);
-    data = $obj.data();
-    object = REGISTER[validatorID(data.id)];
-    html = renderLayout(object);
+/* Обработчик события закрытия вкладки */
+function eventTabClose() {
+    if (DEBUG) {console.log('function:'+'eventTabClose')};
+    data = $(this).data();
+    data = REGISTER[data.id] || data;
+    handlerTabClose(data)
+    return true;
+}
+
+/* Загружает необходимый макет модели или объекта */
+function handlerLayoutLoad(instance) {
+    if (DEBUG) {console.log('function:'+'handlerLayoutLoad')};
+    html = handlerLayoutRender(instance);
     // Одиночные биндинги на загрузку коллекций объекта
-    if (object instanceof Item) {
-        $('#layout_'+object.id+' button[data-loading=true]')
-        .one('click', function() { loadLayout(this) });
+    if (instance instanceof Subject) {
+        $('#layout_'+instance.id+' button[data-loading=true]')
+        .one('click', eventLayoutLoad);
     }
     // Загрузка коллекции
-    else if ((object instanceof Model) || (object instanceof Compose)) {
-        jqxhr = getCollection(object);
+    else if ((instance instanceof Model) || (instance instanceof Compose)) {
+        jqxhr = handlerCollectionGet(instance);
     }
+}
+
+/* Обработчик события загрузки макета */
+function eventLayoutLoad() {
+    if (DEBUG) {console.log('function:'+'eventLayoutLoad')};
+    data = $(this).data();
+    instance = REGISTER[data.id];
+    handlerLayoutLoad(instance)
     // Удаление атрибута загрузки
-    $obj.removeAttr("data-loading");
-    return $obj
+    $(this).removeAttr("data-loading");
+    return true;
 }
 
 /* Восстанавливает вкладки, открытые до обновления страницы */
@@ -747,7 +825,7 @@ $(document).ready(function($) {
     TEMPLATES.collection        = _.template($('#underscore-collection').html());
     TEMPLATES.layoutModel       = _.template($('#underscore-layout-model').html());
     TEMPLATES.layoutCompose     = _.template($('#underscore-layout-compose').html());
-    TEMPLATES.layoutItem        = _.template($('#underscore-layout-item').html());
+    TEMPLATES.layoutSubject     = _.template($('#underscore-layout-item').html());
     TEMPLATES.layoutDefault     = _.template($('#underscore-layout-default').html());
     TEMPLATES.tab               = _.template($('#underscore-tab').html());
 
@@ -756,10 +834,7 @@ $(document).ready(function($) {
     $('#menu-func').hide();
     loadMenuApp()
 
-    /* сначала инициализируем объекты, затем настройки, иначе не работает
-     * TODO: Найти объяснение.
-     */
-    //~ window.OBJECTS = new Objects();
+    /* Инициализируем настройки */
     window.SETTINGS = new Settings();
 
     // Инициализация для Bootstrap
@@ -777,26 +852,26 @@ $(document).ready(function($) {
     if (SETTINGS.init().ready) {
         $('#search').focus();
         // Биндинги на открытие-закрытие вкладок и их контента
-        $('#menu-app li[class!=disabled] a').click(tabAdd);
-        $('#main-tab').on('click', 'button.close[data-id]', tabRemove)
+        $('#menu-app li[class!=disabled]').on('click',  'a', eventTabOpen);
+        $('#main-tab').on('click', 'button.close[data-id]',  eventTabClose)
 
         restoreSession();
 
         // Биндинг на фильтрацию, паджинацию и количество в коллекциях
-        $('body').on('keyup',  '[data-action=collection_filter]', collectionFilter);
-        $('body').on('change', '[data-action=collection_filter]', collectionFilter);
-        $('body').on('click',  '[data-action=collection_count]',  collectionCount);
-        $('body').on('change', '[data-action=collection_page]',   collectionPage);
-        $('body').on('click',  '[data-action=collection_page]',   collectionPage);
+        $('body').on('keyup',  '[data-action=collection_filter]', eventCollectionFilter);
+        $('body').on('change', '[data-action=collection_filter]', eventCollectionFilter);
+        $('body').on('click',  '[data-action=collection_count]',  eventCollectionCount);
+        $('body').on('change', '[data-action=collection_page]',   eventCollectionPage);
+        $('body').on('click',  '[data-action=collection_page]',   eventCollectionPage);
         
         // Биндинги на кнопки и ссылки
-        $('body').on('click', '[data-action=object_open]',   objectOpen);
-        $('body').on('click', '[data-action=object_new]',    objectNew);
-        $('body').on('click', '[data-action=object_copy]',   objectCopy);
-        $('body').on('click', '[data-action=object_delete]', objectDelete);
-        $('body').on('click', '[data-action=object_reset]',  objectReset);
-        $('body').on('click', '[data-action=object_save]',   objectSave);
-        $('body').on('change','[data-action=object_change]', objectChange);
+        $('body').on('click', '[data-action=subject_open]',   eventSubjectOpen);
+        $('body').on('click', '[data-action=subject_new]',    eventSubjectNew);
+        $('body').on('click', '[data-action=subject_copy]',   eventSubjectCopy);
+        $('body').on('click', '[data-action=subject_delete]', eventSubjectDelete);
+        $('body').on('change','[data-action=subject_change]', eventSubjectChange);
+        $('body').on('click', '[data-action=subject_reset]',  eventSubjectReset);
+        $('body').on('click', '[data-action=subject_save]',   eventSubjectSave);
         
     } else {
         console.log("ОШИБКА! Загрузка настроек не удалась.");
