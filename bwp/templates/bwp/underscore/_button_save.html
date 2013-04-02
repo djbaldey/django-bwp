@@ -1,9 +1,7 @@
 {# Шаблон Underscore #}{% load bwp_verbatim %}{% verbatim %}
 <button data-action="object_save"
-    data-model="{{ data.model }}"
-    data-pk="{{ data.pk }}"
-    class="btn btn-mini btn-primary"
-    type="button">
+    data-id="{{ data.id }}"
+    class="btn btn-mini btn-primary">
     Сохранить
 </button>
 {% endverbatim %}

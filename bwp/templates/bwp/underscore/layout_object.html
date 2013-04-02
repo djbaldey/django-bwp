@@ -4,7 +4,7 @@
     <div class="btn-group" data-toggle="buttons-radio" data-id="{{ data.id }}">
         <button class="btn btn-mini btn-primary active"
             data-toggle="tab"
-            data-target="#itempane_{{ data.id }}">
+            data-target="#objectpane_{{ data.id }}">
             Объект
         </button>
     {% _.each(data.composes, function(compose) { %}
@@ -29,11 +29,11 @@
             <div align="center"><img src="/static/img/ajax-loader.gif" /> загрузка данных...</div>
         </div>
     {% }); %}
-        <div class="tab-pane active" id="itempane_{{ data.id }}">
+        <div class="tab-pane active" id="objectpane_{{ data.id }}">
             <legend>{{ data.label }}</legend>
             <div class="form form-horizontal" data-id="{{ data.id }}">
         {% endverbatim %}
-                {% include "bwp/underscore/_item_fields.html" %}
+                {% include "bwp/underscore/_object_fields.html" %}
             </div>
         </div>
     </div>

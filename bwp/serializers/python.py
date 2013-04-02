@@ -174,11 +174,13 @@ def Deserializer(object_list, **options):
     for d in object_list:
         # Look up the model and starting build a dict of data for it.
         Model = _get_model(d["model"])
-        data = {Model._meta.pk.attname : Model._meta.pk.to_python(d["pk"])}
+        data = {Model._meta.pk.attname : Model._meta.pk.to_python(d.get("pk", None))}
         m2m_data = {}
 
         # Handle each field
         for (field_name, field_value) in d["fields"].iteritems():
+            if field_name == Model._meta.pk.attname:
+                continue
             if isinstance(field_value, str):
                 field_value = smart_unicode(field_value, options.get("encoding", settings.DEFAULT_CHARSET), strings_only=True)
 
@@ -210,6 +212,8 @@ def Deserializer(object_list, **options):
                         else:
                             value = field.rel.to._meta.get_field(field.rel.field_name).to_python(field_value)
                         data[field.attname] = value
+                    elif isinstance(field_value, (list,tuple)):
+                        data[field.attname] = field_value[0]
                     else:
                         data[field.attname] = field.rel.to._meta.get_field(field.rel.field_name).to_python(field_value)
                 else:

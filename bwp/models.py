@@ -36,9 +36,8 @@
 #   <http://www.gnu.org/licenses/>.
 ###############################################################################
 """
-from django.db import models, transaction
+from django.db import models
 from django.db.models.query import QuerySet
-from django.forms.models import modelform_factory
 from django.utils.translation import ugettext, ugettext_lazy as _ 
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import User
@@ -172,6 +171,7 @@ class BaseModel(object):
     actions             = []
 
     paginator           = Paginator
+    form                = None
     site                = None
     
     # Набор ключей для предоставления метаданных об этой модели.
@@ -228,7 +228,10 @@ class BaseModel(object):
     def get_search_fields(self):
         """ Устанавливает и возвращает значение полей поиска """
         if self.search_fields is None:
-            self.search_fields = self.get_fields()
+            self.search_fields = [
+                x.name for x in self.get_fields_objects() if \
+                    x.rel is None
+            ]
         return self.search_fields
 
     def get_fields(self):
@@ -440,62 +443,6 @@ class BaseModel(object):
         qs = self.page_queryset(request, qs, **kwargs)
         data = self.serialize(qs)
         return JSONResponse(data=data)
-
-    @transaction.commit_manually
-    def commit(self, request, data, recursive=True, **kwargs):
-        """ Сохрание и/или удаление переданных объектов """
-        if not data:
-            transaction.rollback()
-            return JSONResponse(status=400, message=_("List objects is blank!"))
-        model = bwp = None
-        try:
-            for item in data:
-                # Уменьшение ссылок на объекты, если они существуют
-                # в прошлой ротации
-                if model != item.model:
-                    model = item.model
-                    bwp = self.get_bwp_model(request, model)
-                # Новый объект
-                if getattr(item, 'new', False):
-                    if bwp.has_add_permission(request):
-                        form = self.get_form_instance(request, bwp, data=item)
-                        if form.is_valid(): 
-                            form.save()
-                # Удаляемый объект
-                elif getattr(item, 'remove', False):
-                    object = self.get_instance(item.pk, item.model)
-                    if bwp.has_delete_permission(request, object):
-                        object.delete()
-                # Обновляемый объект
-                elif getattr(item, 'pk'): # raise AttributeError()
-                    object = self.get_instance(item.pk, item.model)
-                    if bwp.has_change_permission(request, object):
-                        form = self.get_form_instance(request, bwp, data=item, instance=object)
-                        if form.is_valid():
-                            form.save()
-        except Exception as e:
-            transaction.rollback()
-            return JSONResponse(status=400, message=unicode(e))
-        else:
-            transaction.commit()
-        return JSONResponse(message=_("Commited!"))
-
-    def get_form_instance(self, request, bwp_model, data=None, instance=None):
-        """
-        Возвращает экземпляр формы, которая используются для добавления
-        или редактирования объекта.
-
-        Аргумент `instance` является экземпляром модели `model_name`
-        (принимается только если эта форма будет использоваться для
-        редактирования существующего объекта).
-        """
-        model = bwp_model.model
-        defaults = {}
-        if bwp_model.form:
-            defaults['form'] = bwp_model.form
-        if bwp_model.fields:
-            defaults['fields'] = bwp_model.fields
-        return modelform_factory(model, **defaults)(data=data, instance=instance)
 
     def has_add_permission(self, request):
         """

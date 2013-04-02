@@ -49,6 +49,8 @@ from django.utils import simplejson
 from django.utils.encoding import force_unicode
 from django.utils.functional import Promise
 from django.core.serializers.json import DjangoJSONEncoder
+from django.db import transaction
+from django.forms.models import modelform_factory
 
 from decimal import Decimal
 
@@ -62,6 +64,7 @@ from bwp.conf import settings
 from bwp.utils.convertors import jquery_form_array, jquery_multi_form_array
 
 from bwp.contrib.usersettings.models import OrgUserSettings, GlobalUserSettings
+from bwp import serializers
 
 ########################################################################
 #                               PAGES                                  #
@@ -113,6 +116,27 @@ def logout(request, extra_context={}):
 ########################################################################
 #                             END PAGES                                #
 ########################################################################
+def get_form_instance(request, bwp_model, data=None, instance=None):
+    """
+    Возвращает экземпляр формы, которая используются для добавления
+    или редактирования объекта.
+
+    Аргумент `instance` является экземпляром модели `model_name`
+    (принимается только если эта форма будет использоваться для
+    редактирования существующего объекта).
+    """
+    model = bwp_model.model
+    defaults = {}
+    if bwp_model.form:
+        defaults['form'] = bwp_model.form
+    if bwp_model.fields:
+        defaults['fields'] = bwp_model.fields
+    return modelform_factory(model, **defaults)(data=data, instance=instance)
+
+def get_instance(self, pk, model_name):
+    """ Возвращает зкземпляр указаной модели """
+    model = site.model_dict(model_name)
+    return model.objects.get(pk=pk)
 
 ########################################################################
 #                               API                                    #
@@ -259,11 +283,62 @@ def API_get_collection(request, model, pk=None, compose=None, page=1,
     # Возвращаем коллекцию в JSONResponse
     return model_bwp.get(**options)
 
+@api_required
+@login_required
+@transaction.commit_manually
+def API_commit(request, objects, **kwargs):
+    """ *Сохрание и/или удаление переданных объектов.*
+        
+        ##### ЗАПРОС
+        Параметры:
+        
+        1. **"objects"** - список объектов для изменения;
+        
+        ##### ОТВЕТ
+        Формат ключа **"data"**:
+        `Boolean`
+    """
+    if not objects:
+        transaction.rollback()
+        return JSONResponse(data=False, status=400, message=unicode(_("List objects is blank!")))
+    model_name = bwp = None
+    try:
+        _objects = serializers.deserialize('python', objects, use_natural_keys=True)
+        for item, deserialized in zip(objects, _objects):
+            object = deserialized.object
+            # Уменьшение ссылок на объекты, если они существуют
+            # в прошлой ротации
+            if  model_name != item['model']:
+                model_name = item['model']
+                bwp = site.bwp_dict(request).get(model_name)
+            action = item['action'] # raise AttributeError()
+            # Удаляемый объект
+            if action == 'delete':
+                if bwp.has_delete_permission(request, object):
+                    object.delete()
+            # Обновляемый объект
+            elif action == 'change': # raise AttributeError()
+                if bwp.has_change_permission(request, object):
+                    object.save()
+            # Новый объект
+            elif not getattr(item, 'pk', None):
+                if bwp.has_add_permission(request):
+                    object.pk = None
+                    object.save()
+            
+    except Exception as e:
+        transaction.rollback()
+        raise e
+    else:
+        transaction.commit()
+    return JSONResponse(data=True, message=unicode(_("Commited!")))
+
 QUICKAPI_DEFINED_METHODS = {
     'get_apps':         'bwp.views.API_get_apps',
     'get_settings':     'bwp.views.API_get_settings',
     'get_object':       'bwp.views.API_get_object',
     'get_collection':   'bwp.views.API_get_collection',
+    'commit':           'bwp.views.API_commit',
 }
 
 @csrf_exempt

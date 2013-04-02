@@ -39,7 +39,7 @@
 ////////////////////////////////////////////////////////////////////////
 //                             КОНСТАНТЫ                              //
 ////////////////////////////////////////////////////////////////////////
-var NEWITEMKEY = 'newItem';
+var NEWOBJECTKEY = 'newObject';
 
 // Глобальные хранилища-регистраторы
 window.TEMPLATES = {}; // Шаблоны
@@ -61,6 +61,15 @@ _.mixin(_.str.exports());
 ////////////////////////////////////////////////////////////////////////
 //                               ОБЩИЕ                                //
 ////////////////////////////////////////////////////////////////////////
+
+/* Проверка объекта на пустоту */
+function isEmpty(obj) {
+    for (var key in obj) {
+        return false; // если цикл хоть раз сработал, то объект не пустой => false
+    }
+    // дошли до этой строки - значит цикл не нашёл ни одного свойства => true
+    return true;
+}
 
 /* Единая, переопределяемая задержка для действий или функций */
 var delay = (function(){
@@ -405,17 +414,17 @@ function classModel(app, data) {
 };
 
 /* класс: Композиция */
-function classCompose(item, data) {
-    this.item     = item;
-    this.editable = Boolean(this.item.pk);
+function classCompose(object, data) {
+    this.object     = object;
+    this.editable = Boolean(this.object.pk);
     this.perms    = data.perms;
     this.meta     = data.meta;
     this.name     = this.meta.related_name;
     this.compose  = this.name;
     this.model = this.meta.related_model;
-    this.id    = validatorID([this.item.id, this.name]);
+    this.id    = validatorID([this.object.id, this.name]);
     this.label = data.label;
-    this.title = this.item.label +': '+ this.label;
+    this.title = this.object.label +': '+ this.label;
     this.query = null;
     this.fix = {};
     this.paginator = null;
@@ -440,17 +449,17 @@ function classCompose(item, data) {
 function classObject(data) {
     this.model = REGISTER[validatorID(data.model)];
     this.pk    = data.pk;
-    this.id    = this.pk ? validatorID(data.model+'.'+this.pk) : generatorID(NEWITEMKEY);
+    this.id    = this.pk ? validatorID(data.model+'.'+this.pk) : generatorID(NEWOBJECTKEY);
     this.__unicode__ = data.__unicode__;
     this.label       = this.__unicode__;
     this.title = this.model.label +': '+ this.label;
     _fields     = data.fields;
     this.fields = _fields;
-    _tmpfields     = {};
-    this.tmpfields = _tmpfields;
     _composes = [];
     this.composes = _composes;
     this.widgets = this.model.meta.widgets;
+    this.fix = {};
+    this.fixaction = null;
     object = this;
     // Init
     if (this.model.composes) {
@@ -491,16 +500,131 @@ function handlerLayoutRender(instance) {
     }
     html = template({data:instance})
     $('#layout_'+instance.id).html(html)
+    // Одиночные биндинги на загрузку коллекций объекта
+    if (instance instanceof classObject) {
+        $('#layout_'+instance.id+' button[data-loading=true]')
+        .one('click', eventLayoutLoad);
+    }
     return html
 }
 
-/* Обработчик события удаления объекта */
+/* Применение изменений на сервере */
 function handlerCommitInstance(instanse) {
     if (DEBUG) {console.log('function:'+'handlerCommitInstance')};
+    console.log(instance);
     is_changed = false;
-    $.each(instance.fix, function(name, value) {
-        
-    });
+    _objects = []
+    _model = instance.model;
+    appendObject = function(obj) {
+        if ((!isEmpty(obj.fix)) || (obj.fixaction == 'delete')) {
+            $.extend(true, obj.fields, obj.fix);
+            _objects.push(
+                {   pk: obj.pk, fields: obj.fields,
+                    model: obj.model.model,
+                    action: obj.fixaction
+                }
+            );
+        }
+    }
+    if ((instance instanceof classModel) || (instance instanceof classCompose)) {
+        _model = instance;
+        $.each(instance.fix, function(key, val) {
+            appendObject(val)
+        });
+    } else { console.log(instance); appendObject(instance) }
+    args = {
+        "method"  : "commit",
+        "objects" : _objects,
+    }
+    cb = function(json, status, xhr) {
+        handlerCollectionGet(_model)
+    };
+    jqxhr = new jsonAPI(args, cb, 'handlerCommitInstance(instanse) call jsonAPI()')
+    return jqxhr
+}
+
+/* Добавление объекта */
+function handlerObjectAdd(model, $this) {
+    if (DEBUG) {console.log('function:'+'handlerObjectAdd')};
+    _data = {};
+    _data['model'] = model.model;
+    _data['fields'] = model.meta.fields;
+    _data['__unicode__'] = 'Новый объект';
+    data = {};
+    $.extend(true, data, _data);
+    newobject = new classObject(data);
+    $.extend(true, newobject.fix, newobject.fields);
+    newobject.fixaction = 'add'
+    newobject.model.fix[newobject.id] = newobject
+    $this.data('id', newobject.id);
+    handlerTabOpen(newobject);
+    return newobject
+}
+
+/* Изменение объекта добавлением полей во временное хранилище */
+function handlerObjectChange(object, $field) {
+    if (DEBUG) {console.log('function:'+'handlerObjectChange')};
+    var name = $field.attr('name');
+    var value = $field.val();
+    if ($.type(object.fields[name]) === 'array') {
+        value = [value, $field.text()];
+    }
+    object.fix[name] = value;
+    object.fixaction = object.fixaction || 'change';
+    object.model.fix[object.id] = object;
+}
+
+/* Копирование объекта */
+function handlerObjectCopy(object, $this) {
+    if (DEBUG) {console.log('function:'+'handlerObjectCopy')};
+    create = function(object) {
+        _data = {};
+        _data['model'] = object.model.model;
+        _data['fields'] = object.fields;
+        _data['__unicode__'] = object.__unicode__;
+        data = {};
+        $.extend(true, data, _data);
+        newobject = new classObject(data);
+        $.extend(true, newobject.fix, newobject.fields);
+        newobject.fixaction = 'add'
+        newobject.model.fix[newobject.id] = newobject
+        $this.data('id', newobject.id);
+        handlerTabOpen(newobject);
+        return newobject
+    };
+    if (object) { create(object); }
+    else {
+        args = {
+            "method"  : "get_object",
+            "model"   : data.model,
+            "pk"      : data.pk || null,
+        }
+        cb = function(json, status, xhr) {
+            object = new classObject(json.data);
+            newobject = create(object)
+            $this.data('id', newobject.id);
+            handlerTabOpen(newobject);
+        }
+        jqxhr = new jsonAPI(args, cb, 'handlerObjectCopy(object) call jsonAPI()')
+    }
+}
+
+/* Удаление объекта */
+function handlerObjectDelete(data, $this) {
+    if (DEBUG) {console.log('function:'+'handlerObjectDelete')};
+    args = {
+        "method"  : "commit",
+        "objects" : [
+            {   pk: data.pk, fields: {},
+                model: data.model,
+                action: 'delete'
+            }
+        ],
+    }
+    cb = function(json, status, xhr) {
+        handlerCollectionGet(REGISTER[validatorID(data.model)])
+        }
+    jqxhr = new jsonAPI(args, cb, 'handlerObjectDelete() call jsonAPI()')
 }
 
 /* Обработчик события открытия объекта */
@@ -529,11 +653,14 @@ function eventObjectOpen() {
 }
 
 /* Обработчик события создания объекта */
-function eventObjectNew() {
-    if (DEBUG) {console.log('function:'+'eventObjectNew')};
+function eventObjectAdd() {
+    if (DEBUG) {console.log('function:'+'eventObjectAdd')};
     $this = $(this);
     data = $this.data();
-    object = REGISTER[data.id];
+    model = REGISTER[data.id];
+    console.log(model)
+    handlerObjectAdd(model, $this);
+    return true;
 }
 
 /* Обработчик события копирования объекта */
@@ -542,35 +669,8 @@ function eventObjectCopy() {
     $this = $(this);
     data = $this.data();
     object = REGISTER[data.id];
-    create = function(object) {
-        _data = {};
-        _data['model'] = object.model.model;
-        _data['fields'] = object.fields;
-        _data['__unicode__'] = object.__unicode__;
-        data = {};
-        $.extend(true, data, _data);
-        newobject = new classObject(data);
-        newobject.model.fix[newobject.id] = newobject
-        $this.data('id', newobject.id);
-        handlerTabOpen(newobject);
-        return newobject
-    };
-    if (object) { return create(object); }
-    else {
-        args = {
-            "method"  : "get_object",
-            "model"   : data.model,
-            "pk"      : data.pk || 0,
-        }
-        cb = function(json, status, xhr) {
-            object = new classObject(json.data);
-            newobject = create(object)
-            $this.data('id', newobject.id);
-            handlerTabOpen(newobject);
-        }
-        jqxhr = new jsonAPI(args, cb, 'eventObjectCopy() call jsonAPI()')
-        return jqxhr
-    }
+    handlerObjectCopy(object, $this)
+    return true
 }
 
 /* Обработчик события удаления объекта */
@@ -579,6 +679,8 @@ function eventObjectDelete() {
     $this = $(this);
     data = $this.data();
     object = REGISTER[data.id];
+    handlerObjectDelete(data, $this);
+    return true
 }
 
 /* Обработчик события изменения объекта */
@@ -587,6 +689,8 @@ function eventObjectChange() {
     $this = $(this);
     data = $this.data();
     object = REGISTER[data.id];
+    handlerObjectChange(object, $this)
+    return true
 }
 
 /* Обработчик события восстановления объекта */
@@ -595,6 +699,9 @@ function eventObjectReset() {
     $this = $(this);
     data = $this.data();
     object = REGISTER[data.id];
+    object.fix = {};
+    handlerLayoutRender(object);
+    return true
 }
 
 /* Обработчик события удаления объекта */
@@ -603,7 +710,8 @@ function eventObjectSave() {
     $this = $(this);
     data = $this.data();
     object = REGISTER[data.id];
-    handlerCommitInstance(object)
+    handlerCommitInstance(object);
+    return true
 }
 
 /* Функция мутирования строки объекта */
@@ -632,8 +740,8 @@ function handlerCollectionGet(instance) {
         "order_by": instance.meta.ordering || null,
     }
     args[instance.meta.search_key] = instance.query || null;
-    if (instance.item) {
-        args["pk"] = instance.item.pk || 0;
+    if (instance.object) {
+        args["pk"] = instance.object.pk || 0;
     };
     if (instance.paginator) {
         args["page"]    = instance.paginator.page     || 1;
@@ -730,7 +838,7 @@ function handlerTabOpen(data) {
         }, 1);
         // Добавляем вкладку в хранилище, если её там нет
         // (т.к. эту же функцию использует восстановление сессии). 
-        if ((data.id.indexOf(NEWITEMKEY) == -1)&&($.inArray(data.id, SETTINGS.local.tabs) < 0)) {
+        if ((data.id.indexOf(NEWOBJECTKEY) == -1)&&($.inArray(data.id, SETTINGS.local.tabs) < 0)) {
             SETTINGS.local.tabs.push(data.id);
             SETTINGS.save_local();
         }
@@ -757,7 +865,12 @@ function handlerTabClose(data) {
     $('#tab_'+data.id).remove();
     $('#layout_'+data.id).remove();
     instance = REGISTER[data.id];
-    if (instance) { handlerObjectRowUnmuted(instance) };
+    if (instance) {
+        handlerObjectRowUnmuted(instance);
+        if (instance instanceof classObject) {
+            delete REGISTER[data.id]
+        }
+    };
     // Удаляем из хранилища информацию об открытой вкладке
     num = $.inArray(data.id, SETTINGS.local.tabs);
     if (num > -1) {
@@ -779,13 +892,8 @@ function eventTabClose() {
 function handlerLayoutLoad(instance) {
     if (DEBUG) {console.log('function:'+'handlerLayoutLoad')};
     html = handlerLayoutRender(instance);
-    // Одиночные биндинги на загрузку коллекций объекта
-    if (instance instanceof classObject) {
-        $('#layout_'+instance.id+' button[data-loading=true]')
-        .one('click', eventLayoutLoad);
-    }
     // Загрузка коллекции
-    else if ((instance instanceof classModel) || (instance instanceof classCompose)) {
+    if ((instance instanceof classModel) || (instance instanceof classCompose)) {
         jqxhr = handlerCollectionGet(instance);
     }
 }
@@ -823,7 +931,7 @@ $(document).ready(function($) {
     TEMPLATES.collection        = _.template($('#underscore-collection').html());
     TEMPLATES.layoutModel       = _.template($('#underscore-layout-model').html());
     TEMPLATES.layoutCompose     = _.template($('#underscore-layout-compose').html());
-    TEMPLATES.layoutObject     = _.template($('#underscore-layout-item').html());
+    TEMPLATES.layoutObject      = _.template($('#underscore-layout-object').html());
     TEMPLATES.layoutDefault     = _.template($('#underscore-layout-default').html());
     TEMPLATES.tab               = _.template($('#underscore-tab').html());
 
@@ -864,9 +972,10 @@ $(document).ready(function($) {
         
         // Биндинги на кнопки и ссылки
         $('body').on('click', '[data-action=object_open]',   eventObjectOpen);
-        $('body').on('click', '[data-action=object_new]',    eventObjectNew);
+        $('body').on('click', '[data-action=object_add]',    eventObjectAdd);
         $('body').on('click', '[data-action=object_copy]',   eventObjectCopy);
         $('body').on('click', '[data-action=object_delete]', eventObjectDelete);
+        $('body').on('keyup', '[data-action=object_change]', eventObjectChange);
         $('body').on('change','[data-action=object_change]', eventObjectChange);
         $('body').on('click', '[data-action=object_reset]',  eventObjectReset);
         $('body').on('click', '[data-action=object_save]',   eventObjectSave);
