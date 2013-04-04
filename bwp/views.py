@@ -133,9 +133,9 @@ def get_form_instance(request, bwp_model, data=None, instance=None):
         defaults['fields'] = bwp_model.fields
     return modelform_factory(model, **defaults)(data=data, instance=instance)
 
-def get_instance(self, pk, model_name):
+def get_instance(request, pk, model_name):
     """ Возвращает зкземпляр указаной модели """
-    model = site.model_dict(model_name)
+    model = site.model_dict(request).get(model_name)
     return model.objects.get(pk=pk)
 
 ########################################################################
@@ -303,29 +303,42 @@ def API_commit(request, objects, **kwargs):
         return JSONResponse(data=False, status=400, message=unicode(_("List objects is blank!")))
     model_name = bwp = None
     try:
-        _objects = serializers.deserialize('python', objects, use_natural_keys=True)
-        for item, deserialized in zip(objects, _objects):
-            object = deserialized.object
+        for item in objects:
             # Уменьшение ссылок на объекты, если они существуют
             # в прошлой ротации
-            if  model_name != item['model']:
+            if model_name != item['model']:
                 model_name = item['model']
                 bwp = site.bwp_dict(request).get(model_name)
             action = item['action'] # raise AttributeError()
+            for name, val in item['fields'].items():
+                if isinstance(val, list):
+                    item['fields'][name] = val[0]
+            data = item['fields']
+            # Новый объект
+            if not item.get('pk', False):
+                if bwp.has_add_permission(request):
+                    form = get_form_instance(request, bwp, data=data)
+                    if form.is_valid():
+                        form.save()
+                    else:
+                        transaction.rollback()
+                        return JSONResponse(status=400, message=unicode(form.errors))
             # Удаляемый объект
-            if action == 'delete':
-                if bwp.has_delete_permission(request, object):
-                    object.delete()
+            elif action == 'delete':
+                instance = get_instance(request, item['pk'], item['model'])
+                if bwp.has_delete_permission(request, instance):
+                    instance.delete()
             # Обновляемый объект
             elif action == 'change': # raise AttributeError()
-                if bwp.has_change_permission(request, object):
-                    object.save()
-            # Новый объект
-            elif not getattr(item, 'pk', None):
-                if bwp.has_add_permission(request):
-                    object.pk = None
-                    object.save()
-            
+                instance = get_instance(request, item['pk'], item['model'])
+                if bwp.has_change_permission(request, instance):
+                    form = get_form_instance(request, bwp, data=data, instance=instance)
+                    if form.is_valid():
+                        form.save()
+                    else:
+                        transaction.rollback()
+                        return JSONResponse(status=400, message=unicode(form.errors))
+
     except Exception as e:
         transaction.rollback()
         raise e

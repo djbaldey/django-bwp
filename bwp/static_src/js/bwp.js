@@ -37,9 +37,10 @@
 */
 
 ////////////////////////////////////////////////////////////////////////
-//                             КОНСТАНТЫ                              //
+//                   КОНСТАНТЫ И ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ                //
 ////////////////////////////////////////////////////////////////////////
 var NEWOBJECTKEY = 'newObject';
+var FIELD = null;
 
 // Глобальные хранилища-регистраторы
 window.TEMPLATES = {}; // Шаблоны
@@ -378,6 +379,7 @@ function classApp(data) {
 
 /* класс: Модель BWP */
 function classModel(app, data) {
+    this.template = TEMPLATES.layoutModel;
     this.app   = app;
     this.perms = data.perms;
     this.meta  = data.meta;
@@ -413,14 +415,30 @@ function classModel(app, data) {
     REGISTER[this.id] = this;
 };
 
+/* класс: Модель для выбора (в неё копируется настоящая модель)*/
+function classSelector(model) {
+    $.extend(true, this, model);
+    this.id = validatorID([this.id, 'selector'])
+    this.template = TEMPLATES.layoutSelector;
+    // Запрещаем все действия.
+    this.perms.delete = false;
+    this.perms.add = false;
+    this.perms.change = false;
+    //~ this.meta.list_display = this.meta.list_display.slice(0,1);
+    this.meta.list_per_page = 5;
+    // Register
+    REGISTER[this.id] = this;
+};
+
 /* класс: Композиция */
 function classCompose(object, data) {
+    this.template = TEMPLATES.layoutCompose;
     this.object     = object;
     this.editable = Boolean(this.object.pk);
     this.perms    = data.perms;
+    this.name     = data.name;
     this.meta     = data.meta;
-    this.name     = this.meta.related_name;
-    this.compose  = this.name;
+    this.compose  = this.meta.related_name;
     this.model = this.meta.related_model;
     this.id    = validatorID([this.object.id, this.name]);
     this.label = data.label;
@@ -447,6 +465,7 @@ function classCompose(object, data) {
 
 /* класс: Объект */
 function classObject(data) {
+    this.template = TEMPLATES.layoutObject;
     this.model = REGISTER[validatorID(data.model)];
     this.pk    = data.pk;
     this.id    = this.pk ? validatorID(data.model+'.'+this.pk) : generatorID(NEWOBJECTKEY);
@@ -476,34 +495,29 @@ function classObject(data) {
 ////////////////////////////////////////////////////////////////////////
 
 /* Отрисовка коллекций моделей и композиций */
-function handlerCollectionRender(instance) {
+function handlerCollectionRender(instance, just_prepare) {
     if (DEBUG) {console.log('function:'+'handlerCollectionRender')};
     if (instance instanceof classObject) {  
         return '';
     }
     html = TEMPLATES.collection({data:instance})
-    $('#collection_'+instance.id).html(html)
+    if (!just_prepare) {
+        $('#collection_'+instance.id).html(html);
+    }
     return html
 }
 
 /* Отрисовка макета модели, композиции или объекта */
-function handlerLayoutRender(instance) {
+function handlerLayoutRender(instance, just_prepare) {
     if (DEBUG) {console.log('function:'+'handlerLayoutRender')};
-    if (instance instanceof classModel) {  
-        template = TEMPLATES.layoutModel
-    }
-    else if (instance instanceof classCompose) {  
-        template = TEMPLATES.layoutCompose
-    }
-    else if (instance instanceof classObject) {  
-        template = TEMPLATES.layoutObject
-    }
-    html = template({data:instance})
-    $('#layout_'+instance.id).html(html)
-    // Одиночные биндинги на загрузку коллекций объекта
-    if (instance instanceof classObject) {
-        $('#layout_'+instance.id+' button[data-loading=true]')
-        .one('click', eventLayoutLoad);
+    html = instance.template({data:instance})
+    if (!just_prepare) {
+        $('#layout_'+instance.id).html(html)
+        // Одиночные биндинги на загрузку коллекций объекта
+        if (instance instanceof classObject) {
+            $('#layout_'+instance.id+' button[data-loading=true]')
+            .one('click', eventLayoutLoad);
+        }
     }
     return html
 }
@@ -511,7 +525,6 @@ function handlerLayoutRender(instance) {
 /* Применение изменений на сервере */
 function handlerCommitInstance(instanse) {
     if (DEBUG) {console.log('function:'+'handlerCommitInstance')};
-    console.log(instance);
     is_changed = false;
     _objects = []
     _model = instance.model;
@@ -520,7 +533,7 @@ function handlerCommitInstance(instanse) {
             $.extend(true, obj.fields, obj.fix);
             _objects.push(
                 {   pk: obj.pk, fields: obj.fields,
-                    model: obj.model.model,
+                    model: obj.model.name,
                     action: obj.fixaction
                 }
             );
@@ -531,7 +544,7 @@ function handlerCommitInstance(instanse) {
         $.each(instance.fix, function(key, val) {
             appendObject(val)
         });
-    } else { console.log(instance); appendObject(instance) }
+    } else { appendObject(instance) }
     args = {
         "method"  : "commit",
         "objects" : _objects,
@@ -547,16 +560,17 @@ function handlerCommitInstance(instanse) {
 function handlerObjectAdd(model, $this) {
     if (DEBUG) {console.log('function:'+'handlerObjectAdd')};
     _data = {};
-    _data['model'] = model.model;
-    _data['fields'] = model.meta.fields;
+    _data['model']  = model.model;
+    _data['fields'] = model.meta.defaults;
     _data['__unicode__'] = 'Новый объект';
     data = {};
     $.extend(true, data, _data);
     newobject = new classObject(data);
+    console.log(newobject);
     $.extend(true, newobject.fix, newobject.fields);
     newobject.fixaction = 'add'
     newobject.model.fix[newobject.id] = newobject
-    $this.data('id', newobject.id);
+    //~ $this.data('id', newobject.id);
     handlerTabOpen(newobject);
     return newobject
 }
@@ -579,7 +593,7 @@ function handlerObjectCopy(object, $this) {
     if (DEBUG) {console.log('function:'+'handlerObjectCopy')};
     create = function(object) {
         _data = {};
-        _data['model'] = object.model.model;
+        _data['model'] = object.model.name;
         _data['fields'] = object.fields;
         _data['__unicode__'] = object.__unicode__;
         data = {};
@@ -658,6 +672,9 @@ function eventObjectAdd() {
     $this = $(this);
     data = $this.data();
     model = REGISTER[data.id];
+    if (model instanceof classCompose) {
+        model = REGISTER[validatorID(model.name)]
+    }
     console.log(model)
     handlerObjectAdd(model, $this);
     return true;
@@ -795,6 +812,63 @@ function eventCollectionPage() {
     return jqxhr
 }
 
+/* Обработчик события удаления значения в поле выбора */
+function eventFieldClear() {
+    if (DEBUG) {console.log('function:'+'eventFieldClear')};
+    $this = $(this);
+    $this.attr('disabled', 'disabled');
+    $this.siblings('button[name]').val(null).html('&nbsp;').change();
+    return true
+}
+
+/* Обработчик события запуска выбора */
+function handlerFieldSelect($field) {
+    if (DEBUG) {console.log('function:'+'handlerFieldSelect')};
+    FIELD = $field;
+    $modal = $('#modal');
+    data = $field.data();
+    object = REGISTER[data.id];
+    model =  REGISTER[validatorID(data.model)];
+    selector = new classSelector(model);
+    modal = {};
+    modal.header = 'Выберите требуемый объект'
+    modal.body = handlerLayoutRender(selector, true)
+    html = TEMPLATES.modal({modal:modal})
+    $modal.html(html).modal('show');
+    handlerCollectionGet(selector)
+}
+
+
+/* Обработчик события выбора объекта */
+function eventObjectSelect() {
+    if (DEBUG) {console.log('function:'+'eventObjectSelect')};
+    $this = $(this);
+    data = $this.data();
+    FIELD.val(data.pk).text(data.unicode).change()
+        .siblings('button[disabled]').removeAttr('disabled');
+    $('#modal').modal('hide');
+    return true
+}
+
+/* Обработчик события выбора значения */
+function eventFieldSelect() {
+    if (DEBUG) {console.log('function:'+'eventFieldSelect')};
+    $this = $(this);
+    $field = $this.siblings('button[name]');
+    handlerFieldSelect($field);
+    return true
+}
+
+/* Обработчик события выбора строки в таблице */
+function eventRowClick() {
+    if (DEBUG) {console.log('function:'+'eventRowClick')};
+    $this = $(this);
+    $this.addClass('info').siblings('tr').removeClass('info');
+    return true
+}
+
+
+
 ////////////////////////////////////////////////////////////////////////
 //                              ВКЛАДКИ                               //
 ////////////////////////////////////////////////////////////////////////
@@ -930,10 +1004,12 @@ $(document).ready(function($) {
     TEMPLATES.menuApp           = _.template($('#underscore-menu-app').html());
     TEMPLATES.collection        = _.template($('#underscore-collection').html());
     TEMPLATES.layoutModel       = _.template($('#underscore-layout-model').html());
+    TEMPLATES.layoutSelector    = _.template($('#underscore-layout-selector').html());
     TEMPLATES.layoutCompose     = _.template($('#underscore-layout-compose').html());
     TEMPLATES.layoutObject      = _.template($('#underscore-layout-object').html());
     TEMPLATES.layoutDefault     = _.template($('#underscore-layout-default').html());
     TEMPLATES.tab               = _.template($('#underscore-tab').html());
+    TEMPLATES.modal             = _.template($('#underscore-modal').html());
 
     // Загрузка меню
     $('#menu-app').hide();
@@ -942,6 +1018,9 @@ $(document).ready(function($) {
 
     /* Инициализируем настройки */
     window.SETTINGS = new classSettings();
+
+    /* Инициализируем модальное окно */
+    //~ $('#modal').modal();
 
     // Инициализация для Bootstrap
     $("alert").alert();
@@ -957,6 +1036,7 @@ $(document).ready(function($) {
     // Если настройки готовы, то запускаем все процессы
     if (SETTINGS.init().ready) {
         $('#search').focus();
+        $('body').on('click',  'tr[data-pk]', eventRowClick);
         // Биндинги на открытие-закрытие вкладок и их контента
         $('#menu-app li[class!=disabled]').on('click',  'a', eventTabOpen);
         $('#main-tab').on('click', 'button.close[data-id]',  eventTabClose)
@@ -979,6 +1059,11 @@ $(document).ready(function($) {
         $('body').on('change','[data-action=object_change]', eventObjectChange);
         $('body').on('click', '[data-action=object_reset]',  eventObjectReset);
         $('body').on('click', '[data-action=object_save]',   eventObjectSave);
+        $('body').on('click', '[data-action=object_select]', eventObjectSelect);
+        
+        // Биндинги на кнопки выбора значения
+        $('body').on('click', '[data-action=field_clear]',   eventFieldClear);
+        $('body').on('click', '[data-action=field_select]',  eventFieldSelect);
         
     } else {
         console.log("ОШИБКА! Загрузка настроек не удалась.");

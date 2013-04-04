@@ -32,6 +32,7 @@
             <div class="input-prepend input-append">
                 {%/* Кнопка значения и названия */%}
                 <button name="{{ widget.name }}" value="{{ _val0 }}"
+                    data-model="{{ widget.model }}"
                     disabled="disabled"
                     {% _.each(widget.attr, function(val, key) { %}
                         {% if (! key in {'type':0, 'name':0}) { %}

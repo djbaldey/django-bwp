@@ -173,11 +173,12 @@ class BaseModel(object):
     paginator           = Paginator
     form                = None
     site                = None
+    defaults            = None
     
     # Набор ключей для предоставления метаданных об этой модели.
     metakeys = ('list_display', 'list_display_css', 'list_per_page',
                 'list_max_show_all', 'show_column_pk', 'fields',
-                'search_fields', 'search_key', 'ordering')
+                'search_fields', 'search_key', 'ordering', 'defaults')
 
     @property
     def opts(self):
@@ -202,7 +203,8 @@ class BaseModel(object):
             например, чтобы добавить информацию из наследуемого класса
         """
         self.get_fields() # инициализация полей
-        self.get_search_fields() # инициализация полей
+        self.get_defaults() # инициализация значений по умолчанию
+        self.get_search_fields() # инициализация поисковых полей
         if not hasattr(self, '_meta'):
             self._meta = self.get_meta()
         return self._meta
@@ -239,6 +241,15 @@ class BaseModel(object):
         if not self.fields:
             self.fields = [ _tuple[0].name for _tuple in self.opts.get_fields_with_model() ]
         return self.fields
+
+    def get_defaults(self):
+        """ Устанавливает и возвращает список дефолтных значений
+            полей для новых объектов.
+        """
+        if not self.defaults:
+            fields = [ self.opts.get_field_by_name(name)[0] for name in self.get_fields() ]
+            self.defaults = dict([ (field.name, field.get_default()) for field in fields ])
+        return self.defaults
 
     def get_fields_objects(self):
         """ Возвращает реальные объекты полей """

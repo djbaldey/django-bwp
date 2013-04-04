@@ -185,6 +185,8 @@ def Deserializer(object_list, **options):
                 field_value = smart_unicode(field_value, options.get("encoding", settings.DEFAULT_CHARSET), strings_only=True)
 
             field = Model._meta.get_field(field_name)
+            if field_value is None:
+                field_value = field.get_default()
 
             # Handle M2M relations
             if field.rel and isinstance(field.rel, models.ManyToManyRel):

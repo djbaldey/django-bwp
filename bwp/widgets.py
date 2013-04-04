@@ -74,8 +74,10 @@ class GeneralWidget(object):
             'hidden': self.is_hidden,
             'tag': self.tag,
             'attr': self.attr,
+            'model': None,
         }
-        
+        if self.field.rel:
+            d['model'] = str(self.field.rel.to._meta)
         if hasattr(self, 'select_multiple') and not self.attr.has_key('multiple'):
             d['attr']['multiple'] = self.select_multiple
         if hasattr(self, 'input_type') and not self.attr.has_key('type'):

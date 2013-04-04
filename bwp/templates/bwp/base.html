@@ -66,6 +66,7 @@
 <body class="{% block bodyclass %}home{% endblock %}">
 <div id="wrap">
 {% include "bwp/for_IE.html" %}
+<div id="modal" class="modal hide fade"></div>
 
     <div class="container-fluid">
         <div class="row-fluid">
@@ -120,6 +121,9 @@
     <script type="text/x-underscore" id="underscore-layout-model">
         {% include "bwp/underscore/layout_model.html" %}
     </script>
+    <script type="text/x-underscore" id="underscore-layout-selector">
+        {% include "bwp/underscore/layout_selector.html" %}
+    </script>
     <script type="text/x-underscore" id="underscore-layout-compose">
         {% include "bwp/underscore/layout_compose.html" %}
     </script>
@@ -131,6 +135,9 @@
     </script>
     <script type="text/x-underscore" id="underscore-tab">
         {% include "bwp/underscore/tab.html" %}
+    </script>
+    <script type="text/x-underscore" id="underscore-modal">
+        {% include "bwp/underscore/modal.html" %}
     </script>
     {% endblock %}
 <!-- END: block jstemplates -->

@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Django\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-01-29 01:02+1100\n"
+"POT-Creation-Date: 2013-04-04 12:42+1100\n"
 "PO-Revision-Date: 2013-01-29 01:02+1100\n"
 "Last-Translator: Grigoriy Kramarenko <root@rosix.ru>\n"
 "Language: RU\n"
@@ -20,61 +20,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
-
-#: actions.py:48
-#, python-format
-msgid "Successfully deleted %(count)d %(items)s."
-msgstr "Успешно удалены %(count)d %(items)s."
-
-#: actions.py:60 options.py:1295
-#, python-format
-msgid "Cannot delete %(name)s"
-msgstr "Не удается удалить %(name)s"
-
-#: actions.py:62 options.py:1297
-msgid "Are you sure?"
-msgstr "Вы уверены?"
-
-#: actions.py:83
-#, python-format
-msgid "Delete selected %(verbose_name_plural)s"
-msgstr "Удалить выбранные %(verbose_name_plural)s"
-
-#: filters.py:101 filters.py:194 filters.py:234 filters.py:271 filters.py:381
-msgid "All"
-msgstr "Все"
-
-#: filters.py:235
-msgid "Yes"
-msgstr "Да"
-
-#: filters.py:236
-msgid "No"
-msgstr "Нет"
-
-#: filters.py:250
-msgid "Unknown"
-msgstr "Неизвестно"
-
-#: filters.py:309
-msgid "Any date"
-msgstr "Любая дата"
-
-#: filters.py:310
-msgid "Today"
-msgstr "Сегодня"
-
-#: filters.py:314
-msgid "Past 7 days"
-msgstr "Последние 7 дней"
-
-#: filters.py:318
-msgid "This month"
-msgstr "Этот месяц"
-
-#: filters.py:322
-msgid "This year"
-msgstr "Этот год"
 
 #: forms.py:9
 msgid ""
@@ -95,224 +40,85 @@ msgstr ""
 "Ваш адрес электронной почты не является вашим именем пользователя. "
 "Попробуйте '%s' взамен."
 
-#: helpers.py:20
-msgid "Action:"
-msgstr "Действие:"
-
-#: models.py:19
+#: models.py:112
 msgid "action time"
 msgstr "время действия"
 
-#: models.py:22
+#: models.py:115
 msgid "object id"
 msgstr "идентификатор объекта"
 
-#: models.py:23
+#: models.py:116
 msgid "object repr"
 msgstr "представление объекта"
 
-#: models.py:24
+#: models.py:117
 msgid "action flag"
 msgstr "тип действия"
 
-#: models.py:25
+#: models.py:118
 msgid "change message"
 msgstr "сообщение об изменении"
 
-#: models.py:30
+#: models.py:123
 msgid "log entry"
 msgstr "запись в журнале"
 
-#: models.py:31
+#: models.py:124
 msgid "log entries"
 msgstr "записи в журнале"
 
-#: models.py:40
+#: models.py:133
 #, python-format
 msgid "Added \"%(object)s\"."
 msgstr "Добавлено \"%(object)s\"."
 
-#: models.py:42
+#: models.py:135
 #, python-format
 msgid "Changed \"%(object)s\" - %(changes)s"
 msgstr "Изменено \"%(object)s\" - %(changes)s"
 
-#: models.py:44
+#: models.py:137
 #, python-format
 msgid "Deleted \"%(object)s.\""
 msgstr "Удалено \"%(object)s.\""
 
-#: models.py:46
+#: models.py:139
 msgid "LogEntry Object"
 msgstr "Запись в журнале"
 
-#: options.py:150 options.py:166
-msgid "None"
-msgstr "Нет"
-
-#: options.py:671
-#, python-format
-msgid "Changed %s."
-msgstr "Изменен %s."
-
-#: options.py:671 options.py:681
-msgid "and"
-msgstr "и"
-
-#: options.py:676
-#, python-format
-msgid "Added %(name)s \"%(object)s\"."
-msgstr "Добавлен %(name)s \"%(object)s\"."
-
-#: options.py:680
-#, python-format
-msgid "Changed %(list)s for %(name)s \"%(object)s\"."
-msgstr "Изменены %(list)s для %(name)s \"%(object)s\"."
-
-#: options.py:685
-#, python-format
-msgid "Deleted %(name)s \"%(object)s\"."
-msgstr "Удален %(name)s \"%(object)s\"."
-
-#: options.py:689
-msgid "No fields changed."
-msgstr "Ни одно поле не изменено."
-
-#: options.py:772
-#, python-format
-msgid "The %(name)s \"%(obj)s\" was added successfully."
-msgstr "%(name)s \"%(obj)s\" был успешно добавлен."
-
-#: options.py:776 options.py:824
-msgid "You may edit it again below."
-msgstr "Ниже вы можете снова его отредактировать."
-
-#: options.py:788 options.py:837
-#, python-format
-msgid "You may add another %s below."
-msgstr "Ниже вы можете добавить еще один %s."
-
-#: options.py:822
-#, python-format
-msgid "The %(name)s \"%(obj)s\" was changed successfully."
-msgstr "%(name)s \"%(obj)s\" был успешно изменен."
-
-#: options.py:830
-#, python-format
-msgid ""
-"The %(name)s \"%(obj)s\" was added successfully. You may edit it again below."
+#: views.py:79
+msgid "bwp"
 msgstr ""
-"%(name)s \"%(obj)s\" был успешно добавлен. Ниже вы можете снова его "
-"отредактировать."
 
-#: options.py:899 options.py:1159
-msgid ""
-"Items must be selected in order to perform actions on them. No items have "
-"been changed."
-msgstr ""
-"Чтобы произвести действия над объектами, необходимо их выбрать. Объекты не "
-"были изменены."
-
-#: options.py:918
-msgid "No action selected."
-msgstr "Действие не выбрано."
-
-#: options.py:998
-#, python-format
-msgid "Add %s"
-msgstr "Добавить %s"
-
-#: options.py:1023 options.py:1267
-#, python-format
-msgid "%(name)s object with primary key %(key)r does not exist."
-msgstr "%(name)s с первичным ключом %(key)r не существует."
-
-#: options.py:1089
-#, python-format
-msgid "Change %s"
-msgstr "Изменить %s"
-
-#: options.py:1138
-msgid "Database error"
-msgstr "Ошибка базы данных"
-
-#: options.py:1201
-#, python-format
-msgid "%(count)s %(name)s was changed successfully."
-msgid_plural "%(count)s %(name)s were changed successfully."
-msgstr[0] "%(count)s %(name)s был успешно изменен."
-msgstr[1] "%(count)s %(name)s были успешно изменены."
-msgstr[2] "%(count)s %(name)s были успешно изменены."
-
-#: options.py:1228
-#, python-format
-msgid "%(total_count)s selected"
-msgid_plural "All %(total_count)s selected"
-msgstr[0] "Выбран %(total_count)s"
-msgstr[1] "Выбраны все %(total_count)s"
-msgstr[2] "Выбраны все %(total_count)s"
-
-#: options.py:1233
-#, python-format
-msgid "0 of %(cnt)s selected"
-msgstr "Выбрано 0 объектов из %(cnt)s "
-
-#: options.py:1283
-#, python-format
-msgid "The %(name)s \"%(obj)s\" was deleted successfully."
-msgstr "%(name)s \"%(obj)s\" был успешно удален."
-
-#: options.py:1330
-#, python-format
-msgid "Change history: %s"
-msgstr "История изменений: %s"
-
-#: sites.py:315 tests.py:61 templates/admin/login.html:49
-#: templates/registration/password_reset_complete.html:20
-#: views/decorators.py:23
+#: views.py:92 templates/registration/password_reset_complete.html:20
 msgid "Log in"
 msgstr "Войти"
 
-#: sites.py:380
-msgid "Site administration"
-msgstr "Администрирование сайта"
+#: views.py:303
+msgid "List objects is blank!"
+msgstr "Список объектов пуст!"
 
-#: sites.py:432
-#, python-format
-msgid "%s administration"
-msgstr "%s администрирование"
+#: views.py:334
+msgid "Commited!"
+msgstr "Принято!"
 
-#: widgets.py:87
-msgid "Date:"
-msgstr "Дата:"
+#: templates/bwp/404.html:5
+msgid "Excuse, the page isn't found."
+msgstr "Извините, страница не найдена."
 
-#: widgets.py:87
-msgid "Time:"
-msgstr "Время:"
+#: templates/bwp/500.html:9
+msgid "Internal error of the server."
+msgstr "Внутренняя ошибка сервера."
 
-#: widgets.py:161
-msgid "Lookup"
-msgstr "Поиск"
+#: templates/bwp/logout.html:7
+msgid "Thank You for the work done."
+msgstr "Благодарим за выполненную работу."
 
-#: widgets.py:267
-msgid "Add Another"
-msgstr "Добавить еще"
+#: templates/bwp/logout.html:10 templates/registration/logged_out.html:11
+msgid "Log in again"
+msgstr "Войти снова"
 
-#: templates/admin/404.html:4 templates/admin/404.html.py:8
-msgid "Page not found"
-msgstr "Страница не найдена"
-
-#: templates/admin/404.html:10
-msgid "We're sorry, but the requested page could not be found."
-msgstr "К сожалению, запрашиваемая вами страница не найдена."
-
-#: templates/admin/500.html:7 templates/admin/app_index.html:8
-#: templates/admin/base.html:45 templates/admin/change_form.html:21
-#: templates/admin/change_list.html:43
-#: templates/admin/delete_confirmation.html:8
-#: templates/admin/delete_selected_confirmation.html:8
-#: templates/admin/invalid_setup.html:7 templates/admin/object_history.html:8
-#: templates/admin/auth/user/change_password.html:15
 #: templates/registration/logged_out.html:5
 #: templates/registration/password_change_done.html:7
 #: templates/registration/password_change_form.html:8
@@ -323,366 +129,24 @@ msgstr "К сожалению, запрашиваемая вами страни�
 msgid "Home"
 msgstr "Начало"
 
-#: templates/admin/500.html:8
-msgid "Server error"
-msgstr "Ошибка сервера"
+#: templates/registration/logged_out.html:9
+msgid "Thanks for spending some quality time with the Web site today."
+msgstr "Благодарим вас за время, проведенное на этом сайте."
 
-#: templates/admin/500.html:12
-msgid "Server error (500)"
-msgstr "Ошибка сервера (500)"
-
-#: templates/admin/500.html:15
-msgid "Server Error <em>(500)</em>"
-msgstr "Ошибка сервера <em>(500)</em>"
-
-#: templates/admin/500.html:16
-msgid ""
-"There's been an error. It's been reported to the site administrators via e-"
-"mail and should be fixed shortly. Thanks for your patience."
-msgstr ""
-"Произошла ошибка. О ней сообщено администраторам сайта по электронной почте, "
-"ошибка должна быть вскоре исправлена. Благодарим вас за терпение."
-
-#: templates/admin/actions.html:4
-msgid "Run the selected action"
-msgstr "Выполнить выбранное действие"
-
-#: templates/admin/actions.html:4
-msgid "Go"
-msgstr "Выполнить"
-
-#: templates/admin/actions.html:11
-msgid "Click here to select the objects across all pages"
-msgstr "Нажмите здесь, чтобы выбрать объекты на всех страницах"
-
-#: templates/admin/actions.html:11
-#, python-format
-msgid "Select all %(total_count)s %(module_name)s"
-msgstr "Выбрать все %(module_name)s (%(total_count)s)"
-
-#: templates/admin/actions.html:13
-msgid "Clear selection"
-msgstr "Снять выделение"
-
-#: templates/admin/app_index.html:11
-#, python-format
-msgid "%(name)s"
-msgstr "%(name)s"
-
-#: templates/admin/base.html:28
-msgid "Welcome,"
-msgstr "Добро пожаловать,"
-
-#: templates/admin/base.html:33
 #: templates/registration/password_change_done.html:4
 #: templates/registration/password_change_form.html:5
 msgid "Documentation"
 msgstr "Документация"
 
-#: templates/admin/base.html:35
-#: templates/admin/auth/user/change_password.html:19
-#: templates/admin/auth/user/change_password.html:53
 #: templates/registration/password_change_done.html:4
 #: templates/registration/password_change_form.html:5
 msgid "Change password"
 msgstr "Изменить пароль"
 
-#: templates/admin/base.html:36
 #: templates/registration/password_change_done.html:4
 #: templates/registration/password_change_form.html:5
 msgid "Log out"
 msgstr "Выйти"
-
-#: templates/admin/base_site.html:4
-msgid "Django site admin"
-msgstr "Административный сайт Django"
-
-#: templates/admin/base_site.html:7
-msgid "Django administration"
-msgstr "Администрирование Django"
-
-#: templates/admin/change_form.html:24 templates/admin/index.html:29
-msgid "Add"
-msgstr "Добавить"
-
-#: templates/admin/change_form.html:34 templates/admin/object_history.html:12
-msgid "History"
-msgstr "История"
-
-#: templates/admin/change_form.html:35
-#: templates/admin/edit_inline/stacked.html:9
-#: templates/admin/edit_inline/tabular.html:30
-msgid "View on site"
-msgstr "Смотреть на сайте"
-
-#: templates/admin/change_form.html:46 templates/admin/change_list.html:69
-#: templates/admin/login.html:18
-#: templates/admin/auth/user/change_password.html:29
-#: templates/registration/password_change_form.html:21
-msgid "Please correct the error below."
-msgid_plural "Please correct the errors below."
-msgstr[0] "Пожалуйста, исправьте ошибку ниже."
-msgstr[1] "Пожалуйста, исправьте ошибки ниже."
-msgstr[2] "Пожалуйста, исправьте ошибки ниже."
-
-#: templates/admin/change_list.html:60
-#, python-format
-msgid "Add %(name)s"
-msgstr "Добавить %(name)s"
-
-#: templates/admin/change_list.html:80
-msgid "Filter"
-msgstr "Фильтр"
-
-#: templates/admin/change_list_results.html:17
-msgid "Remove from sorting"
-msgstr "Удалить из сортировки"
-
-#: templates/admin/change_list_results.html:18
-#, python-format
-msgid "Sorting priority: %(priority_number)s"
-msgstr "Приоритет сортировки: %(priority_number)s"
-
-#: templates/admin/change_list_results.html:19
-msgid "Toggle sorting"
-msgstr "Сортировать в другом направлении"
-
-#: templates/admin/delete_confirmation.html:12
-#: templates/admin/submit_line.html:4
-msgid "Delete"
-msgstr "Удалить"
-
-#: templates/admin/delete_confirmation.html:19
-#, python-format
-msgid ""
-"Deleting the %(object_name)s '%(escaped_object)s' would result in deleting "
-"related objects, but your account doesn't have permission to delete the "
-"following types of objects:"
-msgstr ""
-"Удаление %(object_name)s '%(escaped_object)s' приведет к удалению связанных "
-"объектов, но ваша учетная запись не имеет прав для удаления следующих типов "
-"объектов:"
-
-#: templates/admin/delete_confirmation.html:27
-#, python-format
-msgid ""
-"Deleting the %(object_name)s '%(escaped_object)s' would require deleting the "
-"following protected related objects:"
-msgstr ""
-"Удаление %(object_name)s '%(escaped_object)s' потребует удаления следующих "
-"связанных защищенных объектов:"
-
-#: templates/admin/delete_confirmation.html:35
-#, python-format
-msgid ""
-"Are you sure you want to delete the %(object_name)s \"%(escaped_object)s\"? "
-"All of the following related items will be deleted:"
-msgstr ""
-"Вы уверены, что хотите удалить %(object_name)s \"%(escaped_object)s\"? Все "
-"следующие связанные объекты также будут удалены:"
-
-#: templates/admin/delete_confirmation.html:40
-#: templates/admin/delete_selected_confirmation.html:45
-msgid "Yes, I'm sure"
-msgstr "Да, я уверен"
-
-#: templates/admin/delete_selected_confirmation.html:11
-msgid "Delete multiple objects"
-msgstr "Удалить несколько объектов"
-
-#: templates/admin/delete_selected_confirmation.html:18
-#, python-format
-msgid ""
-"Deleting the selected %(objects_name)s would result in deleting related "
-"objects, but your account doesn't have permission to delete the following "
-"types of objects:"
-msgstr ""
-"Удаление выбранной %(objects_name)s приведет к удалению связанных объектов, "
-"но ваша учетная запись не имеет прав на удаление следующих типов объектов:"
-
-#: templates/admin/delete_selected_confirmation.html:26
-#, python-format
-msgid ""
-"Deleting the selected %(objects_name)s would require deleting the following "
-"protected related objects:"
-msgstr ""
-"Удаление %(objects_name)s потребует удаления следующих связанных защищенных "
-"объектов:"
-
-#: templates/admin/delete_selected_confirmation.html:34
-#, python-format
-msgid ""
-"Are you sure you want to delete the selected %(objects_name)s? All of the "
-"following objects and their related items will be deleted:"
-msgstr ""
-"Вы уверены, что хотите удалить %(objects_name)s? Все следующие объекты и "
-"связанные с ними элементы будут удалены:"
-
-#: templates/admin/filter.html:2
-#, python-format
-msgid " By %(filter_title)s "
-msgstr "%(filter_title)s"
-
-#: templates/admin/index.html:18
-#, python-format
-msgid "Models available in the %(name)s application."
-msgstr "Модели доступны в приложении %(name)s."
-
-#: templates/admin/index.html:35
-msgid "Change"
-msgstr "Изменить"
-
-#: templates/admin/index.html:45
-msgid "You don't have permission to edit anything."
-msgstr "У вас недостаточно прав для редактирования."
-
-#: templates/admin/index.html:53
-msgid "Recent Actions"
-msgstr "Последние действия"
-
-#: templates/admin/index.html:54
-msgid "My Actions"
-msgstr "Мои действия"
-
-#: templates/admin/index.html:58
-msgid "None available"
-msgstr "Недоступно"
-
-#: templates/admin/index.html:72
-msgid "Unknown content"
-msgstr "Неизвестный тип"
-
-#: templates/admin/invalid_setup.html:13
-msgid ""
-"Something's wrong with your database installation. Make sure the appropriate "
-"database tables have been created, and make sure the database is readable by "
-"the appropriate user."
-msgstr ""
-"Ваша база данных неправильно настроена. Убедитесь, что соответствующие "
-"таблицы были созданы, и что соответствующему пользователю разрешен к ним "
-"доступ."
-
-#: templates/admin/login.html:34
-msgid "Username:"
-msgstr "Имя:"
-
-#: templates/admin/login.html:38
-msgid "Password:"
-msgstr "Пароль:"
-
-#: templates/admin/login.html:45
-msgid "Forgotten your password or username?"
-msgstr "Забыли свой пароль или имя пользователя?"
-
-#: templates/admin/object_history.html:24
-msgid "Date/time"
-msgstr "Дата и время"
-
-#: templates/admin/object_history.html:25
-msgid "User"
-msgstr "Пользователь"
-
-#: templates/admin/object_history.html:26
-msgid "Action"
-msgstr "Действие"
-
-#: templates/admin/object_history.html:40
-msgid ""
-"This object doesn't have a change history. It probably wasn't added via this "
-"admin site."
-msgstr ""
-"Данный объект не имеет истории изменений. Возможно, он был добавлен не через "
-"данный административный сайт."
-
-#: templates/admin/pagination.html:10
-msgid "Show all"
-msgstr "Показать все"
-
-#: templates/admin/pagination.html:11 templates/admin/submit_line.html:3
-msgid "Save"
-msgstr "Сохранить"
-
-#: templates/admin/search_form.html:7
-msgid "Search"
-msgstr "Найти"
-
-#: templates/admin/search_form.html:9
-#, python-format
-msgid "%(counter)s result"
-msgid_plural "%(counter)s results"
-msgstr[0] "%(counter)s результат"
-msgstr[1] "%(counter)s результата"
-msgstr[2] "%(counter)s результатов"
-
-#: templates/admin/search_form.html:9
-#, python-format
-msgid "%(full_result_count)s total"
-msgstr "%(full_result_count)s всего"
-
-#: templates/admin/submit_line.html:5
-msgid "Save as new"
-msgstr "Сохранить как новый объект"
-
-#: templates/admin/submit_line.html:6
-msgid "Save and add another"
-msgstr "Сохранить и добавить другой объект"
-
-#: templates/admin/submit_line.html:7
-msgid "Save and continue editing"
-msgstr "Сохранить и продолжить редактирование"
-
-#: templates/admin/auth/user/add_form.html:6
-msgid ""
-"First, enter a username and password. Then, you'll be able to edit more user "
-"options."
-msgstr ""
-"Сначала введите имя пользователя и пароль. Затем вы сможете ввести больше "
-"информации о пользователе."
-
-#: templates/admin/auth/user/add_form.html:8
-msgid "Enter a username and password."
-msgstr "Введите имя пользователя и пароль."
-
-#: templates/admin/auth/user/change_password.html:33
-#, python-format
-msgid "Enter a new password for the user <strong>%(username)s</strong>."
-msgstr "Введите новый пароль для пользователя <strong>%(username)s</strong>."
-
-#: templates/admin/auth/user/change_password.html:40
-msgid "Password"
-msgstr "Пароль"
-
-#: templates/admin/auth/user/change_password.html:46
-#: templates/registration/password_change_form.html:43
-msgid "Password (again)"
-msgstr "Пароль (еще раз)"
-
-#: templates/admin/auth/user/change_password.html:47
-msgid "Enter the same password as above, for verification."
-msgstr "Введите тот же пароль, что и выше, для подтверждения."
-
-#: templates/admin/edit_inline/stacked.html:67
-#: templates/admin/edit_inline/tabular.html:115
-#, python-format
-msgid "Add another %(verbose_name)s"
-msgstr "Добавить еще один %(verbose_name)s"
-
-#: templates/admin/edit_inline/stacked.html:70
-#: templates/admin/edit_inline/tabular.html:118
-msgid "Remove"
-msgstr "Удалить"
-
-#: templates/admin/edit_inline/tabular.html:17
-msgid "Delete?"
-msgstr "Удалить?"
-
-#: templates/registration/logged_out.html:9
-msgid "Thanks for spending some quality time with the Web site today."
-msgstr "Благодарим вас за время, проведенное на этом сайте."
-
-#: templates/registration/logged_out.html:11
-msgid "Log in again"
-msgstr "Войти снова"
 
 #: templates/registration/password_change_done.html:8
 #: templates/registration/password_change_form.html:9
@@ -700,6 +164,13 @@ msgstr "Пароль успешно изменен"
 msgid "Your password was changed."
 msgstr "Ваш пароль был изменен."
 
+#: templates/registration/password_change_form.html:21
+msgid "Please correct the error below."
+msgid_plural "Please correct the errors below."
+msgstr[0] "Пожалуйста, исправьте ошибку ниже."
+msgstr[1] "Пожалуйста, исправьте ошибки ниже."
+msgstr[2] "Пожалуйста, исправьте ошибки ниже."
+
 #: templates/registration/password_change_form.html:27
 msgid ""
 "Please enter your old password, for security's sake, and then enter your new "
@@ -715,6 +186,10 @@ msgstr "Старый пароль"
 #: templates/registration/password_change_form.html:38
 msgid "New password"
 msgstr "Новый пароль"
+
+#: templates/registration/password_change_form.html:43
+msgid "Password (again)"
+msgstr "Пароль (еще раз)"
 
 #: templates/registration/password_change_form.html:49
 #: templates/registration/password_reset_confirm.html:27
@@ -831,32 +306,18 @@ msgstr "Адрес электронной почты:"
 msgid "Reset my password"
 msgstr "Восстановить мой пароль"
 
-#: templatetags/admin_list.py:336
+#: templatetags/bwp_list.py:336
 msgid "All dates"
 msgstr "Все даты"
 
-#: templatetags/admin_static.py:17
+#: templatetags/bwp_locale.py:46
 msgid "administration"
 msgstr "администрирование"
 
-#: templatetags/admin_static.py:18
+#: templatetags/bwp_locale.py:47
 msgid "authentication"
 msgstr "авторизация"
 
-#: templatetags/admin_static.py:19
+#: templatetags/bwp_locale.py:48
 msgid "sites"
 msgstr "сайты"
-
-#: views/main.py:31
-msgid "(None)"
-msgstr "(Ничего)"
-
-#: views/main.py:74
-#, python-format
-msgid "Select %s"
-msgstr "Выберите %s"
-
-#: views/main.py:76
-#, python-format
-msgid "Select %s to change"
-msgstr "Выберите %s для изменения"

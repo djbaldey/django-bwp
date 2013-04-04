@@ -51,6 +51,16 @@
                                 </a>
                             </li>
                         {% } %}
+                        {% if (!(data.perms.delete || data.perms.add || data.perms.change)) { %}
+                            <li><a  tabindex="-1" href="#"
+                                    data-action="object_select"
+                                    data-model="{{ obj.model }}"
+                                    data-unicode="{{ obj.__unicode__ }}"
+                                    data-pk="{{ obj.pk }}">
+                                    <i class="icon-ok"> </i> Выбрать
+                                </a>
+                            </li>
+                        {% } %}
                         </ul>
                     </div>
                     {% } else { %}

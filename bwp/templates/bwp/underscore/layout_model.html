@@ -15,9 +15,11 @@
     <ul class="nav nav-pills">
         <li>
             <div class="btn-toolbar">
+            {% if (data.perms.add) { %}
                 <div class="btn-group">
                     <button class="btn btn-mini" data-id="{{ data.id }}" data-action="object_add">Новый</button>
                 </div>
+            {% } %}
                 <div class="btn-group">
                     <a class="btn btn-mini dropdown-toggle"
                        data-toggle="dropdown"
