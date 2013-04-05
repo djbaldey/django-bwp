@@ -583,6 +583,8 @@ function handlerObjectChange(object, $field) {
     var value = $field.val();
     if ($.type(object.fields[name]) === 'array') {
         value = [value, $field.text()];
+    } else if ($.type(object.fields[name]) === 'boolean') {
+        value = $field.is(':checked');
     }
     object.fix[name] = value;
     object.fixaction = object.fixaction || 'change';
