@@ -1,13 +1,13 @@
 # BWP.
-# Copyright (C) 2012 Grigoriy Kramarenko
+# Copyright (C) 2013 Grigoriy Kramarenko
 # This file is distributed under the same license as the BWP package.
-# Grigoriy Kramarenko <root@rosix.ru>, 2012.
+# Grigoriy Kramarenko <root@rosix.ru>, 2013.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.1.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-03-16 18:21+1100\n"
+"POT-Creation-Date: 2013-04-05 10:04+1100\n"
 "PO-Revision-Date: 2013-03-16 18:10+1100\n"
 "Last-Translator: Grigoriy Kramarenko <root@rosix.ru>\n"
 "Language: RU\n"

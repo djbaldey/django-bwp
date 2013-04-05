@@ -63,13 +63,13 @@
                         {% } %}
                         </ul>
                     </div>
+                {% } else { %}
+                    {% if (c.name == '__unicode__') { %}
+                        {{ obj.__unicode__ }}
                     {% } else { %}
-                        {% if (c.name == '__unicode__') { %}
-                            {{ obj.__unicode__ }}
-                        {% } else { %}
-                            {{ obj.fields[c.name] || c.name }}
-                        {% } %}
+                        {{ obj.fields[c.name] || c.name }}
                     {% } %}
+                {% } %}
                 </td>
             {% }); %}
         </tr>

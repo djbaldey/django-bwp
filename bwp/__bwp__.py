@@ -37,6 +37,7 @@
 ###############################################################################
 """
 from django.contrib.auth.models import User, Group
+from django.contrib.contenttypes.models import ContentType
 from bwp.sites import site
 from bwp.models import ModelBWP
 from django.utils.translation import ugettext_lazy as _
@@ -49,3 +50,9 @@ site.register(User, UserAdmin)
 class GroupAdmin(ModelBWP):
     list_display = ('__unicode__', 'id')
 site.register(Group, GroupAdmin)
+
+class ContentTypeAdmin(ModelBWP):
+    list_display = ('name', 'app_label', 'model', 'id')
+    ordering = ('app_label', 'model')
+    hidden = True
+site.register(ContentType, ContentTypeAdmin)

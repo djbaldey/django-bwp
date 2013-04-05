@@ -174,11 +174,13 @@ class BaseModel(object):
     form                = None
     site                = None
     defaults            = None
+    hidden              = False
     
     # Набор ключей для предоставления метаданных об этой модели.
     metakeys = ('list_display', 'list_display_css', 'list_per_page',
                 'list_max_show_all', 'show_column_pk', 'fields',
-                'search_fields', 'search_key', 'ordering', 'defaults')
+                'search_fields', 'search_key', 'ordering', 'defaults',
+                'hidden')
 
     @property
     def opts(self):
@@ -452,7 +454,7 @@ class BaseModel(object):
         """ Метод может переопределяться, но по-умолчанию такой """
         qs = self.filter_queryset(request, **kwargs)
         qs = self.page_queryset(request, qs, **kwargs)
-        data = self.serialize(qs)
+        data = self.serialize(qs, use_natural_keys=True)
         return JSONResponse(data=data)
 
     def has_add_permission(self, request):

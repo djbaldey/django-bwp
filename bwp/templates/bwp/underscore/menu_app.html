@@ -1,14 +1,17 @@
 {# Шаблон Underscore #}{% load bwp_verbatim %}{% verbatim %}
 {% _.each(data, function(app) { %}
+    {% var _models = []; _.each(app.models, function(model) { if (!model.meta.hidden) { _models.push(model) } }); %}
+    {% if (_models.length > 0) { %}
     <li class="dropdown-submenu">
         <a tabindex="-1" href="#">{{ app.label }}</a>
         <ul class="dropdown-menu">
-            {% _.each(app.models, function(model) { %}
+            {% _.each(_models, function(model) { %}
                 <li>
                     <a href="javascript:void(0)" data-id="{{ model.id }}">{{ model.label }}</a>
                 </li>
             {% }); %}
             </ul>
         </li>
+    {% } %}
 {% }); %}
 {% endverbatim %}
