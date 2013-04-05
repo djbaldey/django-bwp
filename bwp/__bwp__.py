@@ -43,7 +43,7 @@ from bwp.models import ModelBWP, LogEntry
 from django.utils.translation import ugettext_lazy as _
 
 class UserAdmin(ModelBWP):
-    list_display = ('__unicode__', 'last_login', 'date_joined', 'id')
+    list_display = ('__unicode__', 'is_superuser', 'is_staff', 'last_login', 'date_joined', 'id')
     exclude = ['password',]
     search_fields = ('username', 'email')
 site.register(User, UserAdmin)
