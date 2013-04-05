@@ -63,7 +63,6 @@ from bwp.forms import BWPAuthenticationForm
 from bwp.conf import settings
 from bwp.utils.convertors import jquery_form_array, jquery_multi_form_array
 
-from bwp.contrib.usersettings.models import OrgUserSettings, GlobalUserSettings
 from bwp import serializers
 
 ########################################################################
@@ -156,9 +155,6 @@ def API_get_settings(request):
         - возвращается словарь с ключами из установленных настроек.
         `
     """
-    if not 'bwp.contrib.usersettings' in settings.INSTALLED_APPS:
-        return JSONResponse(status=405,
-            message=u'Not "bwp.contrib.usersettings" in settings.INSTALLED_APPS')
     user = request.user
     session = request.session
     us = {}

@@ -58,6 +58,7 @@ from bwp import serializers
 from bwp.utils.filters import filterQueryset
 from bwp.conf import settings
 from bwp.widgets import get_widget_from_field
+from bwp.contrib.abstracts.models import AbstractUserSettings
 
 ADDING = 1
 CHANGE = 2
@@ -755,3 +756,11 @@ class ModelBWP(BaseModel):
         """
         composes = self.get_composes(request)
         return dict([ (compose.related_name, compose) for compose in composes ])
+
+class GlobalUserSettings(AbstractUserSettings):
+    """ Глобальные настройки пользователей """
+    class Meta:
+        ordering = ['user',]
+        verbose_name = _('global settings')
+        verbose_name_plural = _('global settings')
+        unique_together = ('user',)

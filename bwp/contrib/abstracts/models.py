@@ -38,10 +38,10 @@
 """
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
+from django.contrib.auth.models import User
 
 from bwp.utils.classes import upload_to, get_random_string
 from bwp.db import fields
-
 import datetime
 from unidecode import unidecode
 
@@ -348,3 +348,23 @@ class AbstractFile(AbstractData):
 
     class Meta:
         abstract = True
+
+class AbstractUserSettings(models.Model):
+    """ Общая модель """
+    user = models.ForeignKey(
+            User,
+            limit_choices_to={'user__isnull': False},
+            verbose_name=_('user'))
+    json = fields.JSONField(
+            blank=True,
+            verbose_name = _('JSON value'))
+
+    def __unicode__(self):
+        return unicode(self.person)
+
+    class Meta:
+        abstract = True
+
+    @property
+    def value(self):
+        return self.json

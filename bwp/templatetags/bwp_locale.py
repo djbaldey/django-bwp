@@ -46,6 +46,7 @@ APP_LABELS = getattr(settings, 'APP_LABELS',
         'admin':            _('administration'),
         'auth':             _('authentication'),
         'sites':            _('sites'),
+        'contenttypes':     _('content types'),
     }
 )
 

@@ -37,6 +37,8 @@
 ###############################################################################
 """
 import os
+from django.utils.translation import ugettext_lazy as _
+__label__ = _('BWP')
 
 VERSION = (0, 1, 4)
 __version__ = '.'.join([ str(x) for x in VERSION ])

@@ -39,7 +39,7 @@
 from django.contrib.auth.models import User, Group
 from django.contrib.contenttypes.models import ContentType
 from bwp.sites import site
-from bwp.models import ModelBWP, LogEntry
+from bwp.models import ModelBWP, LogEntry, GlobalUserSettings
 from django.utils.translation import ugettext_lazy as _
 
 class UserAdmin(ModelBWP):
@@ -62,3 +62,7 @@ class LogEntryAdmin(ModelBWP):
     list_display = ('action_time', 'user', '__unicode__', 'id')
     search_fields = ('user__username', 'object_repr', 'change_message')
 site.register(LogEntry, LogEntryAdmin)
+
+class GlobalUserSettingsAdmin(ModelBWP):
+    list_display = ('__unicode__', 'id')
+site.register(GlobalUserSettings, GlobalUserSettingsAdmin)
