@@ -996,6 +996,17 @@ function restoreSession() {
 }
 
 ////////////////////////////////////////////////////////////////////////
+//                              ПРОЧЕЕ                                //
+////////////////////////////////////////////////////////////////////////
+
+function toggleCheckboxes() {
+    $table = $(this).parents('table');
+    $inputs = $table.find("tbody td:nth-child(1) input[type=checkbox]")
+    checked = this.checked
+    $.each($inputs, function(i, item) { item.checked = checked });
+} 
+
+////////////////////////////////////////////////////////////////////////
 //                            ИСПОЛНЕНИЕ                              //
 ////////////////////////////////////////////////////////////////////////
 
@@ -1052,7 +1063,7 @@ $(document).ready(function($) {
         $('body').on('click',  '[data-action=collection_count]',  eventCollectionCount);
         $('body').on('change', '[data-action=collection_page]',   eventCollectionPage);
         $('body').on('click',  '[data-action=collection_page]',   eventCollectionPage);
-        
+
         // Биндинги на кнопки и ссылки
         $('body').on('click', '[data-action=object_open]',   eventObjectOpen);
         $('body').on('click', '[data-action=object_add]',    eventObjectAdd);
@@ -1063,10 +1074,13 @@ $(document).ready(function($) {
         $('body').on('click', '[data-action=object_reset]',  eventObjectReset);
         $('body').on('click', '[data-action=object_save]',   eventObjectSave);
         $('body').on('click', '[data-action=object_select]', eventObjectSelect);
-        
+
         // Биндинги на кнопки выбора значения
         $('body').on('click', '[data-action=field_clear]',   eventFieldClear);
         $('body').on('click', '[data-action=field_select]',  eventFieldSelect);
+
+        // Биндинг на чекбоксы
+        $('body').on('click', '[data-toggle=checkboxes]',   toggleCheckboxes);
         
     } else {
         console.log("ОШИБКА! Загрузка настроек не удалась.");

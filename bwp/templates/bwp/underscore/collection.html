@@ -3,6 +3,7 @@
     class="table table-condensed table-striped table-bordered table-hover">
     <thead>
         <tr>
+            <th class="input-micro"><input type="checkbox" data-toggle="checkboxes"></th>
         {% _.each(data.widgets, function(c) { %}
             <th data-toggle="tooltip" class="{{ c.attr['class'] }}" title="{{ c.title }}">{{ c.label }}</th>
         {% }); %}
@@ -11,6 +12,7 @@
     <tbody>
     {% _.each(data.paginator.object_list, function(obj) { %}
         <tr data-model="{{ obj.model }}" data-pk="{{ obj.pk }}">
+            <td><input type="checkbox" data-model="{{ obj.model }}" data-pk="{{ obj.pk }}"></td>
             {% _.each(data.widgets, function(c, index) { %}
                 <td class="{{ c.attr['class'] }}">
                 {% if (index == 0) { %}

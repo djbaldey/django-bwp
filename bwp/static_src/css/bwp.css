@@ -88,10 +88,21 @@
     overflow: visible;
 }
 
-.tab-content .nav {
+.tab-content .nav, .modal-body .nav {
     margin-bottom: 5px;
 }
 
+input[type="search"] {
+   height: 12px;
+}
+
+.tab-pane .btn-toolbar, .modal-body .btn-toolbar {
+    margin-top: 0px;
+    margin-bottom: 0px;
+}
+.tab-pane .subtabs {
+    margin-bottom: 3px;
+}
 .tab-pane legend {
     padding-top: 5px;
 }
