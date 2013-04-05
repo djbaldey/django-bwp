@@ -42,7 +42,7 @@ from django.utils.translation import ugettext, ugettext_lazy as _
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import User
 from django.contrib.admin.util import quote
-from django.utils.encoding import smart_unicode
+from django.utils.encoding import smart_unicode, force_unicode
 from django.utils.safestring import mark_safe
 from django.utils.text import capfirst
 from django.core.paginator import Paginator, Page, PageNotAnInteger, EmptyPage
@@ -129,11 +129,11 @@ class LogEntry(models.Model):
         return smart_unicode(self.action_time)
 
     def __unicode__(self):
-        if self.action_flag == ADDITION:
+        if self.action_flag == ADDING:
             return _('Added "%(object)s".') % {'object': self.object_repr}
         elif self.action_flag == CHANGE:
             return _('Changed "%(object)s" - %(changes)s') % {'object': self.object_repr, 'changes': self.change_message}
-        elif self.action_flag == DELETION:
+        elif self.action_flag == DELETE:
             return _('Deleted "%(object)s."') % {'object': self.object_repr}
 
         return _('LogEntry Object')
@@ -511,6 +511,7 @@ class BaseModel(object):
 
         The default implementation creates an bwp LogEntry object.
         """
+        if isinstance(object, LogEntry): return
         LogEntry.objects.log_action(
             user_id         = request.user.pk,
             content_type_id = ContentType.objects.get_for_model(object).pk,
@@ -525,6 +526,7 @@ class BaseModel(object):
 
         The default implementation creates an bwp LogEntry object.
         """
+        if isinstance(object, LogEntry): return
         LogEntry.objects.log_action(
             user_id         = request.user.pk,
             content_type_id = ContentType.objects.get_for_model(object).pk,
@@ -541,6 +543,7 @@ class BaseModel(object):
 
         The default implementation creates an bwp LogEntry object.
         """
+        if isinstance(object, LogEntry): return
         LogEntry.objects.log_action(
             user_id         = request.user.id,
             content_type_id = ContentType.objects.get_for_model(self.model).pk,

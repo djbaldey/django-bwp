@@ -534,7 +534,8 @@ function handlerCommitInstance(instanse) {
             _objects.push(
                 {   pk: obj.pk, fields: obj.fields,
                     model: obj.model.name,
-                    action: obj.fixaction
+                    action: obj.fixaction,
+                    fix: obj.fix,
                 }
             );
         }

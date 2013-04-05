@@ -319,7 +319,8 @@ def API_commit(request, objects, **kwargs):
                 if bwp.has_add_permission(request):
                     form = get_form_instance(request, bwp, data=data)
                     if form.is_valid():
-                        form.save()
+                        object = form.save()
+                        bwp.log_addition(request, object)
                     else:
                         transaction.rollback()
                         return JSONResponse(status=400, message=unicode(form.errors))
@@ -327,6 +328,7 @@ def API_commit(request, objects, **kwargs):
             elif action == 'delete':
                 instance = get_instance(request, item['pk'], item['model'])
                 if bwp.has_delete_permission(request, instance):
+                    bwp.log_deletion(request, instance, unicode(instance))
                     instance.delete()
             # Обновляемый объект
             elif action == 'change': # raise AttributeError()
@@ -334,7 +336,9 @@ def API_commit(request, objects, **kwargs):
                 if bwp.has_change_permission(request, instance):
                     form = get_form_instance(request, bwp, data=data, instance=instance)
                     if form.is_valid():
-                        form.save()
+                        object = form.save()
+                        fix = item.get('fix', {})
+                        bwp.log_change(request, object, ', '.join(fix.keys()))
                     else:
                         transaction.rollback()
                         return JSONResponse(status=400, message=unicode(form.errors))
