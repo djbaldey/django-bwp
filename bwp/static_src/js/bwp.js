@@ -395,6 +395,8 @@ function classModel(app, data) {
     this.composes = _composes
     _widgets = [];
     this.widgets = _widgets;
+    _actions = {};
+    this.actions = _actions;
     model = this;
     // Init
     if (data.meta.compositions) {
@@ -448,6 +450,8 @@ function classCompose(object, data) {
     this.paginator = null;
     _widgets = [];
     this.widgets = _widgets;
+    _actions = {};
+    this.actions = _actions;
     compose = this;
     // Init
     $.each(compose.meta.list_display, function(i, name) {
@@ -477,6 +481,7 @@ function classObject(data) {
     _composes = [];
     this.composes = _composes;
     this.widgets = this.model.meta.widgets;
+    this.actions = this.model.actions;
     this.fix = {};
     this.fixaction = null;
     object = this;

@@ -4,10 +4,10 @@
   <div class="navbar-inner">
 -->
     {% if (data.meta.search_fields.length) { %}
-    <div class="nav nav-pills pull-right">
+    <div class="subnav pull-right">
         <div class="pull-left form-search">
             <div class=" input-append">
-                <input data-action="collection_filter" data-id="{{ data.id }}" type="search" class="search-query" placeholder="Поиск">
+                <input data-action="collection_filter" data-id="{{ data.id }}" type="search" class="search input-small" placeholder="Поиск">
                 <button class="btn btn-mini" data-id="{{ data.id }}" data-action="collection_filtersettings">
                     <i class="icon-wrench"></i>
                 </button>
@@ -17,7 +17,7 @@
     {% } %}
     {% if (data.paginator) { var _per_page = data.paginator.per_page || data.meta.list_per_page; %}
     {% } else { var _per_page = data.meta.list_per_page;} %}
-    <div class="nav nav-pills">
+    <div class="subnav">
         <div>
             <div class="btn-toolbar">
             {% if (data.perms.add) { %}
@@ -30,10 +30,18 @@
             {% } %}
             {% if (data.actions) { %}
                 <div class="btn-group">
-                    <button class="btn btn-mini" data-id="{{ data.id }}" data-action="collection_actions">
+                    <a  class="btn btn-mini dropdown-toggle"
+                        data-toggle="dropdown"
+                        href="#">
                         <i class="icon-list"></i>
                         Действия
-                    </button>
+                        <span class="caret"></span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        {% _.each(data.actions, function(action) { %}
+                            <li><a href="#" data-action="{{ action.name }}" data-id={{ data.id }}>{{ action.label }}</a></li>
+                        {% }); %}
+                    </ul>
                 {% if (data.actions.print) { %}
                     <button class="btn btn-mini" data-id="{{ data.id }}" data-action="collection_print">
                         <i class="icon-print"></i>
@@ -50,13 +58,13 @@
                     <a  class="btn btn-mini dropdown-toggle"
                         data-toggle="dropdown"
                         href="#">
-                        <i class="icon-list"></i>
+                        <i class="icon-resize-small"></i>
                         <span data-placeholder="collection_count" data-id="{{ data.id }}">{{ _per_page }}</span>
                         на странице
                         <span class="caret"></span>
                     </a>
                     <ul class="dropdown-menu">
-                        {% _.each([5,15,25,50,100,200], function(digit) { %}
+                        {% _.each([5,10,15,25,50,100,200], function(digit) { %}
                             <li><a href="#" data-action="collection_count" data-id={{ data.id }} data-count="{{ digit }}">{{ digit }}</a></li>
                         {% }); %}
                     </ul>
