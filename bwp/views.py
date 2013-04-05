@@ -312,7 +312,17 @@ def API_commit(request, objects, **kwargs):
             action = item['action'] # raise AttributeError()
             for name, val in item['fields'].items():
                 if isinstance(val, list):
-                    item['fields'][name] = val[0]
+                    L = []
+                    flag = False
+                    for i in val:
+                        if isinstance(i, list) and len(i) == 2:
+                            L.append(i[0])
+                            flag = True
+                        else:
+                            item['fields'][name] = i
+                            break
+                    if flag:
+                        item['fields'][name] = L
             data = item['fields']
             # Новый объект
             if not item.get('pk', False):
@@ -345,6 +355,8 @@ def API_commit(request, objects, **kwargs):
 
     except Exception as e:
         transaction.rollback()
+        if settings.DEBUG:
+            return JSONResponse(status=500, message=unicode(vars()))
         raise e
     else:
         transaction.commit()

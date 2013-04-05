@@ -161,6 +161,7 @@ class BaseModel(object):
     show_column_pk      = False
 
     fields              = None
+    exclude             = []
     fieldsets           = None
     widgets             = None
     widgetsets          = None
@@ -241,7 +242,8 @@ class BaseModel(object):
     def get_fields(self):
         """ Устанавливает и возвращает значение полей объектов """
         if not self.fields:
-            self.fields = [ _tuple[0].name for _tuple in self.opts.get_fields_with_model() ]
+            fields = [ field.name for field in self.opts.local_fields ]
+            self.fields = [ name for name in fields if name not in self.exclude ]
         return self.fields
 
     def get_defaults(self):
@@ -336,8 +338,9 @@ class BaseModel(object):
             либо несколько объектов или объект паджинации
             и точно также возвращает.
         """
-        if not options.has_key('use_natural_keys'):
-            options['use_natural_keys'] = True # default
+        if  not options.has_key('use_split_keys') \
+        and not options.has_key('use_natural_keys'):
+            options['use_split_keys'] = True # default
         if isinstance(objects, (QuerySet, Page, list, tuple)):
             # Список объектов
             data = serializers.serialize('python', objects, **options)

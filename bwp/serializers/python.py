@@ -44,6 +44,7 @@ from django.db import models, DEFAULT_DB_ALIAS
 from django.utils.encoding import smart_unicode, is_protected_type
 from django.core.paginator import Page
 from bwp.utils.pagers import page_range_dots
+from datetime import datetime, date, time
 
 from django.core.serializers.python import Serializer as OrignSerializer
 
@@ -57,7 +58,13 @@ class SerializerWrapper(object):
         # and Decimals) are passed through as is. All other values are
         # converted to string first.
         if is_protected_type(value):
-            self._current[field.name] = value
+            if   isinstance(value, datetime):
+                val = str(value).split('.')[0] # обрезаем милисекунды
+            elif isinstance(value, (date, time)):
+                val = str(value)
+            else:
+                val = value
+            self._current[field.name] = val
         elif field.name == 'password':
             self._current[field.name] = ''
         else:
@@ -65,13 +72,15 @@ class SerializerWrapper(object):
         return self._current[field.name]
     
     def handle_fk_field(self, obj, field):
-        if self.use_natural_keys:
+        if self.use_split_keys or self.use_natural_keys:
             related = getattr(obj, field.name)
             if related:
-                if hasattr(field.rel.to, 'natural_key'):
+                if self.use_natural_keys and hasattr(field.rel.to, 'natural_key'):
                     value = related.natural_key()
-                else:
+                elif self.use_split_keys:
                     value = (related.pk, unicode(related))
+                else:
+                    value = unicode(related)
             else:
                 value = None
         else:
@@ -80,11 +89,10 @@ class SerializerWrapper(object):
 
     def handle_m2m_field(self, obj, field):
         if field.rel.through._meta.auto_created:
-            if self.use_natural_keys:
-                if hasattr(field.rel.to, 'natural_key'):
-                    m2m_value = lambda value: value.natural_key()
-                else:
-                    m2m_value = lambda value: (value.pk, unicode(value))
+            if self.use_split_keys:
+                m2m_value = lambda value: (value.pk, unicode(value))
+            elif self.use_natural_keys and hasattr(field.rel.to, 'natural_key'):
+                m2m_value = lambda value: value.natural_key()
             else:
                 m2m_value = lambda value: smart_unicode(value._get_pk_val(), strings_only=True)
             self._current[field.name] = [m2m_value(related)
@@ -99,7 +107,10 @@ class SerializerWrapper(object):
 
         self.stream = options.pop("stream", StringIO())
         self.selected_fields = options.pop("fields", None)
+        self.use_split_keys = options.pop("use_split_keys", False)
         self.use_natural_keys = options.pop("use_natural_keys", False)
+        if self.use_split_keys:
+            self.use_natural_keys = False
 
         self.start_serialization()
         for obj in queryset:
@@ -170,6 +181,8 @@ def Deserializer(object_list, **options):
     stream or a string) to the constructor
     """
     db = options.pop('using', DEFAULT_DB_ALIAS)
+    use_split_keys = options.pop("use_split_keys", False)
+    use_natural_keys = options.pop("use_natural_keys", False)
     models.get_apps()
     for d in object_list:
         # Look up the model and starting build a dict of data for it.

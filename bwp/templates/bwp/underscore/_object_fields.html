@@ -52,6 +52,19 @@
                     <i class="icon-search"></i>
                 </button>
             </div>
+        {% } else if ((widget.tag == 'select') && (widget.attr.multiple)) { %}
+            <select name="{{ widget.name }}"
+                data-model="{{ widget.model }}"
+                disabled="disabled"
+                {% _.each(widget.attr, function(val, key) { %}
+                    {% if (! key in {'type':0, 'name':0}) { %}
+                        {{ key }}="{{ val }}"
+                    {% } %}
+                {% }); %}
+                class="{{ widget.attr['class'] }}"
+                data-action="object_change"
+                data-id="{{ data.id }}">{{ data.fields[widget.name] }}
+                </select>
         {% } %}
         {% if (!widget.hidden) { %}
                 </div>
