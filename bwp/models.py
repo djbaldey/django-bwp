@@ -157,7 +157,7 @@ class BaseModel(object):
 
     list_display        = ('__unicode__',)
     list_display_css    = {'pk': 'input-micro', 'id': 'input-micro'} # by default
-    list_per_page       = 15
+    list_per_page       = 10
     list_max_show_all   = 200
     show_column_pk      = False
 

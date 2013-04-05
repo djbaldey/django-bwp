@@ -353,14 +353,13 @@ class AbstractUserSettings(models.Model):
     """ Общая модель """
     user = models.ForeignKey(
             User,
-            limit_choices_to={'user__isnull': False},
             verbose_name=_('user'))
     json = fields.JSONField(
             blank=True,
             verbose_name = _('JSON value'))
 
     def __unicode__(self):
-        return unicode(self.person)
+        return unicode(self.user)
 
     class Meta:
         abstract = True
