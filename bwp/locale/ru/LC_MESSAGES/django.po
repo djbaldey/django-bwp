@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 0.1.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-04-05 10:15+1100\n"
+"POT-Creation-Date: 2013-04-06 19:13+1100\n"
 "PO-Revision-Date: 2013-01-29 01:26+1100\n"
 "Last-Translator: Grigoriy Kramarenko <root@rosix.ru>\n"
 "Language: RU\n"
@@ -16,6 +16,10 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
+
+#: __init__.py:41
+msgid "BWP"
+msgstr ""
 
 #: forms.py:9
 msgid ""
@@ -36,263 +40,72 @@ msgstr ""
 "Ваш адрес электронной почты не является вашим именем пользователя. "
 "Попробуйте '%s' взамен."
 
-#: models.py:112
+#: models.py:113
 msgid "action time"
 msgstr "время действия"
 
-#: models.py:115
+#: models.py:116
 msgid "object id"
 msgstr "идентификатор объекта"
 
-#: models.py:116
+#: models.py:117
 msgid "object repr"
 msgstr "представление объекта"
 
-#: models.py:117
+#: models.py:118
 msgid "action flag"
 msgstr "тип действия"
 
-#: models.py:118
+#: models.py:119
 msgid "change message"
 msgstr "сообщение об изменении"
 
-#: models.py:123
+#: models.py:124
 msgid "log entry"
 msgstr "запись в журнале"
 
-#: models.py:124
+#: models.py:125
 msgid "log entries"
 msgstr "записи в журнале"
 
-#: models.py:133
+#: models.py:134
 #, python-format
 msgid "Added \"%(object)s\"."
 msgstr "Добавлено \"%(object)s\"."
 
-#: models.py:135
+#: models.py:136
 #, python-format
 msgid "Changed \"%(object)s\" - %(changes)s"
 msgstr "Изменено \"%(object)s\" - %(changes)s"
 
-#: models.py:137
+#: models.py:138
 #, python-format
 msgid "Deleted \"%(object)s.\""
 msgstr "Удалено \"%(object)s.\""
 
-#: models.py:139
+#: models.py:140
 msgid "LogEntry Object"
 msgstr "Запись в журнале"
 
-#: views.py:79
+#: models.py:830 models.py:831
+msgid "global settings"
+msgstr "глобальные настройки"
+
+#: views.py:78
 msgid "bwp"
 msgstr ""
 
-#: views.py:92 templates/registration/password_reset_complete.html:20
+#: views.py:91 templates/registration/password_reset_complete.html:20
 msgid "Log in"
 msgstr "Войти"
 
-#: views.py:303
+#: views.py:309
 msgid "List objects is blank!"
 msgstr "Список объектов пуст!"
 
-#: views.py:347
+#: views.py:369
 msgid "Commited!"
 msgstr "Принято!"
-
-#: contrib/abstracts/__init__.py:40
-msgid "abstracts"
-msgstr "абстрактное"
-
-#: contrib/abstracts/models.py:51
-msgid "certificate"
-msgstr "свидетельство"
-
-#: contrib/abstracts/models.py:52
-msgid "license"
-msgstr "лицензия"
-
-#: contrib/abstracts/models.py:56
-msgid "INN"
-msgstr "ИНН"
-
-#: contrib/abstracts/models.py:59 contrib/abstracts/models.py:86
-#: contrib/abstracts/models.py:205 contrib/abstracts/models.py:219
-#: contrib/sales/models.py:56 contrib/warehouses/models.py:56
-msgid "title"
-msgstr "название"
-
-#: contrib/abstracts/models.py:62 contrib/qualifiers/models.py:60
-msgid "full title"
-msgstr "полное название"
-
-#: contrib/abstracts/models.py:66
-msgid "KPP"
-msgstr "КПП"
-
-#: contrib/abstracts/models.py:70
-msgid "OGRN"
-msgstr "ОГРН"
-
-#: contrib/abstracts/models.py:73 contrib/abstracts/models.py:170
-msgid "address"
-msgstr "адрес"
-
-#: contrib/abstracts/models.py:76 contrib/abstracts/models.py:167
-msgid "phones"
-msgstr "телефоны"
-
-#: contrib/abstracts/models.py:82
-msgid "BIK"
-msgstr "БИК"
-
-#: contrib/abstracts/models.py:83
-msgid "identification code of bank"
-msgstr "банковский идентификационный код"
-
-#: contrib/abstracts/models.py:87
-msgid "title of bank"
-msgstr "название банка"
-
-#: contrib/abstracts/models.py:91
-msgid "set/account"
-msgstr "расчётный счёт"
-
-#: contrib/abstracts/models.py:92
-msgid "settlement account"
-msgstr "расчётный счёт"
-
-#: contrib/abstracts/models.py:96
-msgid "cor/account"
-msgstr "корреспондентский счёт"
-
-#: contrib/abstracts/models.py:97
-msgid "correspondent account"
-msgstr "корреспондентский счёт"
-
-#: contrib/abstracts/models.py:102
-msgid "type"
-msgstr "тип"
-
-#: contrib/abstracts/models.py:103 contrib/sales/models.py:60
-#: contrib/warehouses/models.py:60
-msgid "type of document"
-msgstr "тип документа"
-
-#: contrib/abstracts/models.py:107
-msgid "series"
-msgstr "серия"
-
-#: contrib/abstracts/models.py:108
-msgid "series of document"
-msgstr "серия документа"
-
-#: contrib/abstracts/models.py:112
-msgid "number"
-msgstr "номер"
-
-#: contrib/abstracts/models.py:113
-msgid "number of document"
-msgstr "номер документа"
-
-#: contrib/abstracts/models.py:117
-msgid "issue"
-msgstr "выдан"
-
-#: contrib/abstracts/models.py:118
-msgid "issue of document"
-msgstr "дата выдачи документа"
-
-#: contrib/abstracts/models.py:121
-msgid "organ"
-msgstr "орган"
-
-#: contrib/abstracts/models.py:122
-msgid "organization of issue"
-msgstr "орган выдачи документа"
-
-#: contrib/abstracts/models.py:126
-msgid "code organ"
-msgstr "код органа"
-
-#: contrib/abstracts/models.py:127
-msgid "code organization of issue"
-msgstr "код органа выдачи"
-
-#: contrib/abstracts/models.py:132 contrib/abstracts/models.py:177
-msgid "site"
-msgstr "айт"
-
-#: contrib/abstracts/models.py:133 contrib/abstracts/models.py:178
-msgid "web site"
-msgstr "web сайт"
-
-#: contrib/abstracts/models.py:137 contrib/abstracts/models.py:173
-msgid "email"
-msgstr ""
-
-#: contrib/abstracts/models.py:138 contrib/abstracts/models.py:174
-msgid "email address"
-msgstr "адрес e-mail"
-
-#: contrib/abstracts/models.py:141 contrib/abstracts/models.py:188
-#: contrib/smallbusiness/models.py:183
-msgid "about"
-msgstr "описание"
-
-#: contrib/abstracts/models.py:142
-msgid "about organization"
-msgstr "об организации"
-
-#: contrib/abstracts/models.py:155
-msgid "last name"
-msgstr "фамилия"
-
-#: contrib/abstracts/models.py:159
-msgid "first name"
-msgstr "имя"
-
-#: contrib/abstracts/models.py:163
-msgid "middle name"
-msgstr "отчество"
-
-#: contrib/abstracts/models.py:182
-msgid "skype"
-msgstr ""
-
-#: contrib/abstracts/models.py:185
-msgid "jabber"
-msgstr ""
-
-#: contrib/abstracts/models.py:189
-msgid "about person"
-msgstr "о персоне"
-
-#: contrib/abstracts/models.py:233
-msgid "label"
-msgstr "метка"
-
-#: contrib/abstracts/models.py:235 contrib/abstracts/models.py:324
-#: contrib/abstracts/models.py:326
-msgid "file"
-msgstr "файл"
-
-#: contrib/abstracts/models.py:264
-msgid "videocode"
-msgstr "видео"
-
-#: contrib/abstracts/models.py:266 contrib/qualifiers/models.py:48
-#: contrib/qualifiers/models.py:75 contrib/qualifiers/models.py:121
-#: contrib/qualifiers/models.py:194
-msgid "code"
-msgstr "код"
-
-#: contrib/abstracts/models.py:267
-msgid "Set your code for video on the www.youtube.com"
-msgstr "Установите код видео с www.youtube.com"
-
-#: contrib/abstracts/models.py:286 contrib/abstracts/models.py:288
-msgid "image"
-msgstr "изображение"
 
 #: templates/bwp/404.html:5
 msgid "Excuse, the page isn't found."
@@ -512,3 +325,139 @@ msgstr "авторизация"
 #: templatetags/bwp_locale.py:48
 msgid "sites"
 msgstr "сайты"
+
+#: templatetags/bwp_locale.py:49
+msgid "content types"
+msgstr "типы контента"
+
+msgid "abstracts"
+msgstr "абстрактное"
+
+msgid "certificate"
+msgstr "свидетельство"
+
+msgid "license"
+msgstr "лицензия"
+
+msgid "INN"
+msgstr "ИНН"
+
+msgid "title"
+msgstr "название"
+
+msgid "full title"
+msgstr "полное название"
+
+msgid "KPP"
+msgstr "КПП"
+
+msgid "OGRN"
+msgstr "ОГРН"
+
+msgid "address"
+msgstr "адрес"
+
+msgid "phones"
+msgstr "телефоны"
+
+msgid "BIK"
+msgstr "БИК"
+
+msgid "identification code of bank"
+msgstr "банковский идентификационный код"
+
+msgid "title of bank"
+msgstr "название банка"
+
+msgid "set/account"
+msgstr "расчётный счёт"
+
+msgid "settlement account"
+msgstr "расчётный счёт"
+
+msgid "cor/account"
+msgstr "корреспондентский счёт"
+
+msgid "correspondent account"
+msgstr "корреспондентский счёт"
+
+msgid "type"
+msgstr "тип"
+
+msgid "type of document"
+msgstr "тип документа"
+
+msgid "series"
+msgstr "серия"
+
+msgid "series of document"
+msgstr "серия документа"
+
+msgid "number"
+msgstr "номер"
+
+msgid "number of document"
+msgstr "номер документа"
+
+msgid "issue"
+msgstr "выдан"
+
+msgid "issue of document"
+msgstr "дата выдачи документа"
+
+msgid "organ"
+msgstr "орган"
+
+msgid "organization of issue"
+msgstr "орган выдачи документа"
+
+msgid "code organ"
+msgstr "код органа"
+
+msgid "code organization of issue"
+msgstr "код органа выдачи"
+
+msgid "site"
+msgstr "сайт"
+
+msgid "web site"
+msgstr "web сайт"
+
+msgid "email address"
+msgstr "адрес e-mail"
+
+msgid "about"
+msgstr "описание"
+
+msgid "about organization"
+msgstr "об организации"
+
+msgid "last name"
+msgstr "фамилия"
+
+msgid "first name"
+msgstr "имя"
+
+msgid "middle name"
+msgstr "отчество"
+
+msgid "about person"
+msgstr "о персоне"
+
+msgid "label"
+msgstr "метка"
+
+msgid "file"
+msgstr "файл"
+
+msgid "videocode"
+msgstr "видео"
+
+msgid "code"
+msgstr "код"
+
+msgid "Set your code for video on the www.youtube.com"
+msgstr "Установите код видео с www.youtube.com"
+
+msgid "image"
+msgstr "изображение"
