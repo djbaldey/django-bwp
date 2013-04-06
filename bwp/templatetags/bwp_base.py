@@ -118,6 +118,12 @@ def short_username(user):
         return user.username
     return u'%s %s.' % (user.last_name, unicode(user.first_name)[0])
 
+@register.simple_tag
+def full_username(user):
+    if not user.last_name and not user.first_name:
+        return user.username
+    return u'%s %s' % (user.last_name, user.first_name)
+
 @register.filter
 def is_active(qs):
     try:

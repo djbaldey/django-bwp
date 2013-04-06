@@ -21,7 +21,7 @@
         </td>
         <td class="span6">
             <div class="pull-right">
-                <span class="label label-success">{{ user }}</span>
+                <span class="label label-success">{% full_username user %}</span>
                 <a href="{% url "bwp_logout" %}" title="Выход" class="label"><i class="icon-off"></i></a>
             </div>
         </td>
