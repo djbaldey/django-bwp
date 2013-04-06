@@ -1,13 +1,16 @@
 {# Шаблон Underscore #}{% load i18n l10n bwp_verbatim %}{% verbatim %}
-{% var _obj_add = 'object_add'; var _obj_delete = 'object_delete'; %}
+{% var _obj_add = 'object_add', _obj_delete = 'object_delete', _multiselect = true; %}
 {% if (data.is_m2m) { _obj_add += '_m2m'; _obj_delete += '_m2m'; } %}
+{% if ((data instanceof classSelector) && (!data.multiple)) { _multiselect = false; }%}
 <table data-id="{{ data.id }}"
     class="table table-condensed table-striped table-bordered table-hover">
     <thead>
         <tr>
+        {% if (_multiselect) { %}
             <th class="input-micro"><input type="checkbox" data-toggle="checkboxes"></th>
+        {% } %}
         {% _.each(data.widgets, function(c) { %}
-            {% if (_.strip(c.attr['class']) == 'input-mini') { var _label = _.truncate(c.label, 6) } else { _label = c.label } %}
+            {% var _label = c.label; if (_.strip(c.attr['class']) == 'input-mini') { _label = _.truncate(c.label, 6) } %}
             <th data-toggle="tooltip" class="{{ c.attr['class'] }}" title="{{ c.label }}">{{ _label }}</th>
         {% }); %}
         </tr>
@@ -15,7 +18,9 @@
     <tbody>
     {% _.each(data.paginator.object_list, function(obj) { %}
         <tr data-model="{{ obj.model }}" data-pk="{{ obj.pk }}">
+        {% if (_multiselect) { %}
             <td><input type="checkbox" data-model="{{ obj.model }}" data-pk="{{ obj.pk }}"></td>
+        {% } %}
             {% _.each(data.widgets, function(c, index) { %}
                 <td class="{{ c.attr['class'] }}">
                 {% if (index == 0) { %}
@@ -65,7 +70,7 @@
                                 </a>
                             </li>
                         {% } %}
-                        {% if (!(data.perms.delete || data.perms.add || data.perms.change)) { %}
+                        {% if (!_multiselect) { %}
                             <li><a  tabindex="-1" href="#"
                                     data-action="object_select"
                                     data-model="{{ obj.model }}"

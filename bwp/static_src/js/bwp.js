@@ -429,6 +429,7 @@ function classSelector(model) {
     this.perms.change = false;
     this.meta.list_display = ['__unicode__'];
     this.meta.list_per_page = 5;
+    this.multiple = false;
     _widgets = [];
     this.widgets = _widgets;
     selector = this;
