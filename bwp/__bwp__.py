@@ -36,7 +36,7 @@
 #   <http://www.gnu.org/licenses/>.
 ###############################################################################
 """
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import User, Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from bwp.sites import site
 from bwp.models import ModelBWP, ComposeBWP, LogEntry, GlobalUserSettings
@@ -51,6 +51,17 @@ class UserAdmin(ModelBWP):
     exclude = ['password',]
     search_fields = ('username', 'email')
 site.register(User, UserAdmin)
+
+class PermissionAdmin(ModelBWP):
+    list_display = ('__unicode__', 'id')
+    search_fields = (
+        'name',
+        'codename',
+        'content_type__name',
+        'content_type__app_label',
+        'content_type__model',
+    )
+site.register(Permission, PermissionAdmin)
 
 class UserCompose(ComposeBWP):
     model = User
