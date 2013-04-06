@@ -130,12 +130,18 @@ class LogEntry(models.Model):
         return smart_unicode(self.action_time)
 
     def __unicode__(self):
+        D = {'object': self.object_repr, 'changes': self.change_message}
         if self.action_flag == ADDING:
-            return _('Added "%(object)s".') % {'object': self.object_repr}
+            D['action'] = _('added').title()
         elif self.action_flag == CHANGE:
-            return _('Changed "%(object)s" - %(changes)s') % {'object': self.object_repr, 'changes': self.change_message}
+            D['action'] = _('changed').title()
         elif self.action_flag == DELETE:
-            return _('Deleted "%(object)s."') % {'object': self.object_repr}
+            D['action'] = _('deleted').title()
+        if self.action_flag in [ADDING, CHANGE, DELETE]:
+            if self.change_message:
+                return u'%(action)s «%(object)s» - %(changes)s' % D
+            else:
+                return u'%(action)s «%(object)s»' % D
 
         return _('LogEntry Object')
 
@@ -531,19 +537,24 @@ class BaseModel(object):
             'delete': self.has_delete_permission(request),
         }
 
-    def log_addition(self, request, object):
+    def log_addition(self, request, object, oldobj=None):
         """
         Log that an object has been successfully added.
 
         The default implementation creates an bwp LogEntry object.
         """
         if isinstance(object, LogEntry): return
+        if oldobj:
+            message = _('clone from #%s') % oldobj.pk
+        else:
+            message = None
         LogEntry.objects.log_action(
             user_id         = request.user.pk,
             content_type_id = ContentType.objects.get_for_model(object).pk,
             object_id       = object.pk,
             object_repr     = force_unicode(object),
-            action_flag     = ADDING
+            action_flag     = ADDING,
+            change_message  = message
         )
 
     def log_change(self, request, object, message):
@@ -757,10 +768,11 @@ class ModelBWP(BaseModel):
         if clone and self.has_clone:
             object.save()
             oldobj = self.get_instance(pk=pk)
+            self.log_addition(request, object, oldobj)
             for m2m in self.opts.local_many_to_many:
                 old = getattr(oldobj, m2m.get_attname())
                 new = getattr(object, m2m.get_attname())
-                new.add(old.all())
+                new.add(*old.all())
         data = self.get_full_object(request, object)
         return JSONResponse(data=data)
 
