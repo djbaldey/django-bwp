@@ -791,7 +791,10 @@ class ModelBWP(BaseModel):
             # TODO: made and call autofiller
         model = str(self.opts)
         data = self.serialize(object)
-        data['label'] = unicode(object)
+        try:
+            data['label'] = unicode(object)
+        except:
+            data['label'] = ''
 
         # Widgetsets
         widgetsets = self.get_list_widgetsets()

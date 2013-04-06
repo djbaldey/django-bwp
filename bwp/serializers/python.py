@@ -72,7 +72,7 @@ class SerializerWrapper(object):
         return self._current[field.name]
     
     def handle_fk_field(self, obj, field):
-        if self.use_split_keys or self.use_natural_keys:
+        if obj.pk and (self.use_split_keys or self.use_natural_keys):
             related = getattr(obj, field.name)
             if related:
                 if self.use_natural_keys and hasattr(field.rel.to, 'natural_key'):
@@ -161,11 +161,16 @@ class SerializerWrapper(object):
         return self.getvalue()
 
     def end_object(self, obj):
+        _unicode = ""
+        try:
+            _unicode = smart_unicode(obj)
+        except:
+            pass
         self.objects.append({
             "model"  :      smart_unicode(obj._meta),
             "pk"     :      smart_unicode(obj._get_pk_val(), strings_only=True),
             "fields":       self._current,
-            "__unicode__" : smart_unicode(obj),
+            "__unicode__" : _unicode,
         })
         self._current = None
 
