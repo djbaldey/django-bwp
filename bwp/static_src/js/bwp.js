@@ -920,7 +920,9 @@ function handlerTabOpen(data) {
         }, 1);
         // Добавляем вкладку в хранилище, если её там нет
         // (т.к. эту же функцию использует восстановление сессии). 
-        if ((data.id.indexOf(NEWOBJECTKEY) == -1)&&($.inArray(data.id, SETTINGS.local.tabs) < 0)) {
+        if ((data.id.indexOf(NEWOBJECTKEY) == -1)
+            &&($.inArray(data.id, SETTINGS.local.tabs) < 0)
+            &&($('#menu-app li[class!=disabled] a[data-id='+data.id+']').size() >0)) {
             SETTINGS.local.tabs.push(data.id);
             SETTINGS.save_local();
         }
