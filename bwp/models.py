@@ -547,7 +547,7 @@ class BaseModel(object):
         if oldobj:
             message = _('clone from #%s') % oldobj.pk
         else:
-            message = None
+            message = ""
         LogEntry.objects.log_action(
             user_id         = request.user.pk,
             content_type_id = ContentType.objects.get_for_model(object).pk,

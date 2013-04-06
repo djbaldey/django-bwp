@@ -64,6 +64,9 @@ except ImportError:
 class JSONField(TextField):
     __metaclass__ = SubfieldBase
 
+    def get_internal_type(self):
+        return "JSONField"
+
     def contribute_to_class(self, cls, name):
         super(JSONField, self).contribute_to_class(cls, name)
 
@@ -82,10 +85,10 @@ class JSONField(TextField):
     def get_db_prep_save(self, value, **kwargs):
         """Convert our JSON object to a string before we save"""
 
-        if value == "":
-            return None
+        if value is None:
+            value = ""
 
-        if isinstance(value, dict):
+        if not isinstance(value, basestring):
             value = simplejson.dumps(value, cls=DjangoJSONEncoder)
 
         return super(JSONField, self).get_db_prep_save(value, **kwargs)
