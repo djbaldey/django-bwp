@@ -5,7 +5,8 @@
         <tr>
             <th class="input-micro"><input type="checkbox" data-toggle="checkboxes"></th>
         {% _.each(data.widgets, function(c) { %}
-            <th data-toggle="tooltip" class="{{ c.attr['class'] }}" title="{{ c.title }}">{{ c.label }}</th>
+            {% if (_.strip(c.attr['class']) == 'input-mini') { var _label = _.truncate(c.label, 6) } else { _label = c.label } %}
+            <th data-toggle="tooltip" class="{{ c.attr['class'] }}" title="{{ c.label }}">{{ _label }}</th>
         {% }); %}
         </tr>
     </thead>
@@ -69,7 +70,15 @@
                     {% if (c.name == '__unicode__') { %}
                         {{ obj.__unicode__ }}
                     {% } else { %}
-                        {{ obj.fields[c.name] }}
+                        {% if ($.type(obj.fields[c.name]) === 'boolean') { %}
+                            {% if (obj.fields[c.name]) { %}
+                                <i class="icon-ok"></i>
+                            {% } else { %}
+                                <i class="icon-ban-circle"></i>
+                            {% } %}
+                        {% } else { %}
+                            {{ obj.fields[c.name] }}
+                        {% } %}
                     {% } %}
                 {% } %}
                 </td>

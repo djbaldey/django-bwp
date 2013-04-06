@@ -563,8 +563,11 @@ class ComposeBWP(BaseModel):
 
     verbose_name = None
     related_name = None
-    
-    def __init__(self, related_name, related_model, bwp_site):
+    is_many_to_many = False
+
+    def __init__(self, related_name, related_model, bwp_site, model=None):
+        if model:
+            self.model = model
         self.related_name  = related_name
         self.related_model = related_model
         self.bwp_site = bwp_site
@@ -578,6 +581,7 @@ class ComposeBWP(BaseModel):
         meta['widgetsets'] = []
         meta['related_name'] = self.related_name
         meta['related_model'] = str(self.related_model.opts)
+        meta['is_many_to_many'] = self.is_many_to_many
         return meta
 
     def get(self, request, pk, **kwargs):
@@ -649,6 +653,10 @@ class ComposeBWP(BaseModel):
                     'permissions': permissions })
         return data
 
+class ManyToManyBWP(ComposeBWP):
+    """ Расширение композиций для отображения полей m2m """
+    is_many_to_many = True
+
 class ModelBWP(BaseModel):
     """ Модель для регистрации в BWP.
         Наследуются атрибуты:
@@ -689,12 +697,29 @@ class ModelBWP(BaseModel):
 
     @property
     def compose_instances(self):
-        """ Регистрирует экземпляры Compose моделей и/или возвращает их. """
+        """ Регистрирует экземпляры Compose моделей и/или возвращает их.
+            При формировании первыми в композиции попадают поля
+            ManyToMany, если же они переопределены, то заменяются.
+        """
         if not hasattr(self, '_compose_instances'):
-            self._compose_instances = [
-                compose_class(related_name, self, self.bwp_site) \
-                for related_name, compose_class in self.compositions or []
-            ]
+            L = []
+            D = {}
+            def add(cls, related_name, model=None):
+                instance = cls(related_name=related_name, related_model=self,
+                    bwp_site=self.bwp_site, model=model)
+                D[related_name] = instance
+                L.append(instance)
+
+            for m2m in self.opts.local_many_to_many:
+                related_name = m2m.related.field.get_attname()
+                if related_name in self.exclude:
+                    continue
+                model = m2m.related.parent_model
+                add(ManyToManyBWP, related_name, model)
+            for related_name, compose_class in self.compositions:
+                add(compose_class, related_name)
+
+            self._compose_instances = [ D[x.related_name] for x in L ]
         return self._compose_instances
 
     def get_object_detail(self, request, object, **kwargs):
@@ -735,7 +760,7 @@ class ModelBWP(BaseModel):
     def get_composes(self, request=None):
         """ Получает список разрешённых моделей Compose. """
         compose_instances = []
-        if not self.compositions:
+        if self.compositions is None: # запрещены принудительно
             return compose_instances
         for compose in self.compose_instances:
             if request:
@@ -745,7 +770,6 @@ class ModelBWP(BaseModel):
                         compose.has_delete_permission(request)):
                     continue
             compose_instances.append(compose)
-
         return compose_instances
 
     def compose_dict(self, request, **kwargs):

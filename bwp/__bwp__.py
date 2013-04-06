@@ -39,17 +39,25 @@
 from django.contrib.auth.models import User, Group
 from django.contrib.contenttypes.models import ContentType
 from bwp.sites import site
-from bwp.models import ModelBWP, LogEntry, GlobalUserSettings
+from bwp.models import ModelBWP, ComposeBWP, LogEntry, GlobalUserSettings
 from django.utils.translation import ugettext_lazy as _
 
 class UserAdmin(ModelBWP):
     list_display = ('__unicode__', 'is_superuser', 'is_staff', 'last_login', 'date_joined', 'id')
+    list_display_css = {
+        'pk': 'input-micro', 'id': 'input-micro',
+        'is_superuser': 'input-mini', 'is_staff': 'input-mini',
+    }
     exclude = ['password',]
     search_fields = ('username', 'email')
 site.register(User, UserAdmin)
 
+class UserCompose(ComposeBWP):
+    model = User
+
 class GroupAdmin(ModelBWP):
     list_display = ('__unicode__', 'id')
+    compositions = [('user_set', UserCompose)]
 site.register(Group, GroupAdmin)
 
 class ContentTypeAdmin(ModelBWP):
