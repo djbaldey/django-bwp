@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 0.1.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-04-06 21:46+1100\n"
+"POT-Creation-Date: 2013-04-06 22:39+1100\n"
 "PO-Revision-Date: 2013-01-29 01:26+1100\n"
 "Last-Translator: Grigoriy Kramarenko <root@rosix.ru>\n"
 "Language: RU\n"
@@ -20,6 +20,22 @@ msgstr ""
 #: __init__.py:41
 msgid "BWP"
 msgstr ""
+
+#: conf.py:52
+msgid "Example project"
+msgstr "Пример проекта"
+
+#: conf.py:53
+msgid "BWP-Example"
+msgstr "BWP-Пример"
+
+#: conf.py:54
+msgid "Example project on platform Business Web Package"
+msgstr "Пример проекта на платформе Business Web Package"
+
+#: conf.py:64
+msgid "Name of company"
+msgstr "Название компании"
 
 #: forms.py:9
 msgid ""
@@ -291,6 +307,8 @@ msgid "videocode"
 msgstr "видео"
 
 #: contrib/abstracts/models.py:266 contrib/qualifiers/models.py:48
+#: contrib/qualifiers/models.py:75 contrib/qualifiers/models.py:121
+#: contrib/qualifiers/models.py:194
 msgid "code"
 msgstr "код"
 
@@ -303,6 +321,8 @@ msgid "image"
 msgstr "изображение"
 
 #: contrib/abstracts/models.py:356 contrib/contacts/models.py:60
+#: contrib/smallbusiness/models.py:326 contrib/smallbusiness/models.py:383
+#: contrib/smallbusiness/models.py:480 contrib/smallbusiness/models.py:545
 msgid "user"
 msgstr "пользователь"
 

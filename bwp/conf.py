@@ -49,9 +49,9 @@ VERSION_DATE            = getattr(settings, 'VERSION_DATE',
     ).strftime("%d.%m.%Yг.")
 )
 
-PROJECT_NAME            = getattr(settings, 'PROJECT_NAME',             'BWP Default Project')
-PROJECT_SHORTNAME       = getattr(settings, 'PROJECT_SHORTNAME',        'BWP')
-PROJECT_DESCRIPTION     = getattr(settings, 'PROJECT_DESCRIPTION',      'Business Web Package Default Project')
+PROJECT_NAME            = getattr(settings, 'PROJECT_NAME',             _(u'Example project'))
+PROJECT_SHORTNAME       = getattr(settings, 'PROJECT_SHORTNAME',        _(u'BWP-Example'))
+PROJECT_DESCRIPTION     = getattr(settings, 'PROJECT_DESCRIPTION',      _(u'Example project on platform Business Web Package'))
 
 DJANGO_VERSION          = getattr(settings, 'DJANGO_VERSION',           '1.4')
 BOOTSTRAP_VERSION       = getattr(settings, 'BOOTSTRAP_VERSION',        '2.3.1')
@@ -61,5 +61,5 @@ UNDERSCORE_VERSION      = getattr(settings, 'UNDERSCORE_VERSION',       '1.4.4')
 UNDERSCORE_STRING_VERSION = getattr(settings, 'UNDERSCORE_STRING_VERSION', '2.3.0')
 
 AUTHORS                 = getattr(settings, 'AUTHORS',                  [])
-COPYRIGHT               = getattr(settings, 'COPYRIGHT',                'Company Name')
+COPYRIGHT               = getattr(settings, 'COPYRIGHT',                _(u'Name of company'))
 COPYRIGHT_YEAR          = getattr(settings, 'COPYRIGHT_YEAR',           '2013')

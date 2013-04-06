@@ -39,8 +39,9 @@
 ////////////////////////////////////////////////////////////////////////
 //                   КОНСТАНТЫ И ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ                //
 ////////////////////////////////////////////////////////////////////////
-var NEWOBJECTKEY = 'newObject';
-var FIELD = null;
+var NEWOBJECTKEY = 'newObject',
+    FIELD = null,
+    delay = null;
 
 // Глобальные хранилища-регистраторы
 window.TEMPLATES = {}; // Шаблоны
@@ -65,7 +66,7 @@ _.mixin(_.str.exports());
 
 /* Проверка объекта на пустоту */
 function isEmpty(obj) {
-    for (var key in obj) {
+    for (var k in obj) {
         return false; // если цикл хоть раз сработал, то объект не пустой => false
     }
     // дошли до этой строки - значит цикл не нашёл ни одного свойства => true
@@ -73,7 +74,7 @@ function isEmpty(obj) {
 }
 
 /* Единая, переопределяемая задержка для действий или функций */
-var delay = (function(){
+delay = (function(){
     if (DEBUG) {console.log('function:'+'delay')};
     var timer = 0;
     return function(callback, ms){
@@ -95,11 +96,11 @@ var delay = (function(){
  */
 function generatorID(prefix, postfix) {
     if (DEBUG) {console.log('function:'+'generatorID')};
-    var result = [];
-    var gen = 'i';
-    var m = 1000;
-    var n = 9999;
-    var salt = Math.floor( Math.random() * (n - m + 1) ) + m;
+    var result = [],
+        gen = 'i',
+        m = 1000,
+        n = 9999,
+        salt = Math.floor( Math.random() * (n - m + 1) ) + m;
     gen += $.now() + String(salt);
     if (prefix) { result.push(prefix)};
     result.push(gen); 
@@ -138,7 +139,7 @@ function handlerShowAlert(msg, type, callback) {
 /* Общая функция для работы с django-quickapi */
 function jsonAPI(args, callback, to_console, sync) {
     if (DEBUG) {console.log('function:'+'jsonAPI')};
-    if (!args) { var args = { method: "get_settings" } };
+    if (!args) { args = { method: "get_settings" } };
     if (!callback) { callback = function(json, status, xhr) {} };
     var jqxhr = $.ajax({
         type: "POST",
@@ -185,7 +186,7 @@ function jsonAPI(args, callback, to_console, sync) {
             if (DEBUG) {console.log($.toJSON(json.message))};
             return callback(json, status, xhr);
         };
-    })
+    });
     return jqxhr
 };
 
@@ -423,7 +424,7 @@ function classSelector(model) {
     this.id = validatorID([this.id, 'selector'])
     this.template = TEMPLATES.layoutSelector;
     // Запрещаем все действия.
-    this.perms.delete = false;
+    this.perms['delete'] = false;
     this.perms.add = false;
     this.perms.change = false;
     //~ this.meta.list_display = this.meta.list_display.slice(0,1);
@@ -574,7 +575,6 @@ function handlerObjectAdd(model) {
         "model"   : model.name,
         "pk"      : null,
     }
-    console.log(args)
     cb = function(json, status, xhr) {
         object = new classObject(json.data);
         object.fixaction = 'add'
@@ -588,8 +588,8 @@ function handlerObjectAdd(model) {
 /* Изменение объекта добавлением полей во временное хранилище */
 function handlerObjectChange(object, $field) {
     if (DEBUG) {console.log('function:'+'handlerObjectChange')};
-    var name = $field.attr('name');
-    var value = $field.val();
+    var name = $field.attr('name'),
+        value = $field.val();
     if ($.type(object.fields[name]) === 'array') {
         value = [value, $field.text()];
     } else if ($.type(object.fields[name]) === 'boolean') {
@@ -783,7 +783,6 @@ function handlerCollectionGet(instance) {
     cb = function(json, status, xhr) {
         instance.paginator = json.data;
         html = handlerCollectionRender(instance);
-        //~ console.log(html)
     }
     jqxhr = new jsonAPI(args, cb, 'handlerCollectionGet() call jsonAPI()')
     return jqxhr
@@ -945,9 +944,7 @@ function handlerTabOpen(data) {
             SETTINGS.save_local();
         }
         // Устанавливаем одиночный биндинг на загрузку контента при щелчке на вкладке
-        //~ console.log(tab_id)
-        a = $('#tab_'+data.id+' a').one('click', eventLayoutLoad);
-        //~ console.log(a)
+        $('#tab_'+data.id+' a').one('click', eventLayoutLoad);
     }
     return true;
 }
