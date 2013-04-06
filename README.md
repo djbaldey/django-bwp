@@ -1,4 +1,4 @@
-# Business Web Package
+# Business Web Platform
 
 This is online-package for the employers. BWP provides standard set of
 operations with documents, such as acts, accounts, contracts, goods and
@@ -20,3 +20,5 @@ included WSGI).
 *In current time, the project under initial stage of development*
 
 Application tested on Django 1.4
+
+*Old name: Business Web Package*

@@ -18,8 +18,8 @@ msgstr ""
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
 
 #: __init__.py:41
-msgid "BWP"
-msgstr ""
+msgid "platform"
+msgstr "платформа"
 
 #: conf.py:52
 msgid "Example project"
@@ -30,8 +30,8 @@ msgid "BWP-Example"
 msgstr "BWP-Пример"
 
 #: conf.py:54
-msgid "Example project on platform Business Web Package"
-msgstr "Пример проекта на платформе Business Web Package"
+msgid "Example project on Business Web Platform"
+msgstr "Пример проекта на Business Web Platform"
 
 #: conf.py:64
 msgid "Name of company"

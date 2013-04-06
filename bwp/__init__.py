@@ -38,9 +38,9 @@
 """
 import os
 from django.utils.translation import ugettext_lazy as _
-__label__ = _('BWP')
+__label__ = _('platform')
 
-VERSION = (0, 1, 4)
+VERSION = (0, 1, 5)
 __version__ = '.'.join([ str(x) for x in VERSION ])
 
 def auto_remove_version_links(path):

@@ -51,7 +51,7 @@ VERSION_DATE            = getattr(settings, 'VERSION_DATE',
 
 PROJECT_NAME            = getattr(settings, 'PROJECT_NAME',             _(u'Example project'))
 PROJECT_SHORTNAME       = getattr(settings, 'PROJECT_SHORTNAME',        _(u'BWP-Example'))
-PROJECT_DESCRIPTION     = getattr(settings, 'PROJECT_DESCRIPTION',      _(u'Example project on platform Business Web Package'))
+PROJECT_DESCRIPTION     = getattr(settings, 'PROJECT_DESCRIPTION',      _(u'Example project on Business Web Platform'))
 
 DJANGO_VERSION          = getattr(settings, 'DJANGO_VERSION',           '1.4')
 BOOTSTRAP_VERSION       = getattr(settings, 'BOOTSTRAP_VERSION',        '2.3.1')

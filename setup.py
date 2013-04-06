@@ -9,7 +9,9 @@ README = read('README.md')
 setup(
     name='BWP',
     version=__version__,
-    description='The "Business Web Package" is Django-application. Contains models, templates and other preparations for the fast building of ERP system',
+    description='The "Business Web Platform" is Django-application. ' \
+                'Contains models, templates and other preparations for ' \
+                'the fast building of ERP system',
     long_description=README,
     author='Grigoriy Kramarenko',
     author_email='root@rosix.ru',
