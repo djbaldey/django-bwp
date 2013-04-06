@@ -176,6 +176,7 @@ class BaseModel(object):
     form                = None
     site                = None
     hidden              = False
+    allow_clone         = None
     
     # Набор ключей для предоставления метаданных об этой модели.
     metakeys = ('list_display', 'list_display_css', 'list_per_page',
@@ -216,10 +217,13 @@ class BaseModel(object):
         """ Проверяет, могут ли объекты клонироваться
         """
         if not hasattr(self, '_has_clone'):
-            L = [bool(self.opts.unique_together)]
-            L.extend([ f.unique for f in self.opts.local_fields if not f is self.opts.pk ])
-            L.extend([ f.unique for f in self.opts.local_many_to_many ])
-            self._has_clone = not True in L
+            if self.allow_clone is None:
+                L = [bool(self.opts.unique_together)]
+                L.extend([ f.unique for f in self.opts.local_fields if not f is self.opts.pk ])
+                L.extend([ f.unique for f in self.opts.local_many_to_many ])
+                self._has_clone = not True in L
+            else:
+                self._has_clone = self.allow_clone
         return self._has_clone
 
     def prepare_meta(self, request):
