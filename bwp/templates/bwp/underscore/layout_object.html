@@ -9,7 +9,8 @@
         </button>
     {% _.each(data.composes, function(compose) { %}
         {%/* Если объект не сохранён в DB, то запрещаем операции с вложениями */%}
-        <button class="btn btn-mini"
+        {% var _compose_btn_class = ''; if (compose.is_m2m) { _compose_btn_class = 'btn-info'} %}
+        <button class="btn btn-mini {{ _compose_btn_class }}"
         {% if (!data.pk) { %}
             disabled="disabled"
         {% } else { %}

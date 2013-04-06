@@ -1,4 +1,6 @@
 {# Шаблон Underscore #}{% load bwp_verbatim %}{% verbatim %}
+{% var _obj_add = 'object_add'; var _obj_delete = 'object_delete'; %}
+{% if (data.is_m2m) { _obj_add += '_m2m'; _obj_delete += '_m2m'; } %}
 <!--
 <div class="navbar nav-pills" id="navbar_{{ data.id }}">
   <div class="navbar-inner">
@@ -22,8 +24,12 @@
             <div class="btn-toolbar">
             {% if (data.perms.add) { %}
                 <div class="btn-group">
-                    <button class="btn btn-mini" data-id="{{ data.id }}" data-action="object_add">
+                    <button class="btn btn-mini" data-id="{{ data.id }}" data-action="{{ _obj_add }}">
+                    {% if (data.is_m2m) { %}
+                        <i class="icon-plus-sign"></i>
+                    {% } else { %}
                         <i class="icon-plus"></i>
+                    {% } %}
                         Добавить
                     </button>
                 </div>

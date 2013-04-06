@@ -441,7 +441,8 @@ function classCompose(object, data) {
     this.name     = data.name;
     this.meta     = data.meta;
     this.compose  = this.meta.related_name;
-    this.model = this.meta.related_model;
+    this.model    = this.meta.related_model;
+    this.is_m2m   = this.meta.is_many_to_many;
     this.id    = validatorID([this.object.id, this.name]);
     this.label = data.label;
     this.title = this.object.label +': '+ this.label;
@@ -572,7 +573,6 @@ function handlerObjectAdd(model, $this) {
     data = {};
     $.extend(true, data, _data);
     newobject = new classObject(data);
-    console.log(newobject);
     $.extend(true, newobject.fix, newobject.fields);
     newobject.fixaction = 'add'
     newobject.model.fix[newobject.id] = newobject
@@ -675,15 +675,18 @@ function eventObjectOpen() {
 }
 
 /* Обработчик события создания объекта */
-function eventObjectAdd() {
+function eventObjectAdd(event) {
     if (DEBUG) {console.log('function:'+'eventObjectAdd')};
     $this = $(this);
     data = $this.data();
+    if ((event) && (event.data) && (event.data.m2m)) {
+        console.log(event)
+        return true
+    }
     model = REGISTER[data.id];
     if (model instanceof classCompose) {
         model = REGISTER[validatorID(model.name)]
     }
-    console.log(model)
     handlerObjectAdd(model, $this);
     return true;
 }
@@ -699,10 +702,14 @@ function eventObjectCopy() {
 }
 
 /* Обработчик события удаления объекта */
-function eventObjectDelete() {
+function eventObjectDelete(event) {
     if (DEBUG) {console.log('function:'+'eventObjectDelete')};
     $this = $(this);
     data = $this.data();
+    if ((event) && (event.data) && (event.data.m2m)) {
+        console.log(event)
+        return true
+    }
     object = REGISTER[data.id];
     handlerObjectDelete(data, $this);
     return true
@@ -874,8 +881,6 @@ function eventRowClick() {
     $this.addClass('info').siblings('tr').removeClass('info');
     return true
 }
-
-
 
 ////////////////////////////////////////////////////////////////////////
 //                              ВКЛАДКИ                               //
@@ -1073,9 +1078,11 @@ $(document).ready(function($) {
 
         // Биндинги на кнопки и ссылки
         $('body').on('click', '[data-action=object_open]',   eventObjectOpen);
-        $('body').on('click', '[data-action=object_add]',    eventObjectAdd);
         $('body').on('click', '[data-action=object_copy]',   eventObjectCopy);
-        $('body').on('click', '[data-action=object_delete]', eventObjectDelete);
+        $('body').on('click', '[data-action=object_add]',                 eventObjectAdd);
+        $('body').on('click', '[data-action=object_add_m2m]', {m2m:true}, eventObjectAdd);
+        $('body').on('click', '[data-action=object_delete]',                 eventObjectDelete);
+        $('body').on('click', '[data-action=object_delete_m2m]', {m2m:true}, eventObjectDelete);
         $('body').on('keyup', '[data-action=object_change]', eventObjectChange);
         $('body').on('change','[data-action=object_change]', eventObjectChange);
         $('body').on('click', '[data-action=object_reset]',  eventObjectReset);
