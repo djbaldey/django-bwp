@@ -1,87 +1,80 @@
 {# Шаблон Underscore #}{% load bwp_verbatim %}{% verbatim %}
 {% var _obj_add = 'object_add'; var _obj_delete = 'object_delete'; %}
 {% if (data.is_m2m) { _obj_add += '_m2m'; _obj_delete += '_m2m'; } %}
-<!--
-<div class="navbar nav-pills" id="navbar_{{ data.id }}">
-  <div class="navbar-inner">
--->
-    {% if (data.meta.search_fields.length) { %}
-    <div class="subnav pull-right">
-        <div class="pull-left form-search">
-            <div class=" input-append">
-                <input data-action="collection_filter" data-id="{{ data.id }}" type="search" class="search input-small" placeholder="Поиск">
-                <button class="btn btn-mini" data-id="{{ data.id }}" data-action="collection_filtersettings">
-                    <i class="icon-wrench"></i>
+{% if (data.meta.search_fields.length) { %}
+<div class="subnav pull-right">
+    <div class="pull-left form-search">
+        <div class=" input-append">
+            <input data-action="collection_filter" data-id="{{ data.id }}" type="search" class="search input-small" placeholder="Поиск">
+            <button class="btn btn-mini" data-id="{{ data.id }}" data-action="collection_filtersettings">
+                <i class="icon-wrench"></i>
+            </button>
+        </div>
+    </div>
+</div>
+{% } %}
+{% if (data.paginator) { var _per_page = data.paginator.per_page || data.meta.list_per_page; %}
+{% } else { var _per_page = data.meta.list_per_page;} %}
+<div class="subnav">
+    <div>
+        <div class="btn-toolbar">
+        {% if (data.perms.add) { %}
+            <div class="btn-group">
+                <button class="btn btn-mini" data-id="{{ data.id }}" data-action="{{ _obj_add }}">
+                {% if (data.is_m2m) { %}
+                    <i class="icon-plus-sign"></i>
+                {% } else { %}
+                    <i class="icon-plus"></i>
+                {% } %}
+                    Добавить
                 </button>
             </div>
-        </div>
-    </div>
-    {% } %}
-    {% if (data.paginator) { var _per_page = data.paginator.per_page || data.meta.list_per_page; %}
-    {% } else { var _per_page = data.meta.list_per_page;} %}
-    <div class="subnav">
-        <div>
-            <div class="btn-toolbar">
-            {% if (data.perms.add) { %}
-                <div class="btn-group">
-                    <button class="btn btn-mini" data-id="{{ data.id }}" data-action="{{ _obj_add }}">
-                    {% if (data.is_m2m) { %}
-                        <i class="icon-plus-sign"></i>
-                    {% } else { %}
-                        <i class="icon-plus"></i>
-                    {% } %}
-                        Добавить
-                    </button>
-                </div>
+        {% } %}
+        {% if (data.actions) { %}
+            <div class="btn-group">
+                <a  class="btn btn-mini dropdown-toggle"
+                    data-toggle="dropdown"
+                    href="#">
+                    <i class="icon-list"></i>
+                    Действия
+                    <span class="caret"></span>
+                </a>
+                <ul class="dropdown-menu">
+                    {% _.each(data.actions, function(action) { %}
+                        <li><a href="#" data-action="{{ action.name }}" data-id={{ data.id }}>{{ action.label }}</a></li>
+                    {% }); %}
+                </ul>
+            {% if (data.actions.print) { %}
+                <button class="btn btn-mini" data-id="{{ data.id }}" data-action="collection_print">
+                    <i class="icon-print"></i>
+                    Печать
+                </button>
             {% } %}
-            {% if (data.actions) { %}
-                <div class="btn-group">
-                    <a  class="btn btn-mini dropdown-toggle"
-                        data-toggle="dropdown"
-                        href="#">
-                        <i class="icon-list"></i>
-                        Действия
-                        <span class="caret"></span>
-                    </a>
-                    <ul class="dropdown-menu">
-                        {% _.each(data.actions, function(action) { %}
-                            <li><a href="#" data-action="{{ action.name }}" data-id={{ data.id }}>{{ action.label }}</a></li>
-                        {% }); %}
-                    </ul>
-                {% if (data.actions.print) { %}
-                    <button class="btn btn-mini" data-id="{{ data.id }}" data-action="collection_print">
-                        <i class="icon-print"></i>
-                        Печать
-                    </button>
-                {% } %}
-                </div>
-            {% } %}
-                <div class="btn-group">
-                    <button class="btn btn-mini" data-id="{{ data.id }}" data-action="collection_filters">
-                        <i class="icon-filter"></i>
-                        Фильтры
-                    </button>
-                    <a  class="btn btn-mini dropdown-toggle"
-                        data-toggle="dropdown"
-                        href="#">
-                        <i class="icon-resize-vertical"></i>
-                        <span data-placeholder="collection_count" data-id="{{ data.id }}">{{ _per_page }}</span>
-                        на странице
-                        <span class="caret"></span>
-                    </a>
-                    <ul class="dropdown-menu">
-                        {% _.each([5,10,15,25,50,100,200], function(digit) { %}
-                            <li><a href="#" data-action="collection_count" data-id={{ data.id }} data-count="{{ digit }}">{{ digit }}</a></li>
-                        {% }); %}
-                    </ul>
-                </div>
+            </div>
+        {% } %}
+            <div class="btn-group">
+                <button class="btn btn-mini" data-id="{{ data.id }}" data-action="collection_filters">
+                    <i class="icon-filter"></i>
+                    Фильтры
+                </button>
+                <a  class="btn btn-mini dropdown-toggle"
+                    data-toggle="dropdown"
+                    href="#">
+                    <i class="icon-resize-vertical"></i>
+                    <span data-placeholder="collection_count" data-id="{{ data.id }}">{{ _per_page }}</span>
+                    на странице
+                    <span class="caret"></span>
+                </a>
+                <ul class="dropdown-menu">
+                    {% _.each([5,10,15,25,50,100,200], function(digit) { %}
+                        <li><a href="#" data-action="collection_count" data-id={{ data.id }} data-count="{{ digit }}">{{ digit }}</a></li>
+                    {% }); %}
+                </ul>
             </div>
         </div>
     </div>
-<!--
-  </div>
 </div>
--->
+
 <div id="collection_{{ data.id }}">
 </div>
 {% endverbatim %}

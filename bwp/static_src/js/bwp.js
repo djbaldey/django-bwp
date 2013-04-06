@@ -668,14 +668,16 @@ function eventObjectAdd(event) {
     if (DEBUG) {console.log('function:'+'eventObjectAdd')};
     $this = $(this);
     data = $this.data();
+    model = REGISTER[data.id];
+    if (model instanceof classCompose) {
+        console.log(model.is_m2m)
+        model = REGISTER[validatorID(model.name)]
+    }
     if ((event) && (event.data) && (event.data.m2m)) {
         console.log(event)
         return true
     }
-    model = REGISTER[data.id];
-    if (model instanceof classCompose) {
-        model = REGISTER[validatorID(model.name)]
-    }
+    
     handlerObjectAdd(model, $this);
     return true;
 }
@@ -705,6 +707,7 @@ function eventObjectDelete(event) {
     data = $this.data();
     if ((event) && (event.data) && (event.data.m2m)) {
         console.log(event)
+        //~ handlerObjectDelete(data);
         return true
     }
     object = REGISTER[data.id];
@@ -834,21 +837,33 @@ function eventFieldClear() {
     return true
 }
 
+/* Обработчик формирования и запуска модального окна */
+function handlerModalShow(mhead, mbody, mfoot, done) {
+    if (DEBUG) {console.log('function:'+'handlerModalShow')};
+    $modal = $('#modal');
+    modal = {};
+    modal.mhead = mhead;
+    modal.mbody = mbody;
+    modal.mfoot = mfoot;
+    html = TEMPLATES.modal({modal:modal})
+    $modal.html(html).modal('show');
+    if (done) { done() };
+}
+
 /* Обработчик события запуска выбора */
 function handlerFieldSelect($field) {
     if (DEBUG) {console.log('function:'+'handlerFieldSelect')};
     FIELD = $field;
-    $modal = $('#modal');
     data = $field.data();
     object = REGISTER[data.id];
     model =  REGISTER[validatorID(data.model)];
     selector = new classSelector(model);
-    modal = {};
-    modal.header = 'Выберите требуемый объект'
-    modal.body = handlerLayoutRender(selector, true)
-    html = TEMPLATES.modal({modal:modal})
-    $modal.html(html).modal('show');
-    handlerCollectionGet(selector)
+    mhead = 'Выберите требуемый объект';
+    mbody = handlerLayoutRender(selector, true);
+    mfoot = null;
+    handlerModalShow(mhead, mbody, mfoot,
+        function() {handlerCollectionGet(selector)}
+    )
 }
 
 

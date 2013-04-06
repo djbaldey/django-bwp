@@ -80,6 +80,7 @@ site.register(ContentType, ContentTypeAdmin)
 class LogEntryAdmin(ModelBWP):
     list_display = ('action_time', 'user', '__unicode__', 'id')
     search_fields = ('user__username', 'object_repr', 'change_message')
+    allow_clone = False
 site.register(LogEntry, LogEntryAdmin)
 
 class GlobalUserSettingsAdmin(ModelBWP):

@@ -37,22 +37,16 @@
 ###############################################################################
 """
 from django.utils.translation import ugettext_lazy as _
-from django.http import HttpResponse
 from django.template import RequestContext
 from django.shortcuts import render_to_response, get_object_or_404, redirect
 from django.contrib.auth import REDIRECT_FIELD_NAME
-from django.contrib.auth.views import login as _login, logout as _logout, password_change, password_change_done
+from django.contrib.auth.views import login as _login, logout as _logout
+#~ from django.contrib.auth.views import password_change, password_change_done
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
-from django.utils.cache import add_never_cache_headers
-from django.utils import simplejson
-from django.utils.encoding import force_unicode
-from django.utils.functional import Promise
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import transaction
 from django.forms.models import modelform_factory
-
-from decimal import Decimal
 
 from quickapi.http import JSONResponse, JSONRedirect
 from quickapi.views import api as _api
@@ -61,7 +55,6 @@ from quickapi.decorators import login_required, api_required
 from bwp.sites import site
 from bwp.forms import BWPAuthenticationForm
 from bwp.conf import settings
-from bwp.utils.convertors import jquery_form_array, jquery_multi_form_array
 
 from bwp import serializers
 
