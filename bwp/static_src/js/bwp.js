@@ -570,7 +570,7 @@ function handlerObjectAdd(model) {
     if (DEBUG) {console.log('function:'+'handlerObjectAdd')};
     args = {
         "method"  : "get_object",
-        "model"   : model.model,
+        "model"   : model.name,
         "pk"      : null,
     }
     console.log(args)
@@ -580,7 +580,7 @@ function handlerObjectAdd(model) {
         object.model.fix[object.id] = object
         handlerTabOpen(object);
     }
-    jqxhr = new jsonAPI(args, cb, 'handlerObjectAdd(model, $this) call jsonAPI()')
+    jqxhr = new jsonAPI(args, cb, 'handlerObjectAdd(model) call jsonAPI()')
     return jqxhr
 }
 
@@ -600,39 +600,22 @@ function handlerObjectChange(object, $field) {
 }
 
 /* Копирование объекта */
-function handlerObjectCopy(object, $this) {
+function handlerObjectCopy(data, clone) {
     if (DEBUG) {console.log('function:'+'handlerObjectCopy')};
-    create = function(object) {
-        _data = {};
-        _data['model'] = object.model.name;
-        _data['fields'] = object.fields;
-        _data['__unicode__'] = object.__unicode__;
-        data = {};
-        $.extend(true, data, _data);
-        newobject = new classObject(data);
-        $.extend(true, newobject.fix, newobject.fields);
-        newobject.fixaction = 'add'
-        newobject.model.fix[newobject.id] = newobject
-        $this.data('id', newobject.id);
-        handlerTabOpen(newobject);
-        return newobject
-    };
-    if (object) { create(object); }
-    else {
-        data = $this.data()
-        args = {
-            "method"  : "get_object",
-            "model"   : data.model,
-            "pk"      : data.pk || null,
-        }
-        cb = function(json, status, xhr) {
-            object = new classObject(json.data);
-            newobject = create(object)
-            $this.data('id', newobject.id);
-            handlerTabOpen(newobject);
-        }
-        jqxhr = new jsonAPI(args, cb, 'handlerObjectCopy(object) call jsonAPI()')
+    args = {
+        "method"  : "get_object",
+        "model"   : data.model,
+        "pk"      : data.pk,
+        "copy"    : true,
+        "clone"    : clone,
     }
+    cb = function(json, status, xhr) {
+        object = new classObject(json.data);
+        object.fixaction = 'add'
+        object.model.fix[object.id] = object
+        handlerTabOpen(object);
+    }
+    jqxhr = new jsonAPI(args, cb, 'handlerObjectCopy(data, clone) call jsonAPI()')
 }
 
 /* Удаление объекта */
@@ -700,8 +683,16 @@ function eventObjectCopy() {
     if (DEBUG) {console.log('function:'+'eventObjectCopy')};
     $this = $(this);
     data = $this.data();
-    object = REGISTER[data.id];
-    handlerObjectCopy(object, $this)
+    handlerObjectCopy(data)
+    return true
+}
+
+/* Обработчик события полного копирования объекта */
+function eventObjectClone() {
+    if (DEBUG) {console.log('function:'+'eventObjectClone')};
+    $this = $(this);
+    data = $this.data();
+    handlerObjectCopy(data, true)
     return true
 }
 
@@ -1081,8 +1072,9 @@ $(document).ready(function($) {
         $('body').on('click',  '[data-action=collection_page]',   eventCollectionPage);
 
         // Биндинги на кнопки и ссылки
-        $('body').on('click', '[data-action=object_open]',   eventObjectOpen);
-        $('body').on('click', '[data-action=object_copy]',   eventObjectCopy);
+        $('body').on('click', '[data-action=object_open]',     eventObjectOpen);
+        $('body').on('click', '[data-action=object_copy]',     eventObjectCopy);
+        $('body').on('click', '[data-action=object_clone]',    eventObjectClone);
         $('body').on('click', '[data-action=object_add]',                 eventObjectAdd);
         $('body').on('click', '[data-action=object_add_m2m]', {m2m:true}, eventObjectAdd);
         $('body').on('click', '[data-action=object_delete]',                 eventObjectDelete);

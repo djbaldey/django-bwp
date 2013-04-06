@@ -184,7 +184,7 @@ def API_get_apps(request, device=None, **kwargs):
 
 @api_required
 @login_required
-def API_get_object(request, model, pk=None, copy=None, deep=None, **kwargs):
+def API_get_object(request, model, pk=None, copy=None, clone=None, **kwargs):
     """ *Возвращает экземпляр указанной модели.*
 
         ##### ЗАПРОС
@@ -196,7 +196,7 @@ def API_get_object(request, model, pk=None, copy=None, deep=None, **kwargs):
                         вернётся пустой новый объект (тоже без pk).
         3. **"copy"**  - если задано, то возвращается простая копия
                         объекта (без pk).
-        4. **"deep"**  - если задано и допустимо выполнять такую
+        4. **"clone"**  - если задано и допустимо выполнять такую
                         операцию, то возвращается абсолютная копия
                         объекта (включая новый pk и копии m2m полей). 
 
@@ -215,9 +215,9 @@ def API_get_object(request, model, pk=None, copy=None, deep=None, **kwargs):
         # Новый
         return model_bwp.new(request)
     else:
-        if copy or deep:
+        if copy or clone:
             # Копия
-            return model_bwp.copy(request, pk, deep)
+            return model_bwp.copy(request, pk, clone)
         # Существующий
         return model_bwp.get(request, pk)
 

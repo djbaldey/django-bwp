@@ -180,7 +180,7 @@ class BaseModel(object):
     # Набор ключей для предоставления метаданных об этой модели.
     metakeys = ('list_display', 'list_display_css', 'list_per_page',
                 'list_max_show_all', 'show_column_pk', 'fields',
-                'search_fields', 'search_key', 'ordering',
+                'search_fields', 'search_key', 'ordering', 'has_clone',
                 'hidden')
 
     @property
@@ -210,6 +210,17 @@ class BaseModel(object):
         if not hasattr(self, '_meta'):
             self._meta = self.get_meta()
         return self._meta
+
+    @property
+    def has_clone(self):
+        """ Проверяет, могут ли объекты клонироваться
+        """
+        if not hasattr(self, '_has_clone'):
+            L = [bool(self.opts.unique_together)]
+            L.extend([ f.unique for f in self.opts.local_fields if not f is self.opts.pk ])
+            L.extend([ f.unique for f in self.opts.local_many_to_many ])
+            self._has_clone = not True in L
+        return self._has_clone
 
     def prepare_meta(self, request):
         """ Обновляет информацию о метаданных согласно запроса """
@@ -428,7 +439,7 @@ class BaseModel(object):
         """
         raise NotImplementedError
 
-    def copy(self, request, pk, deep=None, **kwargs):
+    def copy(self, request, pk, clone=None, **kwargs):
         """ Получает копию объекта согласно привилегий.
         """
         if self.has_add_permission(request):
@@ -436,11 +447,11 @@ class BaseModel(object):
                 object = self.queryset(request, **kwargs).get(pk=pk)
             except:
                 return get_http_404(request)
-            return self.get_copy_object_detail(request, object, deep, **kwargs)
+            return self.get_copy_object_detail(request, object, clone, **kwargs)
         else:
             return get_http_403(request)
 
-    def get_copy_object_detail(self, request, object, deep, **kwargs):
+    def get_copy_object_detail(self, request, object, clone, **kwargs):
         """
         Вызывается для окончательного формирования ответа сервера.
         """
@@ -734,8 +745,23 @@ class ModelBWP(BaseModel):
         data = self.get_full_object(request, object)
         return JSONResponse(data=data)
 
+    def get_copy_object_detail(self, request, object, clone, **kwargs):
+        """ Метод возвращает сериализованную копию объекта в JSONResponse """
+        pk = object.pk # save
+        object.pk = None
+        # Клонирование с созданием нового pk и заполнением полей m2m
+        if clone and self.has_clone:
+            object.save()
+            oldobj = self.get_instance(pk=pk)
+            for m2m in self.opts.local_many_to_many:
+                old = getattr(oldobj, m2m.get_attname())
+                new = getattr(object, m2m.get_attname())
+                new.add(old.all())
+        data = self.get_full_object(request, object)
+        return JSONResponse(data=data)
+
     def get_new_object_detail(self, request, **kwargs):
-        """ Метод возвращает новый сериализованный объект в JSONResponse """
+        """ Метод возвращает сериализованный, новый объект в JSONResponse """
         data = self.get_full_object(request, None)
         return JSONResponse(data=data)
 

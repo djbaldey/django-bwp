@@ -46,6 +46,15 @@
                                 </a>
                             </li>
                         {% } %}
+                        {% if ((data.perms.add) && (data.meta.has_clone)) { %}
+                            <li><a  tabindex="-1" href="#"
+                                    data-action="object_clone"
+                                    data-model="{{ obj.model }}"
+                                    data-pk="{{ obj.pk }}">
+                                    <i class="icon-pause"> </i> Клонировать
+                                </a>
+                            </li>
+                        {% } %}
                         {% if (data.perms.delete) { %}
                             <li class="divider"></li>
                             <li><a  tabindex="-1" href="#"
