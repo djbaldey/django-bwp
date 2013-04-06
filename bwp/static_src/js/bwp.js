@@ -427,8 +427,21 @@ function classSelector(model) {
     this.perms['delete'] = false;
     this.perms.add = false;
     this.perms.change = false;
-    //~ this.meta.list_display = this.meta.list_display.slice(0,1);
+    this.meta.list_display = ['__unicode__'];
     this.meta.list_per_page = 5;
+    _widgets = [];
+    this.widgets = _widgets;
+    selector = this;
+    // Init
+    $.each(selector.meta.list_display, function(i, name) {
+        if (name == '__unicode__') {
+            _widgets.push({name:name, label: selector.label, attr:{}})
+        } else {
+            $.each(selector.meta.widgets, function(ii, widget) {
+                if (name == widget.name) { _widgets.push(widget) };
+            });
+        }
+    });
     // Register
     REGISTER[this.id] = this;
 };
