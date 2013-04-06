@@ -531,7 +531,7 @@ function handlerLayoutRender(instance, just_prepare) {
 }
 
 /* Применение изменений на сервере */
-function handlerCommitInstance(instanse) {
+function handlerCommitInstance(instanse, done) {
     if (DEBUG) {console.log('function:'+'handlerCommitInstance')};
     is_changed = false;
     _objects = []
@@ -559,7 +559,8 @@ function handlerCommitInstance(instanse) {
         "objects" : _objects,
     }
     cb = function(json, status, xhr) {
-        handlerCollectionGet(_model)
+        handlerCollectionGet(_model);
+        if (done) { done() };
     };
     jqxhr = new jsonAPI(args, cb, 'handlerCommitInstance(instanse) call jsonAPI()')
     return jqxhr
@@ -619,7 +620,7 @@ function handlerObjectCopy(data, clone) {
 }
 
 /* Удаление объекта */
-function handlerObjectDelete(data, $this) {
+function handlerObjectDelete(data, done) {
     if (DEBUG) {console.log('function:'+'handlerObjectDelete')};
     args = {
         "method"  : "commit",
@@ -632,8 +633,9 @@ function handlerObjectDelete(data, $this) {
     }
     cb = function(json, status, xhr) {
         handlerCollectionGet(REGISTER[validatorID(data.model)])
+        if (done) { done() };
         }
-    jqxhr = new jsonAPI(args, cb, 'handlerObjectDelete() call jsonAPI()')
+    jqxhr = new jsonAPI(args, cb, 'handlerObjectDelete(data, done) call jsonAPI()')
 }
 
 /* Обработчик события открытия объекта */
@@ -706,7 +708,8 @@ function eventObjectDelete(event) {
         return true
     }
     object = REGISTER[data.id];
-    handlerObjectDelete(data, $this);
+    if (object) { data.model = object.model.name; data.pk = object.pk; }
+    handlerObjectDelete(data, function() { handlerTabClose(object) });
     return true
 }
 
@@ -737,7 +740,7 @@ function eventObjectSave() {
     $this = $(this);
     data = $this.data();
     object = REGISTER[data.id];
-    handlerCommitInstance(object);
+    handlerCommitInstance(object, function() { handlerTabClose(object); } );
     return true
 }
 
