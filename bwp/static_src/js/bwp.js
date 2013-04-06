@@ -952,6 +952,9 @@ function handlerTabClose(data) {
     if (instance) {
         handlerObjectRowUnmuted(instance);
         if (instance instanceof classObject) {
+            $.each(instance.composes, function(i, item) {
+                delete REGISTER[item.id]
+            });
             delete REGISTER[data.id]
         }
     };
