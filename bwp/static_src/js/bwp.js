@@ -473,8 +473,10 @@ function classObject(data) {
     this.template = TEMPLATES.layoutObject;
     this.model = REGISTER[validatorID(data.model)];
     this.pk    = data.pk;
-    this.id    = this.pk ? validatorID(data.model+'.'+this.pk) : generatorID(NEWOBJECTKEY);
-    this.__unicode__ = data.__unicode__;
+    this.id    = this.pk ? validatorID(data.model+'.'+this.pk)
+                         : generatorID(NEWOBJECTKEY);
+    this.__unicode__ = this.pk ? data.__unicode__
+                               : 'Новый объект ('+this.model.label+')';
     this.label       = this.__unicode__;
     this.title = this.model.label +': '+ this.label;
     _fields     = data.fields;
@@ -564,21 +566,22 @@ function handlerCommitInstance(instanse) {
 }
 
 /* Добавление объекта */
-function handlerObjectAdd(model, $this) {
+function handlerObjectAdd(model) {
     if (DEBUG) {console.log('function:'+'handlerObjectAdd')};
-    _data = {};
-    _data['model']  = model.model;
-    _data['fields'] = model.meta.defaults;
-    _data['__unicode__'] = 'Новый объект';
-    data = {};
-    $.extend(true, data, _data);
-    newobject = new classObject(data);
-    $.extend(true, newobject.fix, newobject.fields);
-    newobject.fixaction = 'add'
-    newobject.model.fix[newobject.id] = newobject
-    //~ $this.data('id', newobject.id);
-    handlerTabOpen(newobject);
-    return newobject
+    args = {
+        "method"  : "get_object",
+        "model"   : model.model,
+        "pk"      : null,
+    }
+    console.log(args)
+    cb = function(json, status, xhr) {
+        object = new classObject(json.data);
+        object.fixaction = 'add'
+        object.model.fix[object.id] = object
+        handlerTabOpen(object);
+    }
+    jqxhr = new jsonAPI(args, cb, 'handlerObjectAdd(model, $this) call jsonAPI()')
+    return jqxhr
 }
 
 /* Изменение объекта добавлением полей во временное хранилище */
@@ -616,6 +619,7 @@ function handlerObjectCopy(object, $this) {
     };
     if (object) { create(object); }
     else {
+        data = $this.data()
         args = {
             "method"  : "get_object",
             "model"   : data.model,

@@ -88,7 +88,9 @@ class SerializerWrapper(object):
         self._current[field.name] = value
 
     def handle_m2m_field(self, obj, field):
-        if field.rel.through._meta.auto_created:
+        if not obj.pk:
+            self._current[field.name] = []
+        elif field.rel.through._meta.auto_created:
             if self.use_split_keys:
                 m2m_value = lambda value: (value.pk, unicode(value))
             elif self.use_natural_keys and hasattr(field.rel.to, 'natural_key'):

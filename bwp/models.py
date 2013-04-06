@@ -175,13 +175,12 @@ class BaseModel(object):
     paginator           = Paginator
     form                = None
     site                = None
-    defaults            = None
     hidden              = False
     
     # Набор ключей для предоставления метаданных об этой модели.
     metakeys = ('list_display', 'list_display_css', 'list_per_page',
                 'list_max_show_all', 'show_column_pk', 'fields',
-                'search_fields', 'search_key', 'ordering', 'defaults',
+                'search_fields', 'search_key', 'ordering',
                 'hidden')
 
     @property
@@ -207,7 +206,6 @@ class BaseModel(object):
             например, чтобы добавить информацию из наследуемого класса
         """
         self.get_fields() # инициализация полей
-        self.get_defaults() # инициализация значений по умолчанию
         self.get_search_fields() # инициализация поисковых полей
         if not hasattr(self, '_meta'):
             self._meta = self.get_meta()
@@ -246,15 +244,6 @@ class BaseModel(object):
             fields = [ field.name for field in self.opts.local_fields ]
             self.fields = [ name for name in fields if name not in self.exclude ]
         return self.fields
-
-    def get_defaults(self):
-        """ Устанавливает и возвращает список дефолтных значений
-            полей для новых объектов.
-        """
-        if not self.defaults:
-            fields = [ self.opts.get_field_by_name(name)[0] for name in self.get_fields() ]
-            self.defaults = dict([ (field.name, field.get_default()) for field in fields ])
-        return self.defaults
 
     def get_fields_objects(self):
         """ Возвращает реальные объекты полей """
@@ -434,6 +423,24 @@ class BaseModel(object):
             return self.get_collection(request, **kwargs)
 
     def get_object_detail(self, request, object, **kwargs):
+        """
+        Вызывается для окончательного формирования ответа сервера.
+        """
+        raise NotImplementedError
+
+    def copy(self, request, pk, deep=None, **kwargs):
+        """ Получает копию объекта согласно привилегий.
+        """
+        if self.has_add_permission(request):
+            try:
+                object = self.queryset(request, **kwargs).get(pk=pk)
+            except:
+                return get_http_404(request)
+            return self.get_copy_object_detail(request, object, deep, **kwargs)
+        else:
+            return get_http_403(request)
+
+    def get_copy_object_detail(self, request, object, deep, **kwargs):
         """
         Вызывается для окончательного формирования ответа сервера.
         """
@@ -627,12 +634,9 @@ class ComposeBWP(BaseModel):
         """
         model = str(object._meta)
         compose = self.related_name
-        html_id = ('%s_%s_%s' % (model, object.pk, compose)
-            ).replace('.','-')
         data = {
             'model':    model,
             'pk':       object.pk,
-            'id':       html_id,
             'compose':  compose,
             'label':    capfirst(unicode(self.verbose_name)),
             'meta':     self.meta,
@@ -645,9 +649,12 @@ class ComposeBWP(BaseModel):
         widgets = self.get_list_widgets()
 
         # Objects
-        qs = getattr(object, self.related_name).select_related().all()
-        qs = self.page_queryset(request, qs)
-        objects = self.serialize(qs)
+        if object.pk:
+            qs = getattr(object, self.related_name).select_related().all()
+            qs = self.page_queryset(request, qs)
+            objects = self.serialize(qs)
+        else:
+            objects = []
 
         data.update({'widgets': widgets, 'objects': objects,
                     'permissions': permissions })
@@ -725,7 +732,11 @@ class ModelBWP(BaseModel):
     def get_object_detail(self, request, object, **kwargs):
         """ Метод возвращает сериализованный объект в JSONResponse """
         data = self.get_full_object(request, object)
-        #~ data['meta'] = self.meta
+        return JSONResponse(data=data)
+
+    def get_new_object_detail(self, request, **kwargs):
+        """ Метод возвращает новый сериализованный объект в JSONResponse """
+        data = self.get_full_object(request, None)
         return JSONResponse(data=data)
 
     def get_full_object(self, request, object, **kwargs):
@@ -733,10 +744,12 @@ class ModelBWP(BaseModel):
         # Object
         if isinstance(object, (str, int)):
             object = self.queryset().select_related().get(pk=pk)
+        elif not object:
+            object = self.model()
+            # TODO: made and call autofiller
         model = str(self.opts)
-        html_id = ('%s_%s' %(model, object.pk)).replace('.','-')
         data = self.serialize(object)
-        data.update({'label': unicode(object), 'id': html_id})
+        data['label'] = unicode(object)
 
         # Widgetsets
         widgetsets = self.get_list_widgetsets()
@@ -750,7 +763,6 @@ class ModelBWP(BaseModel):
         # Compositions
         compositions = []
         for compose in self.get_composes(request):
-            
             compositions.append(compose.get_compose(request, object, **kwargs))
 
         data.update({'widgets':widgets, 'widgetsets':widgetsets,

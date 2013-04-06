@@ -184,15 +184,22 @@ def API_get_apps(request, device=None, **kwargs):
 
 @api_required
 @login_required
-def API_get_object(request, model, pk=None, **kwargs):
+def API_get_object(request, model, pk=None, copy=None, deep=None, **kwargs):
     """ *Возвращает экземпляр указанной модели.*
-        
+
         ##### ЗАПРОС
         Параметры:
         
-        1. **"model"** - уникальное название модели, например: "auth.user".
-        2. **"pk"** - первичный ключ объекта, если отсутствует, то вернётся пустой новый объект без pk 
-        
+        1. **"model"** - уникальное название модели, например:
+                        "auth.user".
+        2. **"pk"**    - первичный ключ объекта, если отсутствует, то
+                        вернётся пустой новый объект (тоже без pk).
+        3. **"copy"**  - если задано, то возвращается простая копия
+                        объекта (без pk).
+        4. **"deep"**  - если задано и допустимо выполнять такую
+                        операцию, то возвращается абсолютная копия
+                        объекта (включая новый pk и копии m2m полей). 
+
         ##### ОТВЕТ
         Формат ключа **"data"**:
         `{
@@ -203,11 +210,14 @@ def API_get_object(request, model, pk=None, **kwargs):
     # Получаем модель BWP со стандартной проверкой прав
     model_bwp = site.bwp_dict(request).get(model)
 
-    # Возвращаем новый пустой объект или существующий 
-    if pk is None:
+    # Возвращаем новый пустой объект или существующий (либо его копию)
+    if not pk:
         # Новый
         return model_bwp.new(request)
     else:
+        if copy or deep:
+            # Копия
+            return model_bwp.copy(request, pk, deep)
         # Существующий
         return model_bwp.get(request, pk)
 
