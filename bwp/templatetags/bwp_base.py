@@ -67,7 +67,7 @@ def COPYRIGHT_YEARS():
         start =  conf.COPYRIGHT_YEAR
     except:
         start = date.today().year
-    if start != end:
+    if str(start) != str(end):
         return "%s-%s" % (start, end)
     else:
         return "%s" % end
