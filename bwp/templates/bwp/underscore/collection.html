@@ -1,7 +1,9 @@
 {# Шаблон Underscore #}{% load i18n l10n bwp_verbatim %}{% verbatim %}
-{% var _obj_add = 'object_add', _obj_delete = 'object_delete', _multiselect = true; %}
+{% var _obj_add = 'object_add', _obj_delete = 'object_delete', _multiselect = true, _rowactions = true; %}
 {% if (data.is_m2m) { _obj_add += '_m2m'; _obj_delete += '_m2m'; } %}
-{% if ((data instanceof classSelector) && (!data.multiple)) { _multiselect = false; }%}
+{% if (data instanceof classSelector) { %}
+    {% if (!data.multiple) { _multiselect = false; } else { _rowactions = false; } %}
+{% } %}
 <table data-id="{{ data.id }}"
     class="table table-condensed table-striped table-bordered table-hover">
     <thead>
@@ -23,7 +25,7 @@
         {% } %}
             {% _.each(data.widgets, function(c, index) { %}
                 <td class="{{ c.attr['class'] }}">
-                {% if (index == 0) { %}
+                {% if ((index == 0) && (_rowactions)) { %}
                     <div class="dropup">
                         <div class="dropdown-toggle" role="button" data-toggle="dropdown" data-target="#">
                         {% if (c.name == '__unicode__') { %}

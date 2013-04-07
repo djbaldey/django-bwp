@@ -419,7 +419,7 @@ function classModel(app, data) {
 };
 
 /* класс: Модель для выбора (в неё копируется настоящая модель)*/
-function classSelector(model) {
+function classSelector(model, multiple) {
     $.extend(true, this, model);
     this.id = validatorID([this.id, 'selector'])
     this.template = TEMPLATES.layoutSelector;
@@ -429,7 +429,7 @@ function classSelector(model) {
     this.perms.change = false;
     this.meta.list_display = ['__unicode__'];
     this.meta.list_per_page = 5;
-    this.multiple = false;
+    this.multiple = multiple ? true : false;
     _widgets = [];
     this.widgets = _widgets;
     selector = this;
@@ -514,36 +514,10 @@ function classObject(data) {
 };
 
 ////////////////////////////////////////////////////////////////////////
-//                         ФУНКЦИИ С "КЛАССАМИ"                       //
+//                      ОБЩИЕ ОБРАБОТЧИКИ "КЛАССОВ"                   //
 ////////////////////////////////////////////////////////////////////////
 
-/* Отрисовка коллекций моделей и композиций */
-function handlerCollectionRender(instance, just_prepare) {
-    if (DEBUG) {console.log('function:'+'handlerCollectionRender')};
-    if (instance instanceof classObject) {  
-        return '';
-    }
-    html = TEMPLATES.collection({data:instance})
-    if (!just_prepare) {
-        $('#collection_'+instance.id).html(html);
-    }
-    return html
-}
-
-/* Отрисовка макета модели, композиции или объекта */
-function handlerLayoutRender(instance, just_prepare) {
-    if (DEBUG) {console.log('function:'+'handlerLayoutRender')};
-    html = instance.template({data:instance})
-    if (!just_prepare) {
-        $('#layout_'+instance.id).html(html)
-        // Одиночные биндинги на загрузку коллекций объекта
-        if (instance instanceof classObject) {
-            $('#layout_'+instance.id+' button[data-loading=true]')
-            .one('click', eventLayoutLoad);
-        }
-    }
-    return html
-}
+// Процедуры
 
 /* Применение изменений на сервере */
 function handlerCommitInstance(instanse, done) {
@@ -580,6 +554,156 @@ function handlerCommitInstance(instanse, done) {
     jqxhr = new jsonAPI(args, cb, 'handlerCommitInstance(instanse) call jsonAPI()')
     return jqxhr
 }
+
+/* Отрисовка макета модели, композиции или объекта */
+function handlerLayoutRender(instance, just_prepare) {
+    if (DEBUG) {console.log('function:'+'handlerLayoutRender')};
+    html = instance.template({data:instance})
+    if (!just_prepare) {
+        $('#layout_'+instance.id).html(html)
+        // Одиночные биндинги на загрузку коллекций объекта
+        if (instance instanceof classObject) {
+            $('#layout_'+instance.id+' button[data-loading=true]')
+            .one('click', eventLayoutLoad);
+        }
+    }
+    return html
+}
+
+/* Загружает необходимый макет модели или объекта */
+function handlerLayoutLoad(instance) {
+    if (DEBUG) {console.log('function:'+'handlerLayoutLoad')};
+    html = handlerLayoutRender(instance);
+    // Загрузка коллекции
+    if ((instance instanceof classModel) || (instance instanceof classCompose)) {
+        jqxhr = handlerCollectionGet(instance);
+    }
+}
+
+// События
+
+/* Обработчик события загрузки макета */
+function eventLayoutLoad() {
+    if (DEBUG) {console.log('function:'+'eventLayoutLoad')};
+    data = $(this).data();
+    instance = REGISTER[data.id];
+    handlerLayoutLoad(instance)
+    // Удаление атрибута загрузки
+    $(this).removeAttr("data-loading");
+    return true;
+}
+
+/* Обработчик события выбора всех строк в таблице модели, композиции,
+ * селектора */
+function handlerSelectAllToggle() {
+    $table = $(this).parents('table');
+    $inputs = $table.find("tbody td:nth-child(1) input[type=checkbox]")
+    checked = this.checked
+    $.each($inputs, function(i, item) { item.checked = checked });
+}
+
+/* Обработчик события клика на строке в таблице модели, композиции,
+ * селектора */
+function eventRowClick() {
+    if (DEBUG) {console.log('function:'+'eventRowClick')};
+    $this = $(this);
+    $this.addClass('info').siblings('tr').removeClass('info');
+    return true
+}
+
+////////////////////////////////////////////////////////////////////////
+//                             КОЛЛЕКЦИИ                              //
+////////////////////////////////////////////////////////////////////////
+
+// Процедуры
+
+/* Отрисовка коллекций моделей и композиций */
+function handlerCollectionRender(instance, just_prepare) {
+    if (DEBUG) {console.log('function:'+'handlerCollectionRender')};
+    if (instance instanceof classObject) {  
+        return '';
+    }
+    html = TEMPLATES.collection({data:instance})
+    if (!just_prepare) {
+        $('#collection_'+instance.id).html(html);
+    }
+    return html
+}
+
+/* Функция получает коллекцию с сервера и перерисовывает цель
+ * коллекции модели/композиции, для которых она вызывалась
+ */
+function handlerCollectionGet(instance) {
+    if (DEBUG) {console.log('function:'+'handlerCollectionGet')};
+    args = {
+        "method"  : "get_collection",
+        "model"   : instance.model,
+        "compose" : instance.compose       || null,
+        "order_by": instance.meta.ordering || null,
+    }
+    args[instance.meta.search_key] = instance.query || null;
+    if (instance.object) {
+        args["pk"] = instance.object.pk || 0;
+    };
+    if (instance.paginator) {
+        args["page"]    = instance.paginator.page     || 1;
+        args["per_page"]= instance.paginator.per_page || null;
+    };
+    cb = function(json, status, xhr) {
+        instance.paginator = json.data;
+        html = handlerCollectionRender(instance);
+    }
+    jqxhr = new jsonAPI(args, cb, 'handlerCollectionGet() call jsonAPI()')
+    return jqxhr
+}
+
+// События
+
+/* Обработчик события фильтрации коллекции */
+function eventCollectionFilter() {
+    if (DEBUG) {console.log('function:'+'eventCollectionFilter')};
+    search         = this;
+    data           = $(search).data();
+    instance       = REGISTER[data['id']];
+    instance.query = $(search).val() || null;
+    jqxhr          = handlerCollectionGet(instance);
+    return jqxhr
+}
+
+/* Обработчик события установки размера коллекции на странице */
+function eventCollectionCount() {
+    if (DEBUG) {console.log('function:'+'eventCollectionCount')};
+    data     = $(this).data();
+    instance = REGISTER[data['id']];
+    if (instance.paginator) {
+        instance.paginator.page = 1;
+        instance.paginator.per_page = $(this).val() || $(this)
+            .data()['count'] || instance.meta.list_per_page;
+        $('[data-placeholder=collection_count][data-id='+instance.id+']')
+            .text(instance.paginator.per_page)
+    };
+    jqxhr = handlerCollectionGet(instance);
+    return jqxhr
+}
+
+/* Обработчик события паджинации коллекции */
+function eventCollectionPage() {
+    if (DEBUG) {console.log('function:'+'eventCollectionPage')};
+    data     = $(this).data();
+    instance = REGISTER[data['id']];
+    if (instance.paginator) {
+        instance.paginator.page = $(this).val() || $(this).data()['page'] || 1;
+    };
+    jqxhr = handlerCollectionGet(instance);
+    return jqxhr
+}
+
+
+////////////////////////////////////////////////////////////////////////
+//                               ОБЪЕКТЫ                              //
+////////////////////////////////////////////////////////////////////////
+
+// Процедуры
 
 /* Добавление объекта */
 function handlerObjectAdd(model) {
@@ -652,6 +776,22 @@ function handlerObjectDelete(data, done) {
     jqxhr = new jsonAPI(args, cb, 'handlerObjectDelete(data, done) call jsonAPI()')
 }
 
+/* Функция мутирования строки объекта */
+function handlerObjectRowMuted(object) {
+    if (DEBUG) {console.log('function:'+'handlerObjectRowMuted')};
+    $('tr[data-model="'+object.model.name+'"][data-pk="'+object.pk+'"]')
+        .addClass('muted');
+}
+
+/* Функция удаления мутирования строки объекта */
+function handlerObjectRowUnmuted(object) {
+    if (DEBUG) {console.log('function:'+'handlerObjectRowUnmuted')};
+    $('tr[data-model="'+object.model.name+'"][data-pk="'+object.pk+'"]')
+        .removeClass('muted');
+}
+
+// События
+
 /* Обработчик события открытия объекта */
 function eventObjectOpen() {
     if (DEBUG) {console.log('function:'+'eventObjectOpen')};
@@ -680,15 +820,15 @@ function eventObjectOpen() {
 /* Обработчик события создания объекта */
 function eventObjectAdd(event) {
     if (DEBUG) {console.log('function:'+'eventObjectAdd')};
-    $this = $(this);
-    data = $this.data();
-    model = REGISTER[data.id];
+    var $this = $(this),
+        data = $this.data(),
+        model = REGISTER[data.id],
+        m2m = model.is_m2m ? model : null;
     if (model instanceof classCompose) {
-        console.log(model.is_m2m)
         model = REGISTER[validatorID(model.name)]
     }
     if ((event) && (event.data) && (event.data.m2m)) {
-        console.log(event)
+        handlerM2MSelect(m2m, model)
         return true
     }
     
@@ -761,106 +901,44 @@ function eventObjectSave() {
     return true
 }
 
-/* Функция мутирования строки объекта */
-function handlerObjectRowMuted(object) {
-    if (DEBUG) {console.log('function:'+'handlerObjectRowMuted')};
-    $('tr[data-model="'+object.model.name+'"][data-pk="'+object.pk+'"]')
-        .addClass('muted');
-}
-
-/* Функция удаления мутирования строки объекта */
-function handlerObjectRowUnmuted(object) {
-    if (DEBUG) {console.log('function:'+'handlerObjectRowUnmuted')};
-    $('tr[data-model="'+object.model.name+'"][data-pk="'+object.pk+'"]')
-        .removeClass('muted');
-}
-
-/* Функция получает коллекцию с сервера и перерисовывает цель
- * коллекции модели/композиции, для которых она вызывалась
- */
-function handlerCollectionGet(instance) {
-    if (DEBUG) {console.log('function:'+'handlerCollectionGet')};
-    args = {
-        "method"  : "get_collection",
-        "model"   : instance.model,
-        "compose" : instance.compose       || null,
-        "order_by": instance.meta.ordering || null,
-    }
-    args[instance.meta.search_key] = instance.query || null;
-    if (instance.object) {
-        args["pk"] = instance.object.pk || 0;
-    };
-    if (instance.paginator) {
-        args["page"]    = instance.paginator.page     || 1;
-        args["per_page"]= instance.paginator.per_page || null;
-    };
-    cb = function(json, status, xhr) {
-        instance.paginator = json.data;
-        html = handlerCollectionRender(instance);
-    }
-    jqxhr = new jsonAPI(args, cb, 'handlerCollectionGet() call jsonAPI()')
-    return jqxhr
-}
-
-/* Обработчик события фильтрации коллекции */
-function eventCollectionFilter() {
-    if (DEBUG) {console.log('function:'+'eventCollectionFilter')};
-    search         = this;
-    data           = $(search).data();
-    instance       = REGISTER[data['id']];
-    instance.query = $(search).val() || null;
-    jqxhr          = handlerCollectionGet(instance);
-    return jqxhr
-}
-
-/* Обработчик события установки размера коллекции на странице */
-function eventCollectionCount() {
-    if (DEBUG) {console.log('function:'+'eventCollectionCount')};
-    data     = $(this).data();
-    instance = REGISTER[data['id']];
-    if (instance.paginator) {
-        instance.paginator.page = 1;
-        instance.paginator.per_page = $(this).val() || $(this)
-            .data()['count'] || instance.meta.list_per_page;
-        $('[data-placeholder=collection_count][data-id='+instance.id+']')
-            .text(instance.paginator.per_page)
-    };
-    jqxhr = handlerCollectionGet(instance);
-    return jqxhr
-}
-
-/* Обработчик события паджинации коллекции */
-function eventCollectionPage() {
-    if (DEBUG) {console.log('function:'+'eventCollectionPage')};
-    data     = $(this).data();
-    instance = REGISTER[data['id']];
-    if (instance.paginator) {
-        instance.paginator.page = $(this).val() || $(this).data()['page'] || 1;
-    };
-    jqxhr = handlerCollectionGet(instance);
-    return jqxhr
-}
-
-/* Обработчик события удаления значения в поле выбора */
-function eventFieldClear() {
-    if (DEBUG) {console.log('function:'+'eventFieldClear')};
+/* Обработчик события выбора объекта */
+function eventObjectSelect() {
+    if (DEBUG) {console.log('function:'+'eventObjectSelect')};
     $this = $(this);
-    $this.attr('disabled', 'disabled');
-    $this.siblings('button[name]').val(null).html('&nbsp;').change();
+    data = $this.data();
+    FIELD.val(data.pk).text(data.unicode).change()
+        .siblings('button[disabled]').removeAttr('disabled');
+    $('#modal').modal('hide');
     return true
 }
 
-/* Обработчик формирования и запуска модального окна */
-function handlerModalShow(mhead, mbody, mfoot, done) {
-    if (DEBUG) {console.log('function:'+'handlerModalShow')};
-    $modal = $('#modal');
-    modal = {};
-    modal.mhead = mhead;
-    modal.mbody = mbody;
-    modal.mfoot = mfoot;
-    html = TEMPLATES.modal({modal:modal})
-    $modal.html(html).modal('show');
-    if (done) { done() };
+////////////////////////////////////////////////////////////////////////
+//                              СЕЛЕКТОРЫ                             //
+////////////////////////////////////////////////////////////////////////
+
+// Процедуры
+
+/* Обработчик события запуска выбора для m2m полей */
+function handlerM2MSelect(m2m, model) {
+    if (DEBUG) {console.log('function:'+'handlerM2MSelect')};
+    var selector = new classSelector(model, true),
+        mhead = 'Выберите требуемые объекты',
+        mbody = handlerLayoutRender(selector, true),
+        mfoot = null,
+        data  = {},
+        buttons = [
+            {model: model, action:'object_add',      label:'Новый',    css:'btn-warning'},
+            {model: null,  action:'modal_close',     label:'Закрыть',  css:''},
+            {model: m2m,   action:'selector_append', label:'Добавить', css:'btn-info'},
+            {model: m2m,   action:'selector_submit', label:'Выбрать',  css:'btn-primary'},
+        ];
+    data = { buttons:buttons, selector: selector };
+    console.log(data);
+    mfoot = TEMPLATES.modalFooter({ mfoot:data, });
+    console.log(mfoot);
+    handlerModalShow(mhead, mbody, mfoot,
+        function() {handlerCollectionGet(selector)}
+    )
 }
 
 /* Обработчик события запуска выбора */
@@ -879,15 +957,14 @@ function handlerFieldSelect($field) {
     )
 }
 
+// События
 
-/* Обработчик события выбора объекта */
-function eventObjectSelect() {
-    if (DEBUG) {console.log('function:'+'eventObjectSelect')};
+/* Обработчик события удаления значения в поле выбора */
+function eventFieldClear() {
+    if (DEBUG) {console.log('function:'+'eventFieldClear')};
     $this = $(this);
-    data = $this.data();
-    FIELD.val(data.pk).text(data.unicode).change()
-        .siblings('button[disabled]').removeAttr('disabled');
-    $('#modal').modal('hide');
+    $this.attr('disabled', 'disabled');
+    $this.siblings('button[name]').val(null).html('&nbsp;').change();
     return true
 }
 
@@ -900,17 +977,42 @@ function eventFieldSelect() {
     return true
 }
 
-/* Обработчик события выбора строки в таблице */
-function eventRowClick() {
-    if (DEBUG) {console.log('function:'+'eventRowClick')};
+/* Обработчик события добавления значений в набор */
+function eventSelectorAppend() {
+    if (DEBUG) {console.log('function:'+'eventSelectorAppend')};
     $this = $(this);
-    $this.addClass('info').siblings('tr').removeClass('info');
+    return true
+}
+
+/* Обработчик события добавления значений в набор */
+function eventSelectorSubmit() {
+    if (DEBUG) {console.log('function:'+'eventSelectorSubmit')};
+    $this = $(this);
     return true
 }
 
 ////////////////////////////////////////////////////////////////////////
-//                              ВКЛАДКИ                               //
+//                           МОДАЛЬНОЕ ОКНО                           //
 ////////////////////////////////////////////////////////////////////////
+
+/* Обработчик формирования и запуска модального окна */
+function handlerModalShow(mhead, mbody, mfoot, done) {
+    if (DEBUG) {console.log('function:'+'handlerModalShow')};
+    $modal = $('#modal');
+    modal = {};
+    modal.mhead = mhead;
+    modal.mbody = mbody;
+    modal.mfoot = mfoot;
+    html = TEMPLATES.modal({modal:modal})
+    $modal.html(html).modal('show');
+    if (done) { done() };
+}
+
+////////////////////////////////////////////////////////////////////////
+//                               МЕНЮ                                 //
+////////////////////////////////////////////////////////////////////////
+
+// Процедуры
 
 function handlerMenuAppLoad() {
     if (DEBUG) {console.log('function:'+'handlerMenuAppLoad')};
@@ -928,6 +1030,12 @@ function handlerMenuAppLoad() {
     jqxhr = new jsonAPI(args, cb, 'handlerMenuAppLoad() call jsonAPI()', sync);
     return jqxhr
 };
+
+////////////////////////////////////////////////////////////////////////
+//                              ВКЛАДКИ                               //
+////////////////////////////////////////////////////////////////////////
+
+// Процедуры
 
 /* Открывает вкладку на рабочей области */
 function handlerTabOpen(data) {
@@ -963,6 +1071,41 @@ function handlerTabOpen(data) {
     return true;
 }
 
+/* Закрывает вкладку, удаляя её с рабочей области и из настроек */
+function handlerTabClose(data) {
+    if (DEBUG) {console.log('function:'+'handlerTabClose')};
+    id = data ? data.id : null;
+    $('#tab_'+id).remove();
+    $('#layout_'+id).remove();
+    instance = REGISTER[id];
+    if (instance) {
+        handlerObjectRowUnmuted(instance);
+        if (instance instanceof classObject) {
+            $.each(instance.composes, function(i, item) {
+                delete REGISTER[item.id]
+            });
+            delete REGISTER[id]
+        }
+    };
+    // Удаляем из хранилища информацию об открытой вкладке
+    num = $.inArray(id, SETTINGS.local.tabs);
+    if (num > -1) {
+        delete SETTINGS.local.tabs[num];
+        SETTINGS.cleanTabs().save_local();
+    };
+}
+
+/* Восстанавливает вкладки, открытые до обновления страницы */
+function handlerTabRestore() {
+    if (DEBUG) {console.log('function:'+'handlerTabRestore')};
+    $.each(SETTINGS.local.tabs, function(i, item) {
+        // только приложения в меню
+        $('#menu-app li[class!=disabled] a[data-id='+item+']').click();
+    });
+}
+
+// События
+
 /* Обработчик события открытия вкладки */
 function eventTabOpen() {
     if (DEBUG) {console.log('function:'+'eventTabOpen')};
@@ -970,29 +1113,6 @@ function eventTabOpen() {
     data = REGISTER[data.id] || data;
     handlerTabOpen(data)
     return true;
-}
-
-/* Закрывает вкладку, удаляя её с рабочей области и из настроек */
-function handlerTabClose(data) {
-    if (DEBUG) {console.log('function:'+'handlerTabClose')};
-    $('#tab_'+data.id).remove();
-    $('#layout_'+data.id).remove();
-    instance = REGISTER[data.id];
-    if (instance) {
-        handlerObjectRowUnmuted(instance);
-        if (instance instanceof classObject) {
-            $.each(instance.composes, function(i, item) {
-                delete REGISTER[item.id]
-            });
-            delete REGISTER[data.id]
-        }
-    };
-    // Удаляем из хранилища информацию об открытой вкладке
-    num = $.inArray(data.id, SETTINGS.local.tabs);
-    if (num > -1) {
-        delete SETTINGS.local.tabs[num];
-        SETTINGS.cleanTabs().save_local();
-    };
 }
 
 /* Обработчик события закрытия вкладки */
@@ -1004,46 +1124,9 @@ function eventTabClose() {
     return true;
 }
 
-/* Загружает необходимый макет модели или объекта */
-function handlerLayoutLoad(instance) {
-    if (DEBUG) {console.log('function:'+'handlerLayoutLoad')};
-    html = handlerLayoutRender(instance);
-    // Загрузка коллекции
-    if ((instance instanceof classModel) || (instance instanceof classCompose)) {
-        jqxhr = handlerCollectionGet(instance);
-    }
-}
-
-/* Обработчик события загрузки макета */
-function eventLayoutLoad() {
-    if (DEBUG) {console.log('function:'+'eventLayoutLoad')};
-    data = $(this).data();
-    instance = REGISTER[data.id];
-    handlerLayoutLoad(instance)
-    // Удаление атрибута загрузки
-    $(this).removeAttr("data-loading");
-    return true;
-}
-
-/* Восстанавливает вкладки, открытые до обновления страницы */
-function restoreSession() {
-    if (DEBUG) {console.log('function:'+'restoreSession')};
-    $.each(SETTINGS.local.tabs, function(i, item) {
-        // только приложения в меню
-        $('#menu-app li[class!=disabled] a[data-id='+item+']').click();
-    });
-}
-
 ////////////////////////////////////////////////////////////////////////
 //                              ПРОЧЕЕ                                //
 ////////////////////////////////////////////////////////////////////////
-
-function toggleCheckboxes() {
-    $table = $(this).parents('table');
-    $inputs = $table.find("tbody td:nth-child(1) input[type=checkbox]")
-    checked = this.checked
-    $.each($inputs, function(i, item) { item.checked = checked });
-} 
 
 ////////////////////////////////////////////////////////////////////////
 //                            ИСПОЛНЕНИЕ                              //
@@ -1063,6 +1146,7 @@ $(document).ready(function($) {
     TEMPLATES.layoutDefault     = _.template($('#underscore-layout-default').html());
     TEMPLATES.tab               = _.template($('#underscore-tab').html());
     TEMPLATES.modal             = _.template($('#underscore-modal').html());
+    TEMPLATES.modalFooter       = _.template($('#underscore-modal-footer').html());
 
     // Загрузка меню
     $('#menu-app').hide();
@@ -1072,19 +1156,10 @@ $(document).ready(function($) {
     /* Инициализируем настройки */
     window.SETTINGS = new classSettings();
 
-    /* Инициализируем модальное окно */
-    //~ $('#modal').modal();
 
     // Инициализация для Bootstrap
     $("alert").alert();
     $(".dropdown-toggle").dropdown();
-
-    /* Подсветка ссылок навигатора согласно текущего положения
-     * TODO: выяснить необходимость?
-    var path = window.location.pathname;
-    if (path != '/') { $('div.navbar a[href^="'+path+'"]').parents('li').addClass('active');}
-    else { $('div.navbar a[href="/"]').parents('li').addClass('active');}
-    */
 
     // Если настройки готовы, то запускаем все процессы
     if (SETTINGS.init().ready) {
@@ -1094,7 +1169,7 @@ $(document).ready(function($) {
         $('#menu-app li[class!=disabled]').on('click',  'a', eventTabOpen);
         $('#main-tab').on('click', 'button.close[data-id]',  eventTabClose)
 
-        restoreSession();
+        handlerTabRestore();
 
         // Биндинг на фильтрацию, паджинацию и количество в коллекциях
         $('body').on('keyup',  '[data-action=collection_filter]', eventCollectionFilter);
@@ -1116,13 +1191,15 @@ $(document).ready(function($) {
         $('body').on('click', '[data-action=object_reset]',  eventObjectReset);
         $('body').on('click', '[data-action=object_save]',   eventObjectSave);
         $('body').on('click', '[data-action=object_select]', eventObjectSelect);
+        $('#modal').on('click', '[data-action=selector_append]', eventSelectorAppend);
+        $('#modal').on('click', '[data-action=selector_submit]', eventSelectorSubmit);
 
         // Биндинги на кнопки выбора значения
         $('body').on('click', '[data-action=field_clear]',   eventFieldClear);
         $('body').on('click', '[data-action=field_select]',  eventFieldSelect);
 
         // Биндинг на чекбоксы
-        $('body').on('click', '[data-toggle=checkboxes]',   toggleCheckboxes);
+        $('body').on('click', '[data-toggle=checkboxes]',   handlerSelectAllToggle);
         
     } else {
         console.log("ОШИБКА! Загрузка настроек не удалась.");
