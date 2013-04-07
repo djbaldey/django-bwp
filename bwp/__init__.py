@@ -40,7 +40,7 @@ import os
 from django.utils.translation import ugettext_lazy as _
 __label__ = _('platform')
 
-VERSION = (0, 1, 5)
+VERSION = (0, 1, 6)
 __version__ = '.'.join([ str(x) for x in VERSION ])
 
 def auto_remove_version_links(path):
@@ -73,4 +73,9 @@ def auto_create_version_links():
         os.symlink(src_js_path, __version__)
     os.chdir(cwd)
 
-auto_create_version_links()
+# При сборке пакета и установке через pip код не выполнится
+# из-за отсутствия путей.
+try:
+    auto_create_version_links()
+except:
+    pass

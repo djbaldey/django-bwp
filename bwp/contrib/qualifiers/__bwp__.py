@@ -56,6 +56,9 @@ class CurrencyAdmin(ModelBWP):
     ordering = ['title', 'code']
 site.register(Currency, CurrencyAdmin)
 
+class DocumentCompose(ComposeBWP):
+    model = Document
+
 class DocumentAdmin(ModelBWP):
     list_display = ('title', 'code',)
     list_display_css = { 'code': 'input-micro',}
@@ -63,6 +66,7 @@ class DocumentAdmin(ModelBWP):
     #~ list_filter = ('parent', )
     raw_id_fields = ['parent']
     ordering = ['title']
+    compositions = [('document_set', DocumentCompose)]
 site.register(Document, DocumentAdmin)
 
 class MeasureUnitCompose(ComposeBWP):
