@@ -122,6 +122,20 @@ body.login #login {
     margin: auto;
 }
 
+.max-height-small {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.max-height-medium {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.max-height-large {
+    max-height: 600px;
+    overflow-y: auto;
+}
 
 hr.soften {
     margin: 1px 0;
