@@ -214,7 +214,7 @@ if (SETTINGS.init().ready) {
 * Функции "callback" - необязательны.
 */
 function classSettings(default_callback) {
-    if (DEBUG) {console.log('function:'+'Settings')};
+    this.meta = {};
     /* Установка ссылки на свой объект для вложенных функций */
     self = this;
     /* Проверка возможности исполнения */

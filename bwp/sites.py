@@ -231,11 +231,11 @@ class BWPSite(object):
         """
         # Sort the apps alphabetically.
         app_list = self.app_dict(request).values()
-        app_list.sort(key=lambda x: x['name'])
+        app_list.sort(key=lambda x: x['label'])
 
         # Sort the models alphabetically within each app.
         for app in app_list:
-            app['models'].sort(key=lambda x: x['name'])
+            app['models'].sort(key=lambda x: x['label'])
 
         return app_list
 
