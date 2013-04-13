@@ -49,7 +49,7 @@ from django.db import transaction
 from django.forms.models import modelform_factory
 
 from quickapi.http import JSONResponse, JSONRedirect
-from quickapi.views import api as _api
+from quickapi.views import index as _api
 from quickapi.decorators import login_required, api_required
 
 from bwp.sites import site

@@ -146,7 +146,10 @@ class SerializerWrapper(object):
             for attr in wanted:
                 v = getattr(queryset, attr)
                 if isinstance(v, MethodType):
-                    result[attr] = v()
+                    try:
+                        result[attr] = v()
+                    except:
+                        result[attr] = None
                 elif isinstance(v, (str, int)):
                     result[attr] = v
             result['count'] = queryset.paginator.count

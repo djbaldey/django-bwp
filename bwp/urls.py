@@ -36,12 +36,11 @@
 #   <http://www.gnu.org/licenses/>.
 ###############################################################################
 """
-from django.conf.urls.defaults import patterns, include, url
-from django.shortcuts import redirect
+from django.conf.urls import *
 
 def autodiscover():
     """
-    Auto-discover INSTALLED_APPS bwp.py modules and fail silently when
+    Auto-discover INSTALLED_APPS __bwp__.py modules and fail silently when
     not present. This forces an import on them to register any bwp bits they
     may want.
     """
@@ -73,9 +72,9 @@ def autodiscover():
 
 autodiscover()
 
-urlpatterns = patterns('',
-    url(r'^$', 'bwp.views.index', name='bwp_index'),
-    url(r'^login/$', 'bwp.views.login', name="bwp_login"),
-    url(r'^logout/$', 'bwp.views.logout', name="bwp_logout"),
-    url(r'^api/$', 'bwp.views.api', name="bwp_api"),
+urlpatterns = patterns('bwp.views',
+    url(r'^$',        'index',  name='bwp_index'),
+    url(r'^login/$',  'login',  name="bwp_login"),
+    url(r'^logout/$', 'logout', name="bwp_logout"),
+    url(r'^api/$',    'api',    name="bwp_api"),
 )
