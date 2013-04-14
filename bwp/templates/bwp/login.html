@@ -25,7 +25,7 @@
         <fieldset>
             <input type="hidden" name="this_is_the_login_form" value="1" />
             <input type="hidden" name="next" value="{{ next|escape }}" />
-            <img alt="" src="{{ STATIC_URL }}img/header.png">
+            <img alt="" src="{{ STATIC_URL }}img/bwp/header.png">
             <hr/>
             {% if not form.this_is_the_login_form.errors %}{{ form.username.errors }}{% endif %}
             <input type="text" class="input-block-level" placeholder="Имя пользователя" name="username" value="" id="username">

@@ -3,16 +3,18 @@ import os
 from bwp import __version__
 
 def read(fname):
-    return open(os.path.join(os.path.dirname(__file__), fname)).read()
-README = read('README.md')
+    try:
+        return open(os.path.join(os.path.dirname(__file__), fname)).read()
+    except:
+        return ''
 
 setup(
     name='BWP',
     version=__version__,
-    description='The "Business Web Platform" is Django-application. ' \
+    description='The Business Web Platform is Django-application. ' \
                 'Contains models, templates and other preparations for ' \
                 'the fast building of ERP system',
-    long_description=README,
+    long_description=read('README.md'),
     author='Grigoriy Kramarenko',
     author_email='root@rosix.ru',
     url='https://bitbucket.org/djbaldey/bwp/',
@@ -23,14 +25,17 @@ setup(
     include_package_data = True,
     install_requires=['django-quickapi'],
     classifiers=[
-        'Development Status :: 1 - Planning',
+        'Development Status :: 2 - Pre-Alpha',
         'Environment :: Web Environment',
+        'Framework :: Django',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
+        'Natural Language :: Russian',
         'Operating System :: OS Independent',
+        'Programming Language :: JavaScript',
         'Programming Language :: Python',
         'Topic :: Internet :: WWW/HTTP :: Dynamic Content',
-        'Framework :: Django',
-        'Natural Language :: Russian',
+        'Topic :: Internet :: WWW/HTTP :: Site Management',
+        'Topic :: Office/Business',
     ],
 )

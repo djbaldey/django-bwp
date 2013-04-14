@@ -1,4 +1,4 @@
-# Business Web Platform
+**About of Business Web Platform**
 
 This is online-package for the employers. BWP provides standard set of
 operations with documents, such as acts, accounts, contracts, goods and
@@ -17,8 +17,12 @@ It is possible to install BWP on any web server (HTTPS recommended),
 which can run with projects of Django (apache, nginx and others with
 included WSGI).
 
-*In current time, the project under initial stage of development*
+**Wiki**
 
-Application tested on Django 1.4
+See https://bitbucket.org/djbaldey/bwp/wiki/
 
-*Old name: Business Web Package*
+**Notes**
+
+* *In current time, the project under initial stage of development*
+* *Application tested on Django 1.4/1.5*
+* *Old name: Business Web Package*
