@@ -200,8 +200,8 @@ INSTALLED_APPS = (
     ### Обязательные
     'bwp',
     'quickapi',
-    #~ 'webodt',
     ### Необязательные
+    'bwp.contrib.webodt',
     'bwp.contrib.contacts',
     'bwp.contrib.qualifiers',
     'project.tests',
