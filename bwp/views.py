@@ -49,7 +49,7 @@ from django.db import transaction
 from django.forms.models import modelform_factory
 
 from quickapi.http import JSONResponse, JSONRedirect
-from quickapi.views import index as _api
+from quickapi.views import index as quickapi_index
 from quickapi.decorators import login_required, api_required
 
 from bwp.sites import site
@@ -371,7 +371,7 @@ QUICKAPI_DEFINED_METHODS = {
 
 @csrf_exempt
 def api(request):
-    return _api(request, QUICKAPI_DEFINED_METHODS)
+    return quickapi_index(request, QUICKAPI_DEFINED_METHODS)
 
 ########################################################################
 #                             END API                                  #
