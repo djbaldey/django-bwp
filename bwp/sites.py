@@ -56,6 +56,9 @@ class NotRegistered(Exception):
 class BWPSite(object):
     """ Класс объекта для регистрации моделей в BWP из одного экземпляра """
 
+    devices = None # local devices, such as
+                   # fiscal register, receipt printer, etc.
+
     def __init__(self, name='bwp', app_name='bwp'):
         self._registry = {} # model_class class -> bwp_class instance
         self.name = name
@@ -247,6 +250,33 @@ class BWPSite(object):
             for dicmodel in app['models']:
                 dicmodel.pop('bwp')
         return app_list
+
+    def get_registry_devices(self, request=None):
+        """
+        Общий метод для проверки привилегий на объекты устройств. 
+        
+        Если не задан запрос, то возвращает весь список, без учёта
+        привилегий.
+        """
+        if self.devices is None:
+            return []
+        if request is None: 
+            return self.devices
+        available = []
+        for device in self.devices:
+            if device.has_permission(request) or \
+            device.has_admin_permission(request):
+                available.append(device)
+        return available
+
+    def devices_dict(self, request):
+        """
+        Возвращает словарь, где ключом является название устройства,
+        а значением - само устройство
+        """
+        return dict([ (device.title, device) \
+            for device in self.get_registry_devices(request)
+        ])
 
 
 # This global object represents the default bwp site, for the common case.
