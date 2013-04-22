@@ -43,7 +43,7 @@ import datetime
 
 class ShtrihFRKDummy(object):
 
-    def __init__(self, connection, password, admin_password):
+    def __init__(self, *args, **kwargs):
         self.kkt = None
 
     def open(self):
@@ -104,8 +104,8 @@ class ShtrihFRKDummy(object):
 
 class ShtrihFRK(ShtrihFRKDummy):
 
-    def __init__(self, connection, password, admin_password):
-        self.kkt = KKT(connection, password, admin_password)
+    def __init__(self, *args, **kwargs):
+        self.kkt = KKT(*args, **kwargs)
 
     def open(self):
         """ Начало работы с ККТ """

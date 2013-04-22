@@ -36,7 +36,7 @@
 #   <http://www.gnu.org/licenses/>.
 ###############################################################################
 """
-from ShtrihM import ShtrihRP, ShtrihFR
+from ShtrihM import ShtrihFRK
 from ICPDAS import ICPi7000
 
 DRIVER_CLASSES = {

@@ -39,7 +39,6 @@
 from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
 import serial, time, datetime
-from struct import pack, unpack
 import struct
 
 from helpers import money2integer, count2integer, \
@@ -51,17 +50,11 @@ DEFAULT_ADMIN_PASSWORD = conf.DEFAULT_ADMIN_PASSWORD
 DEFAULT_PASSWORD       = conf.DEFAULT_PASSWORD
 
 DEFAULT_PORT     = conf.DEFAULT_PORT
+DEFAULT_BOD      = conf.DEFAULT_BOD
 CODE_PAGE        = conf.CODE_PAGE
 
 MAX_ATTEMPT = conf.MAX_ATTEMPT
 MIN_TIMEOUT = conf.MIN_TIMEOUT
-
-# Статусы
-OK        = 0
-READY     = 1
-ANSWERING = 2
-ATTEMPTED = 3
-TIMEOUTED = 4
 
 # ASCII
 ENQ = chr(0x05) #Enquire. Прошу подтверждения.
@@ -72,12 +65,6 @@ NAK = chr(0x15) #Negative Acknowledgment, не подтверждаю.
 KKT_MODES = protocol.KKT_MODES
 KKT_FLAGS = protocol.KKT_FLAGS
 FP_FLAGS  = protocol.FP_FLAGS
-
-def print_debug(*args):
-    if settings.DEBUG:
-        print unicode(''.join(map(lambda x: str(x), args)),'utf8')
-
-dbg = print_debug
 
 class Struct(struct.Struct):
     """ Преобразователь """
@@ -136,13 +123,18 @@ class BaseKKT(object):
     """ Базовый класс включает методы непосредственного общения с
         устройством.
     """
-    def __init__(self, connection, password=DEFAULT_PASSWORD,
-                 admin_password=DEFAULT_ADMIN_PASSWORD):
+    def __init__(self, port=DEFAULT_PORT, bod=DEFAULT_BOD,
+                password=DEFAULT_PASSWORD,
+                admin_password=DEFAULT_ADMIN_PASSWORD, **kwargs):
         """ Пароли можно передавать в виде набора шестнадцатеричных
             значений, либо в виде обычной ASCII строки. Длина пароля 4
             ASCII символа.
         """
-        self.conn   = connection
+        self.conn = serial.Serial(port, bod,\
+                            parity=serial.PARITY_NONE,\
+                            stopbits=serial.STOPBITS_ONE,\
+                            timeout=0.7,\
+                            writeTimeout=0.7)
 
         if isinstance(password, (list, tuple):
             self.password = digits2string(password[:4])
@@ -214,8 +206,8 @@ class BaseKKT(object):
         while n < MAX_ATTEMPT and not one_round():
             n += 1
         if n >= MAX_ATTEMPT:
-            return ATTEMPTED
-        return OK
+            return False
+        return True
 
     def read(self):
         """ Считывает весь ответ ККМ """
