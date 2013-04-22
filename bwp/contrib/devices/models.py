@@ -62,7 +62,12 @@ class Device(AbstractGroupUnique):
     DRIVER_CHOICES = [ (x, x) for x in DRIVER_CLASSES.keys() ]
     BOD_CHOICES = (
         (None, _('nothing')),
+        (2400,   '2400'),
+        (4800,   '4800'),
         (9600,   '9600'),
+        (19200,  '19200'),
+        (38400,  '38400'),
+        (57600,  '57600'),
         (115200, '115200'),
     )
     driver = models.CharField(

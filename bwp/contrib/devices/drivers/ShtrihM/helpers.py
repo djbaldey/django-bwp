@@ -36,11 +36,45 @@
 #   <http://www.gnu.org/licenses/>.
 ###############################################################################
 """
-from ShtrihM import ShtrihRP, ShtrihFR
-from ICPDAS import ICPi7000
 
-DRIVER_CLASSES = {
-    #~ 'Shtrih-M Receipt Printer':  ShtrihRP,
-    'Shtrih-M Fiscal Register':  ShtrihFRK,
-    'ICP DAS I-7000/M-7000 DIO': ICPi7000,
-}
+def money2integer(money, digits=2):
+    """ Преобразует decimal или float значения в целое число, согласно
+        установленной десятичной кратности.
+        
+        Например, money2integer(2.3456, digits=3) вернёт  2346
+    """
+    return int(round(float(money), digits) * 10**digits)
+
+def count2integer(count, coefficient=1, digits=2):
+    """ Преобразует количество согласно заданного коэффициента """
+    return money2integer(count, digits=2) * coefficient
+
+def get_control_summ(string):
+    """ Подсчет CRC """
+    result = 0
+    for s in string:
+        result = result ^ ord(s)
+    return chr(result)
+
+def digits2string(digits):
+    """ Преобразует список из целых или шестнадцатеричных значений в
+        строку
+    """
+    return ''.join([ chr(x) for x in digits ])
+
+def string2bits(data):
+    """ Convert string to bit array """
+    result = []
+    for char in string:
+        bits = bin(ord(char))[2:]
+        bits = '00000000'[len(bits):] + bits
+        result.extend([int(b) for b in bits])
+    return result
+
+def bits2string(bits):
+    """ Convert bit array to string """
+    chars = []
+    for b in range(len(bits) / 8):
+        byte = bits[b*8:(b+1)*8]
+        chars.append(chr(int(''.join([str(bit) for bit in byte]), 2)))
+    return ''.join(chars)

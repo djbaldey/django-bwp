@@ -36,11 +36,19 @@
 #   <http://www.gnu.org/licenses/>.
 ###############################################################################
 """
-from ShtrihM import ShtrihRP, ShtrihFR
-from ICPDAS import ICPi7000
 
-DRIVER_CLASSES = {
-    #~ 'Shtrih-M Receipt Printer':  ShtrihRP,
-    'Shtrih-M Fiscal Register':  ShtrihFRK,
-    'ICP DAS I-7000/M-7000 DIO': ICPi7000,
-}
+# Пароль админа по умолчанию = 30
+DEFAULT_ADMIN_PASSWORD = (0x1e, 0x0, 0x0, 0x0)
+# Пароль кассира по умолчанию = 1
+DEFAULT_PASSWORD       = (0x1, 0x0, 0x0, 0x0)
+
+# Порт в GNU/Linux по-умолчанию (COM1)
+DEFAULT_PORT = '/dev/ttyUSB0'
+
+# Кодировка текста для устройств
+CODE_PAGE = 'cp1251'
+
+# Кол-во попыток и таймаут
+MAX_ATTEMPT = 10
+MIN_TIMEOUT = 0.05
+
