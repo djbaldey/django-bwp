@@ -41,7 +41,7 @@ from bwp.models import ModelBWP
 from django.utils.translation import ugettext_lazy as _
 from models import *
 
-class Device(ModelBWP):
+class DeviceAdmin(ModelBWP):
     list_display = ('title', 'driver', 'port')
     search_fields = ['title', 'driver', 'port']
 site.register(Device, DeviceAdmin)

@@ -38,13 +38,12 @@
 """
 from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
-import serial, time, datetime
-import struct
+import serial, time, datetime, struct
 
+import conf, protocol
 from helpers import money2integer, count2integer, \
                     string2bits, bits2string, digits2string, \
                     get_control_summ
-import conf, protocol
 
 DEFAULT_ADMIN_PASSWORD = conf.DEFAULT_ADMIN_PASSWORD
 DEFAULT_PASSWORD       = conf.DEFAULT_PASSWORD
@@ -119,6 +118,26 @@ class KKTException(Exception):
     def __unicode__(self):
         return unicode(str(self))
 
+def password_prapare(password):
+    if isinstance(password, (list, tuple)):
+        try:
+            password = digits2string(password[:4])
+        except:
+            raise TypeError(u'Password type not identify')
+    elif isinstance(password, int):
+        if password > 9999:
+            raise TypeError(u'Password must be 0..9999 or string from 4 chars')
+        password = int4.pack(password)
+    elif isinstance(password, str):
+        try: # если это число в строке
+            password = int4.pack(int(password))
+        except:
+            pass
+        password = password[:4]
+    else:
+        raise TypeError(u'Password type not identify')
+    return password
+
 class BaseKKT(object):
     """ Базовый класс включает методы непосредственного общения с
         устройством.
@@ -136,19 +155,8 @@ class BaseKKT(object):
                             timeout=0.7,\
                             writeTimeout=0.7)
 
-        if isinstance(password, (list, tuple):
-            self.password = digits2string(password[:4])
-        elif isinstance(password, str):
-            self.password = password[:4]
-        else:
-            raise TypeError(u'Password type not identify')
-
-        if isinstance(admin_password, (list, tuple):
-            self.admin_password = digits2string(admin_password[:4])
-        elif isinstance(password, str):
-            self.admin_password = admin_password[:4]
-        else:
-            raise TypeError(u'Password type not identify')
+        self.password = password_prapare(password)
+        self.admin_password = password_prapare(admin_password)
 
         if self.check() != NAK:
             while self.conn.inWaiting():
@@ -503,7 +511,7 @@ class KKT(BaseKKT):
             'kkt_submode': ord(data[14]),
             'kkt_port':    ord(data[15]),
             'fp_version':  '%s.%s' % (data[16], data[17]),
-            'fp_build':    int2.unpack(data[18] + data[19])
+            'fp_build':    int2.unpack(data[18] + data[19]),
             'fp_date':     fp_date,
             'date':        date,
             'time':        time,

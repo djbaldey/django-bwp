@@ -37,9 +37,10 @@
 ###############################################################################
 """
 from django.utils.translation import ugettext_lazy as _
+import datetime
+
 from kkt import KKTException, KKT, int2
 from protocol import *
-import datetime
 
 class ShtrihFRKDummy(object):
 

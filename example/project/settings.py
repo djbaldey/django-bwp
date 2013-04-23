@@ -204,6 +204,7 @@ INSTALLED_APPS = (
     'bwp.contrib.webodt',
     'bwp.contrib.contacts',
     'bwp.contrib.qualifiers',
+    'bwp.contrib.devices',
     'project.tests',
 )
 
