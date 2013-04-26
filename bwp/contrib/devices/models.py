@@ -46,37 +46,56 @@ from drivers import DRIVER_CLASSES
 class Register(object):
     """ Класс-регистратор устройств """
 
+    def __iter__(self):
+        return self.devices
+
     @property
     def devices(self):
-        if not getattr(self, '_device'):
+        if not getattr(self, '_devices'):
             self.load()
         return self._devices
 
     def load(self):
-        self._devices = [ x for x in Device.objects.all() ]
+        self._devices = dict([
+            (x.title, x) for x in Device.objects.filter(is_local=True)
+        ])
+        return self._devices
+    
+    def get_devices(self, request=None):
+        data = {}
+        if request:
+            for x in self.devices:
+                if x.has_permission(request) or x.has_admin_permission(request):
+                    data['title'] = x
+        else:
+            for x in self.devices:
+                data['title'] = x
+        return data
+    
+    def get_list(self, request):
+        data = []
+        for x in self.get_devices(request).values():
+            data.append(x.values('pk', 'title', 'driver'))
+        return data
 
 register = Register()
 
 class Device(AbstractGroupUnique):
-    """ Устройство """
+    """ Локальное или удалённое устройство """
     DRIVER_CHOICES = [ (x, x) for x in DRIVER_CLASSES.keys() ]
-    BOD_CHOICES = (
-        (None, _('nothing')),
-        (2400,   '2400'),
-        (4800,   '4800'),
-        (9600,   '9600'),
-        (19200,  '19200'),
-        (38400,  '38400'),
-        (57600,  '57600'),
-        (115200, '115200'),
-    )
+    is_local = models.BooleanField(
+            default=False,
+            verbose_name = _("is local"))
     driver = models.CharField(
             choices=DRIVER_CHOICES,
             max_length=255,
             verbose_name = _('driver'))
+    url = models.URLField(
+            blank=True,
+            verbose_name = _('url'))
     port = models.CharField(
             max_length=50,
-            unique=True,
+            blank=True,
             verbose_name = _('port'))
     username = models.CharField(
             max_length=100,
@@ -90,11 +109,6 @@ class Device(AbstractGroupUnique):
             max_length=100,
             blank=True,
             verbose_name = _('admin password'))
-    bod = models.IntegerField(
-            choices=BOD_CHOICES,
-            null=True,
-            default=None,
-            verbose_name = _('bod'))
 
     users = models.ManyToManyField(
             User,
@@ -131,13 +145,15 @@ class Device(AbstractGroupUnique):
         """
         if not getattr(self, '_device'):
             cls = DRIVER_CLASSES[self.driver]
-            self._device = cls(
-                port=self.port,
-                username=self.username,
-                password=self.password,
-                admin_password=self.admin_password,
-                bod=self.bod, 
-            )
+            if self.is_local:
+                self._device = cls(
+                    port=self.port,
+                    username=self.username,
+                    password=self.password,
+                    admin_password=self.admin_password,
+                )
+            else:
+                self._device = None
         return self._device
 
     def has_permission(self, request, **kwargs):

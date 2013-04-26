@@ -361,6 +361,49 @@ def API_commit(request, objects, **kwargs):
         transaction.commit()
     return JSONResponse(data=True, message=unicode(_("Commited!")))
 
+@api_required
+@login_required
+def API_device_list(request, **kwargs):
+    """ *Получение списка доступных устройств.*
+        
+        ##### ЗАПРОС
+        Без параметров.
+        
+        ##### ОТВЕТ
+        Формат ключа **"data"**:
+        список устройств
+    """
+    data = []
+    if site.devices:
+        data = site.devices.get_list()
+    return JSONResponse(data=data)
+
+@api_required
+@login_required
+def API_device_command(request, device, command, params={}, **kwargs):
+    """ *Выполнение команды на устройстве.*
+        
+        ##### ЗАПРОС
+        Параметры:
+        
+        1. **"device"** - идентификатор устройства;
+        2. **"command"** - команда(метод) устройства;
+        3. **"params"** - параметры к команде (по-умолчанию == {});
+        
+        ##### ОТВЕТ
+        Формат ключа **"data"**:
+        результат выполнения команды
+    """
+    device = site.devices.get_devices(request).get(device)
+    if device.device:
+        try:
+            attr = getattr(device.device, command)
+            data = attr(**params)
+            return JSONResponse(data=data)
+        except:
+            return JSONResponse(status=400)
+    return JSONResponse(status=400)
+
 QUICKAPI_DEFINED_METHODS = {
     'get_apps':         'bwp.views.API_get_apps',
     'get_settings':     'bwp.views.API_get_settings',
@@ -371,6 +414,9 @@ QUICKAPI_DEFINED_METHODS = {
 
 @csrf_exempt
 def api(request):
+    if site.devices:
+        QUICKAPI_DEFINED_METHODS['device_list']    = 'bwp.views.API_device_list'
+        QUICKAPI_DEFINED_METHODS['device_command'] = 'bwp.views.API_device_command'
     return quickapi_index(request, QUICKAPI_DEFINED_METHODS)
 
 ########################################################################
