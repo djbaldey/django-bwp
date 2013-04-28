@@ -65,8 +65,8 @@
 
 <body class="{% block bodyclass %}home{% endblock %}">
 <div id="wrap">
-{% include "bwp/for_IE.html" %}
-<div id="modal" class="modal hide fade"></div>
+    {% include "bwp/for_IE.html" %}
+    <div id="modal" class="modal hide fade"></div>
 
     <div class="container-fluid">
         <div class="row-fluid">
@@ -184,6 +184,4 @@
 <!-- START: block extrajs -->
     {% block extrajs %}{% endblock %}
 <!-- END: block extrajs -->
-
-<!-- END: javascript -->
 </body></html>

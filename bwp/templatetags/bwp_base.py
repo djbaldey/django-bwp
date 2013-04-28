@@ -56,7 +56,7 @@ def mini_library():
 @register.simple_tag
 def AUTHORS():
     try:
-        return ' | '.join(conf.AUTHORS)
+        return ' | '.join(conf.AUTHORS).strip()
     except:
         return ''
 
