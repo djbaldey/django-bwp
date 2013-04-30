@@ -34,7 +34,8 @@
 #   вместе с этой программой. Если это не так, см.
 #   <http://www.gnu.org/licenses/>.
 ###############################################################################
--->{% endcomment %}{% load i18n l10n bwp_base bwp_static bwp_locale %}{% load url from future %}<!DOCTYPE html>
+-->{% endcomment %}
+{% load i18n l10n bwp_base bwp_static bwp_locale %}{% load url from future %}<!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE|default:"en-us" }}" {% if LANGUAGE_BIDI %}dir="rtl"{% endif %}>
 <head>
     <title>{% SETTINGS 'PROJECT_SHORTNAME' %}: {% block title %}{% filter force_escape %}{% SETTINGS 'PROJECT_DESCRIPTION' %}{% endfilter %}{% endblock %}</title>
