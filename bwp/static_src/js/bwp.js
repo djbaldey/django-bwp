@@ -68,10 +68,10 @@ _.mixin(_.str.exports());
 function isEmpty(obj) {
     for (var k in obj) {
         return false; // если цикл хоть раз сработал, то объект не пустой => false
-    }
+    };
     // дошли до этой строки - значит цикл не нашёл ни одного свойства => true
     return true;
-}
+};
 
 /* Единая, переопределяемая задержка для действий или функций */
 delay = (function(){
@@ -106,35 +106,35 @@ function generatorID(prefix, postfix) {
     result.push(gen); 
     if (postfix) { result.push(postfix) };
     return validatorID(result);
-}
+};
 
 /* Приводит идентификаторы в позволительный jQuery вид.
  * В данном приложении он заменяет точки на "-".
  * На вход может принимать список или строку
  */
 function validatorID(id) {
-    if ($.type(id) === 'array') {id = id.join('_')};
-    if (DEBUG) {console.log('function:'+'validatorID')};
+    if ($.type(id) === 'array') { id = id.join('_'); };
+    if (DEBUG) { console.log('function:'+'validatorID'); };
     return id.replace(/[\.,\:,\/, ,\(,\),=,?]/g, "-");
-}
+};
 
 /* Общие функции вывода сообщений */
 function handlerHideAlert() {
     if (DEBUG) {console.log('function:'+'handlerHideAlert')};
     $('.alert').alert('close');
-}
+};
 function handlerShowAlert(msg, type, callback) {
     if (DEBUG) {console.log('function:'+'handlerShowAlert')};
-    console.log(msg);
-    if (!type) { type = 'alert-error' }
+    if (!type) { type = 'alert-error'; };
+    if (type == 'alert-error') { console.log(msg); };
     html = TEMPLATES.alert({ msg: msg, type: type });
     $('#alert-place').html(html);
     $(window).scrollTop(0);
     $('.alert').alert();
     if (callback) { delay(callback, 5000); }
-    else { delay(handlerHideAlert, 5000); }
+    else { delay(handlerHideAlert, 5000); };
     return false;
-}
+};
 
 /* Общая функция для работы с django-quickapi */
 function jsonAPI(args, callback, to_console, sync) {
@@ -169,11 +169,15 @@ function jsonAPI(args, callback, to_console, sync) {
          * а затем выполнить переход по ссылке, добавив GET-параметр для
          * возврата на текущую страницу
          */
-        if ((json.status >=300) && (json.status <400) && (json.data.Location)) {
-            handlerShowAlert(json.message, 'alert-error', function() {
+        if ((json.status >=300) && (json.status <400) && (json.data.Location != undefined)) {
+            redirect = function() {
                 window.location.href = json.data.Location
                 .replace(/\?.*$/, "?next=" + window.location.pathname);
-            });
+            }
+            if (json.message) {
+                handlerShowAlert(json.message, 'alert-error', redirect);
+            }
+            else { redirect() }
         }
         /* При ошибках извещаем пользователя полученным сообщением */
         else if (json.status >=400) {
@@ -218,8 +222,10 @@ function classSettings(default_callback) {
     /* Установка ссылки на свой объект для вложенных функций */
     self = this;
     /* Проверка возможности исполнения */
-    if (typeof localStorage == 'undefined' || typeof $.evalJSON == 'undefined')
-        { return {}; }
+    if ((typeof localStorage == 'undefined')
+                                || (typeof $.evalJSON == 'undefined')){
+        return {}; 
+    };
 
     _unique_key = SETTINGS_UNIQUE_KEY;
 
@@ -233,7 +239,7 @@ function classSettings(default_callback) {
     _responseServer = null;
 
     /* Атрибут SETTINGS.ready - показывает готовность */
-    this.__defineGetter__('ready', function() { return _values_is_set; })
+    this.__defineGetter__('ready', function() { return _values_is_set; });
 
     /* В этом атрибуте можно задавать функцию, которая будет исполняться
      * всякий раз в конце методов: save() и reload(),
@@ -252,19 +258,19 @@ function classSettings(default_callback) {
         };
     };
 
-    this.callback = _callback
+    this.callback = _callback;
 
     /* Дата последнего сохранения на сервере */
-    _last_set_server =  null; // Date()
+    _last_set_server = null; // Date()
     this.last_set = _last_set_server;
 
     /* Дата последнего получения с сервера */
-    _last_get_server =  null; // Date()
+    _last_get_server = null; // Date()
     this.last_get = _last_get_server;
 
     /* Метод получения данных из localStorage и ServerStorage */
     _init = function(callback) {
-        if (callback) { _callback = callback; }
+        if (callback) { _callback = callback; };
         _values_is_set = false;
         _local = $.evalJSON(localStorage.getItem(_unique_key)) || _local;
         _get_server();
@@ -277,29 +283,32 @@ function classSettings(default_callback) {
     this.reload = _init;
 
     /* Проверка первичной инициализации */
-    _check_init = function() { if (!_values_is_set) { _init(); } return self; };
+    _check_init = function() {
+        if (!_values_is_set) { _init(); };
+        return self;
+    };
 
     /* Публичные атрибуты краткого, облегчённого доступа к данным хранилищ.
      * Включают проверку первичной инициализации.
      * Атрибут SETTINGS.all - все настройки
      */
-    this.__defineGetter__('all', function() { _check_init(); return _values; })
+    this.__defineGetter__('all', function() { _check_init(); return _values; });
     /* Атрибут SETTINGS.server - настройки ServerStorage */
-    this.__defineGetter__('server', function() { _check_init(); return _server; })
+    this.__defineGetter__('server', function() { _check_init(); return _server; });
     /* Атрибут SETTINGS.local - настройки localStorage */
-    this.__defineGetter__('local', function() { _check_init(); return _local; })
+    this.__defineGetter__('local', function() { _check_init(); return _local; });
 
     /* Сохранение в localStorage и ServerStorage. Вторым аргументом можно
      * передавать какую именно настройку ('server' или 'local') требуется
      * сохранить.
      */
     this.save = function(callback, only) {
-        if (callback) { _callback = callback; }
+        if (callback) { _callback = callback; };
         if (only != 'local') {
             _set_server(); // Сначала на сервер,
-        }
+        };
         if (only != 'server') { // затем в локалсторадж
-            localStorage.setItem(_unique_key, $.toJSON(self.local))
+            localStorage.setItem(_unique_key, $.toJSON(self.local));
         };
         _run_callback(); // RUN CALLBACK IF EXIST!!!
         return self;
@@ -319,16 +328,16 @@ function classSettings(default_callback) {
     _set_server = function() {
         sync = false;
         _responseServer = null;
-        args = { method: "set_settings", settings: self.server }
+        args = { method: "set_settings", settings: self.server };
         cb = function(json, status, xhr) {
             if (!json.data) { handlerShowAlert(json.message) }
             else {
                 _last_set_server = new Date();
                 _responseServer = json;
-            }
-        }
-        jqxhr = new jsonAPI(args, cb, 'SETTINGS.set_server() call jsonAPI()', sync)
-        return [_last_set_server, _responseServer, jqxhr]
+            };
+        };
+        jqxhr = new jsonAPI(args, cb, 'SETTINGS.set_server() call jsonAPI()', sync);
+        return [_last_set_server, _responseServer, jqxhr];
     };
 
     /* Получение настроек из ServerStorage.
@@ -337,28 +346,28 @@ function classSettings(default_callback) {
     _get_server = function() {
         sync = true;
         _responseServer = null;
-        args = { method: "get_settings" }
+        args = { method: "get_settings" };
         cb = function(json, status, xhr) {
             _server = json.data;
             _last_get_server = new Date();
             _responseServer = json;
             _values_is_set = true;
             _run_callback(); // RUN CALLBACK IF EXIST!!!
-            }
+        };
         jqxhr = new jsonAPI(args, cb, 'SETTINGS.get_server() call jsonAPI()', sync);
-        return [_last_get_server, _responseServer, jqxhr]
+        return [_last_get_server, _responseServer, jqxhr];
     };
 
     // Очистка от null в списке вкладок
     this.cleanTabs = function() {
-        _tabs = []
+        _tabs = [];
         $.each(_local.tabs, function(i, item) {
             if (item) { _tabs.push(item); }
         });
         _local.tabs = _tabs;
         return self;
-    }
-}
+    };
+};
 
 /* класс: Приложение BWP */
 function classApp(data) {
@@ -393,7 +402,7 @@ function classModel(app, data) {
     this.fix = {};
     this.paginator = null;
     _composes     = {};
-    this.composes = _composes
+    this.composes = _composes;
     _widgets = [];
     this.widgets = _widgets;
     _actions = {};
@@ -404,15 +413,15 @@ function classModel(app, data) {
         $.each(data.meta.compositions, function(index, item) {
             _composes[item.meta.related_name] = item;
         });
-    }
+    };
     $.each(model.meta.list_display, function(i, name) {
         if (name == '__unicode__') {
-            _widgets.push({name:name, label: model.label, attr:{}})
+            _widgets.push({name:name, label: model.label, attr:{}});
         } else {
             $.each(model.meta.widgets, function(ii, widget) {
-                if (name == widget.name) { _widgets.push(widget) };
+                if (name == widget.name) { _widgets.push(widget); };
             });
-        }
+        };
     });
     // Register
     REGISTER[this.id] = this;
@@ -421,7 +430,7 @@ function classModel(app, data) {
 /* класс: Модель для выбора (в неё копируется настоящая модель)*/
 function classSelector(model, multiple) {
     $.extend(true, this, model);
-    this.id = validatorID([this.id, 'selector'])
+    this.id = validatorID([this.id, 'selector']);
     this.template = TEMPLATES.layoutSelector;
     // Запрещаем все действия.
     this.perms['delete'] = false;
@@ -436,15 +445,24 @@ function classSelector(model, multiple) {
     // Init
     $.each(selector.meta.list_display, function(i, name) {
         if (name == '__unicode__') {
-            _widgets.push({name:name, label: selector.label, attr:{}})
+            _widgets.push({name:name, label: selector.label, attr:{}});
         } else {
             $.each(selector.meta.widgets, function(ii, widget) {
-                if (name == widget.name) { _widgets.push(widget) };
+                if (name == widget.name) { _widgets.push(widget); };
             });
-        }
+        };
     });
     // Register
     REGISTER[this.id] = this;
+    // method
+    this.get_checked_items = function() {
+        _checkboxes = $(
+            '#collection_'
+            + this.id
+            +' tbody td:nth-child(1) input[type=checkbox]:checked'
+        );
+        return _checked;
+    };
 };
 
 /* класс: Композиция */
@@ -463,6 +481,8 @@ function classCompose(object, data) {
     this.title = this.object.label +': '+ this.label;
     this.query = null;
     this.fix = {};
+    this.m2m_fix = [];
+    this.m2m_fixaction = null;
     this.paginator = null;
     _widgets = [];
     this.widgets = _widgets;
@@ -475,9 +495,9 @@ function classCompose(object, data) {
             _widgets.push({name:name, label: compose.label, attr:{}})
         } else {
             $.each(compose.meta.widgets, function(ii, widget) {
-                if (name == widget.name) { _widgets.push(widget) };
+                if (name == widget.name) { _widgets.push(widget); };
             });
-        }
+        };
     });
     // Register
     REGISTER[this.id] = this;
@@ -496,6 +516,13 @@ function classObject(data) {
     this.title = this.model.label +': '+ this.label;
     _fields     = data.fields;
     this.fields = _fields;
+    this.get_fields = function() {
+        L = {};
+        $.each(this.model.meta.fields, function(i, item) {
+            L[item] = _fields[item];
+        });
+        return L;
+    };
     _composes = [];
     this.composes = _composes;
     this.widgets = this.model.meta.widgets;
@@ -508,7 +535,7 @@ function classObject(data) {
         $.each(this.model.composes, function(rel_name, item) {
             _composes.push(new classCompose(object, item));
         });
-    }
+    };
     // register
     REGISTER[this.id] = this;
 };
@@ -519,56 +546,87 @@ function classObject(data) {
 
 // Процедуры
 
-/* Применение изменений на сервере */
+/* Применение изменений на сервере для объектов в моделях и композициях */
 function handlerCommitInstance(instanse, done) {
     if (DEBUG) {console.log('function:'+'handlerCommitInstance')};
-    is_changed = false;
+    //~ is_changed = false;
     _objects = []
-    _model = instance.model;
+    _model = instance.model; // по-умолчанию для экземпляра объекта
+    
     appendObject = function(obj) {
+        /* Функция оперирует только экземплярами класса classObject */
         if ((!isEmpty(obj.fix)) || (obj.fixaction == 'delete')) {
             $.extend(true, obj.fields, obj.fix);
+            _send_fields = obj.get_fields();
+            $.extend(true, _send_fields, obj.fix);
             _objects.push(
-                {   pk: obj.pk, fields: obj.fields,
+                {   pk: obj.pk,
+                    fields: _send_fields,
                     model: obj.model.name,
                     action: obj.fixaction,
                     fix: obj.fix,
                 }
             );
-        }
-    }
+        };
+    };
+    /* При сохранении композиции, на самом деле сохраняем модель
+     * (modelBWP), но объекты сохранения берутся из композиции.
+     */ 
     if ((instance instanceof classModel) || (instance instanceof classCompose)) {
         _model = instance;
         $.each(instance.fix, function(key, val) {
-            appendObject(val)
+            appendObject(val);
         });
-    } else { appendObject(instance) }
+    } else { appendObject(instance); };
+
+    /* Формируем запрос на сервер */
     args = {
         "method"  : "commit",
         "objects" : _objects,
-    }
+    };
     cb = function(json, status, xhr) {
         handlerCollectionGet(_model);
         if (done) { done() };
     };
-    jqxhr = new jsonAPI(args, cb, 'handlerCommitInstance(instanse) call jsonAPI()')
-    return jqxhr
-}
+    jqxhr = new jsonAPI(args, cb, 'handlerCommitInstance(instanse) call jsonAPI()');
+    return jqxhr;
+};
+
+/* Применение изменений на сервере для m2m-композиций */
+function handlerCommitComposeM2M(compose, done) {
+    if (DEBUG) {console.log('function:'+'handlerCommitComposeM2M')};
+
+    /* Формируем запрос на сервер */
+    args = {
+        "method"  : "m2m_commit",
+        "model"   : compose.object.model.name,
+        "pk"      : compose.object.pk,
+        "compose" : compose.compose,
+        "action"  : compose.m2m_fixaction,
+        "objects" : compose.m2m_fix,
+    };
+    cb = function(json, status, xhr) {
+        handlerCollectionGet(compose);
+        if (done) { done() };
+    };
+    jqxhr = new jsonAPI(args, cb, 'handlerCommitComposeM2M(compose, done) call jsonAPI()');
+    return jqxhr;
+};
 
 /* Отрисовка макета модели, композиции или объекта */
 function handlerLayoutRender(instance, just_prepare) {
     if (DEBUG) {console.log('function:'+'handlerLayoutRender')};
-    html = instance.template({data:instance})
+    html = instance.template({data:instance});
     if (!just_prepare) {
-        $('#layout_'+instance.id).html(html)
+        $('#layout_'+instance.id).html(html);
         // Одиночные биндинги на загрузку коллекций объекта
         if (instance instanceof classObject) {
             $('#layout_'+instance.id+' button[data-loading=true]')
             .one('click', eventLayoutLoad);
-        }
-    }
-    return html
-}
+        };
+    };
+    return html;
+};
 
 /* Загружает необходимый макет модели или объекта */
 function handlerLayoutLoad(instance) {
@@ -577,8 +635,8 @@ function handlerLayoutLoad(instance) {
     // Загрузка коллекции
     if ((instance instanceof classModel) || (instance instanceof classCompose)) {
         jqxhr = handlerCollectionGet(instance);
-    }
-}
+    };
+};
 
 // События
 
@@ -587,20 +645,20 @@ function eventLayoutLoad() {
     if (DEBUG) {console.log('function:'+'eventLayoutLoad')};
     data = $(this).data();
     instance = REGISTER[data.id];
-    handlerLayoutLoad(instance)
+    handlerLayoutLoad(instance);
     // Удаление атрибута загрузки
     $(this).removeAttr("data-loading");
     return true;
-}
+};
 
 /* Обработчик события выбора всех строк в таблице модели, композиции,
  * селектора */
 function handlerSelectAllToggle() {
     $table = $(this).parents('table');
-    $inputs = $table.find("tbody td:nth-child(1) input[type=checkbox]")
-    checked = this.checked
+    $inputs = $table.find("tbody td:nth-child(1) input[type=checkbox]");
+    checked = this.checked;
     $.each($inputs, function(i, item) { item.checked = checked });
-}
+};
 
 /* Обработчик события клика на строке в таблице модели, композиции,
  * селектора */
@@ -608,8 +666,8 @@ function eventRowClick() {
     if (DEBUG) {console.log('function:'+'eventRowClick')};
     $this = $(this);
     $this.addClass('info').siblings('tr').removeClass('info');
-    return true
-}
+    return true;
+};
 
 ////////////////////////////////////////////////////////////////////////
 //                             КОЛЛЕКЦИИ                              //
@@ -622,13 +680,13 @@ function handlerCollectionRender(instance, just_prepare) {
     if (DEBUG) {console.log('function:'+'handlerCollectionRender')};
     if (instance instanceof classObject) {  
         return '';
-    }
-    html = TEMPLATES.collection({data:instance})
+    };
+    html = TEMPLATES.collection({data:instance});
     if (!just_prepare) {
         $('#collection_'+instance.id).html(html);
-    }
-    return html
-}
+    };
+    return html;
+};
 
 /* Функция получает коллекцию с сервера и перерисовывает цель
  * коллекции модели/композиции, для которых она вызывалась
@@ -640,7 +698,7 @@ function handlerCollectionGet(instance) {
         "model"   : instance.model,
         "compose" : instance.compose       || null,
         "order_by": instance.meta.ordering || null,
-    }
+    };
     args[instance.meta.search_key] = instance.query || null;
     if (instance.object) {
         args["pk"] = instance.object.pk || 0;
@@ -652,10 +710,10 @@ function handlerCollectionGet(instance) {
     cb = function(json, status, xhr) {
         instance.paginator = json.data;
         html = handlerCollectionRender(instance);
-    }
-    jqxhr = new jsonAPI(args, cb, 'handlerCollectionGet() call jsonAPI()')
-    return jqxhr
-}
+    };
+    jqxhr = new jsonAPI(args, cb, 'handlerCollectionGet() call jsonAPI()');
+    return jqxhr;
+};
 
 // События
 
@@ -667,8 +725,8 @@ function eventCollectionFilter() {
     instance       = REGISTER[data['id']];
     instance.query = $(search).val() || null;
     jqxhr          = handlerCollectionGet(instance);
-    return jqxhr
-}
+    return jqxhr;
+};
 
 /* Обработчик события установки размера коллекции на странице */
 function eventCollectionCount() {
@@ -677,14 +735,15 @@ function eventCollectionCount() {
     instance = REGISTER[data['id']];
     if (instance.paginator) {
         instance.paginator.page = 1;
-        instance.paginator.per_page = $(this).val() || $(this)
-            .data()['count'] || instance.meta.list_per_page;
+        instance.paginator.per_page = $(this).val()
+            || $(this).data()['count']
+            || instance.meta.list_per_page;
         $('[data-placeholder=collection_count][data-id='+instance.id+']')
-            .text(instance.paginator.per_page)
+            .text(instance.paginator.per_page);
     };
     jqxhr = handlerCollectionGet(instance);
-    return jqxhr
-}
+    return jqxhr;
+};
 
 /* Обработчик события паджинации коллекции */
 function eventCollectionPage() {
@@ -695,8 +754,8 @@ function eventCollectionPage() {
         instance.paginator.page = $(this).val() || $(this).data()['page'] || 1;
     };
     jqxhr = handlerCollectionGet(instance);
-    return jqxhr
-}
+    return jqxhr;
+};
 
 
 ////////////////////////////////////////////////////////////////////////
@@ -712,16 +771,16 @@ function handlerObjectAdd(model) {
         "method"  : "get_object",
         "model"   : model.name,
         "pk"      : null,
-    }
+    };
     cb = function(json, status, xhr) {
         object = new classObject(json.data);
-        object.fixaction = 'add'
-        object.model.fix[object.id] = object
+        object.fixaction = 'add';
+        object.model.fix[object.id] = object;
         handlerTabOpen(object);
-    }
-    jqxhr = new jsonAPI(args, cb, 'handlerObjectAdd(model) call jsonAPI()')
-    return jqxhr
-}
+    };
+    jqxhr = new jsonAPI(args, cb, 'handlerObjectAdd(model) call jsonAPI()');
+    return jqxhr;
+};
 
 /* Изменение объекта добавлением полей во временное хранилище */
 function handlerObjectChange(object, $field) {
@@ -732,11 +791,11 @@ function handlerObjectChange(object, $field) {
         value = [value, $field.text()];
     } else if ($.type(object.fields[name]) === 'boolean') {
         value = $field.is(':checked');
-    }
+    };
     object.fix[name] = value;
     object.fixaction = object.fixaction || 'change';
     object.model.fix[object.id] = object;
-}
+};
 
 /* Копирование объекта */
 function handlerObjectCopy(data, clone) {
@@ -747,15 +806,15 @@ function handlerObjectCopy(data, clone) {
         "pk"      : data.pk,
         "copy"    : true,
         "clone"    : clone,
-    }
+    };
     cb = function(json, status, xhr) {
         object = new classObject(json.data);
-        object.fixaction = 'add'
-        object.model.fix[object.id] = object
+        object.fixaction = 'add';
+        object.model.fix[object.id] = object;
         handlerTabOpen(object);
-    }
-    jqxhr = new jsonAPI(args, cb, 'handlerObjectCopy(data, clone) call jsonAPI()')
-}
+    };
+    jqxhr = new jsonAPI(args, cb, 'handlerObjectCopy(data, clone) call jsonAPI()');
+};
 
 /* Удаление объекта */
 function handlerObjectDelete(data, done) {
@@ -768,27 +827,27 @@ function handlerObjectDelete(data, done) {
                 action: 'delete'
             }
         ],
-    }
+    };
     cb = function(json, status, xhr) {
-        handlerCollectionGet(REGISTER[validatorID(data.model)])
+        handlerCollectionGet(REGISTER[validatorID(data.model)]);
         if (done) { done() };
-        }
-    jqxhr = new jsonAPI(args, cb, 'handlerObjectDelete(data, done) call jsonAPI()')
-}
+    };
+    jqxhr = new jsonAPI(args, cb, 'handlerObjectDelete(data, done) call jsonAPI()');
+};
 
 /* Функция мутирования строки объекта */
 function handlerObjectRowMuted(object) {
     if (DEBUG) {console.log('function:'+'handlerObjectRowMuted')};
     $('tr[data-model="'+object.model.name+'"][data-pk="'+object.pk+'"]')
         .addClass('muted');
-}
+};
 
 /* Функция удаления мутирования строки объекта */
 function handlerObjectRowUnmuted(object) {
     if (DEBUG) {console.log('function:'+'handlerObjectRowUnmuted')};
     $('tr[data-model="'+object.model.name+'"][data-pk="'+object.pk+'"]')
         .removeClass('muted');
-}
+};
 
 // События
 
@@ -801,21 +860,21 @@ function eventObjectOpen() {
     object = REGISTER[data.id];
     if (object) {
         handlerTabOpen(object);
-        return null
-    }
+        return null;
+    };
     args = {
         "method"  : "get_object",
         "model"   : data.model,
         "pk"      : data.pk || null,
-    }
+    };
     cb = function(json, status, xhr) {
         object = new classObject(json.data);
         $this.data('id', object.id);
         handlerTabOpen(object);
-    }
-    jqxhr = new jsonAPI(args, cb, 'eventObjectOpen() call jsonAPI()')
-    return jqxhr
-}
+    };
+    jqxhr = new jsonAPI(args, cb, 'eventObjectOpen() call jsonAPI()');
+    return jqxhr;
+};
 
 /* Обработчик события создания объекта */
 function eventObjectAdd(event) {
@@ -825,34 +884,34 @@ function eventObjectAdd(event) {
         model = REGISTER[data.id],
         m2m = model.is_m2m ? model : null;
     if (model instanceof classCompose) {
-        model = REGISTER[validatorID(model.name)]
-    }
+        model = REGISTER[validatorID(model.name)];
+    };
     if ((event) && (event.data) && (event.data.m2m)) {
-        handlerM2MSelect(m2m, model)
-        return true
-    }
-    
+        handlerM2MSelect(m2m, model);
+        return true;
+    };
+
     handlerObjectAdd(model, $this);
     return true;
-}
+};
 
 /* Обработчик события копирования объекта */
 function eventObjectCopy() {
     if (DEBUG) {console.log('function:'+'eventObjectCopy')};
     $this = $(this);
     data = $this.data();
-    handlerObjectCopy(data)
-    return true
-}
+    handlerObjectCopy(data);
+    return true;
+};
 
 /* Обработчик события полного копирования объекта */
 function eventObjectClone() {
     if (DEBUG) {console.log('function:'+'eventObjectClone')};
     $this = $(this);
     data = $this.data();
-    handlerObjectCopy(data, true)
-    return true
-}
+    handlerObjectCopy(data, true);
+    return true;
+};
 
 /* Обработчик события удаления объекта */
 function eventObjectDelete(event) {
@@ -860,15 +919,17 @@ function eventObjectDelete(event) {
     $this = $(this);
     data = $this.data();
     if ((event) && (event.data) && (event.data.m2m)) {
-        console.log(event)
-        //~ handlerObjectDelete(data);
-        return true
-    }
+        compose = REGISTER[data.id];
+        compose.m2m_fix = [data.pk];
+        compose.m2m_fixaction = 'delete';
+        handlerCommitComposeM2M(compose);
+        return true;
+    };
     object = REGISTER[data.id];
-    if (object) { data.model = object.model.name; data.pk = object.pk; }
+    if (object) { data.model = object.model.name; data.pk = object.pk; };
     handlerObjectDelete(data, function() { handlerTabClose(object) });
-    return true
-}
+    return true;
+};
 
 /* Обработчик события изменения объекта */
 function eventObjectChange() {
@@ -876,9 +937,9 @@ function eventObjectChange() {
     $this = $(this);
     data = $this.data();
     object = REGISTER[data.id];
-    handlerObjectChange(object, $this)
-    return true
-}
+    handlerObjectChange(object, $this);
+    return true;
+};
 
 /* Обработчик события восстановления объекта */
 function eventObjectReset() {
@@ -888,8 +949,8 @@ function eventObjectReset() {
     object = REGISTER[data.id];
     object.fix = {};
     handlerLayoutRender(object);
-    return true
-}
+    return true;
+};
 
 /* Обработчик события удаления объекта */
 function eventObjectSave() {
@@ -898,8 +959,8 @@ function eventObjectSave() {
     data = $this.data();
     object = REGISTER[data.id];
     handlerCommitInstance(object, function() { handlerTabClose(object); } );
-    return true
-}
+    return true;
+};
 
 /* Обработчик события выбора объекта */
 function eventObjectSelect() {
@@ -909,8 +970,8 @@ function eventObjectSelect() {
     FIELD.val(data.pk).text(data.unicode).change()
         .siblings('button[disabled]').removeAttr('disabled');
     $('#modal').modal('hide');
-    return true
-}
+    return true;
+};
 
 ////////////////////////////////////////////////////////////////////////
 //                              СЕЛЕКТОРЫ                             //
@@ -933,13 +994,13 @@ function handlerM2MSelect(m2m, model) {
             {model: m2m,   action:'selector_submit', label:'Выбрать',  css:'btn-primary'},
         ];
     data = { buttons:buttons, selector: selector };
-    console.log(data);
+    //~ console.log(data);
     mfoot = TEMPLATES.modalFooter({ mfoot:data, });
-    console.log(mfoot);
+    //~ console.log(mfoot);
     handlerModalShow(mhead, mbody, mfoot,
         function() {handlerCollectionGet(selector)}
-    )
-}
+    );
+};
 
 /* Обработчик события запуска выбора */
 function handlerFieldSelect($field) {
@@ -954,8 +1015,22 @@ function handlerFieldSelect($field) {
     mfoot = null;
     handlerModalShow(mhead, mbody, mfoot,
         function() {handlerCollectionGet(selector)}
-    )
-}
+    );
+};
+
+/* Обработчик добавления значений в набор */
+function handlerSelectorSubmit(compose, selector) {
+    if (DEBUG) {console.log('function:'+'handlerSelectorSubmit')};
+    _objects = [];
+    checked = selector.get_checked_items();
+    $.each(checked, function(i, item) {
+        data = $(item).data();
+        _objects.push(data.pk);
+    });
+    compose.m2m_fix = _objects;
+    compose.m2m_fixaction = 'add';
+    handlerCommitComposeM2M(compose);
+};
 
 // События
 
@@ -965,8 +1040,8 @@ function eventFieldClear() {
     $this = $(this);
     $this.attr('disabled', 'disabled');
     $this.siblings('button[name]').val(null).html('&nbsp;').change();
-    return true
-}
+    return true;
+};
 
 /* Обработчик события выбора значения */
 function eventFieldSelect() {
@@ -974,22 +1049,22 @@ function eventFieldSelect() {
     $this = $(this);
     $field = $this.siblings('button[name]');
     handlerFieldSelect($field);
-    return true
-}
+    return true;
+};
 
-/* Обработчик события добавления значений в набор */
-function eventSelectorAppend() {
-    if (DEBUG) {console.log('function:'+'eventSelectorAppend')};
-    $this = $(this);
-    return true
-}
-
-/* Обработчик события добавления значений в набор */
-function eventSelectorSubmit() {
+/* Обработчик события добавления значений в набор с последующим
+ * закрытием окна, если это требуется
+ */
+function eventSelectorSubmit(event) {
     if (DEBUG) {console.log('function:'+'eventSelectorSubmit')};
     $this = $(this);
-    return true
-}
+    data = $this.data();
+    compose  = REGISTER[data.id];
+    selector = REGISTER[validatorID([compose.name, 'selector'])];
+    handlerSelectorSubmit(compose, selector);
+    if (event.data.close) { handlerModalHide() };
+    return true;
+};
 
 ////////////////////////////////////////////////////////////////////////
 //                           МОДАЛЬНОЕ ОКНО                           //
@@ -1003,10 +1078,18 @@ function handlerModalShow(mhead, mbody, mfoot, done) {
     modal.mhead = mhead;
     modal.mbody = mbody;
     modal.mfoot = mfoot;
-    html = TEMPLATES.modal({modal:modal})
+    html = TEMPLATES.modal({modal:modal});
     $modal.html(html).modal('show');
     if (done) { done() };
-}
+};
+
+/* Обработчик закрытия модального окна */
+function handlerModalHide(done) {
+    if (DEBUG) {console.log('function:'+'handlerModalHide')};
+    $modal = $('#modal');
+    $modal.modal('hide');
+    if (done) { done() };
+};
 
 ////////////////////////////////////////////////////////////////////////
 //                               МЕНЮ                                 //
@@ -1017,7 +1100,7 @@ function handlerModalShow(mhead, mbody, mfoot, done) {
 function handlerMenuAppLoad() {
     if (DEBUG) {console.log('function:'+'handlerMenuAppLoad')};
     sync = true;
-    args = { method: "get_apps" }
+    args = { method: "get_apps" };
     cb = function(json, status, xhr) {
         apps = [];
         $.each(json.data, function(index, item) {
@@ -1028,7 +1111,7 @@ function handlerMenuAppLoad() {
         $('#menu-app').show();
     };
     jqxhr = new jsonAPI(args, cb, 'handlerMenuAppLoad() call jsonAPI()', sync);
-    return jqxhr
+    return jqxhr;
 };
 
 ////////////////////////////////////////////////////////////////////////
@@ -1064,12 +1147,12 @@ function handlerTabOpen(data) {
             &&($('#menu-app li[class!=disabled] a[data-id='+data.id+']').size() >0)) {
             SETTINGS.local.tabs.push(data.id);
             SETTINGS.save_local();
-        }
+        };
         // Устанавливаем одиночный биндинг на загрузку контента при щелчке на вкладке
         $('#tab_'+data.id+' a').one('click', eventLayoutLoad);
-    }
+    };
     return true;
-}
+};
 
 /* Закрывает вкладку, удаляя её с рабочей области и из настроек */
 function handlerTabClose(data) {
@@ -1084,8 +1167,8 @@ function handlerTabClose(data) {
             $.each(instance.composes, function(i, item) {
                 delete REGISTER[item.id]
             });
-            delete REGISTER[id]
-        }
+            delete REGISTER[id];
+        };
     };
     // Удаляем из хранилища информацию об открытой вкладке
     num = $.inArray(id, SETTINGS.local.tabs);
@@ -1093,7 +1176,7 @@ function handlerTabClose(data) {
         delete SETTINGS.local.tabs[num];
         SETTINGS.cleanTabs().save_local();
     };
-}
+};
 
 /* Восстанавливает вкладки, открытые до обновления страницы */
 function handlerTabRestore() {
@@ -1102,7 +1185,7 @@ function handlerTabRestore() {
         // только приложения в меню
         $('#menu-app li[class!=disabled] a[data-id='+item+']').click();
     });
-}
+};
 
 // События
 
@@ -1111,18 +1194,18 @@ function eventTabOpen() {
     if (DEBUG) {console.log('function:'+'eventTabOpen')};
     data = $(this).data();
     data = REGISTER[data.id] || data;
-    handlerTabOpen(data)
+    handlerTabOpen(data);
     return true;
-}
+};
 
 /* Обработчик события закрытия вкладки */
 function eventTabClose() {
     if (DEBUG) {console.log('function:'+'eventTabClose')};
     data = $(this).data();
     data = REGISTER[data.id] || data;
-    handlerTabClose(data)
+    handlerTabClose(data);
     return true;
-}
+};
 
 ////////////////////////////////////////////////////////////////////////
 //                              ПРОЧЕЕ                                //
@@ -1191,8 +1274,8 @@ $(document).ready(function($) {
         $('body').on('click', '[data-action=object_reset]',  eventObjectReset);
         $('body').on('click', '[data-action=object_save]',   eventObjectSave);
         $('body').on('click', '[data-action=object_select]', eventObjectSelect);
-        $('#modal').on('click', '[data-action=selector_append]', eventSelectorAppend);
-        $('#modal').on('click', '[data-action=selector_submit]', eventSelectorSubmit);
+        $('#modal').on('click', '[data-action=selector_append]', {close:false}, eventSelectorSubmit);
+        $('#modal').on('click', '[data-action=selector_submit]', {close:true},  eventSelectorSubmit);
 
         // Биндинги на кнопки выбора значения
         $('body').on('click', '[data-action=field_clear]',   eventFieldClear);

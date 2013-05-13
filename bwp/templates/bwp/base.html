@@ -65,9 +65,13 @@
 </head>
 
 <body class="{% block bodyclass %}home{% endblock %}">
+<!-- START: block body -->
+{% block body %}
 <div id="wrap">
     {% include "bwp/for_IE.html" %}
-    <div id="modal" class="modal hide fade"></div>
+    <!-- START: block modal -->
+    {% block modal %}<div id="modal" class="modal hide fade"></div>{% endblock %}
+    <!-- END: block modal -->
 
     <div class="container-fluid">
         <div class="row-fluid">
@@ -107,6 +111,8 @@
         </div>
     </div>
 </div>
+{% endblock %}
+<!-- END: block body -->
 
 <!-- START: block jstemplates -->
     {% block jstemplates %}
@@ -155,8 +161,12 @@
         window.__bwp_media_prefix__ = "{% filter escapejs %}{% static "bwp/" %}{% endfilter %}";
         window.AJAX_TIMEOUT = 3000;
         window.BWP_API_URL = "{% filter escapejs %}{% url "bwp_api" %}{% endfilter %}";
-        window.SETTINGS_UNIQUE_KEY = "{% filter escapejs %}{% SETTINGS 'PROJECT_SHORTNAME' %}_{{ user.id|default:0 }}{% endfilter %}";
+        window.SETTINGS_UNIQUE_KEY = "{% filter escapejs %}{% SETTINGS 'PROJECT_SHORTNAME' %}__user_{{ user.id|default:0 }}{% endfilter %}";
         window.USER_ID = "{{ user.id|default:0 }}";
+        window.USER_NAME = "{{ user.username }}";
+        window.USER_LAST_NAME = "{{ user.last_name }}";
+        window.USER_FIRST_NAME = "{{ user.first_name }}";
+        window.USER = "{{ user }}";
         window.DEBUG = Boolean("{% filter yesno:"yes," %}{% SETTINGS 'DEBUG' %}{% endfilter %}");
     </script>
 {% endblock %}

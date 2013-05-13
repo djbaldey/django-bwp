@@ -307,7 +307,7 @@ table .headerSortUp:after {
     margin-bottom: 5px;
 } 
 
-code {
+#quickapi-docs code {
     display: block;
     white-space: pre-wrap;
 }

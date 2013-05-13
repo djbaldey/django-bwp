@@ -60,30 +60,11 @@ from bwp.conf import settings
 from bwp.widgets import get_widget_from_field
 from bwp.contrib.abstracts.models import AbstractUserSettings
 
+from bwp.utils.http import get_http_400, get_http_403, get_http_404
+
 ADDING = 1
 CHANGE = 2
 DELETE = 3
-
-def is_api(request):
-    return bool(request.path == redirect('bwp.views.api')['Location'])
-
-def get_http_400(self, request):
-    """ Если запрос на API, то возвращаем JSON, иначе обычный ответ """
-    if is_api(request):
-        return JSONResponse(status=400)
-    return HttpResponseBadRequest()
-
-def get_http_403(self, request):
-    """ Если запрос на API, то возвращаем JSON, иначе обычный ответ """
-    if is_api(request):
-        return JSONResponse(status=404)
-    return HttpResponseForbidden()
-
-def get_http_404(self, request):
-    """ Если запрос на API, то возвращаем JSON, иначе обычный ответ """
-    if is_api(request):
-        return JSONResponse(status=404)
-    return HttpResponseNotFound()
 
 def serialize_field(item, field, as_pk=False, with_pk=False, as_option=False):
     if field == '__unicode__':
@@ -239,9 +220,10 @@ class BaseModel(object):
 
     def get_model_info(self, request, bwp=False):
         """ Информация о модели """
+        label = getattr(self, 'verbose_name', self.opts.verbose_name_plural)
         dic = {
             'name':  unicode(self.opts),
-            'label': capfirst(unicode(self.opts.verbose_name_plural)),
+            'label': capfirst(unicode(label)),
             'perms': self.get_model_perms(request),
             'meta':  self.prepare_meta(request),
         }
@@ -605,6 +587,7 @@ class ComposeBWP(BaseModel):
         self.related_model = related_model
         self.bwp_site = bwp_site
         if self.verbose_name is None:
+            # TODO: сделать установку имени из поля
             self.verbose_name = self.opts.verbose_name_plural or self.opts.verbose_name
 
     def get_meta(self):
@@ -690,6 +673,16 @@ class ManyToManyBWP(ComposeBWP):
     """ Расширение композиций для отображения полей m2m """
     is_many_to_many = True
 
+    def add_objects_in_m2m(self, object, objects):
+        m2m = getattr(object, self.related_name)
+        m2m.add(*objects)
+        return True
+
+    def delete_objects_in_m2m(self, object, objects):
+        m2m = getattr(object, self.related_name)
+        m2m.remove(*objects)
+        return True
+
 class ModelBWP(BaseModel):
     """ Модель для регистрации в BWP.
         Наследуются атрибуты:
@@ -754,6 +747,11 @@ class ModelBWP(BaseModel):
 
             self._compose_instances = [ D[x.related_name] for x in L ]
         return self._compose_instances
+    
+    def get_all_fields(self):
+        m2m = [ x.related_name for x in self.compose_instances if x.is_many_to_many ]
+        m2m.extend(self.fields or [])
+        return m2m
 
     def get_object_detail(self, request, object, **kwargs):
         """ Метод возвращает сериализованный объект в JSONResponse """
@@ -785,7 +783,7 @@ class ModelBWP(BaseModel):
         """ Python объект с композициями и виджетами(наборами виджетов). """
         # Object
         if isinstance(object, (str, int)):
-            object = self.queryset().select_related().get(pk=pk)
+            object = self.queryset().select_related().get(pk=object)
         elif not object:
             object = self.model()
             # TODO: made and call autofiller

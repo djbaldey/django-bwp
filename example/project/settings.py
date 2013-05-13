@@ -253,11 +253,10 @@ LOGGING = {
 
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+        #'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
         'KEY_PREFIX': '_%s_' % 'BWP',
-        'LOCATION': [
-            '127.0.0.1:11211',
-        ]
+        #'LOCATION': [ '127.0.0.1:11211' ]
     }
 }
 

@@ -19,7 +19,7 @@ included WSGI).
 
 **Wiki**
 
-See https://bitbucket.org/djbaldey/bwp/wiki/
+See https://bitbucket.org/rosix/bwp/wiki/
 
 **Notes**
 

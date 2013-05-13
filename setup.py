@@ -17,7 +17,7 @@ setup(
     long_description=read('README.md'),
     author='Grigoriy Kramarenko',
     author_email='root@rosix.ru',
-    url='https://bitbucket.org/djbaldey/bwp/',
+    url='https://bitbucket.org/rosix/bwp/',
     license='GNU General Public License v3 or later (GPLv3+)',
     platforms='any',
     zip_safe=False,

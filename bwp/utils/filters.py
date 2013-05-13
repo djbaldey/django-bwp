@@ -36,8 +36,9 @@
 #   <http://www.gnu.org/licenses/>.
 ###############################################################################
 """
-from django.db.models import Q
+from django.db.models import Q, Model
 import operator
+from bwp.utils import print_debug
 
 def filterQueryset(queryset, search_fields, query):
     """ Фильтрация """
@@ -60,3 +61,20 @@ def filterQueryset(queryset, search_fields, query):
                 queryset = queryset.filter(reduce(operator.or_, or_queries))
 
     return queryset
+
+def get_object_or_none(qs, **kwargs):
+    """ Возвращает объект или None.
+        На вход можно подавать как класс модели, так и отфильтрованный
+        QuerySet.
+    """
+    if type(qs) == type(Model):
+        try:
+            return qs.objects.get(**kwargs)
+        except Exception as e:
+            print_debug(e)
+            return None
+    try:
+        return qs.get(**kwargs)
+    except Exception as e:
+        print_debug(e)
+        return None

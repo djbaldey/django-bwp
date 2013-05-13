@@ -36,11 +36,29 @@
 #   <http://www.gnu.org/licenses/>.
 ###############################################################################
 """
-from django.conf import settings
+from django.shortcuts import redirect
+from django.http import (HttpResponseNotFound, HttpResponseBadRequest,
+    HttpResponseForbidden)
 
-def print_debug(*args):
-    if settings.DEBUG:
-        print '-'*65 + '<<== DEBUG ==>>'
-        for arg in args:
-            print arg,
-        print '\n' + '-'*61 + '<<== END DEBUG ==>>'
+from quickapi.http import JSONResponse
+
+def is_api(request):
+    return bool(request.path == redirect('bwp.views.api')['Location'])
+
+def get_http_400(self, request):
+    """ Если запрос на API, то возвращаем JSON, иначе обычный ответ """
+    if is_api(request):
+        return JSONResponse(status=400)
+    return HttpResponseBadRequest()
+
+def get_http_403(self, request):
+    """ Если запрос на API, то возвращаем JSON, иначе обычный ответ """
+    if is_api(request):
+        return JSONResponse(status=404)
+    return HttpResponseForbidden()
+
+def get_http_404(self, request):
+    """ Если запрос на API, то возвращаем JSON, иначе обычный ответ """
+    if is_api(request):
+        return JSONResponse(status=404)
+    return HttpResponseNotFound()

@@ -27,7 +27,9 @@
     <div class="tab-content">
     {% _.each(data.composes, function(compose) { %}
         <div class="tab-pane" id="layout_{{ compose.id }}">
-            <div align="center"><img src="/static/img/ajax-loader.gif" /> загрузка данных...</div>
+            {% endverbatim %}
+            <div align="center"><img src="{{ STATIC_URL }}img/bwp/ajax-loader.gif" /> загрузка данных...</div>
+            {% verbatim %}
         </div>
     {% }); %}
         <div class="tab-pane active" id="objectpane_{{ data.id }}">

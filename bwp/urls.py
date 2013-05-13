@@ -77,4 +77,7 @@ urlpatterns = patterns('bwp.views',
     url(r'^login/$',  'login',  name="bwp_login"),
     url(r'^logout/$', 'logout', name="bwp_logout"),
     url(r'^api/$',    'api',    name="bwp_api"),
+    
+    url(r'^accounts/login/$',  'login',  name="bwp_login_redirect"),
+    url(r'^accounts/logout/$', 'logout', name="bwp_logout_redirect"),
 )

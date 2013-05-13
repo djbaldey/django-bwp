@@ -55,8 +55,8 @@ from quickapi.decorators import login_required, api_required
 from bwp.sites import site
 from bwp.forms import BWPAuthenticationForm
 from bwp.conf import settings
-
-from bwp import serializers
+from bwp.utils import print_debug
+from bwp.utils.http import get_http_400, get_http_403, get_http_404
 
 ########################################################################
 #                               PAGES                                  #
@@ -123,6 +123,7 @@ def get_form_instance(request, bwp_model, data=None, instance=None):
         defaults['form'] = bwp_model.form
     if bwp_model.fields:
         defaults['fields'] = bwp_model.fields
+    print_debug(defaults)
     return modelform_factory(model, **defaults)(data=data, instance=instance)
 
 def get_instance(request, pk, model_name):
@@ -177,6 +178,30 @@ def API_get_apps(request, device=None, **kwargs):
 
 @api_required
 @login_required
+def API_get_objects(request, model, list_pk, **kwargs):
+    """ *Возвращает выбранные экземпляры указанной модели.*
+
+        ##### ЗАПРОС
+        Параметры:
+        
+        1. **"model"** - уникальное название модели, например:
+                        "auth.user".
+        2. **"list_pk"** - список первичных ключей объектов.
+
+        ##### ОТВЕТ
+        Формат ключа **"data"**:
+        `{
+            TODO: написать
+        }`
+    """
+
+    # Получаем модель BWP со стандартной проверкой прав
+    model_bwp = site.bwp_dict(request).get(model)
+
+    return []
+
+@api_required
+@login_required
 def API_get_object(request, model, pk=None, copy=None, clone=None, **kwargs):
     """ *Возвращает экземпляр указанной модели.*
 
@@ -224,13 +249,15 @@ def API_get_collection(request, model, pk=None, compose=None, page=1,
         Параметры:
         
         1. **"model"** - уникальное название модели, например: "auth.user";
-        2. **"compose"** - уникальное название модели Compose, 
+        2. **"pk"** - ключ объекта модели, по умолчанию == None;
+        3. **"compose"** - уникальное название модели Compose, 
             объекты которой должны быть возвращены: "group_set",
             по-умолчанию не используется;
-        3. **"page"** -  номер страницы, по-умолчанию == 1;
-        4. **"per_page"** - количество на странице, по-умолчанию определяется BWP;
-        5. **"query"** - поисковый запрос;
-        6. **"order_by"** - сортировка объектов.
+        4. **"page"** -  номер страницы, по-умолчанию == 1;
+        5. **"per_page"** - количество на странице, по-умолчанию определяется BWP;
+        6. **"query"** - поисковый запрос;
+        7. **"order_by"** - сортировка объектов.
+        8. **"fields"** - поля объектов.
         
         ##### ОТВЕТ
         Формат ключа **"data"**:
@@ -262,7 +289,7 @@ def API_get_collection(request, model, pk=None, compose=None, page=1,
 
     # Получаем модель BWP со стандартной проверкой прав
     model_bwp = site.bwp_dict(request).get(model)
-    
+
     options = {
         'request': request,
         'page': page,
@@ -272,7 +299,7 @@ def API_get_collection(request, model, pk=None, compose=None, page=1,
         'fields': fields,
         'pk':pk, 
     }
-    
+
     # Возвращаем коллекцию композиции, если указано
     if compose:
         dic = model_bwp.compose_dict(request)
@@ -281,6 +308,47 @@ def API_get_collection(request, model, pk=None, compose=None, page=1,
 
     # Возвращаем коллекцию в JSONResponse
     return model_bwp.get(**options)
+
+@api_required
+@login_required
+def API_m2m_commit(request, model, pk, compose, action, objects, **kwargs):
+    """ *Добавление или удаление объектов в M2M полях.*
+        
+        ##### ЗАПРОС
+        Параметры:
+        
+        1. **"model"** - модель объекта, которому принадлежит поле;
+        2. **"pk"**    - ключ объекта, которому принадлежит поле;
+        3. **"compose"** - композиция(поле);
+        4. **"action"** - действие, которое необходимо выполнить;
+        5. **"objects"** - список идентификаторов объектов;
+        
+        ##### ОТВЕТ
+        Формат ключа **"data"**:
+        `Boolean`
+    """
+    if not objects:
+        return JSONResponse(data=False, status=400, message=unicode(_("List objects is blank!")))
+
+    # Получаем модель BWP и композиции со стандартной проверкой прав
+    model_bwp = site.bwp_dict(request).get(model)
+    compose = model_bwp.compose_dict(request).get(compose)
+    objects = compose.queryset().filter(pk__in=objects)
+    try:
+        object = compose.related_model.queryset(request, **kwargs).get(pk=pk)
+    except:
+        return get_http_404(request)
+    else:
+        if action == 'add' and compose.has_add_permission(request):
+            result = compose.add_objects_in_m2m(object, objects)
+        elif action == 'delete' and compose.has_delete_permission(request):
+            result = compose.delete_objects_in_m2m(object, objects)
+        else:
+            result = False
+        if not result:
+            return JSONResponse(data=False, status=400)
+
+    return JSONResponse(data=True, message=unicode(_("Commited!")))
 
 @api_required
 @login_required
@@ -301,6 +369,7 @@ def API_commit(request, objects, **kwargs):
         transaction.rollback()
         return JSONResponse(data=False, status=400, message=unicode(_("List objects is blank!")))
     model_name = bwp = None
+    print_debug('def API_commit.objects ==', objects)
     try:
         for item in objects:
             # Уменьшение ссылок на объекты, если они существуют
@@ -409,6 +478,7 @@ QUICKAPI_DEFINED_METHODS = {
     'get_settings':     'bwp.views.API_get_settings',
     'get_object':       'bwp.views.API_get_object',
     'get_collection':   'bwp.views.API_get_collection',
+    'm2m_commit':       'bwp.views.API_m2m_commit',
     'commit':           'bwp.views.API_commit',
 }
 
