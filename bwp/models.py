@@ -244,7 +244,7 @@ class BaseModel(object):
     def get_fields(self):
         """ Устанавливает и возвращает значение полей объектов """
         if not self.fields:
-            fields = [ field.name for field in self.opts.local_fields ]
+            fields = [ field.name for field in self.opts.local_fields if field.editable ]
             self.fields = [ name for name in fields if name not in self.exclude ]
         return self.fields
 
