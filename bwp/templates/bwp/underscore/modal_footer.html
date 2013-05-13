@@ -1,18 +1,33 @@
 {# Шаблон Underscore #}{% load bwp_verbatim %}{% verbatim %}
-{% _.each(mfoot.buttons, function(button) { %}
-    {% if (button.action == 'modal_close') { %}
-        <a href="#" data-dismiss="modal" aria-hidden="true" class="btn">Закрыть</a>
-    {% } else if ((!button.action == "object_add") || (button.model.perms.add)) { %}
-        <a href="#"
-        {% if (button.action == "object_add") {%}
-            data-dismiss="modal"
-            aria-hidden="true"
+{% if (!mfoot.buttons) { %}
+    <a href="#" data-dismiss="modal"
+                aria-hidden="true"
+                data-action="wait_cancel"
+                class="btn">
+        Отмена
+    </a>
+    <a href="#" data-dismiss="modal"
+                aria-hidden="true"
+                data-action="wait_submit"
+                class="btn btn-primary">
+        ОК
+    </a>
+{% } else { %}
+    {% _.each(mfoot.buttons, function(button) { %}
+        {% if (button.action == 'modal_close') { %}
+            <a href="#" data-dismiss="modal" aria-hidden="true" class="btn">Закрыть</a>
+        {% } else if ((!button.action == "object_add") || (button.model.perms.add)) { %}
+            <a href="#"
+            {% if ((button.action == "object_add") || (button.dismiss)) {%}
+                data-dismiss="modal"
+                aria-hidden="true"
+            {% } %}
+                data-action="{{ button.action }}"
+                data-id="{{ button.model.id }}"
+                class="btn {{ button.css }}">
+                {{ button.label }}
+            </a>
         {% } %}
-            data-action="{{ button.action }}"
-            data-id="{{ button.model.id }}"
-            class="btn {{ button.css }}">
-            {{ button.label }}
-        </a>
-    {% } %}
-{% }); %}
+    {% }); %}
+{% } %}
 {% endverbatim %}

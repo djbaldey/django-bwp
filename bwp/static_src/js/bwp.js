@@ -41,7 +41,8 @@
 ////////////////////////////////////////////////////////////////////////
 var NEWOBJECTKEY = 'newObject',
     FIELD = null,
-    delay = null;
+    delay = null,
+    ACTION_WAIT = null;
 
 // Глобальные хранилища-регистраторы
 window.TEMPLATES = {}; // Шаблоны
@@ -461,7 +462,7 @@ function classSelector(model, multiple) {
             + this.id
             +' tbody td:nth-child(1) input[type=checkbox]:checked'
         );
-        return _checked;
+        return _checkboxes;
     };
 };
 
@@ -822,8 +823,9 @@ function handlerObjectDelete(data, done) {
     args = {
         "method"  : "commit",
         "objects" : [
-            {   pk: data.pk, fields: {},
-                model: data.model,
+            {   pk    : data.pk,
+                fields: {},
+                model : data.model,
                 action: 'delete'
             }
         ],
@@ -916,6 +918,7 @@ function eventObjectClone() {
 /* Обработчик события удаления объекта */
 function eventObjectDelete(event) {
     if (DEBUG) {console.log('function:'+'eventObjectDelete')};
+    done = undefined;
     $this = $(this);
     data = $this.data();
     if ((event) && (event.data) && (event.data.m2m)) {
@@ -926,8 +929,15 @@ function eventObjectDelete(event) {
         return true;
     };
     object = REGISTER[data.id];
-    if (object) { data.model = object.model.name; data.pk = object.pk; };
-    handlerObjectDelete(data, function() { handlerTabClose(object) });
+    if (object instanceof classObject) {
+        data.model = object.model.name;
+        data.pk    = object.pk;
+        done = function() { handlerTabClose(object) }
+    };
+    text = "<b>Вы действительно желаете удалить этот объект?</b><br>"
+          +"<i>Удаление невозможно обратить, если этот объект не рассчитан"
+          +" на перемещение в корзину.</i>"
+    handlerModalShowSubmit(text, handlerObjectDelete, data, done);
     return true;
 };
 
@@ -1070,6 +1080,15 @@ function eventSelectorSubmit(event) {
 //                           МОДАЛЬНОЕ ОКНО                           //
 ////////////////////////////////////////////////////////////////////////
 
+function handlerModalShowSubmit(text, wait, arg1, arg2, arg3, arg4) {
+    if (DEBUG) {console.log('function:'+'handlerModalShowSubmit')};
+    var mhead = 'Подтверждение',
+        mbody = text,
+        mfoot = TEMPLATES.modalFooter({ mfoot: {} });
+    ACTION_WAIT = function() { wait(arg1, arg2, arg3, arg4); };
+    handlerModalShow(mhead, mbody, mfoot);
+};
+
 /* Обработчик формирования и запуска модального окна */
 function handlerModalShow(mhead, mbody, mfoot, done) {
     if (DEBUG) {console.log('function:'+'handlerModalShow')};
@@ -1176,6 +1195,9 @@ function handlerTabClose(data) {
         delete SETTINGS.local.tabs[num];
         SETTINGS.cleanTabs().save_local();
     };
+    // открываем предыдущую вкладку
+    tabs = SETTINGS.local.tabs;
+    $('#menu-app li[class!=disabled] a[data-id='+tabs[tabs.length-1]+']').click();
 };
 
 /* Восстанавливает вкладки, открытые до обновления страницы */
@@ -1211,6 +1233,20 @@ function eventTabClose() {
 //                              ПРОЧЕЕ                                //
 ////////////////////////////////////////////////////////////////////////
 
+/* Обработчик события отмены ожидаемого действия */
+function eventWaitCancel() {
+    if (DEBUG) {console.log('function:'+'eventWaitCancel')};
+    ACTION_WAIT = null
+    return true;
+};
+
+/* Обработчик события подтверждения ожидаемого действия */
+function eventWaitSubmit() {
+    if (DEBUG) {console.log('function:'+'eventWaitSubmit')};
+    ACTION_WAIT()
+    ACTION_WAIT = null
+    return true;
+};
 ////////////////////////////////////////////////////////////////////////
 //                            ИСПОЛНЕНИЕ                              //
 ////////////////////////////////////////////////////////////////////////
@@ -1276,6 +1312,8 @@ $(document).ready(function($) {
         $('body').on('click', '[data-action=object_select]', eventObjectSelect);
         $('#modal').on('click', '[data-action=selector_append]', {close:false}, eventSelectorSubmit);
         $('#modal').on('click', '[data-action=selector_submit]', {close:true},  eventSelectorSubmit);
+        $('#modal').on('click', '[data-action=wait_cancel]',  eventWaitCancel);
+        $('#modal').on('click', '[data-action=wait_submit]',  eventWaitSubmit);
 
         // Биндинги на кнопки выбора значения
         $('body').on('click', '[data-action=field_clear]',   eventFieldClear);
