@@ -41,7 +41,7 @@ from django.db.models.fields.files import ImageField, ImageFieldFile
 from django.forms.widgets import Textarea 
 from django.template.defaultfilters import slugify
 from django.utils import simplejson
-from django.core.serializers.json import DjangoJSONEncoder
+from quickapi.http import DjangoJSONEncoder
 
 from bwp.conf import settings  
 

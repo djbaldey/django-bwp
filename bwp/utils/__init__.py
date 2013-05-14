@@ -37,10 +37,28 @@
 ###############################################################################
 """
 from django.conf import settings
+import os
+
+def osdelete(filename):
+    """ Замалчивание ошибки удаления файла """
+    try:
+        os.remove(filename)
+        return True
+    except:
+        return False
 
 def print_debug(*args):
     if settings.DEBUG:
-        print '-'*65 + '<<== DEBUG ==>>'
+        #~ print '-'*65 + '<<== DEBUG ==>>'
+        print '<DEBUG START>'
         for arg in args:
             print arg,
-        print '\n' + '-'*61 + '<<== END DEBUG ==>>'
+        print '\n<DEBUG END>\n'
+        #~ print '\n' + '-'*61 + '<<== END DEBUG ==>>'
+
+def print_f_code(f_code):
+    print 'line %s:\t%s\t%s' % (
+            f_code.co_firstlineno,
+            os.path.basename(f_code.co_filename),
+            f_code.co_name,
+        )

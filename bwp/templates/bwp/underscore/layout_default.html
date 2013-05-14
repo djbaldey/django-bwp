@@ -1,5 +1,6 @@
-{# Шаблон Underscore #}{% load bwp_verbatim %}
-{% verbatim %}<div class="tab-pane" id="layout_{{ data.id }}" data-id="{{ data.id }}">{% endverbatim %}
+{# Шаблон Underscore #}{% load bwp_verbatim %}{% verbatim %}
+<div class="tab-pane" id="layout_{{ data.id }}" data-id="{{ data.id }}">
+{% endverbatim %}
     <div align="center"><img src="{{ STATIC_URL }}img/bwp/ajax-loader.gif" /> загрузка данных...</div>
 </div>
 
