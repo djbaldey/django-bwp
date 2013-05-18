@@ -67,7 +67,11 @@
                     style="display:none;">
                 </input>
                 {%/* Кнопка сброса */%}
-                <button class="btn" data-action="file_field_clear">
+                <button class="btn"
+                {% if (!_val) { %}
+                    disabled="disabled"
+                {% } %}
+                    data-action="file_field_clear">
                     <i class="icon-remove"></i>
                 </button>
                 {%/* Кнопка поиска */%}
@@ -113,7 +117,11 @@
                     title="{{ _val1 }}">{{ _val1 }}
                 </button>
                 {%/* Кнопка сброса */%}
-                <button class="btn" data-action="field_clear">
+                <button class="btn"
+                {% if (!_val1) { %}
+                    disabled="disabled"
+                {% } %}
+                    data-action="field_clear">
                     <i class="icon-remove"></i>
                 </button>
                 {%/* Кнопка поиска */%}

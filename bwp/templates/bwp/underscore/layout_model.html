@@ -4,8 +4,11 @@
 {% if (data.meta.search_fields.length) { %}
 <div class="subnav pull-right">
     <div class="pull-left form-search">
-        <div class=" input-append">
-            <input data-action="collection_filter" data-id="{{ data.id }}" type="search" class="search input-small" placeholder="Поиск">
+        <div class="input-prepend input-append">
+            <button class="btn btn-mini" data-id="{{ data.id }}" title="Обновить" data-action="collection_filter_refresh">
+                <i class="icon-refresh"></i>
+            </button>
+            <input data-action="collection_filter" data-id="{{ data.id }}" type="search" class="search input-large" placeholder="Поиск">
             <button class="btn btn-mini" data-id="{{ data.id }}" data-action="collection_filtersettings">
                 <i class="icon-wrench"></i>
             </button>
@@ -59,10 +62,10 @@
                 </button>
                 <a  class="btn btn-mini dropdown-toggle"
                     data-toggle="dropdown"
+                    title="Количество на странице"
                     href="#">
                     <i class="icon-resize-vertical"></i>
                     <span data-placeholder="collection_count" data-id="{{ data.id }}">{{ _per_page }}</span>
-                    на странице
                     <span class="caret"></span>
                 </a>
                 <ul class="dropdown-menu">

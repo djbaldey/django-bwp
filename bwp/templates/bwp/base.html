@@ -101,9 +101,11 @@
                 {% endfilter %} © {% COPYRIGHT_YEARS %}
                 </div>
                 <div class="mono align-center" >
+                {% block footer_links %}
                     <a href="/">{% SETTINGS 'PROJECT_SHORTNAME' %}:<span title="{% SETTINGS 'VERSION_DATE' %}">{% SETTINGS 'VERSION' %}</span></a>
                     <a href="http://rosix.ru/project/9/">BWP:<span title="{% SETTINGS 'BWP_VERSION_DATE' %}">{% SETTINGS 'BWP_VERSION' %}</span></a>
-                    <a href="{% filter escapejs %}{% url "bwp_api" %}{% endfilter %}">API:{% SETTINGS 'QUICKAPI_VERSION' %}</a>
+                    <a href="{% url "bwp_api" %}">API:{% SETTINGS 'QUICKAPI_VERSION' %}</a>
+                {% endblock %}
                 </div>
             </footer>
             {% endblock %}

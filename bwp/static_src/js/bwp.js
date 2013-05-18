@@ -731,6 +731,17 @@ function eventCollectionFilter() {
     return jqxhr;
 };
 
+/* Обработчик события обновления фильтрации коллекции */
+function eventCollectionFilterRefresh() {
+    if (DEBUG) {console.log('function:'+'eventCollectionFilterRefresh')};
+    search         = $(this).siblings('input[data-action=collection_filter][data-id='+ $(this).data().id +']');
+    data           = $(search).data();
+    instance       = REGISTER[data['id']];
+    instance.query = $(search).val() || null;
+    jqxhr          = handlerCollectionGet(instance);
+    return jqxhr;
+};
+
 /* Обработчик события установки размера коллекции на странице */
 function eventCollectionCount() {
     if (DEBUG) {console.log('function:'+'eventCollectionCount')};
@@ -1249,7 +1260,7 @@ function handlerTabClose(data) {
     };
     // открываем предыдущую вкладку
     tabs = SETTINGS.local.tabs;
-    $('#menu-app li[class!=disabled] a[data-id='+tabs[tabs.length-1]+']').click();
+    $('#tab_'+tabs[tabs.length-1]+' a').click();
 };
 
 /* Восстанавливает вкладки, открытые до обновления страницы */
@@ -1345,6 +1356,7 @@ $(document).ready(function($) {
         // Биндинг на фильтрацию, паджинацию и количество в коллекциях
         $('body').on('keyup',  '[data-action=collection_filter]', eventCollectionFilter);
         $('body').on('change', '[data-action=collection_filter]', eventCollectionFilter);
+        $('body').on('click',  '[data-action=collection_filter_refresh]', eventCollectionFilterRefresh);
         $('body').on('click',  '[data-action=collection_count]',  eventCollectionCount);
         $('body').on('change', '[data-action=collection_page]',   eventCollectionPage);
         $('body').on('click',  '[data-action=collection_page]',   eventCollectionPage);
