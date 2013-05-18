@@ -74,7 +74,7 @@ class Template(AbstractGroup):
             verbose_name = _('by default'))
     webodt = models.FileField(upload_to=webodt_conf.WEBODT_TEMPLATE_PATH,
             blank=True,
-            verbose_name = _('template of webodt file'))
+            verbose_name = _('template file'))
     text = models.TextField(
             blank=True,
             verbose_name = _('template'))
@@ -103,4 +103,4 @@ class DocumentBound(models.Model):
     class Meta:
         ordering = ['document', 'content_type', ]
         verbose_name = _('document bound')
-        verbose_name_plural = _('document bounds')
+        verbose_name_plural = _('documents bounds')
