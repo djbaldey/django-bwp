@@ -44,12 +44,22 @@ from models import *
 class TemplateCompose(ComposeBWP):
     model = Template
 
+class DocumentBoundCompose(ComposeBWP):
+    model = DocumentBound
+
 class DocumentBWP(ModelBWP):
-    list_display = ('__unicode__', 'id')
+    list_display = ('title', 'qualifier', 'id')
     raw_id_fields = ('qualifier',)
-    compositions = [('template_set', TemplateCompose)]
+    compositions = [
+        ('template_set', TemplateCompose),
+        ('documentbound_set', DocumentBoundCompose),
+    ]
 site.register(Document, DocumentBWP)
 
 class TemplateBWP(ModelBWP):
-    list_display = ('__unicode__', 'id')
+    list_display = ('title', 'document', 'is_default', 'webodt', 'id')
 site.register(Template, TemplateBWP)
+
+class DocumentBoundBWP(ModelBWP):
+    list_display = ('document', 'content_type', 'id')
+site.register(DocumentBound, DocumentBoundBWP)

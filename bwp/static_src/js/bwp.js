@@ -558,7 +558,7 @@ function handlerCommitInstance(instanse, done) {
     
     appendObject = function(obj) {
         /* Функция оперирует только экземплярами класса classObject */
-        if ((!isEmpty(obj.fix)) || (obj.fixaction == 'delete')) {
+        //~ if ((!isEmpty(obj.fix)) || (obj.fixaction == 'delete')) {
             $.extend(true, obj.fields, obj.fix);
             _send_fields = obj.get_fields();
             $.extend(true, _send_fields, obj.fix);
@@ -570,7 +570,7 @@ function handlerCommitInstance(instanse, done) {
                     fix: obj.fix,
                 }
             );
-        };
+        //~ };
     };
     /* При сохранении композиции, на самом деле сохраняем модель
      * (modelBWP), но объекты сохранения берутся из композиции.
@@ -1258,9 +1258,8 @@ function handlerTabClose(data) {
         delete SETTINGS.local.tabs[num];
         SETTINGS.cleanTabs().save_local();
     };
-    // открываем предыдущую вкладку
-    tabs = SETTINGS.local.tabs;
-    $('#tab_'+tabs[tabs.length-1]+' a').click();
+    // открываем последнюю вкладку
+    $('#main-tab a:last').click();
 };
 
 /* Восстанавливает вкладки, открытые до обновления страницы */

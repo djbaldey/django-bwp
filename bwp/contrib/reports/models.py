@@ -38,6 +38,8 @@
 """
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
+from django.contrib.contenttypes.models import ContentType
+
 from bwp.contrib.abstracts.models import AbstractGroup
 from bwp.contrib.qualifiers.models import Document as GeneralDocument
 from bwp.contrib.webodt import conf as webodt_conf
@@ -72,13 +74,13 @@ class Template(AbstractGroup):
             verbose_name = _('by default'))
     webodt = models.FileField(upload_to=webodt_conf.WEBODT_TEMPLATE_PATH,
             blank=True,
-            verbose_name = _('template of webodt'))
+            verbose_name = _('template of webodt file'))
     text = models.TextField(
             blank=True,
             verbose_name = _('template'))
 
     class Meta:
-        ordering = ['document', 'title', ]
+        ordering = ['document', 'title']
         verbose_name = _('template')
         verbose_name_plural = _('templates')
 
@@ -87,3 +89,18 @@ class Template(AbstractGroup):
             docs = Template.objects.filter(document=self.document, is_default=True)
             docs.update(is_default=False)
         super(Template, self).save(**kwargs)
+
+class DocumentBound(models.Model):
+    """ Привязка документов """
+
+    document = models.ForeignKey(
+            Document,
+            verbose_name = _('document'))
+    content_type = models.ForeignKey(
+            ContentType,
+            verbose_name = _('content type'))
+
+    class Meta:
+        ordering = ['document', 'content_type', ]
+        verbose_name = _('document bound')
+        verbose_name_plural = _('document bounds')
