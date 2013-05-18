@@ -39,7 +39,8 @@
 from django.contrib.auth.models import User, Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from bwp.sites import site
-from bwp.models import ModelBWP, ComposeBWP, LogEntry, GlobalUserSettings
+from bwp.models import ModelBWP, ComposeBWP, LogEntry,\
+        GlobalUserSettings, TempUploadFile
 from django.utils.translation import ugettext_lazy as _
 
 class UserAdmin(ModelBWP):
@@ -86,3 +87,7 @@ site.register(LogEntry, LogEntryAdmin)
 class GlobalUserSettingsAdmin(ModelBWP):
     list_display = ('__unicode__', 'id')
 site.register(GlobalUserSettings, GlobalUserSettingsAdmin)
+
+class TempUploadFileAdmin(ModelBWP):
+    list_display = ('__unicode__', 'user', 'created')
+site.register(TempUploadFile, TempUploadFileAdmin)

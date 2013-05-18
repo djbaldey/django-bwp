@@ -425,7 +425,11 @@ function classModel(app, data) {
         };
     });
     // Register
-    REGISTER[this.id] = this;
+    if ((!this.meta) || (!this.meta.list_display)) {
+        console.log("Модель не может быть зарегистрирована.")
+    } else {
+        REGISTER[this.id] = this;
+    };
 };
 
 /* класс: Модель для выбора (в неё копируется настоящая модель)*/
@@ -434,9 +438,7 @@ function classSelector(model, multiple) {
     this.id = validatorID([this.id, 'selector']);
     this.template = TEMPLATES.layoutSelector;
     // Запрещаем все действия.
-    this.perms['delete'] = false;
-    this.perms.add = false;
-    this.perms.change = false;
+    this.perms = { 'delete': false, 'add': false, 'change': false };
     this.meta.list_display = ['__unicode__'];
     this.meta.list_per_page = 5;
     this.multiple = multiple ? true : false;
@@ -783,12 +785,48 @@ function handlerObjectAdd(model) {
     return jqxhr;
 };
 
+/* Загрузка файла */
+function handlerTempUploadFile(object, field) {
+    if (DEBUG) {console.log('function:'+'handlerTempUploadFile')};
+
+    var formData = new FormData(),
+        file = field.files[0],
+        xhr = new XMLHttpRequest();
+
+    if (!file) {
+        object.fix[field.name] = 0;
+        return true;
+    }
+    else {
+
+        formData.append('file', file);
+
+        xhr.open('POST',
+            '/upload/'+ object.model.name +'/',
+            true
+        );
+        xhr.onload = function(e) {
+            json = JSON.parse(this.response);
+            object.fix[field.name] = json.data;
+            $(field).siblings('button[name]').text(file.name)
+                .attr('title', file.name);
+        };
+        xhr.send(formData);  // multipart/form-data
+
+        return true;
+    };
+};
+
 /* Изменение объекта добавлением полей во временное хранилище */
 function handlerObjectChange(object, $field) {
     if (DEBUG) {console.log('function:'+'handlerObjectChange')};
-    var name = $field.attr('name'),
+    var name  = $field.attr('name'),
+        type  = $field.attr('type'),
         value = $field.val();
-    if ($.type(object.fields[name]) === 'array') {
+    if (type) { type = type.toLowerCase(); };
+    if (type in {'file':0, 'image':0}) {
+        handlerTempUploadFile(object, $field[0]);
+    } else if ($.type(object.fields[name]) === 'array') {
         value = [value, $field.text()];
     } else if ($.type(object.fields[name]) === 'boolean') {
         value = $field.is(':checked');
@@ -977,8 +1015,8 @@ function eventObjectSelect() {
     if (DEBUG) {console.log('function:'+'eventObjectSelect')};
     $this = $(this);
     data = $this.data();
-    FIELD.val(data.pk).text(data.unicode).change()
-        .siblings('button[disabled]').removeAttr('disabled');
+    FIELD.val(data.pk).text(data.unicode).attr('title', data.unicode)
+        .change().siblings('button[disabled]').removeAttr('disabled');
     $('#modal').modal('hide');
     return true;
 };
@@ -1045,20 +1083,34 @@ function handlerSelectorSubmit(compose, selector) {
 // События
 
 /* Обработчик события удаления значения в поле выбора */
-function eventFieldClear() {
+function eventFieldClear(event) {
     if (DEBUG) {console.log('function:'+'eventFieldClear')};
     $this = $(this);
     $this.attr('disabled', 'disabled');
-    $this.siblings('button[name]').val(null).html('&nbsp;').change();
+    // Обработка сброса выбора файла
+    if ((event) && (event.data) && (event.data.file)) {
+        $field = $this.siblings('input[name]');
+        $field.val(null).change();
+    };
+    // Обработка сброса кнопки с названием (и значением)
+    $this.siblings('button[name]').val(null).html('&nbsp;')
+        .attr('title', '').change();
     return true;
 };
 
 /* Обработчик события выбора значения */
-function eventFieldSelect() {
+function eventFieldSelect(event) {
     if (DEBUG) {console.log('function:'+'eventFieldSelect')};
     $this = $(this);
-    $field = $this.siblings('button[name]');
-    handlerFieldSelect($field);
+    // Обработка вызова выбора файла
+    if ((event) && (event.data) && (event.data.file)) {
+        $this.siblings('input[name]').click();
+    }
+    // Обработка вызова селекторов
+    else {
+        $field = $this.siblings('button[name]');
+        handlerFieldSelect($field);
+    };
     return true;
 };
 
@@ -1316,8 +1368,10 @@ $(document).ready(function($) {
         $('#modal').on('click', '[data-action=wait_submit]',  eventWaitSubmit);
 
         // Биндинги на кнопки выбора значения
-        $('body').on('click', '[data-action=field_clear]',   eventFieldClear);
-        $('body').on('click', '[data-action=field_select]',  eventFieldSelect);
+        $('body').on('click', '[data-action=field_clear]',                    eventFieldClear);
+        $('body').on('click', '[data-action=file_field_clear]', {file:true},  eventFieldClear);
+        $('body').on('click', '[data-action=field_select]',                   eventFieldSelect);
+        $('body').on('click', '[data-action=file_field_select]', {file:true}, eventFieldSelect);
 
         // Биндинг на чекбоксы
         $('body').on('click', '[data-toggle=checkboxes]',   handlerSelectAllToggle);

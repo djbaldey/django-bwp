@@ -36,8 +36,9 @@
 #   <http://www.gnu.org/licenses/>.
 ###############################################################################
 """
-from django.db import models
+from django.db import models, transaction
 from django.db.models.query import QuerySet
+from django.db.models.fields.files import FileField, ImageField
 from django.utils.translation import ugettext, ugettext_lazy as _ 
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import User
@@ -45,6 +46,7 @@ from django.contrib.admin.util import quote
 from django.utils.encoding import smart_unicode, force_unicode
 from django.utils.safestring import mark_safe
 from django.utils.text import capfirst
+from django.utils.crypto import get_random_string
 from django.core.paginator import Paginator, Page, PageNotAnInteger, EmptyPage
 from django.shortcuts import redirect
 
@@ -53,14 +55,17 @@ from django.http import (HttpResponseNotFound, HttpResponseBadRequest,
 from quickapi.http import JSONResponse
 
 from copy import deepcopy
+import os, datetime
 
 from bwp import serializers
+from bwp.utils.http import get_http_400, get_http_403, get_http_404
 from bwp.utils.filters import filterQueryset
-from bwp.conf import settings
+from bwp.utils.classes import upload_to
+from bwp.utils import print_debug
+
+from bwp import conf
 from bwp.widgets import get_widget_from_field
 from bwp.contrib.abstracts.models import AbstractUserSettings
-
-from bwp.utils.http import get_http_400, get_http_403, get_http_404
 
 ADDING = 1
 CHANGE = 2
@@ -139,6 +144,55 @@ class LogEntry(models.Model):
         "Returns the edited object represented by this log entry"
         return self.content_type.get_object_for_this_type(pk=self.object_id)
 
+class TempUploadFile(models.Model):
+    """ Временно загружаемые файлы для последующей
+        передачи в нужную модель и требуемое поле
+    """
+    created = models.DateTimeField(auto_now_add=True)
+    file = models.FileField(upload_to=upload_to, 
+            verbose_name=_('file'))
+    user = models.ForeignKey(
+            User,
+            null=True, blank=True,
+            verbose_name=_('user'))
+    
+    def __unicode__(self):
+        return self.file.name.split('/')[-1]
+
+    class Meta:
+        ordering = ('-created',)
+        verbose_name = _('temporarily upload file')
+        verbose_name_plural = _('temporarily upload files')
+
+    def upload_to(self, filename):
+        dic = {
+            'tmp': conf.BWP_TEMP_UPLOAD_FILE,
+            'filename': filename,
+            'hash': get_random_string(conf.BWP_TEMP_UPLOAD_FILE_HASH_LENGTH),
+        }
+        return u'%(tmp)s/%(hash)s/%(filename)s' % dic
+    
+    def save(self, **kwargs):
+        now = datetime.datetime.now()
+        expires = now - datetime.timedelta(seconds=conf.BWP_TEMP_UPLOAD_FILE_EXPIRES)
+        with transaction.commit_on_success():
+            for x in TempUploadFile.objects.filter(created__lt=expires):
+                x.delete()
+            
+        super(TempUploadFile, self).save(**kwargs)
+    
+    def delete(self, **kwargs):
+        filename = self.file.path
+        print_debug(filename)
+        dirname  = os.path.dirname(filename)
+        print_debug(dirname)
+        try:
+            os.remove(filename)
+            os.removedirs(dirname)
+        except:
+            pass
+        super(TempUploadFile, self).delete(**kwargs)
+
 class BaseModel(object):
     """ Functionality common to both ModelBWP and ComposeBWP."""
 
@@ -154,6 +208,7 @@ class BaseModel(object):
     widgets             = None
     widgetsets          = None
     search_fields       = None # для запрета поиска пустой кортеж
+    file_fields         = []
     search_key          = 'query'
 
     ordering            = None
@@ -169,7 +224,7 @@ class BaseModel(object):
     metakeys = ('list_display', 'list_display_css', 'list_per_page',
                 'list_max_show_all', 'show_column_pk', 'fields',
                 'search_fields', 'search_key', 'ordering', 'has_clone',
-                'hidden')
+                'hidden', 'file_fields')
 
     @property
     def opts(self):
@@ -193,8 +248,9 @@ class BaseModel(object):
             Это свойство можно переопределить в наследуемом классе,
             например, чтобы добавить информацию из наследуемого класса
         """
-        self.get_fields() # инициализация полей
+        self.get_fields()        # инициализация полей
         self.get_search_fields() # инициализация поисковых полей
+        self.get_file_fields()   # инициализация файловых полей
         if not hasattr(self, '_meta'):
             self._meta = self.get_meta()
         return self._meta
@@ -242,7 +298,7 @@ class BaseModel(object):
         return self.search_fields
 
     def get_fields(self):
-        """ Устанавливает и возвращает значение полей объектов """
+        """ Устанавливает и/или возвращает список полей объектов """
         if not self.fields:
             fields = [ field.name for field in self.opts.local_fields if field.editable ]
             self.fields = [ name for name in fields if name not in self.exclude ]
@@ -251,6 +307,15 @@ class BaseModel(object):
     def get_fields_objects(self):
         """ Возвращает реальные объекты полей """
         return [ self.opts.get_field_by_name(name)[0] for name in self.get_fields() ]
+
+    def get_file_fields(self):
+        """ Устанавливает и/или возвращает список полей File/Image """
+        if not self.file_fields:
+            self.file_fields = [ name for name in self.get_fields() if \
+                        isinstance(self.opts.get_field_by_name(name)[0],
+                                                (FileField, ImageField))
+                    ]
+        return self.file_fields
 
     def prepare_widget(self, field_name):
         """ Возвращает виджет с заменой атрибутов, согласно настроек

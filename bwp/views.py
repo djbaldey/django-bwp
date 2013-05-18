@@ -36,27 +36,30 @@
 #   <http://www.gnu.org/licenses/>.
 ###############################################################################
 """
+from django.http import HttpResponseBadRequest, HttpResponseForbidden
 from django.utils.translation import ugettext_lazy as _
 from django.template import RequestContext
 from django.shortcuts import render_to_response, get_object_or_404, redirect
 from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.contrib.auth.views import login as _login, logout as _logout
-#~ from django.contrib.auth.views import password_change, password_change_done
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
-from django.core.serializers.json import DjangoJSONEncoder
 from django.db import transaction
 from django.forms.models import modelform_factory
 
-from quickapi.http import JSONResponse, JSONRedirect
+from quickapi.http import JSONResponse, JSONRedirect, MESSAGES, DjangoJSONEncoder
 from quickapi.views import index as quickapi_index
 from quickapi.decorators import login_required, api_required
 
 from bwp.sites import site
-from bwp.forms import BWPAuthenticationForm
+from bwp.models import TempUploadFile
+from bwp.forms import BWPAuthenticationForm, TempUploadFileForm
+from bwp import conf
 from bwp.conf import settings
 from bwp.utils import print_debug
 from bwp.utils.http import get_http_400, get_http_403, get_http_404
+
+import datetime, os
 
 ########################################################################
 #                               PAGES                                  #
@@ -105,10 +108,51 @@ def logout(request, extra_context={}):
     }
     return _logout(request, **defaults)
 
+@csrf_exempt
+def upload(request, model, **kwargs):
+    """ Загрузка файла во временное хранилище для определённого поля
+        объекта.
+
+        Формат ключа "data" в ответе:
+        {
+            'id'  : 'идентификатор загруженного файла',
+            'name': 'имя файла',
+        }
+    """
+    user = request.user
+
+    if not user.is_authenticated() and not conf.BWP_TMP_UPLOAD_ANONYMOUS:
+        return redirect('bwp.views.login')
+
+    # Получаем модель BWP со стандартной проверкой прав
+    model_bwp = site.bwp_dict(request).get(model)
+    perms = model_bwp.get_model_perms(request)
+
+    if not model_bwp or not (perms['add'] or perms['change']):
+        print_debug("not model_bwp or not (perms['add'] or perms['change'])")
+        return HttpResponseForbidden(MESSAGES[403])
+
+    # Только метод POST
+    if request.method != 'POST':
+        print_debug("request.method != 'POST'")
+        return HttpResponseBadRequest(MESSAGES[400])
+    else:
+        print_debug(request.POST, request.FILES)
+        form = TempUploadFileForm(request.POST, request.FILES)
+        if form.is_valid():
+            obj = form.save(commit=False)
+            obj.user = request.user
+            obj.save()
+            return JSONResponse(data=obj.pk)
+        else:
+            print_debug("not form.is_valid()")
+            return HttpResponseBadRequest(MESSAGES[400])
+    return JSONResponse(data=None)
+
 ########################################################################
 #                             END PAGES                                #
 ########################################################################
-def get_form_instance(request, bwp_model, data=None, instance=None):
+def get_form_instance(request, bwp_model, data=None, files={}, instance=None):
     """
     Возвращает экземпляр формы, которая используются для добавления
     или редактирования объекта.
@@ -116,6 +160,8 @@ def get_form_instance(request, bwp_model, data=None, instance=None):
     Аргумент `instance` является экземпляром модели `model_name`
     (принимается только если эта форма будет использоваться для
     редактирования существующего объекта).
+    
+    files = {'field': ('фото.jpg', 'path/in/bwp_tmp_upload/фото.jpg'}
     """
     model = bwp_model.model
     defaults = {}
@@ -123,13 +169,35 @@ def get_form_instance(request, bwp_model, data=None, instance=None):
         defaults['form'] = bwp_model.form
     if bwp_model.fields:
         defaults['fields'] = bwp_model.fields
-    print_debug(defaults)
-    return modelform_factory(model, **defaults)(data=data, instance=instance)
+
+    print_debug('defaults:', defaults, '\ndata:', data, '\nfiles:', files)
+    return modelform_factory(model, **defaults)(data=data, files=files, instance=instance)
 
 def get_instance(request, pk, model_name):
     """ Возвращает зкземпляр указаной модели """
     model = site.model_dict(request).get(model_name)
     return model.objects.get(pk=pk)
+
+def set_file_fields(bwp_model, instance, data):
+    """ Устанавливает файловые поля и возвращает зкземпляр указаной
+        модели без сохранения
+    """
+    for field in bwp_model.get_file_fields():
+        temp_id = data.get(field, None)
+        if temp_id in (0, ''):
+            real_field = getattr(instance, field)
+            real_field.delete(save=False)
+        elif not temp_id is None:
+            try:
+                upl = TempUploadFile.objects.get(pk=temp_id) 
+            except Exception as e:
+                print e
+                continue
+            else:
+                real_field = getattr(instance, field)
+                real_field.save(upl.file.name, upl.file.file, save=False)
+
+    return instance
 
 ########################################################################
 #                               API                                    #
@@ -365,11 +433,12 @@ def API_commit(request, objects, **kwargs):
         Формат ключа **"data"**:
         `Boolean`
     """
+    transaction.commit()
     if not objects:
         transaction.rollback()
         return JSONResponse(data=False, status=400, message=unicode(_("List objects is blank!")))
     model_name = bwp = None
-    print_debug('def API_commit.objects ==', objects)
+    #~ print_debug('def API_commit.objects ==', objects)
     try:
         for item in objects:
             # Уменьшение ссылок на объекты, если они существуют
@@ -395,7 +464,9 @@ def API_commit(request, objects, **kwargs):
             # Новый объект
             if not item.get('pk', False):
                 if bwp.has_add_permission(request):
-                    form = get_form_instance(request, bwp, data=data)
+                    instance = bwp.model()
+                    instance = set_file_fields(bwp, instance, data)
+                    form = get_form_instance(request, bwp, data=data, instance=instance)
                     if form.is_valid():
                         object = form.save()
                         bwp.log_addition(request, object)
@@ -412,6 +483,7 @@ def API_commit(request, objects, **kwargs):
             elif action == 'change': # raise AttributeError()
                 instance = get_instance(request, item['pk'], item['model'])
                 if bwp.has_change_permission(request, instance):
+                    instance = set_file_fields(bwp, instance, data)
                     form = get_form_instance(request, bwp, data=data, instance=instance)
                     if form.is_valid():
                         object = form.save()
@@ -424,7 +496,7 @@ def API_commit(request, objects, **kwargs):
     except Exception as e:
         transaction.rollback()
         if settings.DEBUG:
-            return JSONResponse(status=500, message=unicode(vars()))
+            return JSONResponse(status=500, message=unicode(e))
         raise e
     else:
         transaction.commit()

@@ -39,7 +39,8 @@
 from django.db import models
 from django.utils import simplejson
 from copy import deepcopy
-from django.core.serializers.json import DjangoJSONEncoder
+from quickapi.http import DjangoJSONEncoder
+from bwp.utils import print_debug
 
 class GeneralWidget(object):
     field = None
@@ -58,7 +59,6 @@ class GeneralWidget(object):
 
     def __str__(self):
         dic = self.get_dict()
-        #~ del dic['field']
         return simplejson.dumps(dic, ensure_ascii=False,
                                 cls=DjangoJSONEncoder,
                                 indent=4,
@@ -75,9 +75,12 @@ class GeneralWidget(object):
             'tag': self.tag,
             'attr': self.attr,
             'model': None,
+            'choices': None,
         }
         if self.field.rel:
             d['model'] = str(self.field.rel.to._meta)
+        if self.field.choices:
+            d['choices'] = self.field.choices
         if hasattr(self, 'select_multiple') and not self.attr.has_key('multiple'):
             d['attr']['multiple'] = self.select_multiple
         if hasattr(self, 'input_type') and not self.attr.has_key('type'):
@@ -91,7 +94,7 @@ class GeneralWidget(object):
             d['attr']['required'] = False
         if self.is_hidden:
             d['attr']['type'] = 'hidden'
-        
+
         return d
 
 class SelectWidget(GeneralWidget):

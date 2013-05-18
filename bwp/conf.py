@@ -41,8 +41,15 @@ from django.conf import settings
 import bwp, os, datetime, quickapi
 
 QUICKAPI_VERSION        = quickapi.__version__
+
 BWP_VERSION             = bwp.__version__
-VERSION                 = getattr(settings, 'VERSION',                  BWP_VERSION)
+
+BWP_TEMP_UPLOAD_FILE          = getattr(settings, 'BWP_TEMP_UPLOAD_FILE', 'bwp_tmp_upload')
+BWP_TEMP_UPLOAD_FILE_EXPIRES  = getattr(settings, 'BWP_TEMP_UPLOAD_FILE_EXPIRES', 120) # 3 minutes
+BWP_TEMP_UPLOAD_FILE_HASH_LENGTH = getattr(settings, 'BWP_TEMP_UPLOAD_FILE_HASH_LENGTH', 12)
+BWP_TEMP_UPLOAD_FILE_ANONYMOUS   = getattr(settings, 'BWP_TEMP_UPLOAD_FILE_ANONYMOUS', False)
+
+VERSION                 = getattr(settings, 'VERSION',         BWP_VERSION)
 VERSION_DATE            = getattr(settings, 'VERSION_DATE',
     datetime.datetime.fromtimestamp(
         os.stat(os.path.join(os.path.abspath(os.path.dirname(__file__)), '__init__.py')).st_mtime

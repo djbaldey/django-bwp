@@ -9,7 +9,74 @@
                 </label>
                 <div class="controls">
         {% } %}
-        {% if ((widget.tag == 'input') || (widget.tag == 'textarea')) { %}
+
+        {% if (widget.choices) { %}
+            {% var _val = _.escape(data.fields[widget.name]) || '' %}
+            <select name="{{ widget.name }}"
+                data-model="{{ widget.model }}"
+                {% _.each(widget.attr, function(val, key) { %}
+                    {% if (! key in {'type':0, 'name':0}) { %}
+                        {{ key }}="{{ val }}"
+                    {% } %}
+                {% }); %}
+                class="{{ widget.attr['class'] }}"
+                data-action="object_change"
+                data-id="{{ data.id }}">
+                    {% if ((!widget.attr) && (!widget.attr.required)) { %}
+                        <option value=""></option>
+                    {% } %}
+                {% _.each(widget.choices, function(item) { %}
+                    {% _val0 = _.escape(item[0]) %}
+                    {% _val1 = _.escape(item[1]) %}
+                    {% if (_val0 == _val) { %}
+                        <option value="{{ _val0 }}" selected>{{ _val1 }}</option>
+                    {% } else { %}
+                        <option value="{{ _val0 }}">{{ _val1 }}</option>
+                    {% } %}
+                {% }); %}
+            </select>
+
+        {% } else if ((widget.tag == 'input') && (widget.attr['type'] in {'file':0, 'image':0})) { %}
+            {% var _val = _.escape(data.fields[widget.name].split('/').pop()) || '' %}
+            <div class="input-prepend input-append">
+                {%/* Кнопка названия файла */%}
+                <button name="{{ widget.name }}"
+                    data-model="{{ widget.model }}"
+                    disabled="disabled"
+                    {% _.each(widget.attr, function(val, key) { %}
+                        {% if (! key in {'type':0, 'name':0}) { %}
+                            {{ key }}="{{ val }}"
+                        {% } %}
+                    {% }); %}
+                    class="btn {{ widget.attr['class'] || 'input-medium' }}"
+                    data-id="{{ data.id }}"
+                    title="{{ _val }}">
+                    {{ _val }}
+                </button>
+                {%/* Скрытое поле значения */%}
+                <input
+                    name="{{ widget.name }}"
+                    data-id="{{ data.id }}"
+                    type="file"
+                    {% _.each(widget.attr, function(val, key) { %}
+                        {% if (! key in {'type':0, 'name':0}) { %}
+                            {{ key }}="{{ val }}"
+                        {% } %}
+                    {% }); %}
+                    data-action="object_change"
+                    style="display:none;">
+                </input>
+                {%/* Кнопка сброса */%}
+                <button class="btn" data-action="file_field_clear">
+                    <i class="icon-remove"></i>
+                </button>
+                {%/* Кнопка поиска */%}
+                <button class="btn" data-action="file_field_select">
+                    <i class="icon-search"></i>
+                </button>
+            </div>
+
+        {% } else if ((widget.tag == 'input') || (widget.tag == 'textarea')) { %}
             {% var _val = _.escape(data.fields[widget.name]) || '' %}
             <{{ widget.tag }} id="field_{{ data.id }}_{{ widget.name }}"
                 name="{{ widget.name }}"
@@ -25,6 +92,7 @@
             {% } else { %}
                 value="{{ _val }}"
             {% } %}>
+
         {% } else if ((widget.tag == 'select') && (!widget.attr.multiple)) { %}
             {% var _val = data.fields[widget.name] || ['',''] %}
             {% var _val0 = _.escape(_val[0]) %}
@@ -41,7 +109,8 @@
                     {% }); %}
                     class="btn {{ widget.attr['class'] || 'input-medium' }}"
                     data-action="object_change"
-                    data-id="{{ data.id }}">{{ _val1 }}
+                    data-id="{{ data.id }}"
+                    title="{{ _val1 }}">{{ _val1 }}
                 </button>
                 {%/* Кнопка сброса */%}
                 <button class="btn" data-action="field_clear">
@@ -52,6 +121,7 @@
                     <i class="icon-search"></i>
                 </button>
             </div>
+
         {% } else if ((widget.tag == 'select') && (widget.attr.multiple)) { %}
             <select name="{{ widget.name }}"
                 data-model="{{ widget.model }}"

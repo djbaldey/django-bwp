@@ -37,9 +37,18 @@
 ###############################################################################
 """
 from django.conf import settings
+from django.utils.termcolors import colorize
 import os
 
-def osdelete(filename):
+def remove_dirs(dirname):
+    """ Замалчивание ошибки удаления каталога """
+    try:
+        os.removedirs(dirname)
+        return True
+    except:
+        return False
+
+def remove_file(filename):
     """ Замалчивание ошибки удаления файла """
     try:
         os.remove(filename)
@@ -47,13 +56,16 @@ def osdelete(filename):
     except:
         return False
 
+# Deprecated
+osdelete = remove_file
+
 def print_debug(*args):
     if settings.DEBUG:
         #~ print '-'*65 + '<<== DEBUG ==>>'
-        print '<DEBUG START>'
+        print colorize('<DEBUG START>', fg='red', bg='black', opts=('blink',))
         for arg in args:
             print arg,
-        print '\n<DEBUG END>\n'
+        print colorize('\n<DEBUG END>\n', fg='red', bg='black', opts=('blink',))
         #~ print '\n' + '-'*61 + '<<== END DEBUG ==>>'
 
 def print_f_code(f_code):
@@ -62,3 +74,14 @@ def print_f_code(f_code):
             os.path.basename(f_code.co_filename),
             f_code.co_name,
         )
+
+def get_slug_datetime_iso(datetime_value, as_list=False, as_os_path=False):
+    iso = datetime_value.isoformat().replace(
+        'T', '-T-').replace(':','-').replace('.','-')
+    if as_os_path:
+        return os.path.join(iso.split('-'))
+    if as_list:
+        return iso.split('-')
+    return iso
+
+

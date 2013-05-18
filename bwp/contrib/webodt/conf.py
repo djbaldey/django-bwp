@@ -38,7 +38,8 @@
 """
 from bwp.conf import settings
 
-WEBODT_TEMPLATE_PATH = getattr(settings, 'WEBODT_TEMPLATE_PATH', '')
+# Путь внутри каталога MEDIA_ROOT
+WEBODT_TEMPLATE_PATH = getattr(settings, 'WEBODT_TEMPLATE_PATH', 'webodt')
 WEBODT_DEFAULT_FORMAT = getattr(settings, 'WEBODT_DEFAULT_FORMAT', 'doc')
 WEBODT_ABIWORD_COMMAND = getattr(settings, 'WEBODT_ABIWORD_COMMAND', ['/usr/bin/abiword', '--plugin', 'AbiCommand'])
 WEBODT_GOOGLEDOCS_EMAIL = getattr(settings, 'WEBODT_GOOGLEDOCS_EMAIL', None)

@@ -6,6 +6,8 @@ from django.contrib.auth.models import User
 
 from django.utils.translation import ugettext_lazy, ugettext as _
 
+from bwp.models import TempUploadFile
+
 ERROR_MESSAGE = ugettext_lazy("Please enter the correct username and password "
         "for a staff account. Note that both fields are case-sensitive.")
 
@@ -41,3 +43,8 @@ class BWPAuthenticationForm(AuthenticationForm):
                 raise forms.ValidationError(message)
         self.check_for_test_cookie()
         return self.cleaned_data
+
+class TempUploadFileForm(forms.ModelForm):
+    class Meta:
+        model = TempUploadFile
+        fields = ('file',)

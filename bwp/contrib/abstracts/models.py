@@ -40,7 +40,8 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.models import User
 
-from bwp.utils.classes import upload_to, get_random_string
+from bwp.utils.classes import upload_to
+from bwp.utils import remove_file
 from bwp.db import fields
 import datetime
 from unidecode import unidecode
@@ -305,7 +306,7 @@ class AbstractImage(AbstractData):
                         for name in (
                             presave_obj.image.path, presave_obj.image.thumb_path, 
                             ):
-                            osdelete(name)
+                            remove_file(name)
         super(AbstractImage, self).save(**kwargs)
 
     def delete(self, **kwargs):
@@ -313,7 +314,7 @@ class AbstractImage(AbstractData):
         for name in (
             self.image.path, self.image.thumb_path, 
             ):
-            osdelete(name)
+            remove_file(name)
         super(AbstractImage, self).delete(**kwargs)
 
     class Meta:
@@ -339,11 +340,11 @@ class AbstractFile(AbstractData):
                     pass
                 else:
                     if self.file != presave_obj.file:
-                        osdelete(presave_obj.file.path)
+                        remove_file(presave_obj.file.path)
         super(AbstractFile, self).save()
 
     def delete(self):
-        osdelete(self.file.path)
+        remove_file(self.file.path)
         super(AbstractFile, self).delete()
 
     class Meta:

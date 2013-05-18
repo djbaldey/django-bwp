@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 0.1.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-04-06 22:39+1100\n"
+"POT-Creation-Date: 2013-05-18 14:17+1100\n"
 "PO-Revision-Date: 2013-01-29 01:26+1100\n"
 "Last-Translator: Grigoriy Kramarenko <root@rosix.ru>\n"
 "Language: RU\n"
@@ -21,23 +21,23 @@ msgstr ""
 msgid "platform"
 msgstr "платформа"
 
-#: conf.py:52
+#: conf.py:59
 msgid "Example project"
 msgstr "Пример проекта"
 
-#: conf.py:53
+#: conf.py:60
 msgid "BWP-Example"
 msgstr "BWP-Пример"
 
-#: conf.py:54
+#: conf.py:61
 msgid "Example project on Business Web Platform"
 msgstr "Пример проекта на Business Web Platform"
 
-#: conf.py:64
+#: conf.py:71
 msgid "Name of company"
 msgstr "Название компании"
 
-#: forms.py:9
+#: forms.py:11
 msgid ""
 "Please enter the correct username and password for a staff account. Note "
 "that both fields are case-sensitive."
@@ -45,83 +45,100 @@ msgstr ""
 "Пожалуйста, введите корректное имя пользователя и пароль учётной записи "
 "администратора. Помните, что оба поля чувствительны к регистру."
 
-#: forms.py:18
+#: forms.py:20
 msgid "Please log in again, because your session has expired."
 msgstr "Пожалуйста, войдите снова, поскольку ваша сессия устарела."
 
-#: forms.py:37
+#: forms.py:39
 #, python-format
 msgid "Your e-mail address is not your username. Try '%s' instead."
 msgstr ""
 "Ваш адрес электронной почты не является вашим именем пользователя. "
 "Попробуйте '%s' взамен."
 
-#: models.py:113
+#: models.py:99
 msgid "action time"
 msgstr "время действия"
 
-#: models.py:116
+#: models.py:102
 msgid "object id"
 msgstr "идентификатор объекта"
 
-#: models.py:117
+#: models.py:103
 msgid "object repr"
 msgstr "представление объекта"
 
-#: models.py:118
+#: models.py:104
 msgid "action flag"
 msgstr "тип действия"
 
-#: models.py:119
+#: models.py:105
 msgid "change message"
 msgstr "сообщение об изменении"
 
-#: models.py:124
+#: models.py:110
 msgid "log entry"
 msgstr "запись в журнале"
 
-#: models.py:125
+#: models.py:111
 msgid "log entries"
 msgstr "записи в журнале"
 
-#: models.py:135
+#: models.py:121
 msgid "added"
 msgstr "добавлено"
 
-#: models.py:137
+#: models.py:123
 msgid "changed"
 msgstr "изменено"
 
-#: models.py:139
+#: models.py:125
 msgid "deleted"
 msgstr "удалено"
 
-#: models.py:146
+#: models.py:132
 msgid "LogEntry Object"
 msgstr "Запись в журнале"
 
-#: models.py:548
+#: models.py:153 contrib/abstracts/models.py:236
+#: contrib/abstracts/models.py:325 contrib/abstracts/models.py:327
+msgid "file"
+msgstr "файл"
+
+#: models.py:157 contrib/abstracts/models.py:357
+msgid "user"
+msgstr "пользователь"
+
+#: models.py:161
+msgid "temporarily upload file"
+msgstr "временно загружаемый файл"
+
+#: models.py:162
+msgid "temporarily upload files"
+msgstr "временно загружаемые файлы"
+
+#: models.py:592
 #, python-format
 msgid "clone from #%s"
 msgstr "клон из #%s"
 
-#: models.py:842 models.py:843
+#: models.py:905 models.py:906
 msgid "global settings"
 msgstr "глобальные настройки"
 
-#: views.py:71
+#: views.py:74
 msgid "bwp"
 msgstr ""
 
-#: views.py:84 templates/registration/password_reset_complete.html:20
+#: views.py:87 templates/registration/password_reset_complete.html:20
 msgid "Log in"
 msgstr "Войти"
 
-#: views.py:302
+#: views.py:399 views.py:439
 msgid "List objects is blank!"
 msgstr "Список объектов пуст!"
 
-#: views.py:362
+#: views.py:419 views.py:503
 msgid "Commited!"
 msgstr "Принято!"
 
@@ -129,204 +146,188 @@ msgstr "Принято!"
 msgid "abstracts"
 msgstr "абстрактное"
 
-#: contrib/abstracts/models.py:51
+#: contrib/abstracts/models.py:52
 msgid "certificate"
 msgstr "свидетельство"
 
-#: contrib/abstracts/models.py:52
+#: contrib/abstracts/models.py:53
 msgid "license"
 msgstr "лицензия"
 
-#: contrib/abstracts/models.py:56
+#: contrib/abstracts/models.py:57
 msgid "INN"
 msgstr "ИНН"
 
-#: contrib/abstracts/models.py:59 contrib/abstracts/models.py:86
-#: contrib/abstracts/models.py:205 contrib/abstracts/models.py:219
-#: contrib/sales/models.py:56 contrib/warehouses/models.py:56
+#: contrib/abstracts/models.py:60 contrib/abstracts/models.py:87
+#: contrib/abstracts/models.py:206 contrib/abstracts/models.py:220
 msgid "title"
 msgstr "название"
 
-#: contrib/abstracts/models.py:62 contrib/qualifiers/models.py:60
+#: contrib/abstracts/models.py:63
 msgid "full title"
 msgstr "полное название"
 
-#: contrib/abstracts/models.py:66
+#: contrib/abstracts/models.py:67
 msgid "KPP"
 msgstr "КПП"
 
-#: contrib/abstracts/models.py:70
+#: contrib/abstracts/models.py:71
 msgid "OGRN"
 msgstr "ОГРН"
 
-#: contrib/abstracts/models.py:73 contrib/abstracts/models.py:170
+#: contrib/abstracts/models.py:74 contrib/abstracts/models.py:171
 msgid "address"
 msgstr "адрес"
 
-#: contrib/abstracts/models.py:76 contrib/abstracts/models.py:167
+#: contrib/abstracts/models.py:77 contrib/abstracts/models.py:168
 msgid "phones"
 msgstr "телефоны"
 
-#: contrib/abstracts/models.py:82
+#: contrib/abstracts/models.py:83
 msgid "BIK"
 msgstr "БИК"
 
-#: contrib/abstracts/models.py:83
+#: contrib/abstracts/models.py:84
 msgid "identification code of bank"
 msgstr "банковский идентификационный код"
 
-#: contrib/abstracts/models.py:87
+#: contrib/abstracts/models.py:88
 msgid "title of bank"
 msgstr "название банка"
 
-#: contrib/abstracts/models.py:91
+#: contrib/abstracts/models.py:92
 msgid "set/account"
 msgstr "расчётный счёт"
 
-#: contrib/abstracts/models.py:92
+#: contrib/abstracts/models.py:93
 msgid "settlement account"
 msgstr "расчётный счёт"
 
-#: contrib/abstracts/models.py:96
+#: contrib/abstracts/models.py:97
 msgid "cor/account"
 msgstr "корреспондентский счёт"
 
-#: contrib/abstracts/models.py:97
+#: contrib/abstracts/models.py:98
 msgid "correspondent account"
 msgstr "корреспондентский счёт"
 
-#: contrib/abstracts/models.py:102
+#: contrib/abstracts/models.py:103
 msgid "type"
 msgstr "тип"
 
-#: contrib/abstracts/models.py:103 contrib/sales/models.py:60
-#: contrib/warehouses/models.py:60
+#: contrib/abstracts/models.py:104
 msgid "type of document"
 msgstr "тип документа"
 
-#: contrib/abstracts/models.py:107
+#: contrib/abstracts/models.py:108
 msgid "series"
 msgstr "серия"
 
-#: contrib/abstracts/models.py:108
+#: contrib/abstracts/models.py:109
 msgid "series of document"
 msgstr "серия документа"
 
-#: contrib/abstracts/models.py:112
+#: contrib/abstracts/models.py:113
 msgid "number"
 msgstr "номер"
 
-#: contrib/abstracts/models.py:113
+#: contrib/abstracts/models.py:114
 msgid "number of document"
 msgstr "номер документа"
 
-#: contrib/abstracts/models.py:117
+#: contrib/abstracts/models.py:118
 msgid "issue"
 msgstr "выдан"
 
-#: contrib/abstracts/models.py:118
+#: contrib/abstracts/models.py:119
 msgid "issue of document"
 msgstr "дата выдачи документа"
 
-#: contrib/abstracts/models.py:121
+#: contrib/abstracts/models.py:122
 msgid "organ"
 msgstr "орган"
 
-#: contrib/abstracts/models.py:122
+#: contrib/abstracts/models.py:123
 msgid "organization of issue"
 msgstr "орган выдачи документа"
 
-#: contrib/abstracts/models.py:126
+#: contrib/abstracts/models.py:127
 msgid "code organ"
 msgstr "код органа"
 
-#: contrib/abstracts/models.py:127
+#: contrib/abstracts/models.py:128
 msgid "code organization of issue"
 msgstr "код органа выдачи"
 
-#: contrib/abstracts/models.py:132 contrib/abstracts/models.py:177
+#: contrib/abstracts/models.py:133 contrib/abstracts/models.py:178
 msgid "site"
 msgstr "сайт"
 
-#: contrib/abstracts/models.py:133 contrib/abstracts/models.py:178
+#: contrib/abstracts/models.py:134 contrib/abstracts/models.py:179
 msgid "web site"
 msgstr "web сайт"
 
-#: contrib/abstracts/models.py:137 contrib/abstracts/models.py:173
+#: contrib/abstracts/models.py:138 contrib/abstracts/models.py:174
 msgid "email"
 msgstr ""
 
-#: contrib/abstracts/models.py:138 contrib/abstracts/models.py:174
+#: contrib/abstracts/models.py:139 contrib/abstracts/models.py:175
 msgid "email address"
 msgstr "адрес e-mail"
 
-#: contrib/abstracts/models.py:141 contrib/abstracts/models.py:188
-#: contrib/smallbusiness/models.py:183
+#: contrib/abstracts/models.py:142 contrib/abstracts/models.py:189
 msgid "about"
 msgstr "описание"
 
-#: contrib/abstracts/models.py:142
+#: contrib/abstracts/models.py:143
 msgid "about organization"
 msgstr "об организации"
 
-#: contrib/abstracts/models.py:155
+#: contrib/abstracts/models.py:156
 msgid "last name"
 msgstr "фамилия"
 
-#: contrib/abstracts/models.py:159
+#: contrib/abstracts/models.py:160
 msgid "first name"
 msgstr "имя"
 
-#: contrib/abstracts/models.py:163
+#: contrib/abstracts/models.py:164
 msgid "middle name"
 msgstr "отчество"
 
-#: contrib/abstracts/models.py:182
+#: contrib/abstracts/models.py:183
 msgid "skype"
 msgstr "скайп"
 
-#: contrib/abstracts/models.py:185
+#: contrib/abstracts/models.py:186
 msgid "jabber"
 msgstr "джаббер"
 
-#: contrib/abstracts/models.py:189
+#: contrib/abstracts/models.py:190
 msgid "about person"
 msgstr "о персоне"
 
-#: contrib/abstracts/models.py:233
+#: contrib/abstracts/models.py:234
 msgid "label"
 msgstr "метка"
 
-#: contrib/abstracts/models.py:235 contrib/abstracts/models.py:324
-#: contrib/abstracts/models.py:326
-msgid "file"
-msgstr "файл"
-
-#: contrib/abstracts/models.py:264
+#: contrib/abstracts/models.py:265
 msgid "videocode"
 msgstr "видео"
 
-#: contrib/abstracts/models.py:266 contrib/qualifiers/models.py:48
-#: contrib/qualifiers/models.py:75 contrib/qualifiers/models.py:121
-#: contrib/qualifiers/models.py:194
+#: contrib/abstracts/models.py:267
 msgid "code"
 msgstr "код"
 
-#: contrib/abstracts/models.py:267
+#: contrib/abstracts/models.py:268
 msgid "Set your code for video on the www.youtube.com"
 msgstr "Установите код видео с www.youtube.com"
 
-#: contrib/abstracts/models.py:286 contrib/abstracts/models.py:288
+#: contrib/abstracts/models.py:287 contrib/abstracts/models.py:289
 msgid "image"
 msgstr "изображение"
 
-#: contrib/abstracts/models.py:356 contrib/contacts/models.py:60
-#: contrib/smallbusiness/models.py:326 contrib/smallbusiness/models.py:383
-#: contrib/smallbusiness/models.py:480 contrib/smallbusiness/models.py:545
-msgid "user"
-msgstr "пользователь"
-
-#: contrib/abstracts/models.py:359
+#: contrib/abstracts/models.py:360
 msgid "JSON value"
 msgstr "значение JSON"
 

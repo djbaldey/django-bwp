@@ -40,6 +40,7 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from bwp.contrib.abstracts.models import AbstractGroup
 from bwp.contrib.qualifiers.models import Document as GeneralDocument
+from bwp.contrib.webodt import conf as webodt_conf
 from bwp.conf import settings
 
 class Document(AbstractGroup):
@@ -69,7 +70,7 @@ class Template(AbstractGroup):
     is_default = models.BooleanField(
             default=True,
             verbose_name = _('by default'))
-    webodt = models.FileField(upload_to=settings.WEBODT_TEMPLATE_PATH,
+    webodt = models.FileField(upload_to=webodt_conf.WEBODT_TEMPLATE_PATH,
             blank=True,
             verbose_name = _('template of webodt'))
     text = models.TextField(

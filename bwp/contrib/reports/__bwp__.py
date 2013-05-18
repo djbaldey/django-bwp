@@ -38,14 +38,18 @@
 """
 from django.utils.translation import ugettext_lazy as _
 from bwp.sites import site
-from bwp.models import ModelBWP
+from bwp.models import ModelBWP, ComposeBWP
 from models import *
 
-class DocumentAdmin(ModelBWP):
+class TemplateCompose(ComposeBWP):
+    model = Template
+
+class DocumentBWP(ModelBWP):
     list_display = ('__unicode__', 'id')
     raw_id_fields = ('qualifier',)
-site.register(Document, DocumentAdmin)
+    compositions = [('template_set', TemplateCompose)]
+site.register(Document, DocumentBWP)
 
-class TemplateAdmin(ModelBWP):
+class TemplateBWP(ModelBWP):
     list_display = ('__unicode__', 'id')
-site.register(Template, TemplateAdmin)
+site.register(Template, TemplateBWP)

@@ -36,12 +36,6 @@
 #   <http://www.gnu.org/licenses/>.
 ###############################################################################
 """
-from django.utils.crypto import get_random_string as _get_random_string
-
-
-def get_random_string(dt, length=16):
-    symbols = '123456687890'
-    return _get_random_string(length, symbols)
 
 def upload_to(cls, filename):
     """ Именованная функция-ссылка на метод ещё неопределённого класса """
