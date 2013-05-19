@@ -147,7 +147,7 @@ function jsonAPI(args, callback, to_console, sync) {
         async: !sync,
         timeout: AJAX_TIMEOUT,
         url: BWP_API_URL,
-        data: 'jsonData=' + $.toJSON(args),
+        data: {'jsonData': $.toJSON(args)},
         dataType: 'json'
     })
     // Обработка ошибок протокола HTTP
@@ -550,7 +550,7 @@ function classObject(data) {
 // Процедуры
 
 /* Применение изменений на сервере для объектов в моделях и композициях */
-function handlerCommitInstance(instanse, done) {
+function handlerCommitInstance(instance, done) {
     if (DEBUG) {console.log('function:'+'handlerCommitInstance')};
     //~ is_changed = false;
     _objects = []
@@ -591,7 +591,7 @@ function handlerCommitInstance(instanse, done) {
         handlerCollectionGet(_model);
         if (done) { done() };
     };
-    jqxhr = new jsonAPI(args, cb, 'handlerCommitInstance(instanse) call jsonAPI()');
+    jqxhr = new jsonAPI(args, cb, 'handlerCommitInstance(instance) call jsonAPI()');
     return jqxhr;
 };
 

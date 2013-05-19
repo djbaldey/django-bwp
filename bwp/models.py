@@ -778,6 +778,7 @@ class ModelBWP(BaseModel):
         meta['compositions'] = [ x.get_meta() for x in self.compose_instances ]
         meta['widgets'] = self.get_list_widgets()
         meta['widgetsets'] = self.get_list_widgetsets()
+        meta['reports'] = self.get_list_reports()
         return meta
 
     def prepare_meta(self, request):
@@ -900,6 +901,22 @@ class ModelBWP(BaseModel):
         """
         composes = self.get_composes(request)
         return dict([ (compose.related_name, compose) for compose in composes ])
+
+    def get_list_reports(self):
+        L = []
+        if 'bwp.contrib.reports' in conf.settings.INSTALLED_APPS:
+            ct = ContentType.objects.get_for_model(self.model)
+            bounds = ct.documentbound_set.all()
+            for bound in bounds:
+                doc = bound.document
+                templates = list(doc.template_set.all().values(
+                    'pk', 'title', 'is_default'))
+                L.append({
+                    'pk': doc.pk,
+                    'title': doc.title,
+                    'templates': templates,
+                })
+        return L
 
 class GlobalUserSettings(AbstractUserSettings):
     """ Глобальные настройки пользователей """
