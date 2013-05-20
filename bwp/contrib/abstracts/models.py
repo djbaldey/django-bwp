@@ -212,6 +212,18 @@ class AbstractGroup(models.Model):
         ordering = ['title',]
         abstract = True
 
+class AbstractGroupText(models.Model):
+    """ Абстрактная модель группы или категории с длинным полем"""
+    title = models.TextField(
+            verbose_name = _('title'))
+
+    def __unicode__(self):
+        return self.title
+
+    class Meta:
+        ordering = ['title',]
+        abstract = True
+
 class AbstractGroupUnique(models.Model):
     """ Абстрактная модель уникальной группы или категории """
     title = models.CharField(

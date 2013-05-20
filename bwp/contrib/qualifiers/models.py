@@ -38,7 +38,7 @@
 """
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
-from bwp.contrib.abstracts.models import AbstractGroup
+from bwp.contrib.abstracts.models import AbstractGroup, AbstractGroupText
 
 class Country(AbstractGroup):
     """ Общероссийский классификатор стран мира (ОКСМ) """
@@ -90,7 +90,7 @@ class Currency(AbstractGroup):
         verbose_name = _('currency')
         verbose_name_plural = _('currencies')
 
-class Document(AbstractGroup):
+class Document(AbstractGroupText):
     """ Общероссийский классификатор управленческой документации (ОКУД)
         является составной частью Единой системы классификации и
         кодирования технико-экономической и социальной информации
