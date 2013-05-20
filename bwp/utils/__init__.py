@@ -37,7 +37,6 @@
 ###############################################################################
 """
 from django.conf import settings
-from django.utils.termcolors import colorize
 import os
 
 def remove_dirs(dirname):
@@ -61,12 +60,10 @@ osdelete = remove_file
 
 def print_debug(*args):
     if settings.DEBUG:
-        #~ print '-'*65 + '<<== DEBUG ==>>'
-        print colorize('<DEBUG START>', fg='red', bg='black', opts=('blink',))
+        print '<DEBUG START>'
         for arg in args:
             print arg,
-        print colorize('\n<DEBUG END>\n', fg='red', bg='black', opts=('blink',))
-        #~ print '\n' + '-'*61 + '<<== END DEBUG ==>>'
+        print '\n<DEBUG END>\n'
 
 def print_f_code(f_code):
     print 'line %s:\t%s\t%s' % (
