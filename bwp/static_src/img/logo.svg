@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="2312.2188"
+   height="2312.2188"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.48.3.1 r9886"
+   sodipodi:docname="logo.svg"
+   inkscape:export-filename="/home/djbaldey/www/bwp-kurage/bwp/static_src/img/logo48.png"
+   inkscape:export-xdpi="1.8683354"
+   inkscape:export-ydpi="1.8683354">
+  <defs
+     id="defs4" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.175"
+     inkscape:cx="1276.5218"
+     inkscape:cy="907.15847"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0"
+     inkscape:window-width="1366"
+     inkscape:window-height="715"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(630.82665,95.66982)">
+    <path
+       sodipodi:type="arc"
+       style="fill:#5495f8;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       id="path3066"
+       sodipodi:cx="1785.9497"
+       sodipodi:cy="769.51947"
+       sodipodi:rx="1155.6145"
+       sodipodi:ry="1155.6145"
+       d="m 2941.5642,769.51947 c 0,638.22823 -517.3862,1155.61453 -1155.6145,1155.61453 -638.2283,0 -1155.61449,-517.3863 -1155.61449,-1155.61453 0,-638.22827 517.38619,-1155.6145 1155.61449,-1155.6145 638.2283,0 1155.6145,517.38623 1155.6145,1155.6145 z"
+       transform="translate(-1260.6704,290.92393)" />
+    <text
+       xml:space="preserve"
+       style="font-size:760.21209717px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;letter-spacing:0px;word-spacing:0px;fill:#2843b9;fill-opacity:1;stroke:none;font-family:Liberation Mono;-inkscape-font-specification:Liberation Mono"
+       x="-376.28586"
+       y="1413.5911"
+       id="text3836"
+       sodipodi:linespacing="0%"
+       transform="scale(1.052338,0.95026503)"><tspan
+         sodipodi:role="line"
+         id="tspan3838"
+         x="-376.28586"
+         y="1413.5911"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;letter-spacing:0px;word-spacing:0px;baseline-shift:baseline;font-family:Sans;-inkscape-font-specification:Sans"
+         rotate="0 0 0 0"
+         dy="0"
+         dx="0">WEB</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:40px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       x="113.13703"
+       y="761.43823"
+       id="text3840"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3842"
+         x="113.13703"
+         y="761.43823"
+         style="font-size:300px;fill:#ffffff">business</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:40px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#ff0000;fill-opacity:1;stroke:none;font-family:Sans"
+       x="83.047432"
+       y="1600.5889"
+       id="text3840-6"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3842-7"
+         x="83.047432"
+         y="1600.5889"
+         style="font-size:300px;fill:#ff0000">platform</tspan></text>
+  </g>
+</svg>

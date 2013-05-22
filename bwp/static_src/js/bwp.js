@@ -479,7 +479,7 @@ function classCompose(object, data) {
     this.compose  = this.meta.related_name;
     this.model    = this.meta.related_model;
     this.is_m2m   = this.meta.is_many_to_many;
-    this.id    = validatorID([this.object.id, this.name]);
+    this.id    = validatorID([this.object.id, this.name, this.compose]);
     this.label = data.label;
     this.title = this.object.label +': '+ this.label;
     this.query = null;

@@ -199,6 +199,61 @@ class AbstractPerson(models.Model):
         ordering = ['last_name', 'first_name', 'middle_name']
         abstract = True
 
+class AbstractDocumentDate(models.Model):
+    """ Абстрактная модель датированных документов """
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+
+    date = models.DateField(
+            null=True, blank=True,
+            verbose_name = _("date"))
+
+    def __unicode__(self):
+        if self.pk:
+            return _('Document from %s') % (self.date,)
+        else:
+            return _('New document')
+
+    class Meta:
+        ordering = ['-date',]
+        abstract = True
+
+    def save(self, **kwargs):
+        self.date = self.date or datetime.datetime.now().date()
+        super(AbstractDocumentDate, self).save(**kwargs)
+
+class AbstractDocumentDateTime(AbstractDocumentDate):
+    """ Абстрактная модель датированных документов """
+    time = models.TimeField(
+            null=True, blank=True,
+            verbose_name = _("time"))
+
+    def __unicode__(self):
+        if self.pk:
+            return _('Document from %s %s') % (self.date, self.time)
+        else:
+            return _('New document')
+
+    def get_datetime(self):
+        """ Возвращает самый доступный объект datetime.
+            Складывает поля даты и времени в один объект, либо
+            возвращает дату-время создания.
+        """
+        if self.date and self.time:
+            return datetime.datetime.combine(self.date, self.time)
+        elif self.date:
+            return datetime.datetime.fromordinal(self.date.toordinal())
+        else:
+            return self.created
+    
+    class Meta:
+        ordering = ['-date', '-time']
+        abstract = True
+
+    def save(self, **kwargs):
+        self.time = self.time or datetime.datetime.now().time()
+        super(AbstractDocumentDateTime, self).save(**kwargs)
+
 class AbstractGroup(models.Model):
     """ Абстрактная модель группы или категории """
     title = models.CharField(
