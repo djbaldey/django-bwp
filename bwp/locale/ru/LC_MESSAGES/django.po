@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 0.1.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-05-18 14:17+1100\n"
+"POT-Creation-Date: 2013-05-22 20:55+1100\n"
 "PO-Revision-Date: 2013-01-29 01:26+1100\n"
 "Last-Translator: Grigoriy Kramarenko <root@rosix.ru>\n"
 "Language: RU\n"
@@ -100,29 +100,29 @@ msgstr "удалено"
 msgid "LogEntry Object"
 msgstr "Запись в журнале"
 
-#: models.py:153 contrib/abstracts/models.py:236
-#: contrib/abstracts/models.py:325 contrib/abstracts/models.py:327
+#: models.py:153 contrib/abstracts/models.py:304
+#: contrib/abstracts/models.py:393 contrib/abstracts/models.py:395
 msgid "file"
 msgstr "файл"
 
-#: models.py:157 contrib/abstracts/models.py:357
+#: models.py:157 contrib/abstracts/models.py:425
 msgid "user"
 msgstr "пользователь"
 
-#: models.py:161
+#: models.py:164
 msgid "temporarily upload file"
 msgstr "временно загружаемый файл"
 
-#: models.py:162
+#: models.py:165
 msgid "temporarily upload files"
 msgstr "временно загружаемые файлы"
 
-#: models.py:592
+#: models.py:595
 #, python-format
 msgid "clone from #%s"
 msgstr "клон из #%s"
 
-#: models.py:905 models.py:906
+#: models.py:925 models.py:926
 msgid "global settings"
 msgstr "глобальные настройки"
 
@@ -159,7 +159,8 @@ msgid "INN"
 msgstr "ИНН"
 
 #: contrib/abstracts/models.py:60 contrib/abstracts/models.py:87
-#: contrib/abstracts/models.py:206 contrib/abstracts/models.py:220
+#: contrib/abstracts/models.py:262 contrib/abstracts/models.py:274
+#: contrib/abstracts/models.py:288
 msgid "title"
 msgstr "название"
 
@@ -307,27 +308,48 @@ msgstr "джаббер"
 msgid "about person"
 msgstr "о персоне"
 
-#: contrib/abstracts/models.py:234
+#: contrib/abstracts/models.py:209
+msgid "date"
+msgstr "дата"
+
+#: contrib/abstracts/models.py:213
+msgid "Document from %s"
+msgstr "Документ от %s"
+
+#: contrib/abstracts/models.py:215 contrib/abstracts/models.py:236
+msgid "New document"
+msgstr "Новый документ"
+
+#: contrib/abstracts/models.py:229
+msgid "time"
+msgstr "время"
+
+#: contrib/abstracts/models.py:233
+#, python-format
+msgid "Document from %(date)s %(time)s"
+msgstr "Документ от %(date)s %(time)s"
+
+#: contrib/abstracts/models.py:302
 msgid "label"
 msgstr "метка"
 
-#: contrib/abstracts/models.py:265
+#: contrib/abstracts/models.py:333
 msgid "videocode"
 msgstr "видео"
 
-#: contrib/abstracts/models.py:267
+#: contrib/abstracts/models.py:335
 msgid "code"
 msgstr "код"
 
-#: contrib/abstracts/models.py:268
+#: contrib/abstracts/models.py:336
 msgid "Set your code for video on the www.youtube.com"
 msgstr "Установите код видео с www.youtube.com"
 
-#: contrib/abstracts/models.py:287 contrib/abstracts/models.py:289
+#: contrib/abstracts/models.py:355 contrib/abstracts/models.py:357
 msgid "image"
 msgstr "изображение"
 
-#: contrib/abstracts/models.py:360
+#: contrib/abstracts/models.py:428
 msgid "JSON value"
 msgstr "значение JSON"
 

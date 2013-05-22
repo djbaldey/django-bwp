@@ -230,7 +230,8 @@ class AbstractDocumentDateTime(AbstractDocumentDate):
 
     def __unicode__(self):
         if self.pk:
-            return _('Document from %s %s') % (self.date, self.time)
+            return _('Document from %(date)s %(time)s') % {
+                'date':self.date, 'time':self.time}
         else:
             return _('New document')
 
