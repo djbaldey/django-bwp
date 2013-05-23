@@ -11,9 +11,9 @@
         {% if (_multiselect) { %}
             <th class="input-micro"><input type="checkbox" data-toggle="checkboxes"></th>
         {% } %}
-        {% _.each(data.widgets, function(c) { %}
-            {% var _label = c.label; if (_.strip(c.attr['class']) == 'input-mini') { _label = _.truncate(c.label, 6) } %}
-            <th data-toggle="tooltip" class="{{ c.attr['class'] }}" title="{{ c.label }}">{{ _label }}</th>
+        {% _.each(data.widgets, function(w) { %}
+            {% var _label = w.label; if (_.strip(w.attr['class']) == 'input-mini') { _label = _.truncate(w.label, 6) } %}
+            <th data-toggle="tooltip" class="{{ w.attr['class'] }}" title="{{ w.label }}">{{ _label }}</th>
         {% }); %}
         </tr>
     </thead>
@@ -23,15 +23,17 @@
         {% if (_multiselect) { %}
             <td><input type="checkbox" data-model="{{ obj.model }}" data-pk="{{ obj.pk }}"></td>
         {% } %}
-            {% _.each(data.widgets, function(c, index) { %}
-                <td class="{{ c.attr['class'] }}">
+            {% _.each(data.widgets, function(w, index) { %}
+                <td class="{{ w.attr['class'] }}">
                 {% if ((index == 0) && (_rowactions)) { %}
                     <div class="dropup">
                         <div class="dropdown-toggle" role="button" data-toggle="dropdown" data-target="#">
-                        {% if (c.name == '__unicode__') { %}
+                        {% if (w.name == '__unicode__') { %}
                             {{ obj.__unicode__ }}
+                        {% } else if ($.type(obj.fields[w.name]) === 'array'){ %}
+                            {{ obj.fields[w.name][1] }}
                         {% } else { %}
-                            {{ obj.fields[c.name] }}
+                            {{ obj.fields[w.name] }}
                         {% } %}
                         </div>
                         <ul class="dropdown-menu" role="menu">
@@ -86,17 +88,19 @@
                         </ul>
                     </div>
                 {% } else { %}
-                    {% if (c.name == '__unicode__') { %}
+                    {% if (w.name == '__unicode__') { %}
                         {{ obj.__unicode__ }}
                     {% } else { %}
-                        {% if ($.type(obj.fields[c.name]) === 'boolean') { %}
-                            {% if (obj.fields[c.name]) { %}
+                        {% if ($.type(obj.fields[w.name]) === 'boolean') { %}
+                            {% if (obj.fields[w.name]) { %}
                                 <i class="icon-ok"></i>
                             {% } else { %}
                                 <i class="icon-ban-circle"></i>
                             {% } %}
+                        {% } else if ($.type(obj.fields[w.name]) === 'array'){ %}
+                            {{ obj.fields[w.name][1] }}
                         {% } else { %}
-                            {{ obj.fields[c.name] }}
+                            {{ obj.fields[w.name] }}
                         {% } %}
                     {% } %}
                 {% } %}

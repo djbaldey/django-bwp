@@ -222,37 +222,26 @@ class AbstractDocumentDate(models.Model):
         self.date = self.date or datetime.datetime.now().date()
         super(AbstractDocumentDate, self).save(**kwargs)
 
-class AbstractDocumentDateTime(AbstractDocumentDate):
-    """ Абстрактная модель датированных документов """
-    time = models.TimeField(
+class AbstractDocumentDateTime(models.Model):
+    """ Абстрактная модель датированных документов, включающих время """
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+    date_time = models.DateTimeField(
             null=True, blank=True,
-            verbose_name = _("time"))
+            verbose_name = _("date and time"))
 
     def __unicode__(self):
         if self.pk:
-            return _('Document from %(date)s %(time)s') % {
-                'date':self.date, 'time':self.time}
+            return _('Document from %s') % (self.date_time,)
         else:
             return _('New document')
 
-    def get_datetime(self):
-        """ Возвращает самый доступный объект datetime.
-            Складывает поля даты и времени в один объект, либо
-            возвращает дату-время создания.
-        """
-        if self.date and self.time:
-            return datetime.datetime.combine(self.date, self.time)
-        elif self.date:
-            return datetime.datetime.fromordinal(self.date.toordinal())
-        else:
-            return self.created
-    
     class Meta:
-        ordering = ['-date', '-time']
+        ordering = ['-date_time']
         abstract = True
 
     def save(self, **kwargs):
-        self.time = self.time or datetime.datetime.now().time()
+        self.date_time = self.date_time or datetime.datetime.now()
         super(AbstractDocumentDateTime, self).save(**kwargs)
 
 class AbstractGroup(models.Model):
