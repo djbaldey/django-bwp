@@ -428,7 +428,7 @@ function classSelector(model, multiple) {
     this.template = TEMPLATES.layoutSelector;
     // Запрещаем все действия.
     this.perms = { 'delete': false, 'add': false, 'change': false };
-    this.meta.list_display = ['__unicode__'];
+    this.meta.list_display = this.meta.list_display.slice(0,1);
     this.meta.list_per_page = 5;
     this.multiple = multiple ? true : false;
     selector = this;
