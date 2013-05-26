@@ -43,8 +43,11 @@ from bwp.models import ModelBWP, ComposeBWP, LogEntry,\
         GlobalUserSettings, TempUploadFile
 from django.utils.translation import ugettext_lazy as _
 
+label_id = _('ID')
+label_pk = _('PK')
+
 class UserAdmin(ModelBWP):
-    list_display = ('__unicode__', 'is_superuser', 'is_staff', 'last_login', 'date_joined', 'id')
+    list_display = ('__unicode__', 'is_superuser', 'is_staff', 'last_login', 'date_joined', ('id', label_id))
     list_display_css = {
         'pk': 'input-micro', 'id': 'input-micro',
         'is_superuser': 'input-mini', 'is_staff': 'input-mini',

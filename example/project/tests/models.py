@@ -69,6 +69,14 @@ class Org(AbstractOrg):
         verbose_name = _('org')
         verbose_name_plural = _('orgs')
 
+    @property
+    def get_group(self):
+        return self.group
+
+    @property
+    def get_groupunique(self):
+        return self.groupunique
+
 class Person(AbstractPerson):
     """ Test AbstractPerson model """
     group = models.ForeignKey(

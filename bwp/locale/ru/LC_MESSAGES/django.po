@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 0.1.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-05-22 20:55+1100\n"
+"POT-Creation-Date: 2013-05-26 18:52+1100\n"
 "PO-Revision-Date: 2013-01-29 01:26+1100\n"
 "Last-Translator: Grigoriy Kramarenko <root@rosix.ru>\n"
 "Language: RU\n"
@@ -16,6 +16,14 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
+
+#: __bwp__.py:46
+msgid "ID"
+msgstr "ИД"
+
+#: __bwp__.py:47
+msgid "PK"
+msgstr "ПК"
 
 #: __init__.py:41
 msgid "platform"
@@ -56,73 +64,73 @@ msgstr ""
 "Ваш адрес электронной почты не является вашим именем пользователя. "
 "Попробуйте '%s' взамен."
 
-#: models.py:99
+#: models.py:83
 msgid "action time"
 msgstr "время действия"
 
-#: models.py:102
+#: models.py:86
 msgid "object id"
 msgstr "идентификатор объекта"
 
-#: models.py:103
+#: models.py:87
 msgid "object repr"
 msgstr "представление объекта"
 
-#: models.py:104
+#: models.py:88
 msgid "action flag"
 msgstr "тип действия"
 
-#: models.py:105
+#: models.py:89
 msgid "change message"
 msgstr "сообщение об изменении"
 
-#: models.py:110
+#: models.py:94
 msgid "log entry"
 msgstr "запись в журнале"
 
-#: models.py:111
+#: models.py:95
 msgid "log entries"
 msgstr "записи в журнале"
 
-#: models.py:121
+#: models.py:105
 msgid "added"
 msgstr "добавлено"
 
-#: models.py:123
+#: models.py:107
 msgid "changed"
 msgstr "изменено"
 
-#: models.py:125
+#: models.py:109
 msgid "deleted"
 msgstr "удалено"
 
-#: models.py:132
+#: models.py:116
 msgid "LogEntry Object"
 msgstr "Запись в журнале"
 
-#: models.py:153 contrib/abstracts/models.py:304
-#: contrib/abstracts/models.py:393 contrib/abstracts/models.py:395
+#: models.py:137 contrib/abstracts/models.py:293
+#: contrib/abstracts/models.py:382 contrib/abstracts/models.py:384
 msgid "file"
 msgstr "файл"
 
-#: models.py:157 contrib/abstracts/models.py:425
+#: models.py:141 contrib/abstracts/models.py:414
 msgid "user"
 msgstr "пользователь"
 
-#: models.py:164
+#: models.py:148
 msgid "temporarily upload file"
 msgstr "временно загружаемый файл"
 
-#: models.py:165
+#: models.py:149
 msgid "temporarily upload files"
 msgstr "временно загружаемые файлы"
 
-#: models.py:595
+#: models.py:667
 #, python-format
 msgid "clone from #%s"
 msgstr "клон из #%s"
 
-#: models.py:925 models.py:926
+#: models.py:999 models.py:1000
 msgid "global settings"
 msgstr "глобальные настройки"
 
@@ -159,8 +167,8 @@ msgid "INN"
 msgstr "ИНН"
 
 #: contrib/abstracts/models.py:60 contrib/abstracts/models.py:87
-#: contrib/abstracts/models.py:262 contrib/abstracts/models.py:274
-#: contrib/abstracts/models.py:288
+#: contrib/abstracts/models.py:251 contrib/abstracts/models.py:263
+#: contrib/abstracts/models.py:277
 msgid "title"
 msgstr "название"
 
@@ -312,44 +320,40 @@ msgstr "о персоне"
 msgid "date"
 msgstr "дата"
 
-#: contrib/abstracts/models.py:213
+#: contrib/abstracts/models.py:213 contrib/abstracts/models.py:235
+#, python-format
 msgid "Document from %s"
 msgstr "Документ от %s"
 
-#: contrib/abstracts/models.py:215 contrib/abstracts/models.py:236
+#: contrib/abstracts/models.py:215 contrib/abstracts/models.py:237
 msgid "New document"
 msgstr "Новый документ"
 
-#: contrib/abstracts/models.py:229
-msgid "time"
-msgstr "время"
+#: contrib/abstracts/models.py:231
+msgid "date and time"
+msgstr "дата и время"
 
-#: contrib/abstracts/models.py:233
-#, python-format
-msgid "Document from %(date)s %(time)s"
-msgstr "Документ от %(date)s %(time)s"
-
-#: contrib/abstracts/models.py:302
+#: contrib/abstracts/models.py:291
 msgid "label"
 msgstr "метка"
 
-#: contrib/abstracts/models.py:333
+#: contrib/abstracts/models.py:322
 msgid "videocode"
 msgstr "видео"
 
-#: contrib/abstracts/models.py:335
+#: contrib/abstracts/models.py:324
 msgid "code"
 msgstr "код"
 
-#: contrib/abstracts/models.py:336
+#: contrib/abstracts/models.py:325
 msgid "Set your code for video on the www.youtube.com"
 msgstr "Установите код видео с www.youtube.com"
 
-#: contrib/abstracts/models.py:355 contrib/abstracts/models.py:357
+#: contrib/abstracts/models.py:344 contrib/abstracts/models.py:346
 msgid "image"
 msgstr "изображение"
 
-#: contrib/abstracts/models.py:428
+#: contrib/abstracts/models.py:417
 msgid "JSON value"
 msgstr "значение JSON"
 
@@ -575,3 +579,9 @@ msgstr "сайты"
 #: templatetags/bwp_locale.py:49
 msgid "content types"
 msgstr "типы контента"
+
+#~ msgid "time"
+#~ msgstr "время"
+
+#~ msgid "Document from %(date)s %(time)s"
+#~ msgstr "Документ от %(date)s %(time)s"

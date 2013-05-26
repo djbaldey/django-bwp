@@ -43,7 +43,8 @@ from bwp.models import ModelBWP, ComposeBWP
 from models import *
 
 class OrgCompose(ComposeBWP):
-    fields = ('title', 'fulltitle')
+    list_display = ('__unicode__', ('get_group', _('group')), 'pk', 'id')
+    #~ fields = ('title', 'fulltitle')
     model = Org
 
 class PersonCompose(ComposeBWP):
@@ -81,6 +82,7 @@ site.register(GroupUnique, GroupUniqueAdmin)
 admin.site.register(GroupUnique, admin.ModelAdmin)
 
 class OrgAdmin(ModelBWP):
+    list_display = ('__unicode__', ('get_group', _('group')), 'pk', 'id')
     pass
 site.register(Org, OrgAdmin)
 admin.site.register(Org, admin.ModelAdmin)

@@ -404,8 +404,6 @@ function classModel(app, data) {
     this.paginator = null;
     _composes     = {};
     this.composes = _composes;
-    _widgets = [];
-    this.widgets = _widgets;
     _actions = {};
     this.actions = _actions;
     model = this;
@@ -415,15 +413,6 @@ function classModel(app, data) {
             _composes[item.meta.related_name] = item;
         });
     };
-    $.each(model.meta.list_display, function(i, name) {
-        if (name == '__unicode__') {
-            _widgets.push({name:name, label: model.label, attr:{}});
-        } else {
-            $.each(model.meta.widgets, function(ii, widget) {
-                if (name == widget.name) { _widgets.push(widget); };
-            });
-        };
-    });
     // Register
     if ((!this.meta) || (!this.meta.list_display)) {
         console.log("Модель не может быть зарегистрирована.")
@@ -442,19 +431,8 @@ function classSelector(model, multiple) {
     this.meta.list_display = ['__unicode__'];
     this.meta.list_per_page = 5;
     this.multiple = multiple ? true : false;
-    _widgets = [];
-    this.widgets = _widgets;
     selector = this;
     // Init
-    $.each(selector.meta.list_display, function(i, name) {
-        if (name == '__unicode__') {
-            _widgets.push({name:name, label: selector.label, attr:{}});
-        } else {
-            $.each(selector.meta.widgets, function(ii, widget) {
-                if (name == widget.name) { _widgets.push(widget); };
-            });
-        };
-    });
     // Register
     REGISTER[this.id] = this;
     // method
@@ -487,21 +465,10 @@ function classCompose(object, data) {
     this.m2m_fix = [];
     this.m2m_fixaction = null;
     this.paginator = null;
-    _widgets = [];
-    this.widgets = _widgets;
     _actions = {};
     this.actions = _actions;
     compose = this;
     // Init
-    $.each(compose.meta.list_display, function(i, name) {
-        if (name == '__unicode__') {
-            _widgets.push({name:name, label: compose.label, attr:{}})
-        } else {
-            $.each(compose.meta.widgets, function(ii, widget) {
-                if (name == widget.name) { _widgets.push(widget); };
-            });
-        };
-    });
     // Register
     REGISTER[this.id] = this;
 };
@@ -517,6 +484,8 @@ function classObject(data) {
                                : 'Новый объект ('+this.model.label+')';
     this.label       = this.__unicode__;
     this.title = this.model.label +': '+ this.label;
+    _properties     = data.properties;
+    this.properties = _properties;
     _fields     = data.fields;
     this.fields = _fields;
     this.get_fields = function() {
@@ -525,6 +494,15 @@ function classObject(data) {
             L[item] = _fields[item];
         });
         return L;
+    };
+    this.get_column_value = function(colname) {
+        if (colname in _fields) {
+            return _fields[colname];
+        }
+        else if (colname in _properties) {
+            return _properties[colname];
+        };
+        return '';
     };
     _composes = [];
     this.composes = _composes;

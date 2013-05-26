@@ -70,6 +70,25 @@ class SerializerWrapper(object):
         else:
             self._current[field.name] = field.value_to_string(obj)
         return self._current[field.name]
+
+    def handle_properties(self, obj, name):
+        value = getattr(obj, name)
+        if callable(value):
+            value = value()
+        # Protected types (i.e., primitives like None, numbers, dates,
+        # and Decimals) are passed through as is. All other values are
+        # converted to string first.
+        if is_protected_type(value):
+            if   isinstance(value, datetime):
+                val = str(value).split('.')[0] # обрезаем милисекунды
+            elif isinstance(value, (date, time)):
+                val = str(value)
+            else:
+                val = value
+            self._properties[name] = val
+        else:
+            self._properties[name] = unicode(value)
+        return self._properties[name]
     
     def handle_fk_field(self, obj, field):
         if obj.pk and (self.use_split_keys or self.use_natural_keys):
@@ -109,6 +128,7 @@ class SerializerWrapper(object):
 
         self.stream = options.pop("stream", StringIO())
         self.selected_fields = options.pop("fields", None)
+        self.properties = options.pop("properties", [])
         self.use_split_keys = options.pop("use_split_keys", False)
         self.use_natural_keys = options.pop("use_natural_keys", False)
         if self.use_split_keys:
@@ -132,6 +152,8 @@ class SerializerWrapper(object):
                 if field.serialize:
                     if self.selected_fields is None or field.attname in self.selected_fields:
                         self.handle_m2m_field(obj, field)
+            for field in self.properties:
+                self.handle_properties(obj, field)
             self.end_object(obj)
         return self.objects
 
@@ -163,6 +185,10 @@ class SerializerWrapper(object):
         self.end_serialization() # Окончательно сериализуем
         return self.getvalue()
 
+    def start_object(self, obj):
+        self._current    = {}
+        self._properties = {}
+
     def end_object(self, obj):
         _unicode = ""
         try:
@@ -173,9 +199,11 @@ class SerializerWrapper(object):
             "model"  :      smart_unicode(obj._meta),
             "pk"     :      smart_unicode(obj._get_pk_val(), strings_only=True),
             "fields":       self._current,
+            "properties":   self._properties,
             "__unicode__" : _unicode,
         })
-        self._current = None
+        self._current    = None
+        self._properties = None
 
 class Serializer(SerializerWrapper, OrignSerializer):
     """

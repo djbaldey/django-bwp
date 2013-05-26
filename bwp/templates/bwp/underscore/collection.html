@@ -11,9 +11,9 @@
         {% if (_multiselect) { %}
             <th class="input-micro"><input type="checkbox" data-toggle="checkboxes"></th>
         {% } %}
-        {% _.each(data.widgets, function(w) { %}
-            {% var _label = w.label; if (_.strip(w.attr['class']) == 'input-mini') { _label = _.truncate(w.label, 6) } %}
-            <th data-toggle="tooltip" class="{{ w.attr['class'] }}" title="{{ w.label }}">{{ _label }}</th>
+        {% _.each(data.meta.list_display, function(column) { %}
+            {% var _label = column.label; if (_.strip(column.css) == 'input-mini') { _label = _.truncate(column.label, 8) } %}
+            <th data-toggle="tooltip" class="{{ column.css }}" title="{{ column.label }}">{{ _label }}</th>
         {% }); %}
         </tr>
     </thead>
@@ -23,17 +23,18 @@
         {% if (_multiselect) { %}
             <td><input type="checkbox" data-model="{{ obj.model }}" data-pk="{{ obj.pk }}"></td>
         {% } %}
-            {% _.each(data.widgets, function(w, index) { %}
-                <td class="{{ w.attr['class'] }}">
+            {% _.each(data.meta.list_display, function(column, index) { %}
+                {% _value = (column.name in obj.fields) ? obj.fields[column.name] : obj.properties[column.name] %}
+                <td class="{{ column.css }}">
                 {% if ((index == 0) && (_rowactions)) { %}
                     <div class="dropup">
                         <div class="dropdown-toggle" role="button" data-toggle="dropdown" data-target="#">
-                        {% if (w.name == '__unicode__') { %}
+                        {% if ((column.name == '__unicode__') && (!(column.name in obj.properties))) { %}
                             {{ obj.__unicode__ }}
-                        {% } else if ($.type(obj.fields[w.name]) === 'array'){ %}
-                            {{ obj.fields[w.name][1] }}
+                        {% } else if ($.type(_value) === 'array'){ %}
+                            {{ _value[1] }}
                         {% } else { %}
-                            {{ obj.fields[w.name] }}
+                            {{ _value }}
                         {% } %}
                         </div>
                         <ul class="dropdown-menu" role="menu">
@@ -88,19 +89,19 @@
                         </ul>
                     </div>
                 {% } else { %}
-                    {% if (w.name == '__unicode__') { %}
+                    {% if ((column.name == '__unicode__') && (!(column.name in obj.properties))) { %}
                         {{ obj.__unicode__ }}
                     {% } else { %}
-                        {% if ($.type(obj.fields[w.name]) === 'boolean') { %}
-                            {% if (obj.fields[w.name]) { %}
+                        {% if ($.type(_value) === 'boolean') { %}
+                            {% if (_value) { %}
                                 <i class="icon-ok"></i>
                             {% } else { %}
                                 <i class="icon-ban-circle"></i>
                             {% } %}
-                        {% } else if ($.type(obj.fields[w.name]) === 'array'){ %}
-                            {{ obj.fields[w.name][1] }}
+                        {% } else if ($.type(_value) === 'array'){ %}
+                            {{ _value[1] }}
                         {% } else { %}
-                            {{ obj.fields[w.name] }}
+                            {{ _value }}
                         {% } %}
                     {% } %}
                 {% } %}

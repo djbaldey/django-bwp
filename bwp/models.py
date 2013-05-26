@@ -71,22 +71,6 @@ ADDING = 1
 CHANGE = 2
 DELETE = 3
 
-def serialize_field(item, field, as_pk=False, with_pk=False, as_option=False):
-    if field == '__unicode__':
-        return unicode(item)
-    else:
-        val = getattr(item, field)
-        if isinstance(val, models.Model):
-            if as_pk:
-                return val.pk
-            elif as_option or with_pk:
-                return (val.pk, unicode(val))
-            return unicode(val)
-        else:
-            if as_option or as_pk:
-                return None
-            return val
-
 class LogEntryManager(models.Manager):
     def log_action(self, user_id, content_type_id, object_id,
     object_repr, action_flag, change_message=''):
@@ -194,7 +178,39 @@ class TempUploadFile(models.Model):
         super(TempUploadFile, self).delete(**kwargs)
 
 class BaseModel(object):
-    """ Functionality common to both ModelBWP and ComposeBWP."""
+    """ Functionality common to both ModelBWP and ComposeBWP.
+
+        TODO:
+
+        Варианты описания аргументов:
+        list_display = ('__unicode__', 'real_field')
+        list_display = (
+            ('real_field or model_method', _('Translate Name')),
+            'real_field',
+        )
+        list_display = (
+            ('real_field or model_method', _('Translate Name'), 'css'),
+            'real_field',
+        )
+        list_display = (
+            {
+                'name': 'real_field or model_method',
+                'label': _('Translate Name'),
+                'css': 'classes of CSS',
+            },
+            'real_field',
+        )
+
+        # Стили могут добавляться в специально выделенный атрибут 
+        list_display_css = {'pk': 'input-micro', 'id': 'input-micro'} # by default
+
+        fields  = None
+        fields  = ['real_field', ...]
+
+        exclude = []
+        exclude = ['real_field', ...]
+
+    """
 
     list_display        = ('__unicode__',)
     list_display_css    = {'pk': 'input-micro', 'id': 'input-micro'} # by default
@@ -235,8 +251,8 @@ class BaseModel(object):
     def get_meta(self):
         """ Возвращает словарь метаданных об этой модели.
         
-            Этот метод можно переопределить в наследуемом классе,
-            например, чтобы добавить информацию из наследуемого класса
+            Этот метод можно переопределить в дочернем классе,
+            например, чтобы добавить информацию из него
         """
         return dict([ (key, getattr(self, key)) for key in self.metakeys ])
 
@@ -248,6 +264,7 @@ class BaseModel(object):
             Это свойство можно переопределить в наследуемом классе,
             например, чтобы добавить информацию из наследуемого класса
         """
+        self.get_list_display()  # инициализация колонок списка объектов модели
         self.get_fields()        # инициализация полей
         self.get_search_fields() # инициализация поисковых полей
         self.get_file_fields()   # инициализация файловых полей
@@ -288,14 +305,67 @@ class BaseModel(object):
         
         return dic
 
+    def get_list_display(self):
+        """ Устанавливает и/или возвращает список колонок списка
+            объектов модели
+        """
+        if not hasattr(self, '_prepared_list_display'):
+            new = []
+
+            for obj in self.list_display:
+                col = {'name':None,'label':None,'css':'','sorted':False}
+                if   isinstance(obj, dict):
+                    col.update(obj)
+                elif isinstance(obj, (tuple, list)):
+                    d = dict(zip(['name', 'label', 'css', 'sorted'], obj))
+                    col.update(d)
+                elif isinstance(obj, (str, unicode)):
+                    name, label = obj, None
+                    if label is None:
+                        if name == '__unicode__':
+                            label = self.opts.verbose_name
+                        elif name in ('pk', 'id'):
+                            label = ugettext(name.upper())
+                            col['sorted'] = True
+                        elif name in self.dict_all_local_fields:
+                            label = self.opts.get_field_by_name(name)[0].verbose_name
+                            col['sorted'] = True
+                        else:
+                            label = ugettext(name)
+                    col['name'] = name
+                    col['label'] = label
+                # Перезапись ошибочного разрешения сортировки
+                if not col['name'] in ('pk', 'id') and not col['name'] in self.dict_all_local_fields:
+                    col['sorted'] = False
+                # Обновление значения css
+                if col['name'] in self.list_display_css:
+                    col['css'] = self.list_display_css[col['name']]
+                
+                new.append(col)
+
+            self.list_display = new
+            self._prepared_list_display = True
+
+        return self.list_display
+
     def get_search_fields(self):
-        """ Устанавливает и возвращает значение полей поиска """
+        """ Устанавливает и/или возвращает значение полей поиска """
         if self.search_fields is None:
             self.search_fields = [
                 x.name for x in self.get_fields_objects() if \
                     x.rel is None
             ]
         return self.search_fields
+
+    @property
+    def dict_all_local_fields(self):
+        if hasattr(self, '_dict_all_local_fields'):
+            return self._dict_all_local_fields
+
+        self._dict_all_local_fields = dict([
+            (field.name, field) for field in self.opts.local_fields
+        ])
+        return self._dict_all_local_fields
 
     def get_fields(self):
         """ Устанавливает и/или возвращает список полей объектов """
@@ -533,7 +603,9 @@ class BaseModel(object):
         """ Метод может переопределяться, но по-умолчанию такой """
         qs = self.filter_queryset(request, **kwargs)
         qs = self.page_queryset(request, qs, **kwargs)
-        data = self.serialize(qs, use_natural_keys=True)
+        properties = [ x['name'] for x in self.get_list_display()\
+            if not x['name'] in self.get_fields() ]
+        data = self.serialize(qs, use_natural_keys=True, properties=properties)
         return JSONResponse(data=data)
 
     def has_add_permission(self, request):
@@ -668,7 +740,7 @@ class ComposeBWP(BaseModel):
     def get(self, request, pk, **kwargs):
         """ Получает объекты согласно привилегий """
         return self.get_collection(request, pk, **kwargs)
-    
+
     def get_collection(self, request, pk, **kwargs):
         """ Метод получения вложенных объектов """
         try:
@@ -678,7 +750,9 @@ class ComposeBWP(BaseModel):
         qs = getattr(object, self.related_name).select_related().all()
         qs = self.filter_queryset(request, qs, **kwargs)
         qs = self.page_queryset(request, qs, **kwargs)
-        data = self.serialize(qs)
+        properties = [ x['name'] for x in self.get_list_display()\
+            if not x['name'] in self.get_fields() ]
+        data = self.serialize(qs, properties=properties)
         return JSONResponse(data=data)
 
     def get_compose(self, request, object, **kwargs):
