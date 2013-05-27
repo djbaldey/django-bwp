@@ -757,12 +757,18 @@ function eventCollectionPage() {
 // Процедуры
 
 /* Добавление объекта */
-function handlerObjectAdd(model) {
+function handlerObjectAdd(instance) {
     if (DEBUG) {console.log('function:'+'handlerObjectAdd')};
     args = {
         "method"  : "get_object",
-        "model"   : model.name,
+        "model"   : instance.name,
         "pk"      : null,
+        "filler"  : {},
+    };
+    console.log(instance);
+    if (instance instanceof classCompose) {
+        
+        args.filler[instance.meta.related_field] = instance.object.pk;
     };
     cb = function(json, status, xhr) {
         object = new classObject(json.data);
@@ -910,17 +916,14 @@ function eventObjectAdd(event) {
     if (DEBUG) {console.log('function:'+'eventObjectAdd')};
     var $this = $(this),
         data = $this.data(),
-        model = REGISTER[data.id],
-        m2m = model.is_m2m ? model : null;
-    if (model instanceof classCompose) {
-        model = REGISTER[validatorID(model.name)];
-    };
-    if ((event) && (event.data) && (event.data.m2m)) {
-        handlerM2MSelect(m2m, model);
+        instance = REGISTER[data.id],
+        m2m = instance.is_m2m ? instance : null;
+    if ((m2m) && (event) && (event.data) && (event.data.m2m)) {
+        handlerM2MSelect(m2m);
         return true;
     };
 
-    handlerObjectAdd(model, $this);
+    handlerObjectAdd(instance);
     return true;
 };
 
@@ -1017,8 +1020,9 @@ function eventObjectSelect() {
 // Процедуры
 
 /* Обработчик события запуска выбора для m2m полей */
-function handlerM2MSelect(m2m, model) {
+function handlerM2MSelect(m2m) {
     if (DEBUG) {console.log('function:'+'handlerM2MSelect')};
+    model = REGISTER[validatorID(m2m.name)]
     var selector = new classSelector(model, true),
         mhead = 'Выберите требуемые объекты',
         mbody = handlerLayoutRender(selector, true),

@@ -270,7 +270,7 @@ def API_get_objects(request, model, list_pk, **kwargs):
 
 @api_required
 @login_required
-def API_get_object(request, model, pk=None, copy=None, clone=None, **kwargs):
+def API_get_object(request, model, pk=None, copy=None, clone=None, filler={}, **kwargs):
     """ *Возвращает экземпляр указанной модели.*
 
         ##### ЗАПРОС
@@ -285,6 +285,7 @@ def API_get_object(request, model, pk=None, copy=None, clone=None, **kwargs):
         4. **"clone"**  - если задано и допустимо выполнять такую
                         операцию, то возвращается абсолютная копия
                         объекта (включая новый pk и копии m2m полей). 
+        5. **"filler"** - словарь полей для заполнения нового объекта.
 
         ##### ОТВЕТ
         Формат ключа **"data"**:
@@ -299,7 +300,12 @@ def API_get_object(request, model, pk=None, copy=None, clone=None, **kwargs):
     # Возвращаем новый пустой объект или существующий (либо его копию)
     if not pk:
         # Новый
-        return model_bwp.new(request)
+        print_debug(kwargs)
+        fil = {}
+        fields = model_bwp.get_fields()
+        fil = dict([(key, val) for key, val in filler.items() \
+                                            if key in fields])
+        return model_bwp.new(request, filler=fil)
     else:
         if copy or clone:
             # Копия

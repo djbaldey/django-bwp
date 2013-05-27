@@ -167,9 +167,7 @@ class TempUploadFile(models.Model):
     
     def delete(self, **kwargs):
         filename = self.file.path
-        print_debug(filename)
         dirname  = os.path.dirname(filename)
-        print_debug(dirname)
         try:
             os.remove(filename)
             os.removedirs(dirname)
@@ -715,6 +713,7 @@ class ComposeBWP(BaseModel):
 
     verbose_name = None
     related_name = None
+    related_field = None
     is_many_to_many = False
 
     def __init__(self, related_name, related_model, bwp_site, model=None):
@@ -722,6 +721,14 @@ class ComposeBWP(BaseModel):
             self.model = model
         self.related_name  = related_name
         self.related_model = related_model
+
+        manager = getattr(related_model.model, related_name)
+        if hasattr(manager, 'related'):
+            field = manager.related.field
+        else:
+            field = manager.field
+        self.related_field = field.name
+
         self.bwp_site = bwp_site
         if self.verbose_name is None:
             # TODO: сделать установку имени из поля
@@ -733,6 +740,7 @@ class ComposeBWP(BaseModel):
         meta['widgets'] = self.get_list_widgets()
         meta['widgetsets'] = []
         meta['related_name'] = self.related_name
+        meta['related_field'] = self.related_field
         meta['related_model'] = str(self.related_model.opts)
         meta['is_many_to_many'] = self.is_many_to_many
         return meta
@@ -752,7 +760,9 @@ class ComposeBWP(BaseModel):
         qs = self.page_queryset(request, qs, **kwargs)
         properties = [ x['name'] for x in self.get_list_display()\
             if not x['name'] in self.get_fields() ]
-        data = self.serialize(qs, properties=properties)
+        # Задаём использование натуральных ключей для того, чтобы не
+        # ставился автоматически use_split_keys = True
+        data = self.serialize(qs, use_natural_keys=True, properties=properties)
         return JSONResponse(data=data)
 
     def get_compose(self, request, object, **kwargs):
@@ -916,10 +926,10 @@ class ModelBWP(BaseModel):
 
     def get_new_object_detail(self, request, **kwargs):
         """ Метод возвращает сериализованный, новый объект в JSONResponse """
-        data = self.get_full_object(request, None)
+        data = self.get_full_object(request, None, **kwargs)
         return JSONResponse(data=data)
 
-    def get_full_object(self, request, object, **kwargs):
+    def get_full_object(self, request, object, filler={}, **kwargs):
         """ Python объект с композициями и виджетами(наборами виджетов). """
         # Object
         if isinstance(object, (str, int)):
@@ -927,6 +937,11 @@ class ModelBWP(BaseModel):
         elif not object:
             object = self.model()
             # TODO: made and call autofiller
+            for field, value in filler.items():
+                _field = self.opts.get_field_by_name(field)[0]
+                if _field.rel:
+                    value = _field.rel.to.objects.get(pk=value)
+                setattr(object, field, value)
         model = str(self.opts)
         data = self.serialize(object)
         try:

@@ -104,6 +104,14 @@ class SerializerWrapper(object):
                 value = None
         else:
             value = getattr(obj, field.get_attname())
+            rel_model = field.rel.to
+            if self.use_split_keys:
+                try:
+                    related = rel_model._default_manager.get(pk=value)
+                    value = (related.pk, unicode(related))
+                except:
+                    pass
+            
         self._current[field.name] = value
 
     def handle_m2m_field(self, obj, field):
