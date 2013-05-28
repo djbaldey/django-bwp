@@ -440,11 +440,11 @@ def API_commit(request, objects, **kwargs):
         `Boolean`
     """
     transaction.commit()
+    print_debug('def API_commit.objects ==', objects)
     if not objects:
         transaction.rollback()
         return JSONResponse(data=False, status=400, message=unicode(_("List objects is blank!")))
     model_name = bwp = None
-    #~ print_debug('def API_commit.objects ==', objects)
     try:
         for item in objects:
             # Уменьшение ссылок на объекты, если они существуют
@@ -454,18 +454,9 @@ def API_commit(request, objects, **kwargs):
                 bwp = site.bwp_dict(request).get(model_name)
             action = item['action'] # raise AttributeError()
             for name, val in item['fields'].items():
-                if isinstance(val, list):
-                    L = []
-                    flag = False
-                    for i in val:
-                        if isinstance(i, list) and len(i) == 2:
-                            L.append(i[0])
-                            flag = True
-                        else:
-                            item['fields'][name] = i
-                            break
-                    if flag:
-                        item['fields'][name] = L
+                field = bwp.opts.get_field_by_name(name)[0]
+                if field.rel and isinstance(val, list) and len(val) == 2:
+                    item['fields'][name] = val[0]
             data = item['fields']
             # Новый объект
             if not item.get('pk', False):

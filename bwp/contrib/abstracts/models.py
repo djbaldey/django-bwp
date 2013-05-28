@@ -210,7 +210,11 @@ class AbstractDocumentDate(models.Model):
 
     def __unicode__(self):
         if self.pk:
-            return _('Document from %s') % (self.date,)
+            doc = self._meta.verbose_name.split(' ')
+            doc[0] = doc[0].title()
+            return _('%(document)s from %(date)s') % {
+                'document': ' '.join(doc), 'date': self.date
+            }
         else:
             return _('New document')
 
@@ -232,7 +236,11 @@ class AbstractDocumentDateTime(models.Model):
 
     def __unicode__(self):
         if self.pk:
-            return _('Document from %s') % (self.date_time,)
+            doc = self._meta.verbose_name.split(' ')
+            doc[0] = doc[0].title()
+            return _('%(document)s from %(date)s') % {
+                'document': ' '.join(doc), 'date': self.date_time
+            }
         else:
             return _('New document')
 

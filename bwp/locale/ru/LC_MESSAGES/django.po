@@ -322,8 +322,8 @@ msgstr "дата"
 
 #: contrib/abstracts/models.py:213 contrib/abstracts/models.py:235
 #, python-format
-msgid "Document from %s"
-msgstr "Документ от %s"
+msgid "%(document)s from %(date)s"
+msgstr "%(document)s от %(date)s"
 
 #: contrib/abstracts/models.py:215 contrib/abstracts/models.py:237
 msgid "New document"
