@@ -95,7 +95,7 @@ msgstr "группы единиц измерений"
 
 #: models.py:198
 msgid "RU"
-msgstr ""
+msgstr "рус."
 
 #: models.py:199
 msgid "notation RU"
@@ -103,7 +103,7 @@ msgstr "обозначение на русском"
 
 #: models.py:203
 msgid "ISO"
-msgstr ""
+msgstr "ISO"
 
 #: models.py:204
 msgid "notation ISO"
@@ -111,7 +111,7 @@ msgstr "обозначение ISO"
 
 #: models.py:208
 msgid "symbol RU"
-msgstr "символ RU"
+msgstr "символ рус."
 
 #: models.py:209
 msgid "symbolic notation RU"
