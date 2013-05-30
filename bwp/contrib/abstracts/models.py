@@ -41,6 +41,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.models import User
 
 from bwp.utils.classes import upload_to
+from bwp.utils.filters import filterQueryset
 from bwp.utils import remove_file
 from bwp.db import fields
 import datetime
@@ -290,6 +291,124 @@ class AbstractGroupUnique(models.Model):
     class Meta:
         ordering = ['title',]
         abstract = True
+
+class AbstractHierarchy(models.Model):
+    """ Абстрактная модель иерархического списка.
+
+        Сделано на примере пунктов в офисной документации
+        1. - Каталог первого уровня
+          1. - Объект в каталоге первого уровня
+          1. - Объект в каталоге первого уровня
+          1.1. - Каталог второго уровня
+            1.1.- Объект в каталоге второго уровня
+            1.1.- Объект в каталоге второго уровня
+            1.1.1 - Каталог третьего уровня
+        2. - Каталог первого уровня
+          2.1. - Каталог второго уровня
+            2.1.1 - Каталог третьего уровня
+        
+        Для нормального функционирования дочерним таблицам нужно
+        добавить 3 обязательных поля:
+
+        path = models.CharField(
+            max_length=512, # Оптимальный вариант с большим запасом
+            editable=False, # Измените это по желанию
+            blank=True,
+            verbose_name = _('path'))
+        counter = models.IntegerField(
+            editable=False, # Измените это по желанию
+            null=True, blank=True,
+            verbose_name = _('counter'))
+        container = models.ForeignKey(
+            "<CLASS_NAME>", # Обязательно измените это!!!
+            #limit_choices_to={'is_container': True}, # Если есть 4-е поле
+            related_name="only_nested_objects_set", # Не изменяйте это!!!
+            null=True, blank=True,
+            verbose_name = _('container'))
+        
+        И 4-е, если таблица будет содержать не только контейнеры, но и
+        простые предметы:
+
+        is_container = models.BooleanField(
+            default=False, # Измените это по желанию
+            verbose_name=_('is container'))
+    
+    """
+    SEPARATOR = '.'
+
+    title = models.CharField(
+            max_length=255,
+            verbose_name = _('title'))
+
+    path         = lambda: NotImplemented
+    counter      = lambda: NotImplemented
+    container    = lambda: NotImplemented
+    is_container = True
+
+
+    def __unicode__(self):
+        return self.title
+
+    class Meta:
+        ordering = ['path', 'title']
+        abstract = True
+
+    def get_nested_objects(self, recursive=True):
+        """ Возвращаем все вложенные объекты """
+        if recursive and self.path:
+            return filterQueryset(self._default_manager, ['^path'], self.path)
+        else:
+            return self.only_nested_objects_set.all()
+
+    def get_nested_containers(self, recursive=True):
+        """ Возвращаем все вложенные контейнеры """
+        return self.get_nested_objects(
+                recursive=recursive).filter(is_container=True)
+
+    def get_nested_items(self, recursive=True):
+        """ Возвращаем все вложенные предметы """
+        return self.get_nested_objects(
+                recursive=recursive).filter(is_container=False)
+
+    def save_path(self):
+        """ Устанавливаем путь """
+        # Обработка предметов
+        if not self.is_container:
+            if self.container:
+                self.path = self.container.path
+            return self.path
+
+        # Обработка контейнеров
+        old_container = old_path = None
+        if self.pk:
+            old = self._default_manager.get(pk=self.pk)
+            old_container = old.container
+            old_path = old.path
+        # При ручном пользовательском исправлении пути ничего не делаем
+        if self.pk and self.container == old_container and self.path != old.path:
+            return self.path
+        # Вычисление пути
+        if self.container:
+            _path = self.container.path
+            counter = self.container.counter + 1
+            self._default_manager.filter(pk=self.container.pk).update(counter=counter)
+        else:
+            _path = ''
+            # Для корневых пунктов нет счётчика, поэтому вычисляем
+            # его значение
+            roots = self._default_manager.filter(container__isnull=True)
+            counter = roots.count() + 1
+            root_digits = [ int(x.path.split(self.SEPARATOR)[0]) for x in roots ]
+            while counter in root_digits:
+                counter += 1
+        self.path = '%s%s%s' % (_path, counter, self.SEPARATOR)
+
+        return self.path
+
+    def save(self, **kwargs):
+        """ При сохранении объекта нужно установить путь """
+        self.save_path()
+        super(AbstractHierarchy, self).save(**kwargs)
 
 class AbstractData(models.Model):
     """ Класс, предоставляющий общие методы для фото, видео-кода, файлов. """
