@@ -36,7 +36,7 @@
 #   <http://www.gnu.org/licenses/>.
 ###############################################################################
 """
-from django.db import models
+from django.db import models, transaction
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.models import User
 
@@ -44,7 +44,7 @@ from bwp.utils.classes import upload_to
 from bwp.utils.filters import filterQueryset
 from bwp.utils import remove_file
 from bwp.db import fields
-import datetime
+import datetime, os
 from unidecode import unidecode
 
 class AbstractOrg(models.Model):
@@ -409,6 +409,232 @@ class AbstractHierarchy(models.Model):
         """ При сохранении объекта нужно установить путь """
         self.save_path()
         super(AbstractHierarchy, self).save(**kwargs)
+
+class AbstractPathBase(models.Model):
+    """ Класс для общих методов моделей иерархических путей """
+    title        = ''
+    parent_path  = ''
+    is_container = True
+
+    def __unicode__(self):
+        return self.title
+
+    class Meta:
+        abstract = True
+
+    def get_parent_path(self, from_parents=False):
+        parent_path = self.parent_path
+        if from_parents:
+            parent_path = ''
+            if self.parent:
+                parent_path = self.parent.get_object_path(
+                    from_parents=from_parents)
+        return parent_path
+
+    def set_parent_path(self, from_parents=False):
+        self.parent_path = self.get_parent_path(from_parents=from_parents)
+        return self.parent_path
+
+    @property
+    def field_key_prepared(self):
+        return str(self.pk).replace(os.path.sep, '_')
+
+    def get_object_path(self, from_parents=False):
+        self.set_parent_path(from_parents=from_parents)
+        return os.path.join(self.parent_path, self.field_key_prepared)
+
+    def get_root(self):
+        """ Возвращаем корневого родителя """
+        root = self
+        while root:
+            if not root.parent:
+                break
+            root = root.parent
+        return root
+
+    def get_nested_objects(self):
+        """ Возвращаем все вложенные объекты """
+        return filterQueryset(self._default_manager,
+                ['^parent_path'],
+                self.get_object_path().rstrip(os.path.sep) \
+                + os.path.sep)
+
+    def get_nested_containers(self):
+        """ Возвращаем все вложенные контейнеры """
+        if hasattr(self, 'is_container') and \
+        isinstance(self.is_container, models.BooleanField):
+            return self.get_nested_objects().filter(is_container=True)
+        return self.get_nested_objects()
+
+    def get_nested_items(self):
+        """ Возвращаем все вложенные предметы """
+        if hasattr(self, 'is_container') and \
+        isinstance(self.is_container, models.BooleanField):
+            return self.get_nested_objects().filter(is_container=False)
+        return self.get_nested_objects()
+
+    def save_from_root(self):
+        """ Сохраняем все элементы, начиная от корня """
+        related_name = self.__class__.parent.field.related_query_name()
+        def recursive(obj):
+            for i in getattr(obj, related_name).all():
+                i.save(from_root=False)
+                for j in recursive(i):
+                    yield j
+
+        root = self.get_root()
+        root.save(from_root=False)
+
+        for obj in recursive(root):
+            pass
+
+        return True
+
+    def save_parent_path(self):
+        """ Сохраняем родительский путь и помечаем родителя
+            как контейнер
+        """
+        self.set_parent_path(from_parents=True)
+        if self.parent:
+            if not self.parent.is_container:
+                try:
+                    self.parent.is_container = True
+                    self.parent.save()
+                except Exception as e:
+                    print e
+
+        return self.parent_path
+
+    def save(self, from_root=True, **kwargs):
+        """ При сохранении объекта нужно сохранить родительский путь """
+        if from_root:
+            self.save_from_root()
+        else:
+            self.save_parent_path()
+        super(AbstractPathBase, self).save(**kwargs)
+
+class AbstractPathByID(AbstractPathBase):
+    """ Абстрактная модель иерархического списка, основанном на методе
+        хранения родительского пути в отдельном поле.
+
+        Сделано на примере каталогов в UNIX
+        1       - Каталог первого уровня c идентификтором 1
+        1/12    - Объект в каталоге первого уровня
+        1/13    - Объект в каталоге первого уровня
+        1/2     - Каталог второго уровня c идентификтором 2
+        1/2/14  - Объект в каталоге второго уровня
+        1/2/15  - Объект в каталоге второго уровня
+        1/2/3   - Каталог третьего уровня c идентификтором 3
+        4       - Каталог первого уровня c идентификтором 4
+        4/5     - Каталог второго уровня c идентификтором 5
+        4/5/6   - Каталог третьего уровня c идентификтором 6
+
+        Для нормального функционирования дочерним таблицам нужно
+        установить 1 обязательное поле:
+
+        parent = models.ForeignKey(
+            "<CLASS_NAME>", # Обязательно измените это!!!
+            #limit_choices_to={'is_container': True}, # Если есть это поле
+            null=True, blank=True,
+            verbose_name = _('parent'))
+
+        и одно необязательное, если таблица будет содержать не только
+        контейнеры, но и простые предметы:
+
+        is_container = models.BooleanField(
+            default=False, # Измените это по желанию
+            verbose_name=_('is container'))
+
+    """
+    parent_path = models.CharField(
+            max_length=255,
+            editable=False,
+            blank=True,
+            verbose_name = _('parent path'))
+    title = models.CharField(
+            max_length=255,
+            verbose_name = _('title'))
+
+    class Meta:
+        ordering = ['parent_path', 'title']
+        abstract = True
+
+class AbstractPathByTitle(AbstractPathBase):
+    """ Абстрактная модель иерархического списка, основанном на методе
+        хранения родительского пути в отдельном поле.
+
+        Сделано на примере каталогов в UNIX
+        А                       - Каталог первого уровня
+        А/Ананас                - Объект в каталоге первого уровня
+        А/Арбуз                 - Объект в каталоге первого уровня
+        А/Прочее                - Каталог второго уровня
+        А/Прочее/Банан          - Объект в каталоге второго уровня
+        А/Прочее/Яблоко         - Объект в каталоге второго уровня
+        А/Прочее/Удалёнка       - Каталог третьего уровня
+        Б                       - Каталог первого уровня
+        Б/Бегемоты              - Каталог второго уровня
+        Б/Бегемоты/Летающие     - Каталог третьего уровня
+        Б/Бегемоты/Прочие       - Каталог третьего уровня
+
+        Для нормального функционирования дочерним таблицам нужно
+        установить 1 обязательное поле:
+
+        parent = models.ForeignKey(
+            "<CLASS_NAME>", # Обязательно измените это!!!
+            #limit_choices_to={'is_container': True}, # Если есть это поле
+            null=True, blank=True,
+            verbose_name = _('parent'))
+
+        и одно необязательное, если таблица будет содержать не только
+        контейнеры, но и простые предметы:
+
+        is_container = models.BooleanField(
+            default=False, # Измените это по желанию
+            verbose_name=_('is container'))
+
+    """
+    parent_path = models.CharField(
+            max_length=500,
+            editable=False,
+            blank=True,
+            verbose_name = _('parent path'))
+    path = models.CharField(
+            max_length=600,
+            editable=False,
+            blank=True,
+            verbose_name = _('path'))
+    title = models.CharField(
+            max_length=100,
+            verbose_name = _('title'))
+
+    class Meta:
+        ordering = ['path']
+        abstract = True
+
+    @property
+    def field_key_prepared(self):
+        return self.title.replace(os.path.sep,'_')
+
+    def get_path_prepared_as_list(self):
+        return self.path.split(os.path.sep)
+
+    @property
+    def path_prepared(self):
+        pre = self.get_path_prepared_as_list()
+        basename = pre.pop(-1)
+        pre = [ '<b>-</b>' for x in pre ]
+        if not self.parent:
+            pre.append('<strong>'+basename+'</strong>')
+        elif not self.is_container:
+            pre.append('<em>'+basename+'</em>')
+        else:
+            pre.append(basename)
+        return ' '.join(pre)
+
+    def save(self, **kwargs):
+        """ При сохранении объекта нужно сохранить собственный путь """
+        self.path = self.get_object_path(from_parents=True)
+        super(AbstractPathByTitle, self).save(**kwargs)
 
 class AbstractData(models.Model):
     """ Класс, предоставляющий общие методы для фото, видео-кода, файлов. """

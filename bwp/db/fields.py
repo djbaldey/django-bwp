@@ -38,9 +38,11 @@
 """
 from django.db.models import SubfieldBase, TextField
 from django.db.models.fields.files import ImageField, ImageFieldFile
-from django.forms.widgets import Textarea 
+from django.forms.widgets import Textarea
 from django.template.defaultfilters import slugify
-from django.utils import simplejson
+
+import json as simplejson
+
 from quickapi.http import DjangoJSONEncoder
 
 from bwp.conf import settings  
@@ -64,9 +66,6 @@ except ImportError:
 class JSONField(TextField):
     __metaclass__ = SubfieldBase
 
-    def get_internal_type(self):
-        return "JSONField"
-
     def contribute_to_class(self, cls, name):
         super(JSONField, self).contribute_to_class(cls, name)
 
@@ -85,11 +84,12 @@ class JSONField(TextField):
     def get_db_prep_save(self, value, **kwargs):
         """Convert our JSON object to a string before we save"""
 
-        if value is None:
-            value = ""
+        if value == "":
+            return None
 
-        if not isinstance(value, basestring):
-            value = simplejson.dumps(value, cls=DjangoJSONEncoder)
+        if isinstance(value, (list, dict)):
+            value = simplejson.dumps(value, cls=DjangoJSONEncoder,
+                    indent=4)
 
         return super(JSONField, self).get_db_prep_save(value, **kwargs)
 
