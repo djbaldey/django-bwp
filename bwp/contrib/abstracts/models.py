@@ -439,6 +439,16 @@ class AbstractPathBase(models.Model):
     def field_key_prepared(self):
         return str(self.pk).replace(os.path.sep, '_')
 
+    def get_parents(self):
+        L = []
+        root = self
+        while root:
+            if not root.parent:
+                break
+            root = root.parent
+            L.insert(0, root)
+        return L
+
     def get_object_path(self, from_parents=False):
         self.set_parent_path(from_parents=from_parents)
         return os.path.join(self.parent_path, self.field_key_prepared)
@@ -511,6 +521,10 @@ class AbstractPathBase(models.Model):
             self.save_from_root()
         else:
             self.save_parent_path()
+        if self.parent:
+            self._default_manager.filter(
+                pk=self.parent.pk
+            ).update(is_container=True)
         super(AbstractPathBase, self).save(**kwargs)
 
 class AbstractPathByID(AbstractPathBase):
