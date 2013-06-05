@@ -40,21 +40,11 @@ from django.contrib.auth.models import User, Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from bwp.sites import site
 from bwp.models import ModelBWP, ComposeBWP, LogEntry,\
-        GlobalUserSettings, TempUploadFile
+        GlobalUserSettings, TempUploadFile, ManyToManyBWP
 from django.utils.translation import ugettext_lazy as _
 
 label_id = _('ID')
 label_pk = _('PK')
-
-class UserAdmin(ModelBWP):
-    list_display = ('__unicode__', 'is_superuser', 'is_staff', 'last_login', 'date_joined', ('id', label_id))
-    list_display_css = {
-        'pk': 'input-micro', 'id': 'input-micro',
-        'is_superuser': 'input-mini', 'is_staff': 'input-mini',
-    }
-    exclude = ['password',]
-    search_fields = ('username', 'email')
-site.register(User, UserAdmin)
 
 class PermissionAdmin(ModelBWP):
     list_display = ('__unicode__', 'id')
@@ -67,12 +57,39 @@ class PermissionAdmin(ModelBWP):
     )
 site.register(Permission, PermissionAdmin)
 
+class PermissionCompose(ManyToManyBWP):
+    list_display = ('__unicode__', 'name', 'codename', 'id')
+    search_fields = (
+        'name',
+        'codename',
+        'content_type__name',
+        'content_type__app_label',
+        'content_type__model',
+    )
+    model = Permission
+
+class UserAdmin(ModelBWP):
+    list_display = ('__unicode__', 'is_superuser', 'is_staff', 'last_login', 'date_joined', ('id', label_id))
+    list_display_css = {
+        'pk': 'input-micro', 'id': 'input-micro',
+        'is_superuser': 'input-mini', 'is_staff': 'input-mini',
+    }
+    exclude = ['password',]
+    search_fields = ('username', 'email')
+    compositions = [
+        ('user_permissions', PermissionCompose),
+    ]
+site.register(User, UserAdmin)
+
 class UserCompose(ComposeBWP):
     model = User
 
 class GroupAdmin(ModelBWP):
     list_display = ('__unicode__', 'id')
-    compositions = [('user_set', UserCompose)]
+    compositions = [
+        ('user_set', UserCompose),
+        ('permissions', PermissionCompose),
+    ]
 site.register(Group, GroupAdmin)
 
 class ContentTypeAdmin(ModelBWP):
