@@ -36,6 +36,26 @@
 #   <http://www.gnu.org/licenses/>.
 ###############################################################################
 """
+from django.db.models.query import QuerySet
+from django.core.paginator import Page
+
+from bwp import serializers
+
+def serialize(objects, **options):
+    """ Сериализатор в объект(ы) Python, принимает либо один,
+        либо несколько django-объектов или объект паджинации
+        и точно также возвращает.
+    """
+    if  not options.has_key('use_split_keys') \
+    and not options.has_key('use_natural_keys'):
+        options['use_split_keys'] = True # default
+    if isinstance(objects, (QuerySet, Page, list, tuple)):
+        # Список объектов
+        data = serializers.serialize('python', objects, **options)
+    else:
+        # Единственный объект
+        data = serializers.serialize('python', [objects], **options)[0]
+    return data
 
 def jquery_form_array(array):
     """ Преобразование объекта параметров, полученных jQuery:

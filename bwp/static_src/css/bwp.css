@@ -215,7 +215,7 @@ input.input-micro {
     width: 60px;
 }
 
-th.input-micro {
+th.input-micro, td.input-micro {
     width: 1em;
 }
 

@@ -37,7 +37,6 @@
 ###############################################################################
 """
 from django.db import models, transaction
-from django.db.models.query import QuerySet
 from django.db.models.fields.files import FileField, ImageField
 from django.utils.translation import ugettext, ugettext_lazy as _ 
 from django.contrib.contenttypes.models import ContentType
@@ -57,7 +56,7 @@ from quickapi.http import JSONResponse
 from copy import deepcopy
 import os, datetime
 
-from bwp import serializers
+from bwp.utils.convertors import serialize
 from bwp.utils.http import get_http_400, get_http_403, get_http_404
 from bwp.utils.filters import filterQueryset
 from bwp.utils.classes import upload_to
@@ -464,16 +463,7 @@ class BaseModel(object):
             либо несколько объектов или объект паджинации
             и точно также возвращает.
         """
-        if  not options.has_key('use_split_keys') \
-        and not options.has_key('use_natural_keys'):
-            options['use_split_keys'] = True # default
-        if isinstance(objects, (QuerySet, Page, list, tuple)):
-            # Список объектов
-            data = serializers.serialize('python', objects, **options)
-        else:
-            # Единственный объект
-            data = serializers.serialize('python', [objects], **options)[0]
-        return data
+        return serialize(objects, **options)
 
     def get_paginator(self, queryset, per_page=None, orphans=0, allow_empty_first_page=True, **kwargs):
         per_page = per_page or self.list_per_page
