@@ -39,13 +39,13 @@
 from django.utils.translation import ugettext_lazy as _
 import datetime
 
+from bwp.contrib.devices.remote import RemoteCommand
+
 from kkt import KKTException, KKT, int2
 from protocol import *
 
 class ShtrihFRKDummy(object):
-
-    def __init__(self, *args, **kwargs):
-        self.kkt = None
+    kkt = None
 
     def open(self):
         """ Начало работы с ККТ """
@@ -104,22 +104,38 @@ class ShtrihFRKDummy(object):
         pass
 
 class ShtrihFRK(ShtrihFRKDummy):
+    is_remote = False
 
-    def __init__(self, *args, **kwargs):
-        self.kkt = KKT(*args, **kwargs)
+    def __init__(self, remote=False, *args, **kwargs):
+        if remote:
+            self.is_remote= True
+            self.remote = RemoteCommand(*args, **kwargs)
+        else:
+            self.kkt = KKT(*args, **kwargs)
 
     def open(self):
         """ Начало работы с ККТ """
-        pass
+        if self.is_remote:
+            return self.remote("open")
+
+        return True
 
     def status(self, short=True):
         """ Cостояние ККТ, по-умолчанию короткое """
+        if self.is_remote:
+            return self.remote("status", short=short)
+
         if short:
             return self.kkt.x10()
         return self.kkt.x11()
 
     def print_receipt(self, header, summa, comment, buyer, document_type=0, nds=0):
         """ Печать чека """
+        if self.is_remote:
+            return self.remote("print_receipt",
+                header=header, summa=summa, comment=comment, buyer=bayer,
+                document_type=document_type, nds=nds)
+
         taxes = [0,0,0,0]
         if nds > 0:
             taxes[0] = 2
@@ -144,52 +160,86 @@ class ShtrihFRK(ShtrihFRKDummy):
             self.kkt.x82(1, summa, text=comment, taxes=taxes)
 
         _text = u"-" * 18
-        self.kkt.x85(summa, text=_text, taxes=taxes)
-        return True
+        return self.kkt.x85(summa, text=_text, taxes=taxes)
 
     def print_copy(self):
         """ Печать копии последнего документа """
+        if self.is_remote:
+            return self.remote("print_copy")
+
         return self.kkt.x8C()
 
     def print_continue(self):
         """ Продолжение печати, прерванной из-за сбоя """
+        if self.is_remote:
+            return self.remote("print_continue")
+
         return self.kkt.xB0()
 
     def print_report(self):
         """ Печать X-отчета """
+        if self.is_remote:
+            return self.remote("print_report")
+
         return self.kkt.x40()
 
     def close_session(self):
         """ Закрытие смены с печатью Z-отчета """
+        if self.is_remote:
+            return self.remote("close_session")
+
         return self.kkt.x41()
 
     def cancel_receipt(self):
         """ Отмена чека """
+        if self.is_remote:
+            return self.remote("cancel_receipt")
+
         return self.kkt.x88()
 
     def cancel(self):
         """ Отмена операции """
+        if self.is_remote:
+            return self.remote("cancel")
+
         return self.cancel_receipt()
 
     def setup_date(self):
         """ Установка даты как в компьютере """
+        if self.is_remote:
+            return self.remote("setup_date")
+
         now = datetime.datetime.now() 
-        self.kkm.x22(now.day, now.month, now.year)
-        self.kkm.x23(now.day, now.month, now.year)
+        error = self.kkm.x22(now.year, now.month, now.day)
+        if error:
+            return error
+        return self.kkm.x23(now.year, now.month, now.day)
 
     def setup_time(self):
         """ Установка времени как в компьютере """
+        if self.is_remote:
+            return self.remote("setup_time")
+
         now = datetime.datetime.now()
-        self.kkm.x21(now.hour, now.minute, now.second)
+        return self.kkm.x21(now.hour, now.minute, now.second)
 
     def add_money(self, summa):
         """ Внесение денег в кассу """
+        if self.is_remote:
+            return self.remote("add_money", summa=summa)
+
         return self.kkt.x50(summa)
 
     def get_money(self, summa):
         """ Инкассация """
+        if self.is_remote:
+            return self.remote("get_money", summa=summa)
+
         return self.kkt.x51(summa)
 
     def cut_tape(self):
         """ Обрезка ленты """
+        if self.is_remote:
+            return self.remote("cut_tape")
+
         return self.kkt.x25(fullcut=True)

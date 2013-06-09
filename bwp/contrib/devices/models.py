@@ -39,37 +39,37 @@
 from django.db import models
 from django.contrib.auth.models import User, Group
 from django.utils.translation import ugettext_lazy as _
-from bwp.contrib.abstracts.models import AbstractGroupUnique
+from bwp.contrib.abstracts.models import AbstractGroup
 
 from drivers import DRIVER_CLASSES
 
 class Register(object):
-    """ Класс-регистратор устройств """
+    """ Класс-регистратор локальных устройств """
 
     def __iter__(self):
         return self.devices
 
     @property
     def devices(self):
-        if not getattr(self, '_devices'):
+        if not hasattr(self, '_devices'):
             self.load()
         return self._devices
 
     def load(self):
         self._devices = dict([
-            (x.title, x) for x in Device.objects.filter(is_local=True)
+            (x.pk, x) for x in LocalDevice.objects.all()
         ])
         return self._devices
     
     def get_devices(self, request=None):
         data = {}
         if request:
-            for x in self.devices:
+            for pk, x in self.devices.items():
                 if x.has_permission(request) or x.has_admin_permission(request):
-                    data['title'] = x
+                    data[pk] = x
         else:
-            for x in self.devices:
-                data['title'] = x
+            for pk, x in self.devices.items():
+                data[pk] = x
         return data
     
     def get_list(self, request):
@@ -80,23 +80,38 @@ class Register(object):
 
 register = Register()
 
-class Device(AbstractGroupUnique):
-    """ Локальное или удалённое устройство """
+class BaseDevice(AbstractGroup):
+    """ Базовый класс локального или удалённого устройства """
     DRIVER_CHOICES = [ (x, x) for x in DRIVER_CLASSES.keys() ]
-    is_local = models.BooleanField(
-            default=False,
-            verbose_name = _("is local"))
     driver = models.CharField(
             choices=DRIVER_CHOICES,
             max_length=255,
             verbose_name = _('driver'))
-    url = models.URLField(
-            blank=True,
-            verbose_name = _('url'))
-    port = models.CharField(
-            max_length=50,
-            blank=True,
-            verbose_name = _('port'))
+
+    users = models.ManyToManyField(
+            User,
+            null=True, blank=True,
+            related_name='user_%s_set',
+            verbose_name=_('users'))
+
+    groups = models.ManyToManyField(
+            Group,
+            null=True, blank=True,
+            related_name='group_%s_set',
+            verbose_name=_('groups'))
+
+    admin_users = models.ManyToManyField(
+            User,
+            null=True, blank=True,
+            related_name='admin_user_%s_set',
+            verbose_name=_('admin users'))
+
+    admin_groups = models.ManyToManyField(
+            Group,
+            null=True, blank=True,
+            related_name='admin_group_%s_set',
+            verbose_name=_('admin groups'))
+
     username = models.CharField(
             max_length=100,
             blank=True,
@@ -105,59 +120,18 @@ class Device(AbstractGroupUnique):
             max_length=100,
             blank=True,
             verbose_name = _('password'))
-    admin_password = models.CharField(
-            max_length=100,
-            blank=True,
-            verbose_name = _('admin password'))
-
-    users = models.ManyToManyField(
-            User,
-            null=True, blank=True,
-            related_name='user_device_set',
-            verbose_name=_('users'))
-
-    groups = models.ManyToManyField(
-            Group,
-            null=True, blank=True,
-            related_name='group_device_set',
-            verbose_name=_('groups'))
-
-    admin_users = models.ManyToManyField(
-            User,
-            null=True, blank=True,
-            related_name='admin_user_device_set',
-            verbose_name=_('admin users'))
-
-    admin_groups = models.ManyToManyField(
-            Group,
-            null=True, blank=True,
-            related_name='admin_group_device_set',
-            verbose_name=_('admin groups'))
 
     class Meta:
-        verbose_name = _('device')
-        verbose_name_plural = _('devices')
-
-    @property
-    def device(self):
-        """ Свойство возвращает экземпляр управляющего класса устройства
-            со всеми его методами
-        """
-        if not getattr(self, '_device'):
-            cls = DRIVER_CLASSES[self.driver]
-            if self.is_local:
-                self._device = cls(
-                    port=self.port,
-                    username=self.username,
-                    password=self.password,
-                    admin_password=self.admin_password,
-                )
-            else:
-                self._device = None
-        return self._device
+        abstract = True
 
     def has_permission(self, request, **kwargs):
-        """ Проверка прав на использование устройства """
+        """ Проверка прав на использование устройства.
+            Разрешено по-умолчанию, когда везде пусто.
+        """
+
+        if not self.users.count() and not self.groups.count():
+            return True
+
         user = request.user
         if user in self.users.all():
             return True
@@ -167,7 +141,9 @@ class Device(AbstractGroupUnique):
 
     def has_admin_permission(self, request, **kwargs):
         """ Проверка прав на использование устройства с правами
-            администратора
+            администратора.
+            
+            Запрещено по-умолчанию, когда везде пусто.
         """
         user = request.user
         if user in self.admin_users.all():
@@ -175,6 +151,52 @@ class Device(AbstractGroupUnique):
         elif set(user.admin_group_set.all()).intersection(set(self.admin_groups.all())):
             return True
         return False
+
+    @property
+    def device(self):
+        """ Свойство возвращает экземпляр управляющего класса устройства
+            со всеми его методами
+        """
+        if not getattr(self, '_device', None):
+            cls = DRIVER_CLASSES[self.driver]
+            
+            D = {'remote': self.remote }
+            if hasattr(self, 'username') and self.username:
+                D['username'] = self.username
+            if hasattr(self, 'password') and self.password:
+                D['password'] = self.password
+            if hasattr(self, 'admin_password') and self.admin_password:
+                D['admin_password'] = self.admin_password
+
+            if hasattr(self, 'port') and self.port:
+                D['port'] = self.port
+            if hasattr(self, 'remote_url') and self.remote_url:
+                D['remote_url'] = self.remote_url
+            if hasattr(self, 'remote_id') and self.remote_id:
+                D['remote_id'] = self.remote_id
+
+            self._device = cls(**D)
+
+        return self._device
+
+class LocalDevice(BaseDevice):
+    """ Локальное устройство """
+    remote = False
+
+    port = models.CharField(
+            max_length=50,
+            blank=True,
+            verbose_name = _('port'))
+
+    admin_password = models.CharField(
+            max_length=100,
+            blank=True,
+            verbose_name = _('admin password'))
+
+    class Meta:
+        ordering = ['title']
+        verbose_name = _('local device')
+        verbose_name_plural = _('local devices')
 
     def save(self, **kwargs):
         super(Device, self).save(**kwargs)
@@ -184,3 +206,18 @@ class Device(AbstractGroupUnique):
         super(Device, self).delete(**kwargs)
         register.load()
 
+
+class RemoteDevice(BaseDevice):
+    """ Удалённое устройство """
+    remote = True
+
+    remote_url = models.URLField(
+            verbose_name = _('url'))
+    remote_id = models.IntegerField(
+            verbose_name = _('identifier'))
+
+    class Meta:
+        ordering = ['title']
+        verbose_name = _('remote device')
+        verbose_name_plural = _('remote devices')
+        unique_together = ('remote_url', 'remote_id')

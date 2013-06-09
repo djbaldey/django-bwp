@@ -37,13 +37,48 @@
 ###############################################################################
 """
 from bwp.sites import site
-from bwp.models import ModelBWP
+from bwp.models import ModelBWP, ManyToManyBWP
 from django.utils.translation import ugettext_lazy as _
+from django.contrib.auth.models import Group, User
 from models import *
 
-class DeviceAdmin(ModelBWP):
-    list_display = ('title', 'driver', 'port')
-    search_fields = ['title', 'driver', 'port']
-site.register(Device, DeviceAdmin)
+
+class UserCompose(ManyToManyBWP):
+    model = User
+
+class AdminUserCompose(ManyToManyBWP):
+    model = User
+    verbose_name = _('admin users')
+
+class GroupCompose(ManyToManyBWP):
+    model = Group
+
+class AdminGroupCompose(ManyToManyBWP):
+    model = Group
+    verbose_name = _('admin groups')
+
+class LocalDeviceAdmin(ModelBWP):
+    list_display = ('title', 'driver', 'id')
+    search_fields = ['title', ]
+    compositions = [
+        ('users', UserCompose),
+        ('groups', GroupCompose),
+        ('admin_users', AdminUserCompose),
+        ('admin_groups', AdminGroupCompose),
+    ]
+
+site.register(LocalDevice, LocalDeviceAdmin)
+
+class RemoteDeviceAdmin(ModelBWP):
+    list_display = ('title', 'driver', 'remote_url', 'remote_id', 'id')
+    search_fields = ['title', ]
+    compositions = [
+        ('users', UserCompose),
+        ('groups', GroupCompose),
+        ('admin_users', AdminUserCompose),
+        ('admin_groups', AdminGroupCompose),
+    ]
+
+site.register(RemoteDevice, RemoteDeviceAdmin)
 
 site.devices = register

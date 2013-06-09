@@ -532,6 +532,7 @@ def API_device_command(request, device, command, params={}, **kwargs):
         Формат ключа **"data"**:
         результат выполнения команды
     """
+    # Получение устройства согласно привилегий
     device = site.devices.get_devices(request).get(device)
     if device.device:
         try:
