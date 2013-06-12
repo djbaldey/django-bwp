@@ -29,13 +29,25 @@
                 {% if ((index == 0) && (_rowactions)) { %}
                     <div class="dropup">
                         <div class="dropdown-toggle" role="button" data-toggle="dropdown" data-target="#">
-                        {% if ((column.name == '__unicode__') && (!(column.name in obj.properties))) { %}
-                            {{ obj.__unicode__ }}
-                        {% } else if ($.type(_value) === 'array'){ %}
-                            {{ _value[1] }}
-                        {% } else { %}
-                            {{ _value }}
-                        {% } %}
+                        
+                    {% if (!_multiselect) { %}
+                        <a   href="#"
+                                data-action="object_select"
+                                data-model="{{ obj.model }}"
+                                data-unicode="{{ obj.__unicode__ }}"
+                                data-pk="{{ obj.pk }}">
+                    {% } %}
+                            {% if ((column.name == '__unicode__') && (!(column.name in obj.properties))) { %}
+                                {{ obj.__unicode__ }}
+                            {% } else if ($.type(_value) === 'array'){ %}
+                                {{ _value[1] }}
+                            {% } else { %}
+                                {{ _value }}
+                            {% } %}
+                    {% if (!_multiselect) { %}
+                        </a>
+                    {% } %}
+                    
                         </div>
                         <ul class="dropdown-menu" role="menu">
                         {% if (data.perms.change) { %}
