@@ -160,7 +160,9 @@ function jsonAPI(args, callback, to_console, sync) {
         } else {
             // Иначе извещаем пользователя ответом и в консоль
             console.log("ERROR:" + xhr.responseText);
-            handlerShowAlert(_(xhr.responseText).truncate(255), 'alert-error');
+            if (xhr.responseText) {
+                handlerShowAlert(_(xhr.responseText).truncate(255), 'alert-error');
+            };
         };
     })
     // Обработка полученных данных
