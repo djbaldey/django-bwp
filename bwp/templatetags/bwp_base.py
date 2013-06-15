@@ -114,12 +114,16 @@ def addGET(request, key, val=''):
 
 @register.simple_tag
 def short_username(user):
+    if user.is_anonymous():
+        return u'Аноним'
     if not user.last_name and not user.first_name:
         return user.username
     return u'%s %s.' % (user.last_name, unicode(user.first_name)[0])
 
 @register.simple_tag
 def full_username(user):
+    if user.is_anonymous():
+        return u'Анонимный пользователь'
     if not user.last_name and not user.first_name:
         return user.username
     return u'%s %s' % (user.last_name, user.first_name)

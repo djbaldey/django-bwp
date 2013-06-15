@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 0.1.7\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-04-16 01:08+1100\n"
+"POT-Creation-Date: 2013-06-15 22:06+1100\n"
 "PO-Revision-Date: 2013-04-16 01:00+1100\n"
 "Last-Translator: Grigoriy Kramarenko <root@rosix.ru>\n"
 "Language: RU\n"
@@ -17,46 +17,76 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
 
-#: __init__.py:40 models.py:122
+#: __bwp__.py:51 models.py:107
+msgid "admin users"
+msgstr "администраторы"
+
+#: __bwp__.py:58 models.py:113
+msgid "admin groups"
+msgstr "группы администраторов"
+
+#: __init__.py:40
 msgid "devices"
 msgstr "устройства"
 
-#: models.py:64
-msgid "nothing"
-msgstr "ничего"
-
-#: models.py:71
+#: models.py:89
 msgid "driver"
 msgstr "драйвер"
 
-#: models.py:75
-msgid "port"
-msgstr "порт"
-
-#: models.py:79
-msgid "username"
-msgstr "имя пользователя"
-
-#: models.py:83
-msgid "password"
-msgstr "пароль"
-
-#: models.py:87
-msgid "admin password"
-msgstr "пароль администратора"
-
-#: models.py:92
-msgid "bod"
-msgstr "бод"
-
-#: models.py:97
+#: models.py:95
 msgid "users"
 msgstr "пользователи"
 
-#: models.py:102
+#: models.py:101
 msgid "groups"
 msgstr "группы"
 
-#: models.py:121
-msgid "device"
-msgstr "устройство"
+#: models.py:118
+msgid "username"
+msgstr "имя пользователя"
+
+#: models.py:122
+msgid "password"
+msgstr "пароль"
+
+#: models.py:189
+msgid "port"
+msgstr "порт"
+
+#: models.py:194
+msgid "admin password"
+msgstr "пароль администратора"
+
+#: models.py:198
+msgid "local device"
+msgstr "локальное устройство"
+
+#: models.py:199
+msgid "local devices"
+msgstr "локальные устройства"
+
+#: models.py:215
+msgid "url"
+msgstr ""
+
+#: models.py:217
+msgid "identifier"
+msgstr "идентификатор"
+
+#: models.py:221
+msgid "remote device"
+msgstr "удалённое устройство"
+
+#: models.py:222
+msgid "remote devices"
+msgstr "удалённые устройства"
+
+#: drivers/ShtrihM/kkt.py:185
+msgid "Serial port closed unexpectedly"
+msgstr "Последовательный порт закрыт неожиданно"
+
+#~ msgid "nothing"
+#~ msgstr "ничего"
+
+#~ msgid "bod"
+#~ msgstr "бод"

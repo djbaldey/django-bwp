@@ -182,7 +182,7 @@ class BaseKKT(object):
         self._write(ENQ)
         answer = self._read(1)
         if not self.conn.isOpen():
-            raise RuntimeError(_(u'Serial port closed unexpectly'))
+            raise RuntimeError(_(u'Serial port closed unexpectedly'))
         if answer in (NAK, ACK):
             return answer
         raise RuntimeError("Unknown answer")

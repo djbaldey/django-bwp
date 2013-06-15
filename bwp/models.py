@@ -40,7 +40,7 @@ from django.db import models, transaction
 from django.db.models.fields.files import FileField, ImageField
 from django.utils.translation import ugettext, ugettext_lazy as _ 
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.contrib.admin.util import quote
 from django.utils.encoding import smart_unicode, force_unicode
 from django.utils.safestring import mark_safe
@@ -126,6 +126,34 @@ class LogEntry(models.Model):
     def get_edited_object(self):
         "Returns the edited object represented by this log entry"
         return self.content_type.get_object_for_this_type(pk=self.object_id)
+
+#~ class PermissionRead(models.Model):
+    #~ content_type = models.ForeignKey(
+            #~ ContentType,
+            #~ blank=True, null=True,
+            #~ verbose_name=_('content type'))
+    #~ users = models.ManyToManyField(
+            #~ User,
+            #~ blank=True, null=True,
+            #~ verbose_name=_('users'))
+    #~ groups = models.ManyToManyField(
+            #~ Group,
+            #~ blank=True, null=True,
+            #~ verbose_name=_('groups'))
+#~ 
+    #~ class Meta:
+        #~ ordering = ('content_type',)
+        #~ verbose_name = _('permission read')
+        #~ verbose_name_plural = _('permissions read')
+#~ 
+    #~ def __unicode__(self):
+        #~ return unicode(self.content_type)
+#~ 
+    #~ @classmethod
+    #~ def has_perm(cls, user, opts):
+        #~ #objects = cls._default_manager.all()
+        #~ #objects.filter(has_perm(user, opts.app_label)
+        #~ return True
 
 class TempUploadFile(models.Model):
     """ Временно загружаемые файлы для последующей
@@ -231,13 +259,14 @@ class BaseModel(object):
     form                = None
     site                = None
     hidden              = False
+    allow_copy          = True
     allow_clone         = None
     
     # Набор ключей для предоставления метаданных об этой модели.
     metakeys = ('list_display', 'list_display_css', 'list_per_page',
                 'list_max_show_all', 'show_column_pk', 'fields',
-                'search_fields', 'search_key', 'ordering', 'has_clone',
-                'hidden', 'file_fields')
+                'search_fields', 'search_key', 'ordering', 'has_copy',
+                'has_clone', 'hidden', 'file_fields')
 
     @property
     def opts(self):
@@ -268,6 +297,12 @@ class BaseModel(object):
         if not hasattr(self, '_meta'):
             self._meta = self.get_meta()
         return self._meta
+
+    @property
+    def has_copy(self):
+        """ Проверяет, могут ли объекты копироваться
+        """
+        return self.allow_copy
 
     @property
     def has_clone(self):
@@ -595,6 +630,14 @@ class BaseModel(object):
             if not x['name'] in self.get_fields() ]
         data = self.serialize(qs, use_natural_keys=True, properties=properties)
         return JSONResponse(data=data)
+
+    #~ def has_read_permission(self, request):
+        #~ """
+        #~ Returns True if the given request has permission to read an object.
+        #~ Can be overriden by the user in subclasses.
+        #~ """
+        #~ opts = self.opts
+        #~ return PermissionRead.has_perm(user, opts)
 
     def has_add_permission(self, request):
         """
