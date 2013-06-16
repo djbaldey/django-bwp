@@ -707,7 +707,8 @@ function eventCollectionFilter() {
     data           = $(search).data();
     instance       = REGISTER[data['id']];
     instance.query = $(search).val() || null;
-    jqxhr          = handlerCollectionGet(instance);
+    wrap = function() { return handlerCollectionGet(instance); };
+    jqxhr          = delay(wrap, 500);
     return jqxhr;
 };
 
