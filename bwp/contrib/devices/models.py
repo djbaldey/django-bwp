@@ -199,11 +199,11 @@ class LocalDevice(BaseDevice):
         verbose_name_plural = _('local devices')
 
     def save(self, **kwargs):
-        super(Device, self).save(**kwargs)
+        super(LocalDevice, self).save(**kwargs)
         register.load()
 
     def delete(self, **kwargs):
-        super(Device, self).delete(**kwargs)
+        super(LocalDevice, self).delete(**kwargs)
         register.load()
 
 
@@ -211,7 +211,8 @@ class RemoteDevice(BaseDevice):
     """ Удалённое устройство """
     remote = True
 
-    remote_url = models.URLField(
+    remote_url = models.CharField(
+            max_length=200,
             verbose_name = _('url'))
     remote_id = models.IntegerField(
             verbose_name = _('identifier'))
