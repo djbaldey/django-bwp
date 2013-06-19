@@ -36,6 +36,37 @@
 #   <http://www.gnu.org/licenses/>.
 ###############################################################################
 """
+from django.utils.translation import ugettext_lazy as _
+import datetime
+
+from bwp.contrib.devices.remote import RemoteCommand
+
+from dcon import ICP
 
 class ICPi7000(object):
-    pass
+    is_remote = False
+
+    def __init__(self, remote=False, *args, **kwargs):
+        if remote:
+            self.is_remote= True
+            self.remote = RemoteCommand(*args, **kwargs)
+        else:
+            self.icp = ICP(*args, **kwargs)
+
+    def status(self, module=1):
+        if self.is_remote:
+            return self.remote("status", module=module)
+
+        return self.icp.status(module=module)
+
+    def on(self, module=1, channel=1):
+        if self.is_remote:
+            return self.remote("on", module=module, channel=channel)
+
+        return self.icp.off(module=module, channel=channel)
+
+    def off(self, module=1, channel=1):
+        if self.is_remote:
+            return self.remote("off", module=module, channel=channel)
+
+        return self.icp.off(module=module, channel=channel)

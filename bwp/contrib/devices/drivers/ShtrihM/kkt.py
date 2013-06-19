@@ -77,9 +77,20 @@ class Struct(struct.Struct):
 
     def pack(self, value):
         value = super(Struct, self).pack(value)
-        return self.pre_value(value)
+        return self.post_value(value)
     
     def pre_value(self, value):
+        """ Обрезает или добавляет нулевые байты """
+        if self.size:
+            if self.format in ('h','i','I','l','L','q','Q'):
+                _len = len(value)
+                if _len < self.size:
+                    value = value.ljust(self.size, chr(0x0))
+                elif _len > self.size:
+                    value = value[:self.size]
+        return value
+    
+    def post_value(self, value):
         """ Обрезает или добавляет нулевые байты """
         if self.length:
             if self.format in ('h','i','I','l','L','q','Q'):
@@ -113,10 +124,10 @@ class KKTException(Exception):
         self.source, self.message = protocol.BUGS[value]
 
     def __str__(self):
-        return u'%s: %s' % (self.source, self.message)
+        return str(unicode(self).encode('utf-8'))
 
     def __unicode__(self):
-        return unicode(str(self))
+        return u'%s: %s' % (self.source, self.message)
 
 def password_prapare(password):
     if isinstance(password, (list, tuple)):
@@ -142,28 +153,77 @@ class BaseKKT(object):
     """ Базовый класс включает методы непосредственного общения с
         устройством.
     """
-    def __init__(self, port=DEFAULT_PORT, bod=DEFAULT_BOD,
+    error = u''
+
+    def __init__(self, port=DEFAULT_PORT,
                 password=DEFAULT_PASSWORD,
                 admin_password=DEFAULT_ADMIN_PASSWORD, **kwargs):
         """ Пароли можно передавать в виде набора шестнадцатеричных
             значений, либо в виде обычной ASCII строки. Длина пароля 4
             ASCII символа.
         """
-        self.conn = serial.Serial(port, bod,\
-                            parity=serial.PARITY_NONE,\
-                            stopbits=serial.STOPBITS_ONE,\
-                            timeout=0.7,\
-                            writeTimeout=0.7)
-
-        self.password = password_prapare(password)
+        self.port           = port
+        self.password       = password_prapare(password)
         self.admin_password = password_prapare(admin_password)
 
-        if self.check() != NAK:
-            while self.conn.inWaiting():
-                self._read()
-            self._write(ACK + ENQ)
-            if self._read(1) != NAK:
-                raise RuntimeError("NAK expected")
+        self.bod            = kwargs.get('bod', DEFAULT_BOD)
+        self.parity         = kwargs.get('parity', serial.PARITY_NONE)
+        self.stopbits       = kwargs.get('parity', serial.STOPBITS_ONE)
+        self.timeout        = kwargs.get('timeout', 0.7)
+        self.writeTimeout   = kwargs.get('writeTimeout', 0.7)
+
+    @property
+    def is_connected(self):
+        """ Возвращает состояние соединение """
+        return bool(self._conn)
+
+    @property
+    def conn(self):
+        """ Возвращает соединение """
+        if hasattr(self, '_conn') and not self._conn is None:
+            return self._conn
+
+        self.connect()
+
+        return self._conn
+
+    def check(self):
+        """ Проверка на готовность """
+        self._write(ENQ)
+        answer = self._read(1)
+        if not self.conn.isOpen():
+            self.disconnect()
+            raise RuntimeError(_(u'Serial port closed unexpectedly'))
+        if answer in (NAK, ACK):
+            return True
+        elif not answer:
+            return True
+        self.disconnect()
+        raise RuntimeError(_('Unknown answer'))
+
+    def connect(self):
+        """ Устанавливает соединение """
+        try:
+            self._conn = serial.Serial(
+                self.port, self.bod,
+                parity=self.parity,
+                stopbits=self.stopbits,
+                timeout=self.timeout,
+                writeTimeout=self.writeTimeout
+            )
+        except Exception as e:
+            self._conn = None
+            self.error = unicode(e)
+            return False
+
+        return self.check()
+
+    def disconnect(self):
+        """ Закрывает соединение """
+        if self.conn:
+            self._conn.close()
+            self._conn = None
+        return True
 
     def _read(self, read=None):
         """ Высокоуровневый метод считывания соединения """
@@ -177,16 +237,6 @@ class BaseKKT(object):
         """ Высокоуровневый метод слива в ККТ """
         return self.conn.flush()
 
-    def check(self):
-        """ Проверка на готовность"""
-        self._write(ENQ)
-        answer = self._read(1)
-        if not self.conn.isOpen():
-            raise RuntimeError(_(u'Serial port closed unexpectedly'))
-        if answer in (NAK, ACK):
-            return answer
-        raise RuntimeError("Unknown answer")
-
     def clear(self):
         """ Сбрасывает ответ, если он болтается в ККМ """
         def one_round():
@@ -194,14 +244,15 @@ class BaseKKT(object):
             time.sleep(MIN_TIMEOUT*10)
             self._write(ENQ)
             answer = self._read(1)
-            time.sleep(MIN_TIMEOUT*2)
-            if answer == NAK:
+            if answer == NAK or not answer:
                 return True
             elif answer == ACK:
-                answer = self._read(1)
                 time.sleep(MIN_TIMEOUT*2)
+                answer = self._read(1)
                 if answer != STX:
-                    raise RuntimeError("Something wrong")
+                    self.disconnect()
+                    raise RuntimeError(_('KKT is not responding'))
+                time.sleep(MIN_TIMEOUT*2)
                 length = ord(self._read(1))
                 time.sleep(MIN_TIMEOUT*2)
                 data = self._read(length+1)
@@ -209,7 +260,8 @@ class BaseKKT(object):
                 time.sleep(MIN_TIMEOUT*2)
                 return False
             else:
-                raise RuntimeError("Something wrong")
+                self.disconnect()
+                raise RuntimeError(_('KKT is not responding'))
         n = 0
         while n < MAX_ATTEMPT and not one_round():
             n += 1
@@ -219,10 +271,23 @@ class BaseKKT(object):
 
     def read(self):
         """ Считывает весь ответ ККМ """
+        if not self.conn:
+            raise RuntimeError(self.error)
+
         answer = self._read(1)
         if answer == ACK:
-            time.sleep(MIN_TIMEOUT) # ?
-            answer = self._read(1)
+            # Для гарантированного получения ответа стоит обождать
+            # некоторое время, от минимального (0.05 секунд) 
+            # до 12.8746337890625 секунд по умолчанию для 12 попыток
+            answer = ''
+            n = 0
+            timeout = MIN_TIMEOUT
+            while not answer and n < MAX_ATTEMPT:
+                time.sleep(timeout)
+                answer = self._read(1)
+                n += 1
+                timeout *= 1.5
+
             if answer == STX:
                 length  = ord(self._read(1))
                 command = self._read(1)
@@ -230,15 +295,17 @@ class BaseKKT(object):
                 data    = self._read(length-2)
                 if length-2 != len(data):
                     self._write(NAK)
+                    self.disconnect()
                     raise RuntimeError(
-                        "Length (%i) not equal length of data (%i)" % \
-                        (length, len(data))
+                        _('Length (%(lehgth)i) not equal length of data (%(data)i)') % \
+                        {'length': length, 'data': len(data)}
                     )
                 control_read = self._read(1)
                 control_summ = get_control_summ(chr(length) + command \
                                                 + error + data)
                 if control_read != control_summ:
                     self._write(NAK)
+                    self.disconnect()
                     raise RuntimeError("Wrong crc %i must be %i " % (
                                     ord(control_summ), ord(control_read)))
                 self._write(ACK)
@@ -252,16 +319,19 @@ class BaseKKT(object):
                     'data':    data
                 }
             else:
-                raise RuntimeError("answer!=STX %s %s" % (
-                                    hex(ord(answer)), hex(ord(STX))))
+                self.disconnect()
+                raise RuntimeError(_('KKT is not responding'))
         elif answer == NAK:
             return None
         else:
-            raise RuntimeError("answer!=ACK %s %s" % (
-                                    hex(ord(answer)), hex(ord(ACK))))
+            self.disconnect()
+            raise RuntimeError(_('KKT is not responding'))
 
     def send(self, command, params):
         """ Стандартная обработка команды """
+        if not self.conn:
+            raise RuntimeError(self.error)
+
         self._flush()
         data    = chr(command)
         length  = 1
@@ -275,7 +345,7 @@ class BaseKKT(object):
         return True
 
     def ask(self, command, params=None, sleep=0, pre_clear=True,\
-                                        without_password=False):
+                           without_password=False, disconnect=True):
         """ Высокоуровневый метод получения ответа. Состоит из
             последовательной цепочки действий. 
             
@@ -289,6 +359,8 @@ class BaseKKT(object):
         if sleep:
             time.sleep(sleep)
         a = self.read()
+        if disconnect:
+            self.disconnect()
         return (a['data'], a['error'], a['command'])
 
 class KKT(BaseKKT):
@@ -417,6 +489,7 @@ class KKT(BaseKKT):
 
         # Флаги ККТ
         kkt_flags = string2bits(data[2] + data[1]) # старший байт и младший байт
+        kkt_flags = [ KKT_FLAGS[i] for i, x in enumerate(kkt_flags) if x ] 
         # Количество операций
         operations = int2.unpack(data[10]+data[5]) # старший байт и младший байт
 
@@ -481,6 +554,7 @@ class KKT(BaseKKT):
 
         # Флаги ККТ
         kkt_flags = string2bits(data[12] + data[11]) # старший байт и младший байт
+        kkt_flags = [ KKT_FLAGS[i] for i, x in enumerate(kkt_flags) if x ] 
 
         # Дата ПО ФП
         day   = ord(data[20])
@@ -493,10 +567,11 @@ class KKT(BaseKKT):
 
         # Дата и время текущие
         date = datetime.date(2000+ord(data[25]), ord(data[24]), ord(data[23]))
-        time = datetime.time(ord(data[28]), ord(data[27]), ord(data[26]))
+        time = datetime.time(ord(data[26]), ord(data[27]), ord(data[28]))
 
         # Флаги ФП
         fp_flags = string2bits(data[29])
+        fp_flags = [ FP_FLAGS[i][x] for i, x in enumerate(fp_flags) ] 
 
         result = {
             'error':       error,

@@ -539,8 +539,8 @@ def API_device_command(request, device, command, params={}, **kwargs):
             attr = getattr(device.device, command)
             data = attr(**params)
             return JSONResponse(data=data)
-        except:
-            return JSONResponse(status=400)
+        except Exception as e:
+            return JSONResponse(status=400, message=unicode(e))
     return JSONResponse(status=400)
 
 QUICKAPI_DEFINED_METHODS = {

@@ -62,7 +62,7 @@ def digits2string(digits):
     """
     return ''.join([ chr(x) for x in digits ])
 
-def string2bits(data):
+def string2bits(string):
     """ Convert string to bit array """
     result = []
     for char in string:

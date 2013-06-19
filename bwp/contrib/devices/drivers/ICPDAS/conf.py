@@ -37,19 +37,9 @@
 ###############################################################################
 """
 
-# Пароль админа по умолчанию = 30
-DEFAULT_ADMIN_PASSWORD = (0x1e, 0x0, 0x0, 0x0)
-# Пароль кассира по умолчанию = 1
-DEFAULT_PASSWORD       = (0x1, 0x0, 0x0, 0x0)
-
 # Порт в GNU/Linux по-умолчанию (COM1)
-DEFAULT_PORT = '/dev/ttyUSB0'
-DEFAULT_BOD  = 4800
+DEFAULT_PORT = '/dev/ttyS0'
+DEFAULT_BOD  = 9600
 
-# Кодировка текста для устройств
-CODE_PAGE = 'cp1251'
-
-# Кол-во попыток и таймаут
-MAX_ATTEMPT = 12
+# таймаут
 MIN_TIMEOUT = 0.05
-

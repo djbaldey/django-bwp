@@ -41,7 +41,7 @@ import datetime
 
 from bwp.contrib.devices.remote import RemoteCommand
 
-from kkt import KKTException, KKT, int2
+from kkt import KKT, int2
 from protocol import *
 
 class ShtrihFRKDummy(object):
@@ -210,10 +210,10 @@ class ShtrihFRK(ShtrihFRKDummy):
             return self.remote("setup_date")
 
         now = datetime.datetime.now() 
-        error = self.kkm.x22(now.year, now.month, now.day)
+        error = self.kkt.x22(now.year, now.month, now.day)
         if error:
             return error
-        return self.kkm.x23(now.year, now.month, now.day)
+        return self.kkt.x23(now.year, now.month, now.day)
 
     def setup_time(self):
         """ Установка времени как в компьютере """
@@ -221,7 +221,7 @@ class ShtrihFRK(ShtrihFRKDummy):
             return self.remote("setup_time")
 
         now = datetime.datetime.now()
-        return self.kkm.x21(now.hour, now.minute, now.second)
+        return self.kkt.x21(now.hour, now.minute, now.second)
 
     def add_money(self, summa):
         """ Внесение денег в кассу """

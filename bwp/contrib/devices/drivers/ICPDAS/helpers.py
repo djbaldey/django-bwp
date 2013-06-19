@@ -37,19 +37,24 @@
 ###############################################################################
 """
 
-# Пароль админа по умолчанию = 30
-DEFAULT_ADMIN_PASSWORD = (0x1e, 0x0, 0x0, 0x0)
-# Пароль кассира по умолчанию = 1
-DEFAULT_PASSWORD       = (0x1, 0x0, 0x0, 0x0)
+def get_control_summ(string):
+    """ Подсчет CRC """
+    result = sum([ ord(s) for s in string ])
+    return chr(result)
 
-# Порт в GNU/Linux по-умолчанию (COM1)
-DEFAULT_PORT = '/dev/ttyUSB0'
-DEFAULT_BOD  = 4800
+def string2bits(string):
+    """ Convert string to bit array """
+    result = []
+    for char in string:
+        bits = bin(ord(char))[2:]
+        bits = '00000000'[len(bits):] + bits
+        result.extend([int(b) for b in bits])
+    return result
 
-# Кодировка текста для устройств
-CODE_PAGE = 'cp1251'
-
-# Кол-во попыток и таймаут
-MAX_ATTEMPT = 12
-MIN_TIMEOUT = 0.05
-
+def bits2string(bits):
+    """ Convert bit array to string """
+    chars = []
+    for b in range(len(bits) / 8):
+        byte = bits[b*8:(b+1)*8]
+        chars.append(chr(int(''.join([str(bit) for bit in byte]), 2)))
+    return ''.join(chars)

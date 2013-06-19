@@ -40,6 +40,7 @@
 import json, urllib, base64, traceback
 
 class BaseAPI(object):
+    """ Соединение с удалённым API, где расположено устройство """
 
     username = 'admin'
     password = 'admin'
@@ -102,7 +103,7 @@ class BaseAPI(object):
         status = data.get('status', None)
         if status != 200:
             print data.get('message')
-            raise RuntimeError(data.get('message'))
+            raise RuntimeError(data.get('message').encode('utf-8'))
         return data['data']
 
     def method(self, method, **kwargs):
@@ -114,6 +115,7 @@ class BaseAPI(object):
         return data
 
 class RemoteCommand(object):
+    """ Выполнение команды на удалённом устройстве """
     def __init__(self, remote_url, remote_id, **kwargs):
         self.remote_url = remote_url
         self.device     = remote_id
