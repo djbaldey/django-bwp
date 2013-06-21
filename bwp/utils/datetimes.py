@@ -38,19 +38,27 @@
 """
 import datetime
 
-def round_now(minute=True, hour=False):
-    """ Округление текущего времени до секунды, минуты или часа.
+def dt_rounded(dt=None, minute=True, hour=False, day=False):
+    """ Округление времени до секунды, минуты, часа или дня.
         По умолчанию до минуты.
 
-        до часа:    round_now(hour=True)
-        до минуты:  round_now()
-        до секунды: round_now(minute=False)
+        до дня:     rounded(day=True)
+        до часа:    rounded(hour=True)
+        до минуты:  rounded()
+        до секунды: rounded(minute=False)
+        
+        Если нужно округлить заданное время,то оно передаётся в
+        параметре `dt`
     """
-    n = datetime.datetime.now()
-    if hour:
-        now = datetime.datetime(n.year, n.month, n.day, n.hour)
+    if not isinstance(dt, datetime.datetime):
+        dt = datetime.datetime.now()
+
+    if day:
+        dt = datetime.datetime(dt.year, dt.month, dt.day)
+    elif hour:
+        dt = datetime.datetime(dt.year, dt.month, dt.day, dt.hour)
     elif minute:
-        now = datetime.datetime(n.year, n.month, n.day, n.hour, n.minute)
+        dt = datetime.datetime(dt.year, dt.month, dt.day, dt.hour, dt.minute)
     else:
-        now = datetime.datetime(n.year, n.month, n.day, n.hour, n.minute, n.second)
-    return now
+        dt = datetime.datetime(dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second)
+    return dt
