@@ -41,6 +41,7 @@ from django.utils import simplejson
 from copy import deepcopy
 from quickapi.http import DjangoJSONEncoder
 from bwp.utils import print_debug
+from bwp.db import fields as bwp_fields
 
 class GeneralWidget(object):
     field = None
@@ -161,6 +162,7 @@ WIDGETS_FOR_DBFIELD = {
     models.TextField:                   (TextWidget,  {'class': 'textfield', "rows": "3",}),
     models.TimeField:                   (InputWidget, {'class': 'timefield'}),
     models.URLField:                    (URLWidget,   None),
+    bwp_fields.JSONField:               (TextWidget,  {'class': 'textfield', "rows": "3",}),
 }
 
 def get_widget_from_field(field):

@@ -129,12 +129,65 @@ class ShtrihFRK(ShtrihFRKDummy):
             return self.kkt.x10()
         return self.kkt.x11()
 
-    def print_receipt(self, header, summa, comment, buyer, document_type=0, nds=0):
-        """ Печать чека """
+    def reset(self):
+        """ Сброс предыдущей ошибки или остановки печати """
+        try:
+            self.print_continue() # предварительный вывод неоконченных
+        except:
+            try:
+                self.cancel() # отмена ошибочных чеков
+            except:
+                pass
+        return True
+
+    def print_document(self, text=u'Текст документа не передан', header=u''):
+        """ Печать предварительного чека или чего-либо другого. """
+        if self.is_remote:
+            return self.remote("print_document",
+                header=header, body=body, text=text)
+
+        self.reset()
+
+        if header:
+            for line in header.split('\n'):
+                self.kkt.x12_loop(text=line)
+
+        for line in text.split('\n'):
+            self.kkt.x17_loop(text=line)
+
+        return self.cut_tape()
+
+    def print_receipt(self, specs, cash=0, credit=0, packaging=0, card=0,
+    discount=0, document_type=0, nds=0,
+    header=u'', comment=u'', buyer=u''):
+        """ Печать чека.
+            specs - Это список словарей проданных позиций:
+                [{'title':u'Хлеб',
+                 'price':'10.00', 'count':u'3', 'summa':'30.00'},
+                 {'title':u'',
+                 'price':'10.00', 'count':u'3', 'summa':'30.00'},
+                ]
+            Типы оплат:
+                cash      - наличными
+                credit    - кредитом
+                packaging - тарой
+                card      - платёжной картой
+            Тип документа:
+                0 – продажа;
+                1 – покупка;
+                2 – возврат продажи;
+                3 – возврат покупки
+
+        """
         if self.is_remote:
             return self.remote("print_receipt",
-                header=header, summa=summa, comment=comment, buyer=bayer,
-                document_type=document_type, nds=nds)
+                specs=specs, cash=cash, credit=credit,
+                packaging=packaging, card=card, discount=discount,
+                document_type=document_type, nds=nds,
+                header=header, comment=comment, buyer=buyer,
+            )
+
+        self.reset()
 
         taxes = [0,0,0,0]
         if nds > 0:
@@ -151,21 +204,46 @@ class ShtrihFRK(ShtrihFRKDummy):
             self.kkt.x17_loop(text=line)
 
         if document_type == 0:
-            _text = u"Принято от %s" % buyer
-            self.kkt.x17(text=_text)
-            self.kkt.x80(1, summa, text=comment, taxes=taxes)
+            text_buyer = u"Принято от %s"
+            method = self.kkt.x80
+        elif document_type == 1:
+            text_buyer = u"Принято от %s"
+            method = self.kkt.x81
+
+        elif document_type == 2:
+            text_buyer = u"Возвращено %s"
+            method = self.kkt.x82
+
+        elif document_type == 3:
+            text_buyer = u"Возвращено %s"
+            method = self.kkt.x83
         else:
-            _text = u"Возвращено %s" % buyer
-            self.kkt.x17(text=_text)
-            self.kkt.x82(1, summa, text=comment, taxes=taxes)
+            raise RuntimeError(unicode(_('Type of document must be 0..3')))
+
+        text_buyer = text_buyer % buyer if buyer else u''
+
+        for spec in specs:
+            title = u''+spec['title']
+            title = title[:40]
+            method(count=spec['count'], price=spec['price'],
+                                        text=title, taxes=taxes)
+
+        for line in text_buyer.split('\n'):
+            self.kkt.x17_loop(text=line)
+
+        for line in comment.split('\n'):
+            self.kkt.x17_loop(text=line)
 
         _text = u"-" * 18
-        return self.kkt.x85(summa, text=_text, taxes=taxes)
+        summs = [cash,credit,packaging,card]
+        return self.kkt.x85(summs=summs, text=_text, taxes=taxes, discount=discount)
 
     def print_copy(self):
         """ Печать копии последнего документа """
         if self.is_remote:
             return self.remote("print_copy")
+
+        self.reset()
 
         return self.kkt.x8C()
 
@@ -181,12 +259,16 @@ class ShtrihFRK(ShtrihFRKDummy):
         if self.is_remote:
             return self.remote("print_report")
 
+        self.reset()
+
         return self.kkt.x40()
 
     def close_session(self):
         """ Закрытие смены с печатью Z-отчета """
         if self.is_remote:
             return self.remote("close_session")
+
+        self.reset()
 
         return self.kkt.x41()
 
@@ -237,9 +319,9 @@ class ShtrihFRK(ShtrihFRKDummy):
 
         return self.kkt.x51(summa)
 
-    def cut_tape(self):
-        """ Обрезка ленты """
+    def cut_tape(self, fullcut=True):
+        """ Отрез чековой ленты """
         if self.is_remote:
-            return self.remote("cut_tape")
+            return self.remote("cut_tape", fullcut=fullcut)
 
-        return self.kkt.x25(fullcut=True)
+        return self.kkt.x25(fullcut=fullcut)

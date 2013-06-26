@@ -78,8 +78,9 @@ class JSONField(TextField):
         setattr(cls, 'set_%s_json' % self.name, set_json)
 
     def formfield(self, **kwargs):
-        kwargs['widget'] = JSONWidget(attrs={'class': 'vLargeTextField'})
-        return super(JSONField, self).formfield(**kwargs)
+        defaults = {'widget': Textarea}
+        defaults.update(kwargs)
+        return super(JSONField, self).formfield(**defaults)
 
     def get_db_prep_save(self, value, **kwargs):
         """Convert our JSON object to a string before we save"""

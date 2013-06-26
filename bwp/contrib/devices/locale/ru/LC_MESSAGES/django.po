@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 0.1.7\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-06-15 22:06+1100\n"
+"POT-Creation-Date: 2013-06-26 16:03+1100\n"
 "PO-Revision-Date: 2013-04-16 01:00+1100\n"
 "Last-Translator: Grigoriy Kramarenko <root@rosix.ru>\n"
 "Language: RU\n"
@@ -65,25 +65,52 @@ msgstr "локальное устройство"
 msgid "local devices"
 msgstr "локальные устройства"
 
-#: models.py:215
+#: models.py:216
 msgid "url"
 msgstr ""
 
-#: models.py:217
+#: models.py:218
 msgid "identifier"
 msgstr "идентификатор"
 
-#: models.py:221
+#: models.py:222
 msgid "remote device"
 msgstr "удалённое устройство"
 
-#: models.py:222
+#: models.py:223
 msgid "remote devices"
 msgstr "удалённые устройства"
 
-#: drivers/ShtrihM/kkt.py:185
+#: drivers/ICPDAS/dcon.py:89 drivers/ShtrihM/kkt.py:196
 msgid "Serial port closed unexpectedly"
 msgstr "Последовательный порт закрыт неожиданно"
+
+#: drivers/ICPDAS/dcon.py:182 drivers/ICPDAS/dcon.py:194
+#: drivers/ICPDAS/dcon.py:203
+msgid "This implementation does not support modules for more than nine"
+msgstr "Эта реализация не поддерживает модули для более девяти"
+
+#: drivers/ICPDAS/dcon.py:186
+msgid "Unknown error"
+msgstr "Неизвестная ошибка"
+
+#: drivers/ShtrihM/__init__.py:221
+msgid "Type of document must be 0..3"
+msgstr "Тип документа должен быть 0..3"
+
+#: drivers/ShtrihM/kkt.py:202
+msgid "Unknown answer"
+msgstr "Неизвестный ответ"
+
+#: drivers/ShtrihM/kkt.py:254 drivers/ShtrihM/kkt.py:264
+#: drivers/ShtrihM/kkt.py:325 drivers/ShtrihM/kkt.py:330
+msgid "KKT is not responding"
+msgstr "ККТ не отвечает"
+
+#: drivers/ShtrihM/kkt.py:300
+#, python-format
+msgid "Length (%(lehgth)i) not equal length of data (%(data)i)"
+msgstr "Длина (%(lehgth)i) не равна днине данных (%(data)i)"
 
 #~ msgid "nothing"
 #~ msgstr "ничего"

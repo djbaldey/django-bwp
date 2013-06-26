@@ -45,9 +45,17 @@ def money2integer(money, digits=2):
     """
     return int(round(float(money), digits) * 10**digits)
 
-def count2integer(count, coefficient=1, digits=2):
+def integer2money(integer, digits=2):
+    """ Преобразует целое число в значение float, согласно
+        установленной десятичной кратности.
+        
+        Например, integer2money(2346, digits=3) вернёт  2.346
+    """
+    return round(float(integer) / 10**digits, digits)
+
+def count2integer(count, coefficient=1, digits=3):
     """ Преобразует количество согласно заданного коэффициента """
-    return money2integer(count, digits=2) * coefficient
+    return money2integer(count, digits=digits) * coefficient
 
 def get_control_summ(string):
     """ Подсчет CRC """

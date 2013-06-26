@@ -199,6 +199,16 @@ class AbstractPerson(models.Model):
     class Meta:
         ordering = ['last_name', 'first_name', 'middle_name']
         abstract = True
+    
+    def get_short_name(self):
+        first = self.first_name[0] if self.first_name else None
+        middle = self.middle_name[0] if self.middle_name else None
+        res = None
+        if first and middle:
+            res = u'%s %s.%s.' % (self.last_name, first, middle)
+        elif first:
+            res = u'%s %s.' % (self.last_name, first)
+        return res or u'%s' % (self.last_name,)
 
 class AbstractDocumentDate(models.Model):
     """ Абстрактная модель датированных документов """

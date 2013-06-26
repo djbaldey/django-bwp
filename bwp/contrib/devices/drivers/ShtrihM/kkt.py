@@ -41,7 +41,7 @@ from django.conf import settings
 import serial, time, datetime, struct
 
 import conf, protocol
-from helpers import money2integer, count2integer, \
+from helpers import money2integer, integer2money, count2integer, \
                     string2bits, bits2string, digits2string, \
                     get_control_summ
 
@@ -193,13 +193,13 @@ class BaseKKT(object):
         answer = self._read(1)
         if not self.conn.isOpen():
             self.disconnect()
-            raise RuntimeError(_(u'Serial port closed unexpectedly'))
+            raise RuntimeError(unicode(_(u'Serial port closed unexpectedly')))
         if answer in (NAK, ACK):
             return True
         elif not answer:
             return True
         self.disconnect()
-        raise RuntimeError(_('Unknown answer'))
+        raise RuntimeError(unicode(_('Unknown answer')))
 
     def connect(self):
         """ Устанавливает соединение """
@@ -251,7 +251,7 @@ class BaseKKT(object):
                 answer = self._read(1)
                 if answer != STX:
                     self.disconnect()
-                    raise RuntimeError(_('KKT is not responding'))
+                    raise RuntimeError(unicode(_('KKT is not responding')))
                 time.sleep(MIN_TIMEOUT*2)
                 length = ord(self._read(1))
                 time.sleep(MIN_TIMEOUT*2)
@@ -261,7 +261,7 @@ class BaseKKT(object):
                 return False
             else:
                 self.disconnect()
-                raise RuntimeError(_('KKT is not responding'))
+                raise RuntimeError(unicode(_('KKT is not responding')))
         n = 0
         while n < MAX_ATTEMPT and not one_round():
             n += 1
@@ -297,8 +297,9 @@ class BaseKKT(object):
                     self._write(NAK)
                     self.disconnect()
                     raise RuntimeError(
-                        _('Length (%(lehgth)i) not equal length of data (%(data)i)') % \
+                        unicode(_('Length (%(lehgth)i) not equal length of data (%(data)i)') % \
                         {'length': length, 'data': len(data)}
+                        )
                     )
                 control_read = self._read(1)
                 control_summ = get_control_summ(chr(length) + command \
@@ -312,6 +313,7 @@ class BaseKKT(object):
                 self._flush()
                 time.sleep(MIN_TIMEOUT*2)
                 if ord(error) != 0:
+                    self.disconnect()
                     raise KKTException(ord(error))
                 return {
                     'command': command,
@@ -320,19 +322,20 @@ class BaseKKT(object):
                 }
             else:
                 self.disconnect()
-                raise RuntimeError(_('KKT is not responding'))
+                raise RuntimeError(unicode(_('KKT is not responding')))
         elif answer == NAK:
             return None
         else:
             self.disconnect()
-            raise RuntimeError(_('KKT is not responding'))
+            raise RuntimeError(unicode(_('KKT is not responding')))
 
-    def send(self, command, params):
+    def send(self, command, params, quick=False):
         """ Стандартная обработка команды """
         if not self.conn:
             raise RuntimeError(self.error)
 
-        self._flush()
+        if not quick:
+            self._flush()
         data    = chr(command)
         length  = 1
         if not params is None:
@@ -345,17 +348,23 @@ class BaseKKT(object):
         return True
 
     def ask(self, command, params=None, sleep=0, pre_clear=True,\
-                           without_password=False, disconnect=True):
+                without_password=False, disconnect=True, quick=False):
         """ Высокоуровневый метод получения ответа. Состоит из
             последовательной цепочки действий. 
             
             Возвращает позиционные параметры: (data, error, command)
         """
+
+        if quick:
+            pre_clear  = False
+            disconnect = False
+            sleep      = 0
+
         if params is None and not without_password:
             params = self.password
         if pre_clear:
             self.clear()
-        self.send(command, params)
+        self.send(command, params, quick=quick)
         if sleep:
             time.sleep(sleep)
         a = self.read()
@@ -602,7 +611,19 @@ class KKT(BaseKKT):
         }
         return result
 
-    def x12(self):
+## Implemented multistring for x12
+    def x12_loop(self, text=u'', control_tape=False):
+        """ Печать жирной строки без ограничения на 20 символов """
+        # Юникодим "ласково", но принудительно:
+        t = u'' + text
+        last_result = None
+        while len(t) > 0:
+            last_result = self.x12(text=t[:20], control_tape=control_tape)
+            t = t[20:]
+        return last_result
+
+## Implemented
+    def x12(self, text=u'', control_tape=False):
         """ Печать жирной строки
             Команда: 12H. Длина сообщения: 26 байт.
                 Пароль оператора (4 байта)
@@ -613,7 +634,23 @@ class KKT(BaseKKT):
                 Код ошибки (1 байт)
                 Порядковый номер оператора (1 байт) 1...30
         """
-        raise NotImplemented
+        command = 0x12
+
+        flags = 2 # по умолчанию bin(2) == '0b00000010'
+        if control_tape:
+            flags = 1 # bin(1) == '0b00000001'
+
+        # Юникодим "ласково", но принудительно:
+        text = u'' + text
+        if len(text) > 20:
+            raise RuntimeError("Length of string must be less or equal 20 chars")
+        text = text.encode(CODE_PAGE).ljust(20, chr(0x0))
+
+        params = self.password + chr(flags) + text
+
+        data, error, command = self.ask(command, params, quick=True)
+        operator = ord(data[0])
+        return operator
 
 ## Implemented
     def x13(self):
@@ -732,11 +769,12 @@ class KKT(BaseKKT):
 
         params = self.password + chr(flags) + text
 
-        data, error, command = self.ask(command, params)
+        data, error, command = self.ask(command, params, quick=True)
         operator = ord(data[0])
         return operator
 
-    def x18(self):
+## Implemented
+    def x18(self, text, number=1):
         """ Печать заголовка документа
             Команда: 18H. Длина сообщения: 37 байт.
                 Пароль оператора (4 байта)
@@ -751,7 +789,19 @@ class KKT(BaseKKT):
                 Печатаемые символы – символы в кодовой странице 
                 WIN1251. Символы с кодами 0..31 не отображаются.
         """
-        raise NotImplemented
+        command = 0x18
+
+        # Юникодим "ласково", но принудительно:
+        text = u'' + text
+        if len(text) > 30:
+            raise RuntimeError("Length of string must be less or equal 30 chars")
+        text = text.encode(CODE_PAGE).ljust(30, chr(0x0))
+
+        params = self.password + text + chr(flags) 
+
+        data, error, command = self.ask(command, params)
+        operator = ord(data[0])
+        return operator
 
     def x19(self):
         """ Тестовый прогон
@@ -938,7 +988,7 @@ class KKT(BaseKKT):
 
         cut = int(not bool(fullcut)) # 0 по умолчанию
 
-        params  = self.password + chr(cut)
+        params = self.password + chr(cut)
         data, error, command = self.ask(command, params)
         operator = ord(data[0])
         return operator
@@ -1188,6 +1238,7 @@ class KKT(BaseKKT):
         }
         return result
 
+## Implemented
     def x52(self):
         """ Печать клише
             Команда: 52H. Длина сообщения: 5 байт.
@@ -1196,7 +1247,12 @@ class KKT(BaseKKT):
                 Код ошибки (1 байт)
                 Порядковый номер оператора (1 байт) 1...30
         """
-        raise NotImplemented
+        command = 0x52
+
+        params  = self.password
+        data, error, command = self.ask(command, params)
+        operator = ord(data[0])
+        return operator
 
     def x53(self):
         """ Конец Документа
@@ -1537,15 +1593,15 @@ class KKT(BaseKKT):
         raise NotImplemented
 
     def x76(self):
-        """ Формирование закрытия чека на п одкладном документе
+        """ Формирование закрытия чека на подкладном документе
             Команда: 76H. Длина сообщения: 182 байта.
                 Пароль оператора (4 байта)
                 Количество строк в операции (1 байт) 1...17
                 Номер строки итога в операции (1 байт) 1...17
-                Номер текстовой строки в операции (1 байт) 0...17, «0» –
-                    не печатать
-                Номер строки наличных в операции (1 байт) 0...17, «0» –
-                    не печатать
+                Номер текстовой строки в операции (1 байт) 0...17,
+                    «0» – не печатать
+                Номер строки наличных в операции (1 байт) 0...17,
+                    «0» – не печатать
                 Номер строки типа оплаты 2 в операции (1 байт) 0...17,
                     «0» – не печатать
                 Номер строки типа оплаты 3 в операции (1 байт) 0...17,
@@ -1688,7 +1744,9 @@ class KKT(BaseKKT):
         """
         raise NotImplemented
 
-    def x77(self):
+## Implemented
+    def x77(self, cash=0, payment2=0, payment3=0, payment4=0, discount=0,
+    text=u'',  taxes=[0,0,0,0]):
         """ Формирование стандартного закрытия чека на подкладном
                 документе
             Команда: 77H. Длина сообщения: 72 байта.
@@ -1709,7 +1767,52 @@ class KKT(BaseKKT):
                 Порядковый номер оператора (1 байт) 1...30
                 Сдача (5 байт) 0000000000...9999999999
         """
-        raise NotImplemented
+        command = 0x77
+
+        cash     = money2integer(cash)
+        payment2 = money2integer(payment2)
+        payment3 = money2integer(payment3)
+        payment4 = money2integer(payment4)
+        discount = money2integer(discount)
+
+        if cash < 0 or cash > 9999999999:
+            raise ValueError("Cash must be in range 0..9999999999")
+        if payment2 < 0 or payment2 > 9999999999:
+            raise ValueError("Payment 2 must be in range 0..9999999999")
+        if payment3 < 0 or payment3 > 9999999999:
+            raise ValueError("Payment 3 must be in range 0..9999999999")
+        if payment4 < 0 or payment4 > 9999999999:
+            raise ValueError("Payment 4 must be in range 0..9999999999")
+        if discount < -9999 or discount > 9999:
+            raise ValueError("Discount must be in range -9999..9999")
+        if len(text) > 40:
+            raise ValueError("Text must be less than 40 chars")
+        if len(taxes) != 4:
+            raise ValueError("Count of taxes must be 4")
+        if not isinstance(taxes, (list, tuple)):
+            raise TypeError("Taxes must be list or tuple")
+        for t in taxes:
+            if t not in range(0, 5):
+               raise RuntimeError("taxes must be only 0,1,2,3,4")
+
+        cash       = int5.pack(cash)
+        payment2   = int5.pack(payment2)
+        payment3   = int5.pack(payment3)
+        payment4   = int5.pack(payment4)
+        discount   = int2.pack(discount)
+        taxes      = digits2string(taxes)
+        text       = text.encode(CODE_PAGE).ljust(40, chr(0x0))
+
+        params  = self.password + cash + payment2 + payment3 + payment4\
+                                + discount + taxes + text
+        data, error, command = self.ask(command, params, quick=True)
+        operator = ord(data[0])
+        odd = int5.unpack(data[1:6])
+        result = {
+            'operator': operator,
+            'odd': integer2money(odd),
+        }
+        return result
 
     def x78(self):
         """ Конфигурация подкладного документа
@@ -1824,7 +1927,56 @@ class KKT(BaseKKT):
         raise NotImplemented
 
 ## Implemented
-    def x80(self, count, price, text=u"", department=1, taxes=[0,0,0,0]):
+    def _x8count(self, command, count, price, text=u"", department=0, taxes=[0,0,0,0]):
+        """ Общий метод для продаж, покупок, возвратов и сторно
+            Команда: 80H. Длина сообщения: 60 байт.
+                Пароль оператора (4 байта)
+                Количество (5 байт) 0000000000...9999999999
+                Цена (5 байт) 0000000000...9999999999
+                Номер отдела (1 байт) 0...16
+                Налог 1 (1 байт) «0» – нет, «1»...«4» – налоговая группа
+                Налог 2 (1 байт) «0» – нет, «1»...«4» – налоговая группа
+                Налог 3 (1 байт) «0» – нет, «1»...«4» – налоговая группа
+                Налог 4 (1 байт) «0» – нет, «1»...«4» – налоговая группа
+                Текст (40 байт)
+            Ответ: 80H. Длина сообщения: 3 байта.
+                Код ошибки (1 байт)
+                Порядковый номер оператора (1 байт) 1...30
+        """
+        command = command
+
+        count = count2integer(count)
+        price = money2integer(price)
+
+        if count < 0 or count > 9999999999:
+            raise ValueError("Count must be in range 0..9999999999")
+        if price < 0 or price > 9999999999:
+            raise ValueError("Price must be in range 0..9999999999")
+        if not department in range(17):
+            raise ValueError("Department must be in range 0..16")
+        if len(text) > 40:
+            raise ValueError("Text must be less than 40 chars")
+        if len(taxes) != 4:
+            raise ValueError("Count of taxes must be 4")
+        if not isinstance(taxes, (list, tuple)):
+            raise TypeError("Taxes must be list or tuple")
+        for t in taxes:
+            if t not in range(0, 5):
+               raise RuntimeError("taxes must be only 0,1,2,3,4")
+
+        count      = int5.pack(count)
+        price      = int5.pack(price)
+        department = chr(department)
+        taxes      = digits2string(taxes)
+        text       = text.encode(CODE_PAGE).ljust(40, chr(0x0))
+
+        params  = self.password + count + price + department + taxes + text
+        data, error, command = self.ask(command, params, quick=True)
+        operator = ord(data[0])
+        return operator
+
+## Implemented
+    def x80(self, count, price, text=u"", department=0, taxes=[0,0,0,0]):
         """ Продажа
             Команда: 80H. Длина сообщения: 60 байт.
                 Пароль оператора (4 байта)
@@ -1841,38 +1993,11 @@ class KKT(BaseKKT):
                 Порядковый номер оператора (1 байт) 1...30
         """
         command = 0x80
+        return self._x8count(command=command, count=count, price=price,
+                        text=text, department=department, taxes=taxes)
 
-        count = count2integer(count)
-        price = money2integer(price)
-
-        if count < 0 or count > 9999999999:
-            raise ValueError("Count must be in range 0..9999999999")
-        if price < 0 or price > 9999999999:
-            raise ValueError("Price must be in range 0..9999999999")
-        if not department in range(17):
-            raise ValueError("Department must be in range 0..16")
-        if len(text) > 40:
-            raise ValueError("Text must be less than 40 chars")
-        if len(taxes) != 4:
-            raise ValueError("Count of taxes must be 4")
-        if not isinstance(taxes, (list, tuple)):
-            raise TypeError("Taxes must be list or tuple")
-        for t in taxes:
-            if t not in range(0, 5):
-               raise RuntimeError("taxes must be only 0,1,2,3,4")
-
-        count      = int5.pack(count)
-        price      = int5.pack(money2integer(price))
-        department = chr(department)
-        taxes      = digits2string(taxes)
-        text       = text.encode(CODE_PAGE).ljust(40, chr(0x0))
-
-        params  = self.password + count + price + department + taxes + text
-        data, error, command = self.ask(command, params)
-        operator = ord(data[0])
-        return operator
-
-    def x81(self):
+## Implemented
+    def x81(self, count, price, text=u"", department=0, taxes=[0,0,0,0]):
         """ Покупка
             Команда: 81H. Длина сообщения: 60 байт.
                 Пароль оператора (4 байта)
@@ -1888,10 +2013,12 @@ class KKT(BaseKKT):
                 Код ошибки (1 байт)
                 Порядковый номер оператора (1 байт) 1...30
         """
-        raise NotImplemented
+        command = 0x81
+        return self._x8count(command=command, count=count, price=price,
+                        text=text, department=department, taxes=taxes)
 
 ## Implemented
-    def x82(self):
+    def x82(self, count, price, text=u"", department=0, taxes=[0,0,0,0]):
         """ Возврат продажи
             Команда: 82H. Длина сообщения: 60 байт.
                 Пароль оператора (4 байта)
@@ -1907,40 +2034,12 @@ class KKT(BaseKKT):
                 Код ошибки (1 байт)
                 Порядковый номер оператора (1 байт) 1...30
         """
-        raise NotImplemented
         command = 0x82
+        return self._x8count(command=command, count=count, price=price,
+                        text=text, department=department, taxes=taxes)
 
-        count = count2integer(count)
-        price = money2integer(price)
-
-        if count < 0 or count > 9999999999:
-            raise ValueError("Count must be in range 0..9999999999")
-        if price < 0 or price > 9999999999:
-            raise ValueError("Price must be in range 0..9999999999")
-        if not department in range(17):
-            raise ValueError("Department must be in range 0..16")
-        if len(text) > 40:
-            raise ValueError("Text must be less than 40 chars")
-        if len(taxes) != 4:
-            raise ValueError("Count of taxes must be 4")
-        if not isinstance(taxes, (list, tuple)):
-            raise TypeError("Taxes must be list or tuple")
-        for t in taxes:
-            if t not in range(0, 5):
-               raise RuntimeError("taxes must be only 0,1,2,3,4")
-
-        count      = int5.pack(count)
-        price      = int5.pack(money2integer(price))
-        department = chr(department)
-        taxes      = digits2string(taxes)
-        text       = text.encode(CODE_PAGE).ljust(40, chr(0x0))
-
-        params  = self.password + count + price + department + taxes + text
-        data, error, command = self.ask(command, params)
-        operator = ord(data[0])
-        return operator
-
-    def x83(self):
+## Implemented
+    def x83(self, count, price, text=u"", department=0, taxes=[0,0,0,0]):
         """ Возврат покупки
             Команда: 83H. Длина сообщения: 60 байт.
                 Пароль оператора (4 байта)
@@ -1956,9 +2055,12 @@ class KKT(BaseKKT):
                 Код ошибки (1 байт)
                 Порядковый номер оператора (1 байт) 1...30
         """
-        raise NotImplemented
+        command = 0x83
+        return self._x8count(command=command, count=count, price=price,
+                        text=text, department=department, taxes=taxes)
 
-    def x84(self):
+## Implemented
+    def x84(self, count, price, text=u"", department=0, taxes=[0,0,0,0]):
         """ Сторно
             Команда: 84H. Длина сообщения: 60 байт.
                 Пароль оператора (4 байта)
@@ -1974,10 +2076,12 @@ class KKT(BaseKKT):
                 Код ошибки (1 байт)
                 Порядковый номер оператора (1 байт) 1...30
         """
-        raise NotImplemented
+        command = 0x84
+        return self._x8count(command=command, count=count, price=price,
+                        text=text, department=department, taxes=taxes)
 
 ## Implemented
-    def x85(self, summa, summs=[0,0,0,0], discount=0, taxes=[0,0,0,0], text=u''):
+    def x85(self, cash=0, summs=[0,0,0,0], discount=0, taxes=[0,0,0,0], text=u''):
         """ Закрытие чека
             Команда: 85H. Длина сообщения: 71 байт.
                 Пароль оператора (4 байта)
@@ -1997,7 +2101,9 @@ class KKT(BaseKKT):
                 Порядковый номер оператора (1 байт) 1...30
                 Сдача (5 байт) 0000000000...9999999999
         """
-        summa1 = money2integer(summs[0] or summa)
+        command = 0x85
+
+        summa1 = money2integer(summs[0] or cash)
         summa2 = money2integer(summs[1])
         summa3 = money2integer(summs[2])
         summa4 = money2integer(summs[3])
@@ -2026,18 +2132,59 @@ class KKT(BaseKKT):
         taxes    = digits2string(taxes)
         text     = text.encode(CODE_PAGE).ljust(40, chr(0x0))
 
-        params  = self.password + summa1, summa2, summa3, summa4 + \
+        params  = self.password + summa1 + summa2 + summa3 + summa4 \
                                 + discount + taxes + text
         data, error, command = self.ask(command, params)
         operator = ord(data[0])
         odd = int5.unpack(data[1:6])
         result = {
             'operator': operator,
-            'odd': odd,
+            'odd': integer2money(odd),
         }
         return result
 
-    def x86(self):
+## Implemented
+    def _x8summa(self, summa, text=u"", taxes=[0,0,0,0]):
+        """ Общий метод для скидок, 
+            Команда: 86H. Длина сообщения: 54 байт.
+                Пароль оператора (4 байта)
+                Сумма (5 байт) 0000000000...9999999999
+                Налог 1 (1 байт) «0» – нет, «1»...«4» – налоговая группа
+                Налог 2 (1 байт) «0» – нет, «1»...«4» – налоговая группа
+                Налог 3 (1 байт) «0» – нет, «1»...«4» – налоговая группа
+                Налог 4 (1 байт) «0» – нет, «1»...«4» – налоговая группа
+                Текст (40 байт)
+            Ответ: 86H. Длина сообщения: 3 байта.
+                Код ошибки (1 байт)
+                Порядковый номер оператора (1 байт) 1...30
+        """
+        command = command
+
+        summa = money2integer(summa)
+
+        if summa < 0 or summa > 9999999999:
+            raise ValueError("Summa must be in range 0..9999999999")
+        if len(text) > 40:
+            raise ValueError("Text must be less than 40 chars")
+        if len(taxes) != 4:
+            raise ValueError("Count of taxes must be 4")
+        if not isinstance(taxes, (list, tuple)):
+            raise TypeError("Taxes must be list or tuple")
+        for t in taxes:
+            if t not in range(0, 5):
+               raise RuntimeError("taxes must be only 0,1,2,3,4")
+
+        summa      = int5.pack(summa)
+        taxes      = digits2string(taxes)
+        text       = text.encode(CODE_PAGE).ljust(40, chr(0x0))
+
+        params  = self.password + summa + taxes + text
+        data, error, command = self.ask(command, params, quick=True)
+        operator = ord(data[0])
+        return operator
+
+## Implemented
+    def x86(self, summa, text=u"", taxes=[0,0,0,0]):
         """ Скидка
             Команда: 86H. Длина сообщения: 54 байт.
                 Пароль оператора (4 байта)
@@ -2051,9 +2198,12 @@ class KKT(BaseKKT):
                 Код ошибки (1 байт)
                 Порядковый номер оператора (1 байт) 1...30
         """
-        raise NotImplemented
+        command = 0x86
+        return self._x8summa(command=command, summa=summa,
+                        text=text, taxes=taxes)
 
-    def x87(self):
+## Implemented
+    def x87(self, summa, text=u"", taxes=[0,0,0,0]):
         """ Надбавка
             Команда: 87H. Длина сообщения: 54 байт.
                 Пароль оператора (4 байта)
@@ -2067,7 +2217,9 @@ class KKT(BaseKKT):
                 Код ошибки (1 байт)
                 Порядковый номер оператора (1 байт) 1...30
         """
-        raise NotImplemented
+        command = 0x87
+        return self._x8summa(command=command, summa=summa,
+                        text=text, taxes=taxes)
 
 ## Implemented
     def x88(self):
@@ -2084,6 +2236,7 @@ class KKT(BaseKKT):
         operator = ord(data[0])
         return operator
 
+## Implemented
     def x89(self):
         """ Подытог чека
             Команда: 89H. Длина сообщения: 5 байт.
@@ -2093,9 +2246,13 @@ class KKT(BaseKKT):
                 Порядковый номер оператора (1 байт) 1...30
                 Подытог чека (5 байт) 0000000000...9999999999
         """
-        raise NotImplemented
+        command = 0x89
+        data, error, command = self.ask(command)
+        operator = ord(data[0])
+        return operator
 
-    def x8A(self):
+## Implemented
+    def x8A(self, summa, text=u"", taxes=[0,0,0,0]):
         """ Сторно скидки
             Команда: 8AH. Длина сообщения: 54 байта.
                 Пароль оператора (4 байта)
@@ -2109,9 +2266,12 @@ class KKT(BaseKKT):
                 Код ошибки (1 байт)
                 Порядковый номер оператора (1 байт) 1...30
         """
-        raise NotImplemented
+        command = 0x8A
+        return self._x8summa(command=command, summa=summa,
+                        text=text, taxes=taxes)
 
-    def x8B(self):
+## Implemented
+    def x8B(self, summa, text=u"", taxes=[0,0,0,0]):
         """ Сторно надбавки
             Команда: 8BH. Длина сообщения: 54 байта.
                 Пароль оператора (4 байта)
@@ -2125,7 +2285,9 @@ class KKT(BaseKKT):
                 Код ошибки (1 байт)
                 Порядковый номер оператора (1 байт) 1...30
         """
-        raise NotImplemented
+        command = 0x8B
+        return self._x8summa(command=command, summa=summa,
+                        text=text, taxes=taxes)
 
 ## Implemented
     def x8C(self):
