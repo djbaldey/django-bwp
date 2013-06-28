@@ -730,13 +730,16 @@ class KKT(BaseKKT):
 
 ## Implemented multistring for x17
     def x17_loop(self, text=u'', control_tape=False):
-        """ Печать строки без ограничения на 40 символов """
+        """ Печать строки без ограничения на 36 символов
+            В документации указано 40, но 4 символа выходят за область
+            печати на ФРК. 
+        """
         # Юникодим "ласково", но принудительно:
         t = u'' + text
         last_result = None
         while len(t) > 0:
-            last_result = self.x17(text=t[:40], control_tape=control_tape)
-            t = t[40:]
+            last_result = self.x17(text=t[:36], control_tape=control_tape)
+            t = t[36:]
         return last_result
 
 ## Implemented
@@ -2144,7 +2147,7 @@ class KKT(BaseKKT):
         return result
 
 ## Implemented
-    def _x8summa(self, summa, text=u"", taxes=[0,0,0,0]):
+    def _x8summa(self, command, summa, text=u"", taxes=[0,0,0,0]):
         """ Общий метод для скидок, 
             Команда: 86H. Длина сообщения: 54 байт.
                 Пароль оператора (4 байта)

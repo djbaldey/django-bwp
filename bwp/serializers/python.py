@@ -95,7 +95,7 @@ class SerializerWrapper(object):
             related = getattr(obj, field.name)
             if related:
                 if self.use_natural_keys and hasattr(field.rel.to, 'natural_key'):
-                    value = related.natural_key()
+                    value = related.natural_key()[0]
                 elif self.use_split_keys:
                     value = (related.pk, unicode(related))
                 else:

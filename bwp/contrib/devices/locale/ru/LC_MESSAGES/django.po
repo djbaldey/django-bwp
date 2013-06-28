@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 0.1.7\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-06-26 16:03+1100\n"
+"POT-Creation-Date: 2013-06-28 23:28+1100\n"
 "PO-Revision-Date: 2013-04-16 01:00+1100\n"
 "Last-Translator: Grigoriy Kramarenko <root@rosix.ru>\n"
 "Language: RU\n"
@@ -94,7 +94,7 @@ msgstr "Эта реализация не поддерживает модули �
 msgid "Unknown error"
 msgstr "Неизвестная ошибка"
 
-#: drivers/ShtrihM/__init__.py:221
+#: drivers/ShtrihM/__init__.py:164
 msgid "Type of document must be 0..3"
 msgstr "Тип документа должен быть 0..3"
 
@@ -111,6 +111,10 @@ msgstr "ККТ не отвечает"
 #, python-format
 msgid "Length (%(lehgth)i) not equal length of data (%(data)i)"
 msgstr "Длина (%(lehgth)i) не равна днине данных (%(data)i)"
+
+#: drivers/Zonerich/__init__.py:141
+msgid "Printer is not responding"
+msgstr "Принтер не отвечает"
 
 #~ msgid "nothing"
 #~ msgstr "ничего"

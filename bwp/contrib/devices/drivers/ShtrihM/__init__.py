@@ -44,66 +44,8 @@ from bwp.contrib.devices.remote import RemoteCommand
 from kkt import KKT, int2
 from protocol import *
 
-class ShtrihFRKDummy(object):
+class ShtrihFRK(object):
     kkt = None
-
-    def open(self):
-        """ Начало работы с ККТ """
-        pass
-
-    def status(self, short=True):
-        """ Cостояние ККТ, по-умолчанию короткое """
-        return 'Dummy state'
-
-    def print_receipt(self, header, summa, comment, buyer, document_type=0, nds=0):
-        """ Печать чека """
-        pass
-
-    def print_copy(self):
-        """ Печать копии последнего документа """
-        pass
-
-    def print_continue(self):
-        """ Продолжение печати, прерванной из-за сбоя """
-        pass
-
-    def print_report(self):
-        """ Печать X-отчета """
-        pass
-
-    def close_session(self):
-        """ Закрытие смены с печатью Z-отчета """
-        pass
-
-    def cancel_receipt(self):
-        """ Отмена чека """
-        pass
-
-    def cancel(self):
-        """ Отмена операции """
-        pass
-
-    def setup_date(self):
-        """ Установка даты как в компьютере """
-        pass
-
-    def setup_time(self):
-        """ Установка времени как в компьютере """
-        pass
-
-    def add_money(self, summa):
-        """ Внесение денег в кассу """
-        pass
-
-    def get_money(self, summa):
-        """ Инкассация """
-        pass
-
-    def cut_tape(self):
-        """ Обрезка ленты """
-        pass
-
-class ShtrihFRK(ShtrihFRKDummy):
     is_remote = False
 
     def __init__(self, remote=False, *args, **kwargs):
@@ -144,7 +86,7 @@ class ShtrihFRK(ShtrihFRKDummy):
         """ Печать предварительного чека или чего-либо другого. """
         if self.is_remote:
             return self.remote("print_document",
-                header=header, body=body, text=text)
+                header=header, text=text)
 
         self.reset()
 
@@ -158,7 +100,7 @@ class ShtrihFRK(ShtrihFRKDummy):
         return self.cut_tape()
 
     def print_receipt(self, specs, cash=0, credit=0, packaging=0, card=0,
-    discount=0, document_type=0, nds=0,
+    discount_summa=0, discount_percent=0, document_type=0, nds=0,
     header=u'', comment=u'', buyer=u''):
         """ Печать чека.
             specs - Это список словарей проданных позиций:
@@ -182,7 +124,8 @@ class ShtrihFRK(ShtrihFRKDummy):
         if self.is_remote:
             return self.remote("print_receipt",
                 specs=specs, cash=cash, credit=credit,
-                packaging=packaging, card=card, discount=discount,
+                packaging=packaging, card=card,
+                discount_summa=discount_summa, discount_percent=discount_percent,
                 document_type=document_type, nds=nds,
                 header=header, comment=comment, buyer=buyer,
             )
@@ -227,16 +170,25 @@ class ShtrihFRK(ShtrihFRKDummy):
             title = title[:40]
             method(count=spec['count'], price=spec['price'],
                                         text=title, taxes=taxes)
+            spec_discount_summa = spec.get('discount_summa', 0)
+            if spec_discount_summa:
+                line = u'{0:>36}'.format(u'скидка: -%s' % spec_discount_summa)
+                self.kkt.x17_loop(text=line)
 
         for line in text_buyer.split('\n'):
             self.kkt.x17_loop(text=line)
 
         for line in comment.split('\n'):
             self.kkt.x17_loop(text=line)
+        
+        self.kkt.x17_loop(text=u'='*36)
+        
+        if discount_summa:
+            self.kkt.x86(summa=discount_summa, taxes=taxes)
 
         _text = u"-" * 18
         summs = [cash,credit,packaging,card]
-        return self.kkt.x85(summs=summs, text=_text, taxes=taxes, discount=discount)
+        return self.kkt.x85(summs=summs, taxes=taxes, discount=discount_percent)
 
     def print_copy(self):
         """ Печать копии последнего документа """

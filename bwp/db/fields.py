@@ -82,7 +82,7 @@ class JSONField(TextField):
         defaults.update(kwargs)
         return super(JSONField, self).formfield(**defaults)
 
-    def get_db_prep_save(self, value, **kwargs):
+    def get_db_prep_save(self, value, connection, **kwargs):
         """Convert our JSON object to a string before we save"""
 
         if value == "":
@@ -90,9 +90,15 @@ class JSONField(TextField):
 
         if isinstance(value, (list, dict)):
             value = simplejson.dumps(value, cls=DjangoJSONEncoder,
+                    ensure_ascii=False,
                     indent=4)
+            try:
+                value = value.encode('utf-8')
+            except:
+                pass
 
-        return super(JSONField, self).get_db_prep_save(value, **kwargs)
+        return super(JSONField, self).get_db_prep_save(
+                            value, connection=connection, **kwargs)
 
     def to_python(self, value, **kwargs):
         """Convert our string value to JSON after we load it from the DB"""
@@ -109,6 +115,13 @@ class JSONField(TextField):
             # If string could not parse as JSON it's means that it's Python
             # string saved to JSONField.
             return value
+
+    def _get_val_from_obj(self, obj):
+        if obj is not None:
+            value = getattr(obj, self.attname)
+            return self.get_db_prep_save(value, connection=None)
+        else:
+            return self.get_db_prep_save(self.get_default(), connection=None)
 
 class JSONWidget(Textarea):
     """ Prettify dumps of all non-string JSON data. """

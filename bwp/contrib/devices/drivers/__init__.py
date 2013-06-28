@@ -38,9 +38,10 @@
 """
 from ShtrihM import ShtrihFRK
 from ICPDAS import ICPi7000
+from Zonerich import ZonerichIP
 
 DRIVER_CLASSES = {
-    #~ 'Shtrih-M Receipt Printer':  ShtrihRP,
     'Shtrih-M Fiscal Register':  ShtrihFRK,
+    'Zonerich TCP/IP Printer': ZonerichIP,
     'ICP DAS I-7000/M-7000 DIO': ICPi7000,
 }

@@ -45,7 +45,7 @@ class BaseAPI(object):
     username = 'admin'
     password = 'admin'
     url      = 'http://localhost:8000/api/'
-    timeout  = 3000
+    timeout  = 60000
     error    = None
 
     def __init__(self, **kwargs):
@@ -65,8 +65,11 @@ class BaseAPI(object):
 
     def get_result(self, data, **kwargs):
         """ Запрашивает данные из API """
-        jsondata = json.dumps(data, ensure_ascii=False).encode(
-                                                    'utf8', 'ignore')
+        jsondata = json.dumps(data, ensure_ascii=True)
+        try:
+            jsondata = jsondata.encode('utf-8')
+        except:
+            pass
         request = self.get_request(jsondata)
         try:
             data = request.read()
@@ -102,8 +105,9 @@ class BaseAPI(object):
             return data
         status = data.get('status', None)
         if status != 200:
-            print data.get('message')
-            raise RuntimeError(data.get('message').encode('utf-8'))
+            msg = data.get('message').encode('utf-8')
+            print 'RemoteCommand:', msg
+            raise RuntimeError(msg)
         return data['data']
 
     def method(self, method, **kwargs):
