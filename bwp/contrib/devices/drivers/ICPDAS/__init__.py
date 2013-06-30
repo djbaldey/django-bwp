@@ -63,7 +63,7 @@ class ICPi7000(object):
         if self.is_remote:
             return self.remote("on", module=module, channel=channel)
 
-        return self.icp.off(module=module, channel=channel)
+        return self.icp.on(module=module, channel=channel)
 
     def off(self, module=1, channel=1):
         if self.is_remote:

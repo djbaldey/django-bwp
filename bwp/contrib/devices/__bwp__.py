@@ -58,7 +58,7 @@ class AdminGroupCompose(ManyToManyBWP):
     verbose_name = _('admin groups')
 
 class LocalDeviceAdmin(ModelBWP):
-    list_display = ('title', 'driver', 'id')
+    list_display = ('title', 'driver', 'port', 'username', 'id')
     search_fields = ['title', ]
     compositions = [
         ('users', UserCompose),
@@ -70,7 +70,7 @@ class LocalDeviceAdmin(ModelBWP):
 site.register(LocalDevice, LocalDeviceAdmin)
 
 class RemoteDeviceAdmin(ModelBWP):
-    list_display = ('title', 'driver', 'remote_url', 'remote_id', 'id')
+    list_display = ('title', 'driver', 'remote_url', 'remote_id', 'username', 'id')
     search_fields = ['title', ]
     compositions = [
         ('users', UserCompose),
