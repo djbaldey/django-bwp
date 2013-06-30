@@ -59,14 +59,24 @@ class ICPi7000(object):
 
         return self.icp.status(module=module)
 
-    def on(self, module=1, channel=1):
+    def on(self, module=1, channel=0):
         if self.is_remote:
             return self.remote("on", module=module, channel=channel)
 
-        return self.icp.on(module=module, channel=channel)
+        self.icp.on(module=module, channel=channel)
+        status = self.status(module=module)
+        try:
+            return bool(status[module])
+        except:
+            raise RuntimeError(unicode(_('Device is not responding.')))
 
-    def off(self, module=1, channel=1):
+    def off(self, module=1, channel=0):
         if self.is_remote:
             return self.remote("off", module=module, channel=channel)
 
-        return self.icp.off(module=module, channel=channel)
+        self.icp.off(module=module, channel=channel)
+        status = self.status(module=module)
+        try:
+            return bool(not status[module])
+        except:
+            raise RuntimeError(unicode(_('Device is not responding.')))

@@ -38,10 +38,10 @@
 """
 from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
-import serial, time
+import serial, time, struct
 
 import conf
-from helpers import string2bits, get_control_summ
+from helpers import string2bits, get_control_summ, int2hex
 
 DEFAULT_PORT     = conf.DEFAULT_PORT
 DEFAULT_BOD      = conf.DEFAULT_BOD
@@ -149,7 +149,7 @@ class BaseDCON(object):
             Возвращает позиционные параметры: (error, data)
         """
         data = [ None, None ]
-        self.send(command, params)
+        self.send(command)
         if sleep:
             time.sleep(sleep)
         answer = self.read()
@@ -164,24 +164,35 @@ class BaseDCON(object):
 
 def channels_status(data):
     try:
-        data = string2bits(data[:2])
+        data = string2bits(chr(eval('0x'+data[:2])))
     except:
         pass
     else:
         data.reverse()
-        data = data[1:5]
+        data = data
 
     return data
 
 class ICP(BaseDCON):
     """ Класс с командами, исполняемыми согласно протокола DCON """
 
+    def valid_module(self, module):
+        """ Проверка числа модуля. """
+        if 0 > int(module) > 255:
+            raise RuntimeError(unicode(_('Module must be 0..255')))
+        return True
+
+    def valid_channel(self, channel):
+        """ Проверка числа канала. """
+        if 0 > int(channel) > 7:
+            raise RuntimeError(unicode(_('Channel must be 0..7')))
+        return True
+
     def status(self, module=1):
         """ Возвращает статус устойства. """
-        if int(module) > 9:
-            raise RuntimeError(_('This implementation does not support modules for more than nine'))
+        self.valid_module(module)
 
-        error, data = self.ask('@0%d' % int(module))
+        error, data = self.ask('@%s' % int2hex(int(module)))
         if error:
             raise RuntimeError(self.error.encode('utf-8') or _('Unknown error'))
         else:
@@ -190,18 +201,18 @@ class ICP(BaseDCON):
 
     def on(self, module, channel):
         """ Команда включения канала на заданном модуле. """
-        if int(module) > 9:
-            raise RuntimeError(_('This implementation does not support modules for more than nine'))
+        self.valid_module(module)
+        self.valid_channel(channel)
 
-        command = '#0%d1%d01' % (int(module), int(channel))
+        command = '#%s1%d01' % (int2hex(int(module)), int(channel))
         error, data  = self.ask(command)
         return False if error else True
 
     def off(self, module, channel):
         """ Команда выключения канала на заданном модуле. """
-        if int(module) > 9:
-            raise RuntimeError(_('This implementation does not support modules for more than nine'))
+        self.valid_module(module)
+        self.valid_channel(channel)
 
-        command = '#0%d1%d00' % (int(module), int(channel))
+        command = '#%s1%d00' % (int2hex(int(module)), int(channel))
         error, data  = self.ask(command)
         return False if error else True

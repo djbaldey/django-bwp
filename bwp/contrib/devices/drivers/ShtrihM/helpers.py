@@ -36,6 +36,8 @@
 #   <http://www.gnu.org/licenses/>.
 ###############################################################################
 """
+from bwp.contrib.devices.drivers.helpers import int2, int4, int5, int6,\
+    string2bits, bits2string
 
 def money2integer(money, digits=2):
     """ Преобразует decimal или float значения в целое число, согласно
@@ -70,19 +72,3 @@ def digits2string(digits):
     """
     return ''.join([ chr(x) for x in digits ])
 
-def string2bits(string):
-    """ Convert string to bit array """
-    result = []
-    for char in string:
-        bits = bin(ord(char))[2:]
-        bits = '00000000'[len(bits):] + bits
-        result.extend([int(b) for b in bits])
-    return result
-
-def bits2string(bits):
-    """ Convert bit array to string """
-    chars = []
-    for b in range(len(bits) / 8):
-        byte = bits[b*8:(b+1)*8]
-        chars.append(chr(int(''.join([str(bit) for bit in byte]), 2)))
-    return ''.join(chars)

@@ -36,25 +36,17 @@
 #   <http://www.gnu.org/licenses/>.
 ###############################################################################
 """
+from bwp.contrib.devices.drivers.helpers import string2bits, bits2string
 
 def get_control_summ(string):
     """ Подсчет CRC """
     result = sum([ ord(s) for s in string ])
     return chr(result)
 
-def string2bits(string):
-    """ Convert string to bit array """
-    result = []
-    for char in string:
-        bits = bin(ord(char))[2:]
-        bits = '00000000'[len(bits):] + bits
-        result.extend([int(b) for b in bits])
-    return result
+def int2hex(integer):
+    """ Возвращает очищенный от нуля hex минимальной длинной 2 символа """
+    h = hex(integer)[2:].upper()
+    if len(h) < 2:
+        h = '0'+h
+    return h
 
-def bits2string(bits):
-    """ Convert bit array to string """
-    chars = []
-    for b in range(len(bits) / 8):
-        byte = bits[b*8:(b+1)*8]
-        chars.append(chr(int(''.join([str(bit) for bit in byte]), 2)))
-    return ''.join(chars)
