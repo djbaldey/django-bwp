@@ -165,7 +165,7 @@
     <script type="text/javascript">
         /* GLOBAL VARS */
         window.__bwp_media_prefix__ = "{% filter escapejs %}{% static "bwp/" %}{% endfilter %}";
-        window.AJAX_TIMEOUT = 3000;
+        window.AJAX_TIMEOUT = 10000;
         window.BWP_API_URL = "{% filter escapejs %}{% url "bwp_api" %}{% endfilter %}";
         window.SETTINGS_UNIQUE_KEY = "{% filter escapejs %}{% SETTINGS 'PROJECT_SHORTNAME' %}__user_{{ user.id|default:0 }}{% endfilter %}";
         window.USER_ID = "{{ user.id|default:0 }}";
