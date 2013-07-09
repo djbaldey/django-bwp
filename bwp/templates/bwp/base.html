@@ -173,7 +173,7 @@
         window.USER_LAST_NAME = "{{ user.last_name }}";
         window.USER_FIRST_NAME = "{{ user.first_name }}";
         window.USER = "{{ user }}";
-        window.DEBUG = Boolean("{% filter yesno:"yes," %}{% SETTINGS 'DEBUG' %}{% endfilter %}");
+        window.DEBUG = {% filter lower %}{% SETTINGS 'DEBUG' %}{% endfilter %};
     </script>
 {% endblock %}
 <!-- END: block jsglobalvars -->
