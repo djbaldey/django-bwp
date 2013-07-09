@@ -154,8 +154,9 @@ function jsonAPI(args, callback, to_console, sync) {
     .fail(function(xhr, status, err) {
         // Если есть переадресация, то выполняем её
         if (xhr.getResponseHeader('Location')) {
-            window.location = xhr.getResponseHeader('Location')
+            location = xhr.getResponseHeader('Location')
             .replace(/\?.*$/, "?next=" + window.location.pathname);
+            window.location.replace(location);
             console.log("1:" + xhr.getResponseHeader('Location'));
         } else {
             // Иначе извещаем пользователя ответом и в консоль
@@ -174,8 +175,9 @@ function jsonAPI(args, callback, to_console, sync) {
          */
         if ((json.status >=300) && (json.status <400) && (json.data.Location != undefined)) {
             redirect = function() {
-                window.location.href = json.data.Location
+                location = json.data.Location
                 .replace(/\?.*$/, "?next=" + window.location.pathname);
+                window.location.replace(location);
             }
             if (json.message) {
                 handlerShowAlert(json.message, 'alert-error', redirect);
