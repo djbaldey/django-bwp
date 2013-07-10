@@ -73,7 +73,7 @@ class Template(AbstractGroup):
             default=True,
             verbose_name = _('by default'))
     webodt = models.FileField(upload_to=webodt_conf.WEBODT_TEMPLATE_PATH,
-            blank=True,
+            null=True, blank=True,
             verbose_name = _('template file'))
     text = models.TextField(
             blank=True,
