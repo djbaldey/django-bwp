@@ -176,7 +176,8 @@ class BaseDevice(AbstractGroup):
             if hasattr(self, 'remote_id') and self.remote_id:
                 D['remote_id'] = self.remote_id
             if hasattr(self, 'config') and self.config:
-                D.update(self.config)
+                config = self.config or {}
+                D.update(config)
 
             self._device = cls(**D)
 
