@@ -193,7 +193,6 @@ class LocalDevice(BaseDevice):
 
     config = fields.JSONField(
             default={}, blank=True,
-            editable=False,
             verbose_name = _('config'))
 
     admin_password = models.CharField(
