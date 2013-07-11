@@ -40,6 +40,7 @@ from django.db import models
 from django.contrib.auth.models import User, Group
 from django.utils.translation import ugettext_lazy as _
 from bwp.contrib.abstracts.models import AbstractGroup
+from bwp.db import fields
 
 from drivers import DRIVER_CLASSES
 
@@ -174,6 +175,8 @@ class BaseDevice(AbstractGroup):
                 D['remote_url'] = self.remote_url
             if hasattr(self, 'remote_id') and self.remote_id:
                 D['remote_id'] = self.remote_id
+            if hasattr(self, 'config') and self.config:
+                D.update(self.config)
 
             self._device = cls(**D)
 
@@ -187,6 +190,11 @@ class LocalDevice(BaseDevice):
             max_length=50,
             blank=True,
             verbose_name = _('port'))
+
+    config = fields.JSONField(
+            default={}, blank=True,
+            editable=False,
+            verbose_name = _('config'))
 
     admin_password = models.CharField(
             max_length=100,

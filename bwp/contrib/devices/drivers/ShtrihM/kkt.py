@@ -117,7 +117,7 @@ class BaseKKT(object):
 
         self.bod            = kwargs.get('bod', DEFAULT_BOD)
         self.parity         = kwargs.get('parity', serial.PARITY_NONE)
-        self.stopbits       = kwargs.get('parity', serial.STOPBITS_ONE)
+        self.stopbits       = kwargs.get('stopbits', serial.STOPBITS_ONE)
         self.timeout        = kwargs.get('timeout', 0.7)
         self.writeTimeout   = kwargs.get('writeTimeout', 0.7)
 
