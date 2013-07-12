@@ -71,10 +71,10 @@ def get_object_or_none(qs, **kwargs):
         try:
             return qs.objects.get(**kwargs)
         except Exception as e:
-            print_debug(e)
+            #~ print_debug(e)
             return None
     try:
         return qs.get(**kwargs)
     except Exception as e:
-        print_debug(e)
+        #~ print_debug(e)
         return None
