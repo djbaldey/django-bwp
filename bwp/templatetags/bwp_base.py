@@ -48,6 +48,13 @@ def SETTINGS(key):
     return getattr(conf, key, getattr(conf.settings, key, ''))
 
 @register.simple_tag
+def DEMO():
+    mode = getattr(conf, 'DEMO', getattr(conf.settings, 'DEMO', False))
+    if mode:
+        return '<span class="label label-important">DEMO</span>'
+    return ''
+
+@register.simple_tag
 def mini_library():
     if conf.settings.DEBUG:
         return ''
