@@ -108,7 +108,7 @@ class BaseAPI(object):
             msg = data.get('message')
             try:
                 msg = msg.encode('utf-8')
-            else:
+            except:
                 pass
             print 'RemoteCommand:', msg
             raise RuntimeError(msg)
