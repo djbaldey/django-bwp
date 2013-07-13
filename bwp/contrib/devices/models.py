@@ -41,6 +41,7 @@ from django.contrib.auth.models import User, Group
 from django.utils.translation import ugettext_lazy as _
 from bwp.contrib.abstracts.models import AbstractGroup
 from bwp.db import fields
+import hashlib, datetime
 
 from drivers import DRIVER_CLASSES
 
@@ -160,7 +161,10 @@ class BaseDevice(AbstractGroup):
         """
         if not getattr(self, '_device', None):
             cls = DRIVER_CLASSES[self.driver]
-            
+            if not self.remote and hasattr(cls, 'SpoolerDevice'):
+                cls.SpoolerDevice = SpoolerDevice
+                cls.local_device = self
+
             D = {'remote': self.remote }
             if hasattr(self, 'username') and self.username:
                 D['username'] = self.username
@@ -214,7 +218,6 @@ class LocalDevice(BaseDevice):
         super(LocalDevice, self).delete(**kwargs)
         register.load()
 
-
 class RemoteDevice(BaseDevice):
     """ Удалённое устройство """
     remote = True
@@ -230,3 +233,57 @@ class RemoteDevice(BaseDevice):
         verbose_name = _('remote device')
         verbose_name_plural = _('remote devices')
         unique_together = ('remote_url', 'remote_id')
+
+class SpoolerDevice(models.Model):
+    """ Диспетчер очереди команд для устройств """
+    created = models.DateTimeField(
+            auto_now_add=True,
+            verbose_name=_('created'))
+    updated = models.DateTimeField(
+            auto_now=True,
+            verbose_name=_('updated'))
+
+    STATE_WAITING = 1
+    STATE_ERROR = 2
+    STATE_CHOICES = (
+        (STATE_WAITING, _('waiting')),
+        (STATE_ERROR,   _('error')),
+    )
+
+    state = models.IntegerField(
+            choices=STATE_CHOICES,
+            default=1,
+            verbose_name = _('state'))
+    local_device = models.ForeignKey(
+            LocalDevice,
+            verbose_name = _('local device'))
+    method = models.CharField(
+            max_length=50,
+            verbose_name = _('method'))
+    kwargs = fields.JSONField(
+            default={}, blank=True,
+            verbose_name = _('config'))
+    group_hash = models.CharField(
+            max_length=32,
+            blank=True,
+            verbose_name = _('method'))
+
+    def __unicode__(self):
+        return unicode(self.local_device)
+
+    class Meta:
+        ordering = ['pk']
+        verbose_name = _('spooler device')
+        verbose_name_plural = _('spooler device')
+
+    def generate_hash(self):
+        md5 = hashlib.md5()
+        md5.update(str(self.local_device.pk))
+        md5.update(self.method)
+        md5.update(str(self.created or datetime.datetime.now()))
+        return md5.hexdigest()
+
+    def save(self, **kwargs):
+        if not self.group_hash:
+            self.group_hash = self.generate_hash()
+        super(SpoolerDevice, self).save(**kwargs)

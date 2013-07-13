@@ -101,6 +101,61 @@ def password_prapare(password):
 class BaseKKT(object):
     """ Базовый класс включает методы непосредственного общения с
         устройством.
+        
+        Общие положения.
+        В информационном обмене «Хост – ККТ» хост является главным 
+        устройством, а ККТ – подчиненным. Поэтому направление 
+        передачи данных определяется хостом. Физический интерфейс 
+        «Хост – ККТ» – последовательный интерфейс RS-232С, без линий 
+        аппаратного квитирования.
+        Скорость обмена по интерфейсу RS-232С – 2400, 4800, 9600, 19200,
+                                                38400, 57600, 115200.
+        При обмене хост и ККТ оперируют сообщениями. Сообщение может 
+        содержать команду (от хоста) или ответ на команду (от ККТ). 
+        Формат сообщения:
+            Байт 0: признак начала сообщения STX;
+            Байт 1: длина сообщения (N) – ДВОИЧНОЕ число.
+            В длину сообщения не включаются байты 0, LRC и этот байт;
+            Байт 2: код команды или ответа – ДВОИЧНОЕ число;
+            Байты 3 – (N + 1): параметры, зависящие от команды
+            (могут отсутствовать);
+            Байт N + 2 – контрольная сумма сообщения – байт LRC
+            – вычисляется поразрядным сложением (XOR) всех байтов
+            сообщения (кроме байта 0). 
+        Сообщение считается принятым, если приняты байт STX 
+        и байт длины. Сообщение считается принятым корректно, если 
+        приняты байты сообщения, определенные его байтом длины, и 
+        байт LRC.
+        Каждое принятое сообщение подтверждается передачей 
+        одного байта (ACK – положительное подтверждение, NAK – 
+        отрицательное подтверждение).
+        Ответ NAK свидетельствует об ошибке интерфейса (данные приняты
+        с ошибкой или не распознан STX), но не о неверной команде.
+        Отсутствие подтверждения в течение тайм-аута означает, что
+        сообщение не принято.
+        Если в ответ на сообщение ККТ получен NAK, сообщение не
+        повторяется, ККТ ждет уведомления ENQ для повторения ответа.
+        После включения питания ККТ ожидает байт запроса – ENQ.
+        Ответ от ККТ в виде байта NAK означает, что ККТ находится в
+            состоянии ожидания очередной команды;
+            ответ ACK означает, что ККТ подготавливает ответное
+            сообщение, отсутствии ответа означает отсутствие связи между
+            хостом и ККТ.
+
+        По умолчанию устанавливаются следующие параметры порта: 8 бит 
+        данных, 1 стоп- бит, отсутствует проверка на четность, 
+        скорость обмена 4800 бод и тайм-аут ожидания каждого байта, 
+        равный 50 мс. Две последние характеристики обмена могут быть 
+        изменены командой от хоста. Минимальное время между приемом 
+        последнего байта сообщения и передачей подтверждения, и между 
+        приемом ENQ и реакцией на него равно тайм-ауту приема байта. 
+        Количество повторов при неудачных сеансах связи (нет 
+        подтверждения после передачи команды, отрицательное 
+        подтверждение после передачи команды, данные ответа приняты с 
+        ошибкой или не распознан STX ответа) настраивается при 
+        реализации программного обеспечения хоста. Коды знаков STX, 
+        ENQ, ACK и NAK – коды WIN1251.
+
     """
     error = u''
 
@@ -136,20 +191,6 @@ class BaseKKT(object):
 
         return self._conn
 
-    def check(self):
-        """ Проверка на готовность """
-        self._write(ENQ)
-        answer = self._read(1)
-        if not self.conn.isOpen():
-            self.disconnect()
-            raise RuntimeError(unicode(_(u'Serial port closed unexpectedly')))
-        if answer in (NAK, ACK):
-            return True
-        elif not answer:
-            return True
-        self.disconnect()
-        raise RuntimeError(unicode(_('Unknown answer')))
-
     def connect(self):
         """ Устанавливает соединение """
         try:
@@ -165,7 +206,7 @@ class BaseKKT(object):
             self.error = unicode(e)
             return False
 
-        return self.check()
+        return self.check_port()
 
     def disconnect(self):
         """ Закрывает соединение """
@@ -173,6 +214,57 @@ class BaseKKT(object):
             self._conn.close()
             self._conn = None
         return True
+
+    def check_port(self):
+        """ Проверка на готовность порта """
+        if not self.conn.isOpen():
+            raise RuntimeError(unicode(_(u'Serial port closed unexpectedly')))
+        return True
+
+    def check_state(self):
+        """ Проверка на ожидание команды """
+        self.check_port()
+        self._write(ENQ)
+        answer = self._read(1)
+        if not answer:
+            time.sleep(MIN_TIMEOUT)
+            answer = self._read(1)
+        if answer in (NAK, ACK):
+            return answer
+        elif not answer:
+            raise RuntimeError(unicode(_(u'No communication with the device')))
+
+    def check_STX(self):
+        """ Проверка на данные """
+        answer = self._read(1)
+        # Для гарантированного получения ответа стоит обождать
+        # некоторое время, от минимального (0.05 секунд) 
+        # до 12.8746337890625 секунд по умолчанию для 12 попыток
+        n = 0
+        timeout = MIN_TIMEOUT
+        while not answer and n < MAX_ATTEMPT:
+            time.sleep(timeout)
+            answer = self._read(1)
+            n += 1
+            timeout *= 1.5
+        if answer == STX:
+            return True
+        else:
+            raise RuntimeError(unicode(_(u'No communication with the device')))
+
+    def check_NAK(self):
+        """ Проверка на ожидание команды """
+        answer = self.check_state()
+        if answer == NAK:
+            return True
+        return False
+
+    def check_ACK(self):
+        """ Проверка на подготовку ответа """
+        answer = self.check_state()
+        if answer == ACK:
+            return True
+        return False
 
     def _read(self, read=None):
         """ Высокоуровневый метод считывания соединения """
@@ -189,28 +281,13 @@ class BaseKKT(object):
     def clear(self):
         """ Сбрасывает ответ, если он болтается в ККМ """
         def one_round():
-            self._flush()
-            time.sleep(MIN_TIMEOUT*10)
             self._write(ENQ)
             answer = self._read(1)
             if answer == NAK or not answer:
                 return True
-            elif answer == ACK:
-                time.sleep(MIN_TIMEOUT*2)
-                answer = self._read(1)
-                if answer != STX:
-                    self.disconnect()
-                    raise RuntimeError(unicode(_('KKT is not responding')))
-                time.sleep(MIN_TIMEOUT*2)
-                length = ord(self._read(1))
-                time.sleep(MIN_TIMEOUT*2)
-                data = self._read(length+1)
-                self._write(ACK)
-                time.sleep(MIN_TIMEOUT*2)
-                return False
-            else:
-                self.disconnect()
-                raise RuntimeError(unicode(_('KKT is not responding')))
+            time.sleep(MIN_TIMEOUT*10)
+            return False
+
         n = 0
         while n < MAX_ATTEMPT and not one_round():
             n += 1
@@ -220,68 +297,57 @@ class BaseKKT(object):
 
     def read(self):
         """ Считывает весь ответ ККМ """
-        if not self.conn:
-            raise RuntimeError(self.error)
-
-        answer = self._read(1)
-        if answer == ACK:
-            # Для гарантированного получения ответа стоит обождать
-            # некоторое время, от минимального (0.05 секунд) 
-            # до 12.8746337890625 секунд по умолчанию для 12 попыток
-            answer = ''
-            n = 0
-            timeout = MIN_TIMEOUT
-            while not answer and n < MAX_ATTEMPT:
-                time.sleep(timeout)
-                answer = self._read(1)
-                n += 1
-                timeout *= 1.5
-
-            if answer == STX:
-                length  = ord(self._read(1))
-                command = self._read(1)
-                error   = self._read(1)
-                data    = self._read(length-2)
-                if length-2 != len(data):
-                    self._write(NAK)
-                    self.disconnect()
-                    raise RuntimeError(
-                        unicode(_('Length (%(lehgth)i) not equal length of data (%(data)i)') % \
-                        {'length': length, 'data': len(data)}
-                        )
-                    )
-                control_read = self._read(1)
-                control_summ = get_control_summ(chr(length) + command \
-                                                + error + data)
-                if control_read != control_summ:
-                    self._write(NAK)
-                    self.disconnect()
-                    raise RuntimeError("Wrong crc %i must be %i " % (
-                                    ord(control_summ), ord(control_read)))
-                self._write(ACK)
-                self._flush()
-                time.sleep(MIN_TIMEOUT*2)
-                if ord(error) != 0:
-                    self.disconnect()
-                    raise KKTException(ord(error))
-                return {
-                    'command': command,
-                    'error':   ord(error),
-                    'data':    data
-                }
-            else:
+        answer = self.check_state()
+        if answer == NAK :
+            i = 0
+            while i < MAX_ATTEMPT and not self.check_ACK():
+                i += 1
+            if i >= MAX_ATTEMPT:
                 self.disconnect()
-                raise RuntimeError(unicode(_('KKT is not responding')))
-        elif answer == NAK:
-            return None
-        else:
+                raise RuntimeError(unicode(_(u'No communication with the device')))
+        elif not answer:
             self.disconnect()
-            raise RuntimeError(unicode(_('KKT is not responding')))
+            raise RuntimeError(unicode(_(u'No communication with the device')))
+        j = 0
+        while j < MAX_ATTEMPT and not self.check_STX():
+            j += 1
+        if j >= MAX_ATTEMPT:
+            self.disconnect()
+            raise RuntimeError(unicode(_(u'No communication with the device')))
+        
+        length  = ord(self._read(1))
+        command = self._read(1)
+        error   = self._read(1)
+        data    = self._read(length-2)
+        if length-2 != len(data):
+            self._write(NAK)
+            self.disconnect()
+            raise RuntimeError(
+                unicode(_('Length (%(lehgth)i) not equal length of data (%(data)i)') % \
+                {'length': length, 'data': len(data)}
+                )
+            )
+        control_read = self._read(1)
+        control_summ = get_control_summ(chr(length) + command \
+                                        + error + data)
+        if control_read != control_summ:
+            self._write(NAK)
+            self.disconnect()
+            raise RuntimeError("Wrong crc %i must be %i " % (
+                            ord(control_summ), ord(control_read)))
+        self._write(ACK)
+        self._flush()
+        #~ time.sleep(MIN_TIMEOUT*2)
+        return {
+            'command': command,
+            'error':   ord(error),
+            'data':    data
+        }
 
     def send(self, command, params, quick=False):
         """ Стандартная обработка команды """
-        if not self.conn:
-            raise RuntimeError(self.error)
+
+        #~ self.clear()
 
         if not quick:
             self._flush()
@@ -292,8 +358,10 @@ class BaseKKT(object):
             length += len(params)
         content = chr(length) + data
         control_summ = get_control_summ(content)
+
         self._write(STX + content + control_summ)
         self._flush()
+
         return True
 
     def ask(self, command, params=None, sleep=0, pre_clear=True,\
@@ -311,15 +379,18 @@ class BaseKKT(object):
 
         if params is None and not without_password:
             params = self.password
-        if pre_clear:
-            self.clear()
+        #~ if pre_clear:
+            #~ self.clear()
         self.send(command, params, quick=quick)
         if sleep:
             time.sleep(sleep)
         a = self.read()
+        answer, error, command = (a['data'], a['error'], a['command'])
         if disconnect:
             self.disconnect()
-        return (a['data'], a['error'], a['command'])
+        if error:
+            raise KKTException(error)
+        return answer, error, command
 
 class KKT(BaseKKT):
     """ Класс с командами, исполняемыми согласно протокола """

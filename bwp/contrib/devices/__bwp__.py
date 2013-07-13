@@ -57,6 +57,15 @@ class AdminGroupCompose(ManyToManyBWP):
     model = Group
     verbose_name = _('admin groups')
 
+class SpoolerDeviceCompose(ManyToManyBWP):
+    model = SpoolerDevice
+    list_display = ('state', 'method', 'group_hash', 'id')
+
+class SpoolerDeviceAdmin(ModelBWP):
+    list_display = ('local_device', 'state', 'method', 'group_hash', 'id')
+
+site.register(SpoolerDevice, SpoolerDeviceAdmin)
+
 class LocalDeviceAdmin(ModelBWP):
     list_display = ('title', 'driver', 'port', 'username', 'id')
     search_fields = ['title', ]
@@ -65,6 +74,7 @@ class LocalDeviceAdmin(ModelBWP):
         ('groups', GroupCompose),
         ('admin_users', AdminUserCompose),
         ('admin_groups', AdminGroupCompose),
+        ('spoolerdevice_set', SpoolerDeviceCompose),
     ]
 
 site.register(LocalDevice, LocalDeviceAdmin)

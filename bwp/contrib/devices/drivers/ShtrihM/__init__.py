@@ -37,15 +37,20 @@
 ###############################################################################
 """
 from django.utils.translation import ugettext_lazy as _
-import datetime
+import datetime, time
 
 from bwp.contrib.devices.remote import RemoteCommand
 
 from kkt import KKT, int2
 from protocol import *
 
+SPOOLER_TIMEOUT = 1
+SPOOLER_MAX_ATTEMPT = 30
+
 class ShtrihFRK(object):
-    kkt = None
+    SpoolerDevice      = None
+    local_device = None
+    kkt       = None
     is_remote = False
 
     def __init__(self, remote=False, *args, **kwargs):
@@ -54,6 +59,101 @@ class ShtrihFRK(object):
             self.remote = RemoteCommand(*args, **kwargs)
         else:
             self.kkt = KKT(*args, **kwargs)
+
+    def make_spooler(self, method, **kwargs):
+        if not self.SpoolerDevice:
+            return method(**kwargs)
+        if method.im_self == self:
+            method = method.im_func.func_name
+        else:
+            method = 'kkt.'+ method.im_func.func_name
+
+        spooler = self.SpoolerDevice(
+            local_device=self.local_device,
+            method=method,
+            kwargs=kwargs,
+        )
+        spooler.save()
+
+        return spooler.group_hash
+
+    def append_spooler(self, group_hash, method, **kwargs):
+        if not self.SpoolerDevice:
+            return method(**kwargs)
+        if method.im_self == self:
+            method = method.im_func.func_name
+        else:
+            method = 'kkt.'+ method.im_func.func_name
+
+        spooler = self.SpoolerDevice(
+            local_device=self.local_device,
+            method=method,
+            kwargs=kwargs,
+            group_hash=group_hash,
+        )
+        spooler.save()
+        return spooler.group_hash
+
+    def result_spooler(self, group_hash, method, strict=True, **kwargs):
+        if not self.SpoolerDevice:
+            return method(**kwargs)
+        if method.im_self == self:
+            method = method.im_func.func_name
+        else:
+            method = 'kkt.'+ method.im_func.func_name
+
+        spooler = self.SpoolerDevice(
+            local_device=self.local_device,
+            method=method,
+            kwargs=kwargs,
+            group_hash=group_hash,
+        )
+        spooler.save()
+
+        STATE_WAITING = self.SpoolerDevice.STATE_WAITING
+        STATE_ERROR   = self.SpoolerDevice.STATE_ERROR
+
+        all_sps = self.SpoolerDevice.objects.filter(
+                local_device=self.local_device, state=STATE_WAITING
+                ).order_by('pk')
+        self_sps = all_sps.filter(group_hash=spooler.group_hash)
+        min_pk = self_sps[0].pk
+
+        other_sps = all_sps.exclude(group_hash=spooler.group_hash)
+        c = other_sps.count()
+        o = other_sps[0].pk < min_pk if c else False
+        n = 0
+        while c and o and n < SPOOLER_MAX_ATTEMPT:
+            time.sleep(SPOOLER_TIMEOUT)
+            n += 1
+            other_sps = all_sps.exclude(group_hash=spooler.group_hash)
+            c = other_sps.count()
+            o = other_sps[0].pk < min_pk if c else False
+
+        if c and o:
+            if strict:
+                self_sps.all().delete()
+                raise RuntimeError(unicode(_('The device is busy large queue')))
+            else:
+                self_sps.update(state=STATE_ERROR)
+                return u'Queued'
+        else:
+            result = None
+            for s in self_sps.order_by('pk'):
+                method = eval('self.'+ s.method)
+                kwargs = s.kwargs
+                try:
+                    result = method(**kwargs)
+                except Exception as e:
+                    if strict:
+                        self_sps.all().delete()
+                        raise e
+                    else:
+                        self_sps.update(state=STATE_ERROR)
+                        return u'Queued'
+            #~ time.sleep(SPOOLER_TIMEOUT)
+            self_sps.all().delete()
+            return result
 
     def open(self):
         """ Начало работы с ККТ """
@@ -68,8 +168,8 @@ class ShtrihFRK(object):
             return self.remote("status", short=short)
 
         if short:
-            return self.kkt.x10()
-        return self.kkt.x11()
+            return self.result_spooler(None, self.kkt.x10)
+        return self.result_spooler(None, self.kkt.x11)
 
     def reset(self):
         """ Сброс предыдущей ошибки или остановки печати """
@@ -88,16 +188,16 @@ class ShtrihFRK(object):
             return self.remote("print_document",
                 header=header, text=text)
 
-        self.reset()
+        group_hash = self.make_spooler(self.reset)
 
         if header:
             for line in header.split('\n'):
-                self.kkt.x12_loop(text=line)
+                self.append_spooler(group_hash, self.kkt.x12_loop, text=line)
 
         for line in text.split('\n'):
-            self.kkt.x17_loop(text=line)
+            self.append_spooler(group_hash, self.kkt.x17_loop, text=line)
 
-        return self.cut_tape()
+        return self.result_spooler(group_hash, self.cut_tape, strict=False)
 
     def print_receipt(self, specs, cash=0, credit=0, packaging=0, card=0,
     discount_summa=0, discount_percent=0, document_type=0, nds=0,
@@ -130,21 +230,25 @@ class ShtrihFRK(object):
                 header=header, comment=comment, buyer=buyer,
             )
 
-        self.reset()
+        group_hash = self.make_spooler(self.reset)
 
         taxes = [0,0,0,0]
         if nds > 0:
             taxes[0] = 2
             # Включаем начисление налогов на ВСЮ операцию чека
-            self.kkt.x1E(table=1, row=1, field=17, value=chr(0x1))
+            self.append_spooler(group_hash,
+                self.kkt.x1E, table=1, row=1, field=17, value=chr(0x1))
             # Включаем печатать налоговые ставки и сумму налога
-            self.kkt.x1E(table=1, row=1, field=19, value=chr(0x2))
-            self.kkt.x1E(table=6, row=2, field=1, value=int2.pack(nds * 100))
+            self.append_spooler(group_hash,
+                self.kkt.x1E, table=1, row=1, field=19, value=chr(0x2))
+            self.append_spooler(group_hash,
+                self.kkt.x1E, table=6, row=2, field=1, value=int2.pack(nds * 100))
 
-        self.kkt.x8D(document_type) # Открыть чек
+        self.append_spooler(group_hash,
+            self.kkt.x8D, document_type=document_type) # Открыть чек
 
         for line in header.split('\n'):
-            self.kkt.x17_loop(text=line)
+            self.append_spooler(group_hash, self.kkt.x17_loop, text=line)
 
         if document_type == 0:
             text_buyer = u"Принято от %s"
@@ -168,36 +272,40 @@ class ShtrihFRK(object):
         for spec in specs:
             title = u''+spec['title']
             title = title[:40]
-            method(count=spec['count'], price=spec['price'],
+            self.append_spooler(group_hash,
+                method, count=spec['count'], price=spec['price'],
                                         text=title, taxes=taxes)
             spec_discount_summa = spec.get('discount_summa', 0)
             if spec_discount_summa:
                 line = u'{0:>36}'.format(u'скидка: -%s' % spec_discount_summa)
-                self.kkt.x17_loop(text=line)
+                self.append_spooler(group_hash,
+                    self.kkt.x17_loop, text=line)
 
         for line in text_buyer.split('\n'):
-            self.kkt.x17_loop(text=line)
+            self.append_spooler(group_hash, self.kkt.x17_loop, text=line)
 
         for line in comment.split('\n'):
-            self.kkt.x17_loop(text=line)
+            self.append_spooler(group_hash, self.kkt.x17_loop, text=line)
         
-        self.kkt.x17_loop(text=u'='*36)
+        self.append_spooler(group_hash, self.kkt.x17_loop, text=u'='*36)
         
         if discount_summa:
-            self.kkt.x86(summa=discount_summa, taxes=taxes)
+            self.append_spooler(group_hash,
+                self.kkt.x86, summa=discount_summa, taxes=taxes)
 
         _text = u"-" * 18
         summs = [cash,credit,packaging,card]
-        return self.kkt.x85(summs=summs, taxes=taxes, discount=discount_percent)
+        return self.result_spooler(group_hash,
+            self.kkt.x85, summs=summs, taxes=taxes, discount=discount_percent)
 
     def print_copy(self):
         """ Печать копии последнего документа """
         if self.is_remote:
             return self.remote("print_copy")
 
-        self.reset()
+        group_hash = self.make_spooler(self.reset)
 
-        return self.kkt.x8C()
+        return self.result_spooler(group_hash, self.kkt.x8C)
 
     def print_continue(self):
         """ Продолжение печати, прерванной из-за сбоя """
@@ -211,18 +319,18 @@ class ShtrihFRK(object):
         if self.is_remote:
             return self.remote("print_report")
 
-        self.reset()
+        group_hash = self.make_spooler(self.reset)
 
-        return self.kkt.x40()
+        return self.result_spooler(group_hash, self.kkt.x40)
 
     def close_session(self):
         """ Закрытие смены с печатью Z-отчета """
         if self.is_remote:
             return self.remote("close_session")
 
-        self.reset()
+        group_hash = self.make_spooler(self.reset)
 
-        return self.kkt.x41()
+        return self.result_spooler(group_hash, self.kkt.x41)
 
     def cancel_receipt(self):
         """ Отмена чека """
