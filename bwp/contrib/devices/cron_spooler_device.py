@@ -59,11 +59,11 @@ if __name__ == "__main__":
     # Если есть моложе 1минуты - где-то уже запущен процесс их обработки
     if spoolers.filter(state=WAITING, created__gt=new).count():
         pass
-        print u"Где-то уже запущен процесс обработки"
+        print "Где-то уже запущен процесс обработки"
     elif not spoolers.count():
         pass
-        print u"Пусто"
+        print "Пусто"
     else:
-        print u"Запуск"
+        print "Запуск"
         run(spoolers)
 
