@@ -74,6 +74,7 @@ class UserAdmin(ModelBWP):
         'pk': 'input-micro', 'id': 'input-micro',
         'is_superuser': 'input-mini', 'is_staff': 'input-mini',
     }
+    ordering = ('username',)
     exclude = ['password',]
     search_fields = ('username', 'email')
     compositions = [
@@ -83,6 +84,7 @@ site.register(User, UserAdmin)
 
 class UserCompose(ComposeBWP):
     model = User
+    ordering = ('username',)
 
 class GroupAdmin(ModelBWP):
     list_display = ('__unicode__', 'id')
