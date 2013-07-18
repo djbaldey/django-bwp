@@ -1012,6 +1012,7 @@ function eventObjectSelect() {
     if (DEBUG) {console.log('function:'+'eventObjectSelect')};
     $this = $(this);
     data = $this.data();
+    console.log(data)
     FIELD.val(data.pk).text(data.unicode).attr('title', data.unicode)
         .change().siblings('button[disabled]').removeAttr('disabled');
     $('#modal').modal('hide');
@@ -1054,6 +1055,7 @@ function handlerFieldSelect($field) {
     FIELD = $field;
     data = $field.data();
     object = REGISTER[data.id];
+    object.editable_field = $field;
     model =  REGISTER[validatorID(data.model)];
     selector = new classSelector(model);
     mhead = 'Выберите требуемый объект';

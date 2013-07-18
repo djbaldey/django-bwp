@@ -202,6 +202,7 @@ INSTALLED_APPS = (
     'quickapi',
     ### Необязательные
     'bwp.contrib.webodt',
+    'bwp.contrib.reports',
     'bwp.contrib.contacts',
     'bwp.contrib.qualifiers',
     'bwp.contrib.devices',
@@ -216,7 +217,7 @@ INSTALLED_APPS = (
 WEBODT_TMP_DIR = abspath('..', 'tmp-webodt')
 if not os.path.exists(WEBODT_TMP_DIR):
     os.makedirs(WEBODT_TMP_DIR)
-WEBODT_TEMPLATE_PATH = abspath('templates', 'webodt')
+WEBODT_TEMPLATE_PATH = abspath('..', 'media', 'reports')
 
 ########################################################################
 #                   END SETTINGS FOR APPLICATIONS                      #

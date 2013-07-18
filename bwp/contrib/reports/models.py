@@ -39,11 +39,16 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.contenttypes.models import ContentType
+from django.template import Context
 
 from bwp.contrib.abstracts.models import AbstractGroup
 from bwp.contrib.qualifiers.models import Document as GeneralDocument
+from bwp.contrib import webodt
+from bwp.contrib.webodt.shortcuts import render_to_response
 from bwp.contrib.webodt import conf as webodt_conf
 from bwp.conf import settings
+
+import os
 
 class Document(AbstractGroup):
     """ Документы """
@@ -73,16 +78,18 @@ class Template(AbstractGroup):
             default=True,
             verbose_name = _('by default'))
     webodt = models.FileField(upload_to=webodt_conf.WEBODT_TEMPLATE_PATH,
-            null=True, blank=True,
             verbose_name = _('template file'))
-    text = models.TextField(
-            blank=True,
-            verbose_name = _('template'))
 
     class Meta:
         ordering = ['document', 'title']
         verbose_name = _('template')
         verbose_name_plural = _('templates')
+
+    def render_to_response(self, dictionary=None, filename=None, format='odt'):
+        filename = filename or unicode(self.document).encode('utf-8')
+        temlate_name = os.path.basename(self.webodt.name)
+        return render_to_response(temlate_name,
+            format=format, dictionary=dictionary, filename=filename)
 
     def save(self, **kwargs):
         if self.is_default:
@@ -93,12 +100,26 @@ class Template(AbstractGroup):
 class DocumentBound(models.Model):
     """ Привязка документов """
 
+    BOUND_OBJECT = 1
+    BOUND_MODEL = 2
+    BOUND_CHOICES = (
+        (BOUND_OBJECT, _('object')),
+        (BOUND_MODEL, _('model')),
+    )
+
     document = models.ForeignKey(
             Document,
             verbose_name = _('document'))
     content_type = models.ForeignKey(
             ContentType,
             verbose_name = _('content type'))
+    bound = models.IntegerField(
+            choices=BOUND_CHOICES,
+            default=BOUND_OBJECT,
+            verbose_name = _('bound'))
+
+    def __unicode__(self):
+        return unicode(self.content_type)
 
     class Meta:
         ordering = ['document', 'content_type', ]

@@ -540,7 +540,12 @@ def API_device_command(request, device, command, params={}, **kwargs):
             data = attr(**params)
             return JSONResponse(data=data)
         except Exception as e:
-            return JSONResponse(status=400, message=unicode(e))
+            print e
+            try:
+                message = unicode(e)
+            except UnicodeError:
+                message = str(e)
+            return JSONResponse(status=400, message=message)
     return JSONResponse(status=400)
 
 QUICKAPI_DEFINED_METHODS = {
