@@ -542,11 +542,9 @@ function handlerCommitInstance(instance, done) {
         /* Функция оперирует только экземплярами класса classObject */
         //~ if ((!isEmpty(obj.fix)) || (obj.fixaction == 'delete')) {
             $.extend(true, obj.fields, obj.fix);
-            _send_fields = obj.get_fields();
-            $.extend(true, _send_fields, obj.fix);
             _objects.push(
                 {   pk: obj.pk,
-                    fields: _send_fields,
+                    fields: obj.fields,
                     model: obj.model.name,
                     action: obj.fixaction,
                     fix: obj.fix,
@@ -1012,7 +1010,6 @@ function eventObjectSelect() {
     if (DEBUG) {console.log('function:'+'eventObjectSelect')};
     $this = $(this);
     data = $this.data();
-    console.log(data)
     FIELD.val(data.pk).text(data.unicode).attr('title', data.unicode)
         .change().siblings('button[disabled]').removeAttr('disabled');
     $('#modal').modal('hide');
@@ -1055,7 +1052,6 @@ function handlerFieldSelect($field) {
     FIELD = $field;
     data = $field.data();
     object = REGISTER[data.id];
-    object.editable_field = $field;
     model =  REGISTER[validatorID(data.model)];
     selector = new classSelector(model);
     mhead = 'Выберите требуемый объект';
