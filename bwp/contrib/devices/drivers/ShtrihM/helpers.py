@@ -45,7 +45,7 @@ def money2integer(money, digits=2):
         
         Например, money2integer(2.3456, digits=3) вернёт  2346
     """
-    return int(round(float(money), digits) * 10**digits)
+    return int(round(round(float(money), digits) * 10**digits))
 
 def integer2money(integer, digits=2):
     """ Преобразует целое число в значение float, согласно
