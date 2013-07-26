@@ -1,13 +1,15 @@
 {# Шаблон Underscore #}{% load bwp_verbatim %}{% verbatim %}
-<fieldset>
     {% _.each(data.widgets, function(widget) { %}
         {% if (!widget.hidden) { %}
-            <div class="control-group">
-                <label class="control-label" for="field_{{ data.id }}_{{ widget.name }}">
-                    {% if (widget.attr.required) {%}<b>{{ widget.label }}</b>
-                    {% } else { %}{{ widget.label }}{%}%}
-                </label>
-                <div class="controls">
+            <tr>
+                <td class="span2">
+                    <label class="control-label" for="field_{{ data.id }}_{{ widget.name }}">
+                        {% if (widget.attr.required) {%}<b>{{ widget.label }}</b>
+                        {% } else { %}{{ widget.label }}{%}%}
+                    </label>
+                </td>
+                <td>
+                    <div class="controls">
         {% } %}
 
         {% if (widget.choices) { %}
@@ -145,21 +147,9 @@
                 </select>
         {% } %}
         {% if (!widget.hidden) { %}
-                </div>
-            </div>
+                    </div>
+                </td>
+            </tr>
         {% } %}
     {% }); %}
-</fieldset>
 {% endverbatim %}
-
-{# Кнопки действий #}
-<div class="control-group">
-    <div class="controls">
-        <div class="btn-group">
-            {% include "bwp/underscore/_button_delete.html" %}
-            {% include "bwp/underscore/_button_reset.html" %}
-            {% include "bwp/underscore/_button_apply.html" %}
-            {% include "bwp/underscore/_button_save.html" %}
-        </div>
-    </div>
-</div>

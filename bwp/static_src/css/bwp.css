@@ -81,6 +81,14 @@
     }
 /* END ALTER BOOTSTRAP */
 
+#alert-place {
+    position: absolute;
+    left: 50%; top: 50%;
+    height: 100px; margin-top: -50px;
+    width: 600px; margin-left: -300px;
+    z-index: -1000;
+}
+
 .tab-content {
 /*
     min-height: 250px;
@@ -217,6 +225,18 @@ input.input-micro {
 
 th.input-micro, td.input-micro {
     width: 1em;
+}
+
+select, textarea, input[type="text"], input[type="password"], input[type="datetime"], input[type="datetime-local"], input[type="date"], input[type="month"], input[type="time"], input[type="week"], input[type="number"], input[type="email"], input[type="url"], input[type="search"], input[type="tel"], input[type="color"], .uneditable-input {
+    margin-bottom: 0;
+}
+
+input, textarea, .uneditable-input {
+    width: 98%;
+}
+
+.input-append, .input-prepend {
+    margin-bottom: 0;
 }
 
 div.dataTables_length label {

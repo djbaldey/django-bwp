@@ -52,11 +52,13 @@ class GeneralWidget(object):
     tag = None
     attr = None
 
-    def __init__(self, **kwargs):
+    def __init__(self, force_visible=False, **kwargs):
         for key, val in kwargs.items():
             self.__dict__[key] = val
         if self.attr is None:
             self.attr = {}
+        if force_visible:
+            self.is_hidden = False
 
     def __str__(self):
         dic = self.get_dict()
@@ -75,7 +77,7 @@ class GeneralWidget(object):
             'hidden': self.is_hidden,
             'tag': self.tag,
             'attr': self.attr,
-            'model': None,
+            'model': unicode(self.field.model._meta),
             'choices': None,
         }
         if self.field.rel:
@@ -111,13 +113,14 @@ class InputWidget(GeneralWidget):
     tag = 'input'
     input_type = 'text'
 
-class HiddenWidget(InputWidget):
+class IntegerWidget(InputWidget):
+    input_type = 'number'
+
+class AutoWidget(IntegerWidget):
     is_hidden = True
-    input_type = 'hidden'
 
 class PasswordWidget(InputWidget):
-    tag = 'input'
-    input_type = 'text'
+    input_type = 'password'
 
 class CheckboxWidget(InputWidget):
     input_type = 'checkbox'
@@ -134,38 +137,59 @@ class ImageWidget(InputWidget):
 class URLWidget(InputWidget):
     input_type = 'url'
 
+class TimeWidget(InputWidget):
+    input_type = 'time'
+
+class DateWidget(InputWidget):
+    input_type = 'date'
+
+class DateTimeWidget(InputWidget):
+    input_type = 'datetime-local'
+
+class MonthWidget(InputWidget):
+    input_type = 'month'
+
+class WeekWidget(InputWidget):
+    input_type = 'week'
+
+class TelWidget(InputWidget):
+    input_type = 'tel'
+
+class ColorWidget(InputWidget):
+    input_type = 'color'
+
 WIDGETS_FOR_DBFIELD = {
     models.ForeignKey:                  (SelectWidget, None),
     models.ManyToManyField:             (SelectMultipleWidget, None),
     models.OneToOneField:               (SelectWidget, None),
-    models.AutoField:                   (HiddenWidget, {'class': 'integerfield'}),
-    models.BigIntegerField:             (InputWidget, {'class': 'bigintegerfield'}),
+    models.AutoField:                   (AutoWidget, {'class': 'integerfield'}),
+    models.BigIntegerField:             (IntegerWidget, {'class': 'bigintegerfield'}),
     models.BooleanField:                (CheckboxWidget, None),
     models.CharField:                   (InputWidget, None),
     models.CommaSeparatedIntegerField:  (InputWidget, None),
-    models.DateField:                   (InputWidget, {'class': 'datefield'}),
-    models.DateTimeField:               (InputWidget, {'class': 'datetimefield'}),
+    models.DateField:                   (DateWidget, {'class': 'datefield'}),
+    models.DateTimeField:               (DateTimeWidget, {'class': 'datetimefield'}),
     models.DecimalField:                (InputWidget, {'class': 'decimalfield'}),
     models.EmailField:                  (EmailWidget, None),
     models.FileField:                   (FileWidget,  None),
     models.FilePathField:               (InputWidget, {'class': 'filepathfield'}),
     models.FloatField:                  (InputWidget, {'class': 'floatfield'}),
     models.ImageField:                  (ImageWidget, None),
-    models.IntegerField:                (InputWidget, {'class': 'integerfield'}),
+    models.IntegerField:                (IntegerWidget, {'class': 'integerfield'}),
     models.IPAddressField:              (InputWidget, {'class': 'ipaddressfield'}),
     models.GenericIPAddressField:       (InputWidget, {'class': 'ipaddressfield'}),
-    models.NullBooleanField:            (InputWidget, {'class': 'nullbooleanfield'}),
-    models.PositiveIntegerField:        (InputWidget, {'class': 'positiveintegerfield'}),
-    models.PositiveSmallIntegerField:   (InputWidget, {'class': 'positivesmallintegerfield'}),
+    models.NullBooleanField:            (CheckboxWidget, {'class': 'nullbooleanfield'}),
+    models.PositiveIntegerField:        (IntegerWidget, {'class': 'positiveintegerfield'}),
+    models.PositiveSmallIntegerField:   (IntegerWidget, {'class': 'positivesmallintegerfield'}),
     models.SlugField:                   (InputWidget, {'class': 'slugfield'}),
-    models.SmallIntegerField:           (InputWidget, {'class': 'smallintegerfield'}),
+    models.SmallIntegerField:           (IntegerWidget, {'class': 'smallintegerfield'}),
     models.TextField:                   (TextWidget,  {'class': 'textfield', "rows": "3",}),
-    models.TimeField:                   (InputWidget, {'class': 'timefield'}),
+    models.TimeField:                   (TimeWidget, {'class': 'timefield'}),
     models.URLField:                    (URLWidget,   None),
     bwp_fields.JSONField:               (TextWidget,  {'class': 'textfield', "rows": "3",}),
 }
 
-def get_widget_from_field(field):
+def get_widget_from_field(field, force_visible=False):
     try:
         widget_class, attr = WIDGETS_FOR_DBFIELD[type(field)]
     except:
@@ -174,4 +198,4 @@ def get_widget_from_field(field):
         attr = {}
     else:
         attr = deepcopy(attr)
-    return widget_class(field=field, attr=attr) # instance
+    return widget_class(field=field, attr=attr, force_visible=force_visible) # instance

@@ -44,7 +44,7 @@ from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.contrib.auth.views import login as _login, logout as _logout
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
-from django.db import transaction
+from django.db import transaction, models
 from django.forms.models import modelform_factory
 
 from quickapi.http import JSONResponse, JSONRedirect, MESSAGES, DjangoJSONEncoder
@@ -316,7 +316,7 @@ def API_get_object(request, model, pk=None, copy=None, clone=None, filler={}, **
 @api_required
 @login_required
 def API_get_collection(request, model, pk=None, compose=None, page=1,
-    per_page=None, query=None, order_by=None, fields=None, **kwargs):
+    per_page=None, query=None, order_by=None, fields=None, filters=None, **kwargs):
     """ *Возвращает коллекцию экземпляров указанной модели.*
         
         ##### ЗАПРОС
@@ -331,7 +331,8 @@ def API_get_collection(request, model, pk=None, compose=None, page=1,
         5. **"per_page"** - количество на странице, по-умолчанию определяется BWP;
         6. **"query"** - поисковый запрос;
         7. **"order_by"** - сортировка объектов.
-        8. **"fields"** - поля объектов.
+        8. **"fields"** - поля объектов для поиска.
+        9. **"filters"** - дополнительные фильтры.
         
         ##### ОТВЕТ
         Формат ключа **"data"**:
@@ -371,6 +372,7 @@ def API_get_collection(request, model, pk=None, compose=None, page=1,
         'per_page': per_page,
         'order_by': order_by,
         'fields': fields,
+        'filters': filters,
         'pk':pk, 
     }
 
@@ -440,7 +442,6 @@ def API_commit(request, objects, **kwargs):
         `Boolean`
     """
     transaction.commit()
-    print_debug('def API_commit.objects ==', objects)
     if not objects:
         transaction.rollback()
         return JSONResponse(data=False, status=400, message=unicode(_("List objects is blank!")))
@@ -457,6 +458,8 @@ def API_commit(request, objects, **kwargs):
                 field = bwp.opts.get_field_by_name(name)[0]
                 if field.rel and isinstance(val, list) and len(val) == 2:
                     item['fields'][name] = val[0]
+                elif isinstance(field, models.DateTimeField):
+                    item['fields'][name] = val.replace('T', ' ')
             data = item['fields']
             # Новый объект
             if not item.get('pk', False):
@@ -492,6 +495,7 @@ def API_commit(request, objects, **kwargs):
 
     except Exception as e:
         transaction.rollback()
+        print_debug('def API_commit.objects ==', objects)
         if settings.DEBUG:
             return JSONResponse(status=500, message=unicode(e))
         raise e
@@ -540,7 +544,12 @@ def API_device_command(request, device, command, params={}, **kwargs):
             data = attr(**params)
             return JSONResponse(data=data)
         except Exception as e:
-            return JSONResponse(status=400, message=unicode(e))
+            print e
+            try:
+                message = unicode(e)
+            except UnicodeError:
+                message = str(e)
+            return JSONResponse(status=400, message=message)
     return JSONResponse(status=400)
 
 QUICKAPI_DEFINED_METHODS = {

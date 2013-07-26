@@ -1,0 +1,77 @@
+{# Шаблон Underscore #}{% load bwp_verbatim %}{% verbatim %}
+
+{% var index = data.filters.length -1 %}
+
+<tr data-filter_index="{{ index }}">
+
+    {%/* Поле фильтра */%}
+    <td class="input-micro">
+        <select data-action="filter_change_field" data-id="{{ data.id }}"
+            data-filter_index="{{ index }}">
+            <option selected value="">-</option>
+        {% _.each(data.meta.filters, function(filter) { %}
+            <option value="{{ filter.field }}" title="{{ filter.field }}">{{ filter.field_title }}</option>
+        {% }); %}
+        </select>
+    </td>
+
+    {%/* Тип фильтра */%}
+    <td class="input-micro">
+        <select data-action="filter_change_type" data-id="{{ data.id }}"
+            data-filter_index="{{ index }}"
+            disabled>
+            <option selected value="">-</option>
+        {% _.each(FILTER_TYPES, function(type, i) { %}
+            <option value="{{ type[0] }}">
+                {{ type[1] }}
+            </option>
+        {% }); %}
+        </select>
+    </td>
+
+    {%/* Значения фильтра */%}
+    <td data-place="filter_values" data-filter_index="{{ index }}">
+    </td>
+
+    {%/* Активность фильтра */%}
+    <td class="input-micro">
+        <button
+            class="btn{% if (item.active) { %} active{% } %}"
+            data-toggle="button"
+            data-action="filter_change_active"
+            data-filter_index="{{ index }}"
+            data-id="{{ data.id }}"
+            title="Активный">
+            <i class="icon-ok"></i>
+        </button>
+    </td>
+    {%/* Инверсия фильтра */%}
+    <td class="input-micro">
+        <button
+            class="btn{% if (item.inverse) { %} active{% } %}"
+            data-toggle="button"
+            data-action="filter_change_inverse"
+            data-id="{{ data.id }}"
+            data-filter_index="{{ index }}"
+            disabled
+            title="Инверсия">
+            <i class="icon-random"></i>
+        </button>
+    </td>
+
+    {%/* Удаление фильтра */%}
+    <td class="input-micro">
+        <button
+            class="btn"
+            data-action="filter_remove"
+            data-id="{{ data.id }}"
+            data-filter_index="{{ index }}"
+            title="Удалить фильтр">
+            <i class="icon-remove"></i>
+        </button>
+    </td>
+
+</tr>
+
+
+{% endverbatim %}

@@ -59,9 +59,11 @@ class SerializerWrapper(object):
         # converted to string first.
         if is_protected_type(value):
             if   isinstance(value, datetime):
-                val = str(value).split('.')[0] # обрезаем милисекунды
+                val = value.isoformat()
+                val = val.split('.')[0] # обрезаем милисекунды
+                val = val.replace(' ', 'T') # на случай, если не локальное время 
             elif isinstance(value, (date, time)):
-                val = str(value)
+                val = value.isoformat()
             else:
                 val = value
             self._current[field.name] = val

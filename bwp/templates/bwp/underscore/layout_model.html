@@ -5,11 +5,11 @@
 <div class="subnav pull-right">
     <div class="pull-left form-search">
         <div class="input-prepend input-append">
-            <button class="btn btn-mini" data-id="{{ data.id }}" title="Обновить" data-action="collection_filter_refresh">
+            <button class="btn btn-mini" data-id="{{ data.id }}" title="Обновить" data-action="collection_search_refresh">
                 <i class="icon-refresh"></i>
             </button>
-            <input data-action="collection_filter" data-id="{{ data.id }}" type="search" class="search input-large" placeholder="Поиск">
-            <button class="btn btn-mini" data-id="{{ data.id }}" data-action="collection_filtersettings">
+            <input data-action="collection_search" data-id="{{ data.id }}" type="search" class="search input-large" placeholder="Поиск" value="{{ data.query }}">
+            <button class="btn btn-mini" data-id="{{ data.id }}" data-action="collection_searchsettings">
                 <i class="icon-wrench"></i>
             </button>
         </div>
@@ -47,19 +47,37 @@
                         <li><a href="#" data-action="{{ action.name }}" data-id={{ data.id }}>{{ action.label }}</a></li>
                     {% }); %}
                 </ul>
-            {% if (data.actions.print) { %}
-                <button class="btn btn-mini" data-id="{{ data.id }}" data-action="collection_print">
+            </div>
+        {% } %}
+        {% if (data.collection_reports) { %}
+            <div class="btn-group">
+                <a  class="btn btn-mini dropdown-toggle"
+                    data-toggle="dropdown"
+                    href="#">
                     <i class="icon-print"></i>
-                    Печать
-                </button>
-            {% } %}
+                    Отчёты
+                    <span class="caret"></span>
+                </a>
+                <ul class="dropdown-menu">
+                    {% _.each(data.collection_reports, function(report) { %}
+                        <li><a href="#" data-action="collection_print" data-id={{ data.id }}
+                            data-pk={{ report.pk }}>
+                                {{ report.title }}
+                            </a>
+                        </li>
+                    {% }); %}
+                </ul>
             </div>
         {% } %}
             <div class="btn-group">
-                <button class="btn btn-mini" data-id="{{ data.id }}" data-action="collection_filters">
+            {% if (!isEmpty(data.meta.filters) || DEBUG) { %}
+                <button class="btn btn-mini" data-id="{{ data.id }}"
+                    data-action="collection_filters"
+                    data-toggle="button">
                     <i class="icon-filter"></i>
                     Фильтры
                 </button>
+            {% } %}
                 <a  class="btn btn-mini dropdown-toggle"
                     data-toggle="dropdown"
                     title="Количество на странице"
@@ -78,6 +96,7 @@
     </div>
 </div>
 
-<div id="collection_{{ data.id }}">
-</div>
+<div id="collection_filters_{{ data.id }}"></div>
+
+<div id="collection_{{ data.id }}"></div>
 {% endverbatim %}

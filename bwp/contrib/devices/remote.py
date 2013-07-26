@@ -106,6 +106,7 @@ class BaseAPI(object):
         status = data.get('status', None)
         if status != 200:
             msg = data.get('message')
+            print repr(msg)
             try:
                 msg = msg.encode('utf-8')
             except:

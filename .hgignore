@@ -9,9 +9,7 @@
 \.db$
 ^wiki/.*$
 ^example/static/.*$
-^example/media/.*\.sql$
-^example/media/.*\.log$
-^example/media/.*\.txt$
+^example/media/.*$
 ^build/.*$
 ^dist/.*$
 ^BWP.egg-info/.*$

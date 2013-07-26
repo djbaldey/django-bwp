@@ -253,6 +253,7 @@ class BaseModel(object):
     search_key          = 'query'
 
     ordering            = None
+    filters             = None
     actions             = []
 
     paginator           = Paginator
@@ -294,6 +295,7 @@ class BaseModel(object):
         self.get_fields()        # инициализация полей
         self.get_search_fields() # инициализация поисковых полей
         self.get_file_fields()   # инициализация файловых полей
+        self.get_filters()       # инициализация фильтров
         if not hasattr(self, '_meta'):
             self._meta = self.get_meta()
         return self._meta
@@ -419,6 +421,52 @@ class BaseModel(object):
                     ]
         return self.file_fields
 
+    def get_filters(self):
+        """ Возвращает словарь фильтров """
+        def _get_filter(field):
+            if isinstance(field, (str, unicode)):
+                orign = field
+                opts = self.opts
+                fields = field.split('__')
+                title = ''
+                for f in fields:
+                    field = opts.get_field_by_name(f)[0]
+                    if field.rel:
+                        title += unicode(field.verbose_name) + ': '
+                        field = field.rel.get_related_field()
+                        opts = field.model._meta
+                    else:
+                        title += unicode(field.verbose_name)
+            else:
+                orign = field.name
+                title = unicode(field.verbose_name)
+            return {
+                'model': unicode(field.model._meta),
+                'field': orign,
+                'field_title': title,
+                'widget': get_widget_from_field(field, True).get_dict(),
+                }
+
+        if self.filters is None:
+            fields = self.opts.fields
+            return [ _get_filter(x) for x in fields ]
+        if isinstance(self.filters, (list, tuple)):
+            return [ _get_filter(x) for x in self.filters ]
+        return []
+
+    def get_list_reports(self):
+        L = []
+        if 'bwp.contrib.reports' in conf.settings.INSTALLED_APPS:
+            ct = ContentType.objects.get_for_model(self.model)
+            docs = ct.document_set.all()
+            for doc in docs:
+                L.append({
+                    'pk': doc.pk,
+                    'title': doc.title,
+                    'for_object': doc.for_object,
+                })
+        return L
+
     def prepare_widget(self, field_name):
         """ Возвращает виджет с заменой атрибутов, согласно настроек
             текущего класса.
@@ -504,8 +552,43 @@ class BaseModel(object):
         per_page = per_page or self.list_per_page
         return self.paginator(queryset, per_page, orphans, allow_empty_first_page)
 
-    def queryset(self, request=None, **kwargs):
-        return self.model._default_manager.get_query_set()
+    def queryset_from_filters(self, queryset, filters, **kwargs):
+        qs = queryset
+        for f in filters:
+            #~ print f
+            if f.get('active', False):
+                if f.get('inverse', False):
+                    action = qs.exclude
+                else:
+                    action = qs.filter
+                _type = f.get('type', 'exact')
+                _field = f.get('field', 'id')
+                if _type == 'blank':
+                    orm_lookup = '%s__exact' % _field
+                    bit = ''
+                elif _type in ('in', 'range'):
+                    orm_lookup = '%s__%s' % (_field, _type)
+                    bit = f.get('values')
+                    if not isinstance(bit, (list, tuple)):
+                        bit = []
+                    if _type == 'range' and len(bit) != 2:
+                        bit = [None, None]
+                else:
+                    orm_lookup = '%s__%s' % (_field, _type)
+                    try:
+                        bit = f.get('values')[0]
+                    except:
+                        continue
+                    if bit == '':
+                        continue
+                qs = action(models.Q(**{orm_lookup: bit}),)
+        return qs
+
+    def queryset(self, request=None, filters=[], **kwargs):
+        qs = self.model._default_manager.get_query_set()
+        if filters:
+            qs = self.queryset_from_filters(qs, filters, **kwargs)
+        return qs
 
     def get_ordering(self, request=None, **kwargs):
         """
@@ -776,6 +859,9 @@ class ComposeBWP(BaseModel):
         meta['related_field'] = self.related_field
         meta['related_model'] = str(self.related_model.opts)
         meta['is_many_to_many'] = self.is_many_to_many
+        meta['reports'] = self.get_list_reports()
+        meta['filters'] = self.get_filters()
+        meta['filters_dict'] = dict([ (x['field'], x) for x in meta['filters'] ])
         return meta
 
     def get(self, request, pk, **kwargs):
@@ -785,10 +871,11 @@ class ComposeBWP(BaseModel):
     def get_collection(self, request, pk, **kwargs):
         """ Метод получения вложенных объектов """
         try:
-            object = self.related_model.queryset(request, **kwargs).get(pk=pk)
+            object = self.related_model.queryset(request).get(pk=pk)
         except:
             return get_http_404(request)
         qs = getattr(object, self.related_name).select_related().all()
+        qs = self.queryset_from_filters(qs, **kwargs)
         qs = self.filter_queryset(request, qs, **kwargs)
         qs = self.page_queryset(request, qs, **kwargs)
         properties = [ x['name'] for x in self.get_list_display()\
@@ -896,6 +983,8 @@ class ModelBWP(BaseModel):
         meta['widgets'] = self.get_list_widgets()
         meta['widgetsets'] = self.get_list_widgetsets()
         meta['reports'] = self.get_list_reports()
+        meta['filters'] = self.get_filters()
+        meta['filters_dict'] = dict([ (x['field'], x) for x in meta['filters'] ])
         return meta
 
     def prepare_meta(self, request):
@@ -1023,22 +1112,6 @@ class ModelBWP(BaseModel):
         """
         composes = self.get_composes(request)
         return dict([ (compose.related_name, compose) for compose in composes ])
-
-    def get_list_reports(self):
-        L = []
-        if 'bwp.contrib.reports' in conf.settings.INSTALLED_APPS:
-            ct = ContentType.objects.get_for_model(self.model)
-            bounds = ct.documentbound_set.all()
-            for bound in bounds:
-                doc = bound.document
-                templates = list(doc.template_set.all().values(
-                    'pk', 'title', 'is_default'))
-                L.append({
-                    'pk': doc.pk,
-                    'title': doc.title,
-                    'templates': templates,
-                })
-        return L
 
 class GlobalUserSettings(AbstractUserSettings):
     """ Глобальные настройки пользователей """
