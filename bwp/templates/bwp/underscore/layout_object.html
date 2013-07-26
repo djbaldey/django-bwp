@@ -23,6 +23,24 @@
         </button>
     {% }); %}
     </div>
+    <div class="btn-group subtabs">
+    {% if (data.model.object_reports) { %}
+        <button class="btn btn-mini dropdown-toggle"
+            data-toggle="dropdown">            
+            <i class="icon-print"></i> Отчёты
+            <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu">
+            {% _.each(data.model.object_reports, function(report) { %}
+                <li><a href="#" data-action="object_print" data-id={{ data.id }}
+                    data-pk={{ report.pk }}>
+                        {{ report.title }}
+                    </a>
+                </li>
+            {% }); %}
+        </ul>
+    {% }; %}
+    </div>
 {% } %}
     <div class="tab-content">
     {% _.each(data.composes, function(compose) { %}
@@ -33,11 +51,29 @@
         </div>
     {% }); %}
         <div class="tab-pane active" id="objectpane_{{ data.id }}">
-            <legend>{{ data.label }}</legend>
-            <div class="form form-horizontal" data-id="{{ data.id }}">
+            <h3>{{ data.label }}</h3>
+            <table class="table table-condensed" data-id="{{ data.id }}">
+                <tbody>
         {% endverbatim %}
                 {% include "bwp/underscore/_object_fields.html" %}
-            </div>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th colspan="2" class="align-center">
+                            <div class="control-group">
+                                <div class="controls">
+                                    <div class="btn-group">
+                                        {% include "bwp/underscore/_button_delete.html" %}
+                                        {% include "bwp/underscore/_button_reset.html" %}
+                                        {% include "bwp/underscore/_button_apply.html" %}
+                                        {% include "bwp/underscore/_button_save.html" %}
+                                    </div>
+                                </div>
+                            </div>
+                        </th>
+                    </tr>
+                </tfoot>
+            </table>
         </div>
     </div>
 </div>

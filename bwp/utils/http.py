@@ -45,19 +45,19 @@ from quickapi.http import JSONResponse
 def is_api(request):
     return bool(request.path == redirect('bwp.views.api')['Location'])
 
-def get_http_400(self, request):
+def get_http_400(request):
     """ Если запрос на API, то возвращаем JSON, иначе обычный ответ """
     if is_api(request):
         return JSONResponse(status=400)
     return HttpResponseBadRequest()
 
-def get_http_403(self, request):
+def get_http_403(request):
     """ Если запрос на API, то возвращаем JSON, иначе обычный ответ """
     if is_api(request):
         return JSONResponse(status=404)
     return HttpResponseForbidden()
 
-def get_http_404(self, request):
+def get_http_404(request):
     """ Если запрос на API, то возвращаем JSON, иначе обычный ответ """
     if is_api(request):
         return JSONResponse(status=404)

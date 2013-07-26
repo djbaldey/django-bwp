@@ -42,7 +42,24 @@
 var NEWOBJECTKEY = 'newObject',
     FIELD = null,
     delay = null,
-    ACTION_WAIT = null;
+    ACTION_WAIT = null,
+    FILTER_TYPES = [
+        ['exact',       'Равно',            1],
+        ['gt',          'Больше',           1],
+        ['gte',         'Больше или равно', 1],
+        ['lt',          'Меньше',           1],
+        ['lte',         'Меньше или равно', 1],
+
+        ['range',       'Диапазон',         2],
+        ['in',          'Список',           99],
+
+        ['icontains',   'Содержит',         1],
+        ['istartswith', 'Начинается',       1],
+        ['iendswith',   'Заканчивается',    1],
+
+        ['isnull',      'Пусто',            0],
+        ['blank',       'Пустая строка',    0],
+    ]
 
 // Глобальные хранилища-регистраторы
 window.TEMPLATES = {}; // Шаблоны
@@ -123,17 +140,19 @@ function validatorID(id) {
 function handlerHideAlert() {
     if (DEBUG) {console.log('function:'+'handlerHideAlert')};
     $('.alert').alert('close');
+    $('#alert-place').css('z-index', '-1000');
 };
-function handlerShowAlert(msg, type, callback) {
+function handlerShowAlert(msg, type, callback, timeout) {
     if (DEBUG) {console.log('function:'+'handlerShowAlert')};
+    timeout = timeout || 5000;
+    console.log(msg);
     if (!type) { type = 'alert-error'; };
-    if (type == 'alert-error') { console.log(msg); };
     html = TEMPLATES.alert({ msg: msg, type: type });
-    $('#alert-place').html(html);
+    $('#alert-place').css('z-index', '1000').html(html);
     $(window).scrollTop(0);
     $('.alert').alert();
-    if (callback) { delay(callback, 5000); }
-    else { delay(handlerHideAlert, 5000); };
+    if (callback) { delay(callback, timeout); }
+    else { delay(handlerHideAlert, timeout); };
     return false;
 };
 
@@ -236,7 +255,7 @@ function classSettings(default_callback) {
 
     /* Настройки по-умолчанию */
     _server = {}; // непосредственный объект хранения
-    _local = { tabs:[], };  // непосредственный объект хранения
+    _local = { tabs:[], filters:{}, };  // непосредственный объект хранения
     _values = { 'server': _server, 'local': _local }; // ссылки на хранилища
 
     /* Пока с сервера не получены данные */
@@ -255,7 +274,7 @@ function classSettings(default_callback) {
      */
     _callback = default_callback; // functions
     _run_callback = function() {
-        if (_callback) {
+        if (_callback === "function") {
             _callback();
             if (!_callback.__not_reset_after__) {
                 _callback = default_callback;
@@ -406,6 +425,10 @@ function classModel(app, data) {
     this.query = null;
     this.fix = {};
     this.paginator = null;
+    _collection_reports     = [];
+    this.collection_reports = _collection_reports;
+    _object_reports     = [];
+    this.object_reports = _object_reports;
     _composes     = {};
     this.composes = _composes;
     _actions = {};
@@ -417,6 +440,23 @@ function classModel(app, data) {
             _composes[item.meta.related_name] = item;
         });
     };
+    if (data.meta.reports) {
+        $.each(data.meta.reports, function(index, item) {
+            if (item.for_object) {
+                _object_reports.push(item);
+            } else {
+                _collection_reports.push(item);
+            };
+        });
+        if (this.collection_reports.length <1) {
+            this.collection_reports = null;
+        };
+        if (this.object_reports.length <1) {
+            this.object_reports = null;
+        };
+    };
+    //~ console.log(this.collection_reports)
+    //~ console.log(this.object_reports)
     // Register
     if ((!this.meta) || (!this.meta.list_display)) {
         console.log("Модель не может быть зарегистрирована.")
@@ -432,6 +472,7 @@ function classSelector(model, multiple) {
     this.template = TEMPLATES.layoutSelector;
     // Запрещаем все действия.
     this.perms = { 'delete': false, 'add': false, 'change': false };
+    this.actions = null;
     this.meta.list_display = this.meta.list_display.slice(0,1);
     this.meta.list_per_page = 5;
     this.multiple = multiple ? true : false;
@@ -599,6 +640,7 @@ function handlerCommitComposeM2M(compose, done) {
 /* Отрисовка макета модели, композиции или объекта */
 function handlerLayoutRender(instance, just_prepare) {
     if (DEBUG) {console.log('function:'+'handlerLayoutRender')};
+    //~ console.log(instance);
     html = instance.template({data:instance});
     if (!just_prepare) {
         $('#layout_'+instance.id).html(html);
@@ -676,11 +718,25 @@ function handlerCollectionRender(instance, just_prepare) {
  */
 function handlerCollectionGet(instance) {
     if (DEBUG) {console.log('function:'+'handlerCollectionGet')};
+    var _filters = [];
+    if (instance.filters) {
+        $.each(instance.filters, function(i, item) {
+            _filters.push({
+                active:  item.active,
+                field:   item.field,
+                type:    item.type,
+                inverse: item.inverse,
+                values:  item.values,
+            })
+        });
+    };
     args = {
         "method"  : "get_collection",
         "model"   : instance.model,
         "compose" : instance.compose       || null,
         "order_by": instance.meta.ordering || null,
+        "fields":   instance.meta.search_fields || null,
+        "filters":  _filters,
     };
     args[instance.meta.search_key] = instance.query || null;
     if (instance.object) {
@@ -700,9 +756,9 @@ function handlerCollectionGet(instance) {
 
 // События
 
-/* Обработчик события фильтрации коллекции */
-function eventCollectionFilter() {
-    if (DEBUG) {console.log('function:'+'eventCollectionFilter')};
+/* Обработчик события поиска по коллекции */
+function eventCollectionSearch() {
+    if (DEBUG) {console.log('function:'+'eventCollectionSearch')};
     search         = this;
     data           = $(search).data();
     instance       = REGISTER[data['id']];
@@ -712,10 +768,10 @@ function eventCollectionFilter() {
     return jqxhr;
 };
 
-/* Обработчик события обновления фильтрации коллекции */
-function eventCollectionFilterRefresh() {
-    if (DEBUG) {console.log('function:'+'eventCollectionFilterRefresh')};
-    search         = $(this).siblings('input[data-action=collection_filter][data-id='+ $(this).data().id +']');
+/* Обработчик события обновления поиска по коллекции */
+function eventCollectionSearchRefresh() {
+    if (DEBUG) {console.log('function:'+'eventCollectionSearchRefresh')};
+    search         = $(this).siblings('input[data-action=collection_search][data-id='+ $(this).data().id +']');
     data           = $(search).data();
     instance       = REGISTER[data['id']];
     instance.query = $(search).val() || null;
@@ -1277,6 +1333,310 @@ function eventTabClose() {
 };
 
 ////////////////////////////////////////////////////////////////////////
+//                              ФИЛЬТРЫ                               //
+////////////////////////////////////////////////////////////////////////
+
+/* Обработчик заргузки сохранённых фильтров для моделей и коллекций */
+function handlerFiltersFromSettings() {
+    if (DEBUG) {console.log('function:'+'handlerFiltersFromSettings')};
+    if (!SETTINGS.local.filters) {return false;};
+    $.each(SETTINGS.local.filters, function(key, val) {
+        var instance = REGISTER[key];
+        instance.filters = val;
+    });
+    return true;
+};
+
+/* Обработчик отображения фильтров*/
+function handlerFiltersRender(instance) {
+    if (DEBUG) {console.log('function:'+'handlerFiltersRender')};
+    if (instance instanceof classObject) {  
+        return false;
+    };
+    html = TEMPLATES.filters({data:instance});
+    $('#collection_filters_'+instance.id).html(html);
+    return html;
+};
+
+/* Обработчик события показа-сокрытия фильтров */
+function eventFilters() {
+    if (DEBUG) {console.log('function:'+'eventFilters')};
+    var data = $(this).data(),
+        instance = REGISTER[data.id];
+    if ($('#collection_filters_'+data.id+' table').size() >0) {
+        $('#collection_filters_'+data.id).html('');
+        var _filters = [];
+        $.each(instance.filters, function(index, item) {
+            if (item.field && item.type && item.values) {
+                _filters.push(item);
+            };
+        });
+        instance.filters = _filters;
+    } else {
+        handlerFiltersRender(instance);
+    }
+    return true;
+};
+
+/* Обработчик добавления фильтра */
+function handlerFilterAppend(instance) {
+    if (DEBUG) {console.log('function:'+'handlerFilterAppend')};
+    if (instance instanceof classObject) {  
+        return false;
+    };
+    firstfield = instance.meta.filters[0] ? instance.meta.filters[0].field
+                                          : null;
+    if (!firstfield) {
+        handlerShowAlert('Не установлены поля для фильтров.');
+        return false;
+    };
+    newfilter = { type:null, inverse:false, active: false, 
+        field: null,
+        values:null,
+    };
+    if (!instance.filters) { instance.filters = []; };
+    instance.filters.push(newfilter);
+    html = TEMPLATES.filter({data:instance, item:newfilter});
+    $('#collection_filters_'+instance.id+' table tbody').append(html);
+    return html;
+};
+
+/* Обработчик события добавления фильтра */
+function eventFilterAppend() {
+    if (DEBUG) {console.log('function:'+'eventFilterAppend')};
+    var data = $(this).data(),
+        instance = REGISTER[data.id];
+    handlerFilterAppend(instance);
+    return true;
+};
+
+/* Обработчик события удаления фильтра */
+function eventFilterRemove() {
+    if (DEBUG) {console.log('function:'+'eventFilterRemove')};
+    var data = $(this).data(),
+        instance = REGISTER[data.id],
+        index = data.filter_index;
+    instance.filters.splice(index, index+1);
+    $('#collection_filters_'+instance.id+' tr[data-filter_index='+index+']')
+        .remove();
+    handlerCollectionGet(instance);
+
+    if (!SETTINGS.local.filters) { SETTINGS.local.filters = {}; };
+    SETTINGS.local.filters[instance.id] = instance.filters
+    SETTINGS.save(null, 'local')
+
+    return true;
+};
+
+/* Обработчик события изменения поля фильтра */
+function eventFilterChangeField() {
+    if (DEBUG) {console.log('function:'+'eventFilterChangeField')};
+    var data = $(this).data(),
+        instance = REGISTER[data.id],
+        index = data.filter_index,
+        val = $(this).val();
+    instance.filters[index].field = val;
+    handlerFilterChangeActive(instance, index, false);
+    $('#collection_filters_'+instance.id+
+        ' [data-place=filter_values][data-filter_index='+index+']')
+        .html('');
+    if (!val) {
+        // блокировка всех прочих
+        $('#collection_filters_'+instance.id+
+            ' [data-action=filter_change_active][data-filter_index='+index+']')
+            .attr('disabled', 'disabled');
+        $('#collection_filters_'+instance.id+
+            ' [data-action=filter_change_type][data-filter_index='+index+']')
+            .attr('disabled', 'disabled');
+        $('#collection_filters_'+instance.id+
+            ' [data-action=filter_change_inverse][data-filter_index='+index+']')
+            .attr('disabled', 'disabled');
+        $('#collection_filters_'+instance.id+
+            ' [data-place=filter_values][data-filter_index='+index+']')
+            .html('');
+        return true;
+    };
+    $('#collection_filters_'+instance.id+
+        ' [data-action=filter_change_type][data-filter_index='+index+']')
+        .removeAttr('disabled');
+    return true;
+};
+
+
+/* Обработчик события изменения типа фильтра */
+function eventFilterChangeType() {
+    if (DEBUG) {console.log('function:'+'eventFilterChangeType')};
+    var data = $(this).data(),
+        instance = REGISTER[data.id],
+        index = data.filter_index,
+        val = $(this).val();
+    instance.filters[index].type = val;
+    handlerFilterChangeActive(instance, index, false);
+    if (!val) {
+        // блокировка всех прочих
+
+        $('#collection_filters_'+instance.id+
+            ' [data-action=filter_change_active][data-filter_index='+index+']')
+            .attr('disabled', 'disabled');
+        $('#collection_filters_'+instance.id+
+            ' [data-action=filter_change_inverse][data-filter_index='+index+']')
+            .attr('disabled', 'disabled');
+        $('#collection_filters_'+instance.id+
+            ' [data-place=filter_values][data-filter_index='+index+']')
+            .html('');
+        handlerCollectionGet(instance);
+        return true;
+    };
+
+    $('#collection_filters_'+instance.id+
+        ' [data-action=filter_change_active][data-filter_index='+index+']')
+        .removeAttr('disabled');
+    $('#collection_filters_'+instance.id+
+        ' [data-action=filter_change_inverse][data-filter_index='+index+']')
+        .removeAttr('disabled');
+
+    console.log(instance);
+    var html = TEMPLATES.filter_values({data:instance, index:index }),
+        $values = $('#collection_filters_'+instance.id+
+            ' [data-place=filter_values][data-filter_index='+index+']');
+
+    if (instance.filters[index].type != 'blank') {
+        $values.html(html);
+        if (instance.filters[index].type == 'range') { $values.append(html);};
+    };
+
+    return true;
+};
+
+/* Обработчик изменения активности фильтра */
+function handlerFilterChangeActive(instance, index, active) {
+    if (DEBUG) {console.log('function:'+'handlerFilterChangeActive')};
+    instance.filters[index].active = active;
+    //~ console.log(instance);
+    //~ var $active = $('#collection_filters_'+instance.id+
+        //~ ' [data-action=filter_change_active][data-filter_index='+index+']');
+    return true;
+};
+
+/* Обработчик события изменения активности фильтра */
+function eventFilterChangeActive() {
+    if (DEBUG) {console.log('function:'+'eventFilterChangeActive')};
+    var data = $(this).data(),
+        instance = REGISTER[data.id],
+        index = data.filter_index,
+        checked = !$(this).hasClass('active');
+    handlerFilterChangeValues(instance, index);
+    handlerFilterChangeActive(instance, index, checked);
+    if (checked) {
+        $('#collection_filters_'+instance.id+
+            ' [data-action=filter_change_field][data-filter_index='+index+']')
+            .attr('disabled', 'disabled');
+        $('#collection_filters_'+instance.id+
+            ' [data-action=filter_change_type][data-filter_index='+index+']')
+            .attr('disabled', 'disabled');
+    } else {
+        $('#collection_filters_'+instance.id+
+            ' [data-action=filter_change_field][data-filter_index='+index+']')
+            .removeAttr('disabled');
+        $('#collection_filters_'+instance.id+
+            ' [data-action=filter_change_type][data-filter_index='+index+']')
+            .removeAttr('disabled');
+    };
+    handlerCollectionGet(instance);
+    return true;
+};
+
+/* Обработчик изменения инверсии фильтра */
+function handlerFilterChangeInverse(instance, index, inverse) {
+    if (DEBUG) {console.log('function:'+'handlerFilterChangeInverse')};
+    instance.filters[index].inverse = inverse;
+    return true;
+};
+
+/* Обработчик события изменения инверсии фильтра */
+function eventFilterChangeInverse() {
+    if (DEBUG) {console.log('function:'+'eventFilterChangeInverse')};
+    var data = $(this).data(),
+        instance = REGISTER[data.id],
+        index = data.filter_index,
+        checked = !$(this).hasClass('active');
+    handlerFilterChangeInverse(instance, index, checked);
+    if (instance.filters[index].active) {
+        handlerCollectionGet(instance);
+    };
+    return true;
+};
+
+/* Обработчик изменения значения фильтра */
+function handlerFilterChangeValues(instance, index) {
+    if (DEBUG) {console.log('function:'+'handlerFilterChangeValues')};
+
+    var $place = $('#collection_filters_'+instance.id+
+        ' [data-place=filter_values][data-filter_index='+index+']'),
+        $values = $place.find('[data-action=filter_change_values]');
+    instance.filters[index].values = [];
+    instance.filters[index].values_html = $place.html();
+
+    //~ $('#collection_filters_'+instance.id+
+        //~ ' [data-action=filter_change_active][data-filter_index='+index+']')
+        //~ .removeClass('active');
+
+    if (!SETTINGS.local.filters) { SETTINGS.local.filters = {}; };
+    SETTINGS.local.filters[instance.id] = instance.filters;
+    SETTINGS.save(null, 'local');
+
+    $.each($values, function(i, item) {
+        instance.filters[index].values.push($(item).val());
+    });
+
+    return true;
+};
+
+/* Обработчик события изменения значения фильтра */
+function eventFilterChangeValues() {
+    if (DEBUG) {console.log('function:'+'eventFilterChangeValues')};
+    var data = $(this).data(),
+        instance = REGISTER[data.id],
+        index = data.filter_index,
+        val = $(this).val();
+
+    if (val) {
+        $(this).attr('value', val);
+    };
+
+    handlerFilterChangeActive(instance, index, false);
+    handlerFilterChangeValues(instance, index);
+
+    if (instance.filters[index].active) {
+        handlerCollectionGet(instance);
+    };
+    return true;
+};
+
+/* Обработчик добавления поля значения фильтра */
+function handlerFilterAppendValue(instance, index) {
+    if (DEBUG) {console.log('function:'+'handlerFilterAppendValue')};
+    var html = TEMPLATES.filter_values({data:instance, index:index }),
+        $values = $('#collection_filters_'+instance.id+
+            ' [data-place=filter_values][data-filter_index='+index+']');
+    $values.append(html);
+    return true;
+};
+
+/* Обработчик события добавления поля значения фильтра */
+function eventFilterAppendValue() {
+    if (DEBUG) {console.log('function:'+'eventFilterAppendValue')};
+    var data = $(this).data(),
+        instance = REGISTER[data.id],
+        index = data.filter_index;
+    handlerFilterAppendValue(instance, index);
+    $(this).remove();
+
+    return true;
+};
+
+
+////////////////////////////////////////////////////////////////////////
 //                              ПРОЧЕЕ                                //
 ////////////////////////////////////////////////////////////////////////
 
@@ -1294,14 +1654,12 @@ function eventWaitSubmit() {
     ACTION_WAIT = null
     return true;
 };
-////////////////////////////////////////////////////////////////////////
-//                            ИСПОЛНЕНИЕ                              //
-////////////////////////////////////////////////////////////////////////
 
-/* Выполнение чего-либо после загрузки страницы */
-$(document).ready(function($) {
-    if (DEBUG) {console.log('function:'+'$(document).ready')};
-    // Инициализация шаблонов Underscore
+
+/* Обработчик установки шаблонов */
+function handlerTemplates() {
+    if (DEBUG) {console.log('function:'+'handlerTemplates')};
+
     TEMPLATES.alert             = _.template($('#underscore-alert').html());
     TEMPLATES.menuApp           = _.template($('#underscore-menu-app').html());
     TEMPLATES.collection        = _.template($('#underscore-collection').html());
@@ -1313,6 +1671,89 @@ $(document).ready(function($) {
     TEMPLATES.tab               = _.template($('#underscore-tab').html());
     TEMPLATES.modal             = _.template($('#underscore-modal').html());
     TEMPLATES.modalFooter       = _.template($('#underscore-modal-footer').html());
+    TEMPLATES.filter            = _.template($('#underscore-filter').html());
+    TEMPLATES.filters           = _.template($('#underscore-filters').html());
+    TEMPLATES.filter_values     = _.template($('#underscore-filter-values').html());
+
+    return true;
+};
+
+/* Обработчик установки биндингов для элементов */
+function handlerBindinds() {
+    if (DEBUG) {console.log('function:'+'handlerBindinds')};
+
+    // Биндинг на сокрытие алерта
+    $('body').on('click', 'button.close[data-dismiss="alert"]', 
+        function () {$('#alert-place').css('z-index', '-1000');});
+
+    $('body').on('click',  'tr[data-pk]', eventRowClick);
+    // Биндинги на открытие-закрытие вкладок и их контента
+    $('#menu-app li[class!=disabled]').on('click',  'a', eventTabOpen);
+    $('#main-tab').on('click', 'button.close[data-id]',  eventTabClose)
+
+    handlerTabRestore();
+
+    // Биндинг на фильтрацию, паджинацию и количество в коллекциях
+    $('body').on('keyup',  '[data-action=collection_search]', eventCollectionSearch);
+    $('body').on('change', '[data-action=collection_search]', eventCollectionSearch);
+    $('body').on('click',  '[data-action=collection_search_refresh]', eventCollectionSearchRefresh);
+    $('body').on('click',  '[data-action=collection_count]',  eventCollectionCount);
+    $('body').on('change', '[data-action=collection_page]',   eventCollectionPage);
+    $('body').on('click',  '[data-action=collection_page]',   eventCollectionPage);
+
+    // Биндинги на кнопки и ссылки
+    $('body').on('click', '[data-action=object_open]',     eventObjectOpen);
+    $('body').on('click', '[data-action=object_copy]',     eventObjectCopy);
+    $('body').on('click', '[data-action=object_clone]',    eventObjectClone);
+    $('body').on('click', '[data-action=object_add]',                 eventObjectAdd);
+    $('body').on('click', '[data-action=object_add_m2m]', {m2m:true}, eventObjectAdd);
+    $('body').on('click', '[data-action=object_delete]',                 eventObjectDelete);
+    $('body').on('click', '[data-action=object_delete_m2m]', {m2m:true}, eventObjectDelete);
+    $('body').on('keyup', '[data-action=object_change]', eventObjectChange);
+    $('body').on('change','[data-action=object_change]', eventObjectChange);
+    $('body').on('click', '[data-action=object_reset]',  eventObjectReset);
+    $('body').on('click', '[data-action=object_save]',   eventObjectSave);
+    $('body').on('click', '[data-action=object_select]', eventObjectSelect);
+    $('#modal').on('click', '[data-action=selector_append]', {close:false}, eventSelectorSubmit);
+    $('#modal').on('click', '[data-action=selector_submit]', {close:true},  eventSelectorSubmit);
+    $('#modal').on('click', '[data-action=wait_cancel]',  eventWaitCancel);
+    $('#modal').on('click', '[data-action=wait_submit]',  eventWaitSubmit);
+
+    // Биндинги на кнопки выбора значения
+    $('body').on('click', '[data-action=field_clear]',                    eventFieldClear);
+    $('body').on('click', '[data-action=file_field_clear]', {file:true},  eventFieldClear);
+    $('body').on('click', '[data-action=field_select]',                   eventFieldSelect);
+    $('body').on('click', '[data-action=file_field_select]', {file:true}, eventFieldSelect);
+
+    // Биндинг на чекбоксы
+    $('body').on('click', '[data-toggle=checkboxes]',   handlerSelectAllToggle);
+
+    // Биндинги на фильтры
+    $('body').on('click', '[data-action=collection_filters]',   eventFilters);
+    $('body').on('click', '[data-action=filter_append]',   eventFilterAppend);
+    $('body').on('click', '[data-action=filter_remove]',   eventFilterRemove);
+    $('body').on('click', '[data-action=filter_change_field]',   eventFilterChangeField);
+    $('body').on('click', '[data-action=filter_change_type]',   eventFilterChangeType);
+    $('body').on('click', '[data-action=filter_change_inverse]',   eventFilterChangeInverse);
+    $('body').on('click', '[data-action=filter_change_active]',   eventFilterChangeActive);
+    $('body').on('click', '[data-action=filter_change_values]',   eventFilterChangeValues);
+    $('body').on('change', '[data-action=filter_change_values]',   eventFilterChangeValues);
+    $('body').on('click', '[data-action=filter_append_value]',   eventFilterAppendValue);
+
+    return true;
+};
+
+
+
+////////////////////////////////////////////////////////////////////////
+//                            ИСПОЛНЕНИЕ                              //
+////////////////////////////////////////////////////////////////////////
+
+/* Выполнение чего-либо после загрузки страницы */
+$(document).ready(function($) {
+    if (DEBUG) {console.log('function:'+'$(document).ready')};
+    // Инициализация шаблонов Underscore
+    handlerTemplates();
 
     // Загрузка меню
     $('#menu-app').hide();
@@ -1322,7 +1763,6 @@ $(document).ready(function($) {
     /* Инициализируем настройки */
     window.SETTINGS = new classSettings();
 
-
     // Инициализация для Bootstrap
     $("alert").alert();
     $(".dropdown-toggle").dropdown();
@@ -1330,48 +1770,8 @@ $(document).ready(function($) {
     // Если настройки готовы, то запускаем все процессы
     if (SETTINGS.init().ready) {
         $('#search').focus();
-        $('body').on('click',  'tr[data-pk]', eventRowClick);
-        // Биндинги на открытие-закрытие вкладок и их контента
-        $('#menu-app li[class!=disabled]').on('click',  'a', eventTabOpen);
-        $('#main-tab').on('click', 'button.close[data-id]',  eventTabClose)
-
-        handlerTabRestore();
-
-        // Биндинг на фильтрацию, паджинацию и количество в коллекциях
-        $('body').on('keyup',  '[data-action=collection_filter]', eventCollectionFilter);
-        $('body').on('change', '[data-action=collection_filter]', eventCollectionFilter);
-        $('body').on('click',  '[data-action=collection_filter_refresh]', eventCollectionFilterRefresh);
-        $('body').on('click',  '[data-action=collection_count]',  eventCollectionCount);
-        $('body').on('change', '[data-action=collection_page]',   eventCollectionPage);
-        $('body').on('click',  '[data-action=collection_page]',   eventCollectionPage);
-
-        // Биндинги на кнопки и ссылки
-        $('body').on('click', '[data-action=object_open]',     eventObjectOpen);
-        $('body').on('click', '[data-action=object_copy]',     eventObjectCopy);
-        $('body').on('click', '[data-action=object_clone]',    eventObjectClone);
-        $('body').on('click', '[data-action=object_add]',                 eventObjectAdd);
-        $('body').on('click', '[data-action=object_add_m2m]', {m2m:true}, eventObjectAdd);
-        $('body').on('click', '[data-action=object_delete]',                 eventObjectDelete);
-        $('body').on('click', '[data-action=object_delete_m2m]', {m2m:true}, eventObjectDelete);
-        $('body').on('keyup', '[data-action=object_change]', eventObjectChange);
-        $('body').on('change','[data-action=object_change]', eventObjectChange);
-        $('body').on('click', '[data-action=object_reset]',  eventObjectReset);
-        $('body').on('click', '[data-action=object_save]',   eventObjectSave);
-        $('body').on('click', '[data-action=object_select]', eventObjectSelect);
-        $('#modal').on('click', '[data-action=selector_append]', {close:false}, eventSelectorSubmit);
-        $('#modal').on('click', '[data-action=selector_submit]', {close:true},  eventSelectorSubmit);
-        $('#modal').on('click', '[data-action=wait_cancel]',  eventWaitCancel);
-        $('#modal').on('click', '[data-action=wait_submit]',  eventWaitSubmit);
-
-        // Биндинги на кнопки выбора значения
-        $('body').on('click', '[data-action=field_clear]',                    eventFieldClear);
-        $('body').on('click', '[data-action=file_field_clear]', {file:true},  eventFieldClear);
-        $('body').on('click', '[data-action=field_select]',                   eventFieldSelect);
-        $('body').on('click', '[data-action=file_field_select]', {file:true}, eventFieldSelect);
-
-        // Биндинг на чекбоксы
-        $('body').on('click', '[data-toggle=checkboxes]',   handlerSelectAllToggle);
-        
+        handlerBindinds();
+        handlerFiltersFromSettings();
     } else {
         console.log("ОШИБКА! Загрузка настроек не удалась.");
     }

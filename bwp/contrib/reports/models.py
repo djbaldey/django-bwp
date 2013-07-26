@@ -47,11 +47,28 @@ from bwp.contrib import webodt
 from bwp.contrib.webodt.shortcuts import render_to_response
 from bwp.contrib.webodt import conf as webodt_conf
 from bwp.conf import settings
+from bwp.utils import remove_file
 
 import os
 
 class Document(AbstractGroup):
-    """ Документы """
+    """ Документ """
+    BOUND_OBJECT = 1
+    BOUND_MODEL = 2
+    BOUND_CHOICES = (
+        (BOUND_OBJECT, _('object')),
+        (BOUND_MODEL, _('model')),
+    )
+
+    content_type = models.ForeignKey(
+            ContentType,
+            verbose_name = _('content type'))
+    bound = models.IntegerField(
+            choices=BOUND_CHOICES,
+            default=BOUND_OBJECT,
+            verbose_name = _('bound'))
+    webodt = models.FileField(upload_to=webodt_conf.WEBODT_TEMPLATE_PATH,
+            verbose_name = _('template file'))
     qualifier = models.ForeignKey(
             GeneralDocument,
             blank=True, null=True,
@@ -68,60 +85,40 @@ class Document(AbstractGroup):
             return unicode(self.qualifier)
         return self.title
 
-class Template(AbstractGroup):
-    """ Шаблоны документов """
-
-    document = models.ForeignKey(
-            Document,
-            verbose_name = _('document'))
-    is_default = models.BooleanField(
-            default=True,
-            verbose_name = _('by default'))
-    webodt = models.FileField(upload_to=webodt_conf.WEBODT_TEMPLATE_PATH,
-            verbose_name = _('template file'))
-
-    class Meta:
-        ordering = ['document', 'title']
-        verbose_name = _('template')
-        verbose_name_plural = _('templates')
-
     def render_to_response(self, dictionary=None, filename=None, format='odt'):
         filename = filename or unicode(self.document).encode('utf-8')
         temlate_name = os.path.basename(self.webodt.name)
         return render_to_response(temlate_name,
             format=format, dictionary=dictionary, filename=filename)
 
+    @property
+    def for_object(self):
+        return bool(self.bound == Document.BOUND_OBJECT)
+
+    @property
+    def for_model(self):
+        return bool(self.bound == Document.BOUND_MODEL)
+
     def save(self, **kwargs):
-        if self.is_default:
-            docs = Template.objects.filter(document=self.document, is_default=True)
-            docs.update(is_default=False)
-        super(Template, self).save(**kwargs)
+        if self.id:
+            old = self._default_manager.get(id=self.id)
+            try:
+                old.webodt.path
+            except:
+                pass
+            else:
+                if self.webodt != old.webodt:
+                    remove_file(old.webodt.path)
+        super(Document, self).save(**kwargs)
 
-class DocumentBound(models.Model):
-    """ Привязка документов """
+    def delete(self, **kwargs):
+        try:
+            self.webodt.path
+        except:
+            pass
+        else:
+            remove_file(self.webodt.path)
+        super(Document, self).delete(**kwargs)
 
-    BOUND_OBJECT = 1
-    BOUND_MODEL = 2
-    BOUND_CHOICES = (
-        (BOUND_OBJECT, _('object')),
-        (BOUND_MODEL, _('model')),
-    )
 
-    document = models.ForeignKey(
-            Document,
-            verbose_name = _('document'))
-    content_type = models.ForeignKey(
-            ContentType,
-            verbose_name = _('content type'))
-    bound = models.IntegerField(
-            choices=BOUND_CHOICES,
-            default=BOUND_OBJECT,
-            verbose_name = _('bound'))
 
-    def __unicode__(self):
-        return unicode(self.content_type)
-
-    class Meta:
-        ordering = ['document', 'content_type', ]
-        verbose_name = _('document bound')
-        verbose_name_plural = _('documents bounds')

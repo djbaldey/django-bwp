@@ -1,0 +1,97 @@
+{# Шаблон Underscore #}{% load bwp_verbatim %}{% verbatim %}
+{% var type   = data.filters[index].type %}
+{% var filter = data.meta.filters_dict[data.filters[index].field] %}
+{% var widget = filter.widget %}
+
+<div class="controls">
+{% if (type == 'isnull') { %}
+    <input
+        type="checkbox"
+        data-action="filter_change_values"
+        data-filter_index="{{ index }}"
+        data-id="{{ data.id }}">
+    </input>
+
+{% } else if (type in {'icontains':0, 'istartswith':0, 'iendswith':0}) { %}
+    <input
+        type="text"
+        data-action="filter_change_values"
+        data-filter_index="{{ index }}"
+        data-id="{{ data.id }}">
+    </input>
+
+{% } else if (widget.choices) { %}
+    <select
+        data-model="{{ widget.model }}"
+        {% _.each(widget.attr, function(val, key) { %}
+            {% if (! key in {'type':0, 'name':0}) { %}
+                {{ key }}="{{ val }}"
+            {% } %}
+        {% }); %}
+        class="{{ widget.attr['class'] }}"
+        data-action="filter_change_values"
+        data-filter_index="{{ index }}"
+        data-id="{{ data.id }}">
+        {% _.each(widget.choices, function(item) { %}
+            {% _val0 = _.escape(item[0]) %}
+            {% _val1 = _.escape(item[1]) %}
+            <option value="{{ _val0 }}">{{ _val1 }}</option>
+        {% }); %}
+    </select>
+
+{% } else if ((widget.tag == 'input') || (widget.tag == 'textarea')) { %}
+    <{{ widget.tag }}
+    {% _.each(widget.attr, function(val, key) { %}
+        {% if (!(key in {'disabled':0,})) { %}
+            {{ key }}="{{ val }}"
+        {% } %}
+    {% }); %}
+        data-action="filter_change_values"
+        data-filter_index="{{ index }}"
+        data-id="{{ data.id }}">
+        </{{ widget.tag }}>
+
+{% } else if (widget.tag == 'select') { %}
+    <div class="input-prepend input-append">
+        {%/* Кнопка значения и названия */%}
+        <button name="{{ widget.name }}" value=""
+            data-model="{{ widget.model }}"
+            disabled="disabled"
+            {% _.each(widget.attr, function(val, key) { %}
+                {% if (! key in {'type':0, 'name':0}) { %}
+                    {{ key }}="{{ val }}"
+                {% } %}
+            {% }); %}
+            class="btn {{ widget.attr['class'] || 'input-medium' }}"
+            data-action="filter_change_values"
+            data-filter_index="{{ index }}"
+            data-id="{{ data.id }}"
+            title="">{{ '&lt; - &gt;' }}
+        </button>
+        {%/* Кнопка сброса */%}
+        <button class="btn"
+            data-action="field_clear"
+            data-filter_index="{{ index }}"
+            data-id="{{ data.id }}">
+            <i class="icon-remove"></i>
+        </button>
+        {%/* Кнопка поиска */%}
+        <button class="btn"
+            data-action="field_select"
+            data-filter_index="{{ index }}"
+            data-id="{{ data.id }}">
+            <i class="icon-search"></i>
+        </button>
+    </div>
+
+{% } %}
+</div>
+{% if (type == 'in') { %}
+<button class="btn btn-mini" 
+    data-filter_index="{{ index }}"
+    data-action="filter_append_value"
+    data-id="{{ data.id }}">
+    <i class="icon-plus"></i>
+</button>
+{% } %}
+{% endverbatim %}
