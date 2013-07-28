@@ -587,7 +587,7 @@ def API_get_collection_report_url(request, model, report,
 
     qs = model_bwp.filter_queryset(**options)
 
-    ctx = {'data': qs}
+    ctx = {'data': qs, 'filters': filters}
     url = report.render_to_media_url(context=ctx)
     return JSONResponse(data=url)
 

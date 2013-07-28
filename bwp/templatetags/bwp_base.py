@@ -143,8 +143,30 @@ def is_active(qs):
         return qs
 
 @register.filter
-def split(obj, sting):
-    return obj.split(sting)
+def split(obj, string):
+    return obj.split(string)
+
+@register.filter
+def ordering(objects, ordering):
+    if isinstance(ordering, (str, unicode)):
+        ordering = [ x.strip(' ') for x in ordering.split(',')]
+    return objects.order_by(*ordering)
+
+@register.filter
+def sums(objects, attrs):
+    if isinstance(attrs, (str, unicode)):
+        attrs = [ x.strip(' ') for x in attrs.split(',')]
+
+    def get_value(attr):
+        if callable(attr):
+            return attr()
+        return attr
+
+    SUM = []
+    for a in attrs:
+        SUM.append(sum([ get_value(getattr(x, a)) for x in objects ]))
+
+    return SUM
 
 @register.simple_tag
 def pagination(request, paginator):
