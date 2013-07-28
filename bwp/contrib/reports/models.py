@@ -39,25 +39,39 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.auth.models import User
 from django.template import Context
+from django.template.loader import get_template
+from django.core.files.base import ContentFile
 
-from bwp.contrib.abstracts.models import AbstractGroup
+from bwp.contrib.abstracts.models import AbstractGroup, AbstractFile
 from bwp.contrib.qualifiers.models import Document as GeneralDocument
-from bwp.contrib import webodt
-from bwp.contrib.webodt.shortcuts import render_to_response
-from bwp.contrib.webodt import conf as webodt_conf
 from bwp.conf import settings
 from bwp.utils import remove_file
 
-import os
+import os, datetime, hashlib
 
 class Document(AbstractGroup):
-    """ Документ """
+    """ Документ.
+
+        Шаблоном документа может выступать html или txt файлы.
+        В форматы ODS и ODT не конвертируется, а всего лишь заменяет
+        расширение файла для автоматического открытия в ApacheOffice или
+        LibreOffice. Поэтому основу таких шаблонов стоит готовить в
+        нужном приложении и сохранять как HTML.
+    """
     BOUND_OBJECT = 1
     BOUND_MODEL = 2
     BOUND_CHOICES = (
         (BOUND_OBJECT, _('object')),
         (BOUND_MODEL, _('model')),
+    )
+
+    FORMAT_CHOICES = (
+        ('html', _('HTML page')),
+        ('txt', _('plain text')),
+        ('odt', _('text document (ODT)')),
+        ('ods', _('spreadsheet (ODS)')),
     )
 
     content_type = models.ForeignKey(
@@ -67,8 +81,14 @@ class Document(AbstractGroup):
             choices=BOUND_CHOICES,
             default=BOUND_OBJECT,
             verbose_name = _('bound'))
-    webodt = models.FileField(upload_to=webodt_conf.WEBODT_TEMPLATE_PATH,
-            verbose_name = _('template file'))
+    template_name = models.CharField(
+            max_length=255,
+            verbose_name = _('HTML template name'))
+    format_out = models.CharField(
+            max_length=4,
+            choices=FORMAT_CHOICES,
+            default=FORMAT_CHOICES[0][0],
+            verbose_name = _('format out'))
     qualifier = models.ForeignKey(
             GeneralDocument,
             blank=True, null=True,
@@ -85,11 +105,23 @@ class Document(AbstractGroup):
             return unicode(self.qualifier)
         return self.title
 
-    def render_to_response(self, dictionary=None, filename=None, format='odt'):
-        filename = filename or unicode(self.document).encode('utf-8')
-        temlate_name = os.path.basename(self.webodt.name)
-        return render_to_response(temlate_name,
-            format=format, dictionary=dictionary, filename=filename)
+    def render(self, context):
+        """ Return rendered instance of ContentFile """
+        template = get_template(self.template_name)
+        content  = template.render(Context(context)).encode('utf-8')
+        return ContentFile(content)
+
+    def render_to_media_url(self, context={}, user=None):
+        filename = self.title+'.'+self.format_out
+        _file = self.render(context)
+        report = Report(
+            document=self,
+            label=filename,
+            user=user,
+        )
+        report.file.save(filename, _file, save=False)
+        report.save()
+        return report.file.url
 
     @property
     def for_object(self):
@@ -99,26 +131,42 @@ class Document(AbstractGroup):
     def for_model(self):
         return bool(self.bound == Document.BOUND_MODEL)
 
-    def save(self, **kwargs):
-        if self.id:
-            old = self._default_manager.get(id=self.id)
-            try:
-                old.webodt.path
-            except:
-                pass
-            else:
-                if self.webodt != old.webodt:
-                    remove_file(old.webodt.path)
-        super(Document, self).save(**kwargs)
 
-    def delete(self, **kwargs):
-        try:
-            self.webodt.path
-        except:
-            pass
-        else:
-            remove_file(self.webodt.path)
-        super(Document, self).delete(**kwargs)
+
+class Report(AbstractFile):
+    """ Файл сформированного документа """
+    default_label_type = u'%s' % _('report')
+    created = models.DateTimeField(auto_now_add=True, verbose_name=_('created'))
+    document = models.ForeignKey(
+            Document,
+            editable=False,
+            verbose_name = _('document'))
+    user = models.ForeignKey(
+            User,
+            null=True, blank=True,
+            editable=False,
+            verbose_name = _('user'))
+
+    class Meta:
+        ordering = ['-created']
+        verbose_name = _('generated report')
+        verbose_name_plural = _('generated reports')
+
+    def upload_to(self, filename):
+        dt = datetime.datetime.now()
+        date = dt.date()
+        dic = {
+            'filename': filename,
+            'date': date.isoformat(),
+        }
+        sha1 = hashlib.new('md5')
+        sha1.update(str(dt.isoformat()))
+        sha1.update(settings.SECRET_KEY)
+        digest = sha1.hexdigest()
+        dic['digest'] = digest
+        return u'reports/%(date)s/%(digest)s/%(filename)s' % dic
+
+
 
 
 

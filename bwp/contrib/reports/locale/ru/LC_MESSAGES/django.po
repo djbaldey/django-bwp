@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 0.1.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-05-18 22:59+1100\n"
+"POT-Creation-Date: 2013-07-28 14:25+1100\n"
 "PO-Revision-Date: 2013-01-29 01:26+1100\n"
 "Last-Translator: Grigoriy Kramarenko <root@rosix.ru>\n"
 "Language: RU\n"
@@ -21,42 +21,75 @@ msgstr ""
 msgid "reports"
 msgstr "отчёты"
 
-#: models.py:54
-msgid "qualifier"
-msgstr "классификатор"
+#: models.py:66
+msgid "object"
+msgstr "объект"
 
-#: models.py:58 models.py:71 models.py:98
-msgid "document"
-msgstr "документ"
+#: models.py:67
+msgid "model"
+msgstr "модель"
 
-#: models.py:59
-msgid "documents"
-msgstr "документы"
+#: models.py:71
+msgid "HTML page"
+msgstr "страница HTML"
+
+#: models.py:72
+msgid "plain text"
+msgstr "простой текст"
+
+#: models.py:73
+msgid "text document (ODT)"
+msgstr "текстовый документ (ODT)"
 
 #: models.py:74
-msgid "by default"
-msgstr "по-умолчанию"
+msgid "spreadsheet (ODS)"
+msgstr "электронная таблица (ODS)"
 
-#: models.py:77
-msgid "template file"
-msgstr "файл шаблона"
-
-#: models.py:80 models.py:84
-msgid "template"
-msgstr "шаблон"
-
-#: models.py:85
-msgid "templates"
-msgstr "шаблоны"
-
-#: models.py:101
+#: models.py:79
 msgid "content type"
 msgstr "тип контента"
 
-#: models.py:105
-msgid "document bound"
-msgstr "привязка документа"
+#: models.py:83
+msgid "bound"
+msgstr "привязка"
 
-#: models.py:106
-msgid "documents bounds"
-msgstr "привязки документов"
+#: models.py:86
+msgid "HTML template name"
+msgstr "имя HTML шаблона"
+
+#: models.py:91
+msgid "format out"
+msgstr "выходной формат"
+
+#: models.py:96
+msgid "qualifier"
+msgstr "классификатор"
+
+#: models.py:100 models.py:143
+msgid "document"
+msgstr "документ"
+
+#: models.py:101
+msgid "documents"
+msgstr "документы"
+
+#: models.py:138
+msgid "report"
+msgstr "отчёт"
+
+#: models.py:139
+msgid "created"
+msgstr "создано"
+
+#: models.py:148
+msgid "user"
+msgstr "пользователь"
+
+#: models.py:152
+msgid "generated report"
+msgstr "созданный отчёт"
+
+#: models.py:153
+msgid "generated reports"
+msgstr "созданные отчёты"
+

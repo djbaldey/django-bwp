@@ -43,5 +43,8 @@ from models import *
 
 class DocumentBWP(ModelBWP):
     list_display = ('title', 'qualifier', 'id')
-    raw_id_fields = ('qualifier',)
 site.register(Document, DocumentBWP)
+
+class ReportBWP(ModelBWP):
+    list_display = ('label', 'created', 'document', 'user', 'id')
+site.register(Report, ReportBWP)

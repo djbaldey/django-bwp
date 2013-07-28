@@ -59,6 +59,8 @@ from bwp.conf import settings
 from bwp.utils import print_debug
 from bwp.utils.http import get_http_400, get_http_403, get_http_404
 
+from bwp.contrib.reports.models import Document as Report
+
 import datetime, os
 
 ########################################################################
@@ -552,6 +554,77 @@ def API_device_command(request, device, command, params={}, **kwargs):
             return JSONResponse(status=400, message=message)
     return JSONResponse(status=400)
 
+@api_required
+@login_required
+def API_get_collection_report_url(request, model, report,
+    query=None, order_by=None, fields=None, filters=None, **kwargs):
+    """ *Формирование отчёта для коллекции.*
+
+        ##### ЗАПРОС
+        Параметры:
+
+        1. **"model"** - уникальное название модели, например: "auth.user";
+        2. **"report"** - ключ отчёта;
+        3. **"query"** - поисковый запрос;
+        4. **"order_by"** - сортировка объектов.
+        5. **"fields"** - поля объектов для поиска.
+        6. **"filters"** - дополнительные фильтры.
+
+        ##### ОТВЕТ
+        ссылка на файл сформированного отчёта
+    """
+    # Получаем модель BWP со стандартной проверкой прав
+    model_bwp = site.bwp_dict(request).get(model)
+    report = Report.objects.get(pk=report)
+
+    options = {
+        'request': request,
+        'query': query,
+        'order_by': order_by,
+        'fields': fields,
+        'filters': filters,
+    }
+
+    qs = model_bwp.filter_queryset(**options)
+
+    ctx = {'data': qs}
+    url = report.render_to_media_url(context=ctx)
+    return JSONResponse(data=url)
+
+@api_required
+@login_required
+def API_get_object_report_url(request, model, pk, report, **kwargs):
+    """ *Формирование отчёта для объекта.*
+
+        ##### ЗАПРОС
+        Параметры:
+
+        1. **"model"** - уникальное название модели, например: "auth.user";
+        2. **"pk"** - ключ объекта;
+        3. **"report"** - ключ отчёта;
+
+        ##### ОТВЕТ
+        ссылка на файл сформированного отчёта
+    """
+    # Получаем модель BWP со стандартной проверкой прав
+    model_bwp = site.bwp_dict(request).get(model)
+    report = Report.objects.get(pk=report)
+
+    if pk is None:
+        return HttpResponseBadRequest()
+
+    options = {
+        'request': request,
+        'pk': pk,
+        'as_lookup': True,
+    }
+
+    obj = model_bwp.queryset(request, **kwargs).get(pk=pk)
+
+    ctx = {'data': obj}
+    url = report.render_to_media_url(context=ctx)
+    return JSONResponse(data=url)
+
 QUICKAPI_DEFINED_METHODS = {
     'get_apps':         'bwp.views.API_get_apps',
     'get_settings':     'bwp.views.API_get_settings',
@@ -559,6 +632,8 @@ QUICKAPI_DEFINED_METHODS = {
     'get_collection':   'bwp.views.API_get_collection',
     'm2m_commit':       'bwp.views.API_m2m_commit',
     'commit':           'bwp.views.API_commit',
+    'get_collection_report_url': 'bwp.views.API_get_collection_report_url',
+    'get_object_report_url': 'bwp.views.API_get_object_report_url',
 }
 
 @csrf_exempt

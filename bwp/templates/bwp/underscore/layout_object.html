@@ -24,7 +24,7 @@
     {% }); %}
     </div>
     <div class="btn-group subtabs">
-    {% if (data.model.object_reports) { %}
+    {% if ((data.model.object_reports) && (data.pk)) { %}
         <button class="btn btn-mini dropdown-toggle"
             data-toggle="dropdown">            
             <i class="icon-print"></i> Отчёты
@@ -32,8 +32,11 @@
         </button>
         <ul class="dropdown-menu">
             {% _.each(data.model.object_reports, function(report) { %}
-                <li><a href="#" data-action="object_print" data-id={{ data.id }}
-                    data-pk={{ report.pk }}>
+                <li><a href="#" data-action="object_print"
+                    data-id={{ data.id }}
+                    data-model={{ data.model.name }}
+                    data-pk={{ data.pk }}
+                    data-report={{ report.pk }}>
                         {{ report.title }}
                     </a>
                 </li>

@@ -61,7 +61,7 @@
                 <ul class="dropdown-menu">
                     {% _.each(data.collection_reports, function(report) { %}
                         <li><a href="#" data-action="collection_print" data-id={{ data.id }}
-                            data-pk={{ report.pk }}>
+                            data-report={{ report.pk }}>
                                 {{ report.title }}
                             </a>
                         </li>

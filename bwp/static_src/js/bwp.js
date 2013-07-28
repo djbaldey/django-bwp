@@ -1637,6 +1637,53 @@ function eventFilterAppendValue() {
 
 
 ////////////////////////////////////////////////////////////////////////
+//                              ОТЧЁТЫ                                //
+////////////////////////////////////////////////////////////////////////
+
+/* Обработчик события выбора отчёта коллекции */
+function eventCollectionPrint() {
+    if (DEBUG) {console.log('function:'+'eventCollectionPrint')};
+    var data = $(this).data(),
+        instance = REGISTER[data.id],
+        sync = true,
+        args = {
+            method: "get_collection_report_url",
+            report: data.report,
+            model   : instance.model,
+            query   : instance.query,
+            order_by: instance.order_by,
+            fields  : instance.fields,
+            filters : instance.filters,
+        },
+        cb = function(json, status, xhr) {
+            var url = json.data;
+            window.open(url, '_blank');
+        };
+    jqxhr = new jsonAPI(args, cb, 'eventCollectionPrint() call jsonAPI()', sync);
+    return true;
+};
+
+/* Обработчик события выбора отчёта объекта */
+function eventObjectPrint() {
+    if (DEBUG) {console.log('function:'+'eventObjectPrint')};
+    var data = $(this).data(),
+        object = REGISTER[data.id],
+    sync = true;
+    args = {
+        method: "get_object_report_url",
+        model : data.model,
+        pk    : data.pk,
+        report: data.report,
+    };
+    cb = function(json, status, xhr) {
+        var url = json.data;
+        window.open(url, '_blank');
+    };
+    jqxhr = new jsonAPI(args, cb, 'eventObjectPrint() call jsonAPI()', sync);
+    return true;
+};
+
+////////////////////////////////////////////////////////////////////////
 //                              ПРОЧЕЕ                                //
 ////////////////////////////////////////////////////////////////////////
 
@@ -1739,6 +1786,10 @@ function handlerBindinds() {
     $('body').on('click', '[data-action=filter_change_values]',   eventFilterChangeValues);
     $('body').on('change', '[data-action=filter_change_values]',   eventFilterChangeValues);
     $('body').on('click', '[data-action=filter_append_value]',   eventFilterAppendValue);
+
+    // Биндинги на отчёты
+    $('body').on('click', '[data-action=collection_print]',   eventCollectionPrint);
+    $('body').on('click', '[data-action=object_print]',   eventObjectPrint);
 
     return true;
 };

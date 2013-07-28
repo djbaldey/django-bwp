@@ -1,0 +1,113 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+<HEAD>
+    <META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=utf-8">
+    <TITLE>Пользователь</TITLE>
+    <STYLE TYPE="text/css">
+    <!--
+        @page { size: 21cm 29.7cm; margin: 0.5cm }
+        P { margin-bottom: 0.21cm }
+        H1 { margin-bottom: 0.21cm; page-break-after: avoid }
+        H1.western { font-family: "Arial", sans-serif; font-size: 16pt; font-weight: bold }
+        H1.cjk { font-family: "Droid Sans"; font-size: 16pt; font-weight: bold }
+        H1.ctl { font-family: "DejaVu Sans"; font-size: 16pt; font-weight: bold }
+    -->
+    </STYLE>
+</HEAD>
+<BODY LANG="ru-RU" LINK="#000080" VLINK="#800000" DIR="LTR">
+<H1 CLASS="western" ALIGN=CENTER>ИНФОРМАЦИЯ О ПОЛЬЗОВАТЕЛЕ</H1>
+<TABLE WIDTH=100% CELLPADDING=4 CELLSPACING=0>
+    <COL WIDTH=60*>
+    <COL WIDTH=196*>
+    <TR VALIGN=TOP>
+        <TD WIDTH=24% STYLE="border: none; padding: 0cm">
+            <P ALIGN=RIGHT STYLE="font-style: normal"><B>ID</B></P>
+        </TD>
+        <TD WIDTH=76% STYLE="border: none; padding: 0cm">
+            <P ALIGN=LEFT>{{ data.pk }}</P>
+        </TD>
+    </TR>
+    <TR VALIGN=TOP>
+        <TD WIDTH=24% STYLE="border: none; padding: 0cm">
+            <P ALIGN=RIGHT STYLE="font-style: normal"><B>Логин</B></P>
+        </TD>
+        <TD WIDTH=76% STYLE="border: none; padding: 0cm">
+            <P ALIGN=LEFT>{{ data.username }}</P>
+        </TD>
+    </TR>
+    <TR VALIGN=TOP>
+        <TD WIDTH=24% STYLE="border: none; padding: 0cm">
+            <P ALIGN=RIGHT STYLE="font-style: normal"><B>Группы</B></P>
+        </TD>
+        <TD WIDTH=76% STYLE="border: none; padding: 0cm">
+            <P ALIGN=LEFT>{% for x in data.groups.all %}{{ x }}; {% endfor %}</P>
+        </TD>
+    </TR>
+    <TR VALIGN=TOP>
+        <TD WIDTH=24% STYLE="border: none; padding: 0cm">
+            <P ALIGN=RIGHT><B>Фамилия</B></P>
+        </TD>
+        <TD WIDTH=76% STYLE="border: none; padding: 0cm">
+            <P ALIGN=LEFT>{{ data.last_name }}</P>
+        </TD>
+    </TR>
+    <TR VALIGN=TOP>
+        <TD WIDTH=24% STYLE="border: none; padding: 0cm">
+            <P ALIGN=RIGHT><B>Имя</B></P>
+        </TD>
+        <TD WIDTH=76% STYLE="border: none; padding: 0cm">
+            <P ALIGN=LEFT>{{ data.first_name }}</P>
+        </TD>
+    </TR>
+    <TR VALIGN=TOP>
+        <TD WIDTH=24% STYLE="border: none; padding: 0cm">
+            <P ALIGN=RIGHT><B>E-mail</B></P>
+        </TD>
+        <TD WIDTH=76% STYLE="border: none; padding: 0cm">
+            <P ALIGN=LEFT>{{ data.email }}</P>
+        </TD>
+    </TR>
+    <TR VALIGN=TOP>
+        <TD WIDTH=24% STYLE="border: none; padding: 0cm">
+            <P ALIGN=RIGHT><BR>
+            </P>
+        </TD>
+        <TD WIDTH=76% STYLE="border: none; padding: 0cm">
+            <P ALIGN=LEFT><BR>
+            </P>
+        </TD>
+    </TR>
+    <TR VALIGN=TOP>
+        <TD WIDTH=24% STYLE="border: none; padding: 0cm">
+            <P ALIGN=RIGHT><BR>
+            </P>
+        </TD>
+        <TD WIDTH=76% STYLE="border: none; padding: 0cm">
+            <P ALIGN=LEFT><BR>
+            </P>
+        </TD>
+    </TR>
+    <TR VALIGN=TOP>
+        <TD WIDTH=24% STYLE="border: none; padding: 0cm">
+            <P ALIGN=RIGHT><BR>
+            </P>
+        </TD>
+        <TD WIDTH=76% STYLE="border: none; padding: 0cm">
+            <P ALIGN=LEFT><BR>
+            </P>
+        </TD>
+    </TR>
+    <TR VALIGN=TOP>
+        <TD WIDTH=24% STYLE="border: none; padding: 0cm">
+            <P ALIGN=RIGHT><BR>
+            </P>
+        </TD>
+        <TD WIDTH=76% STYLE="border: none; padding: 0cm">
+            <P ALIGN=LEFT><BR>
+            </P>
+        </TD>
+    </TR>
+</TABLE>
+<P ALIGN=RIGHT>Дата печати: {% now &quot;DATETIME_FORMAT&quot; %}</P>
+</BODY>
+</HTML>
