@@ -47,7 +47,7 @@ from django.core.files.base import ContentFile
 from bwp.contrib.abstracts.models import AbstractGroup, AbstractFile
 from bwp.contrib.qualifiers.models import Document as GeneralDocument
 from bwp.conf import settings
-from bwp.utils import remove_file
+from bwp.utils import remove_file, remove_dirs
 
 import os, datetime, hashlib
 
@@ -166,7 +166,13 @@ class Report(AbstractFile):
         dic['digest'] = digest
         return u'reports/%(date)s/%(digest)s/%(filename)s' % dic
 
+    @property
+    def url(self):
+        return '<a href="%s" target="_blank">download</a>' % (self.file.url.encode('utf-8'),)
 
-
+    def delete(self):
+        remove_file(self.file.path)
+        remove_dirs(os.path.dirname(self.file.path))
+        super(Report, self).delete()
 
 

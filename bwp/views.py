@@ -588,7 +588,7 @@ def API_get_collection_report_url(request, model, report,
     qs = model_bwp.filter_queryset(**options)
 
     ctx = {'data': qs, 'filters': filters}
-    url = report.render_to_media_url(context=ctx)
+    url = report.render_to_media_url(context=ctx, user=request.user)
     return JSONResponse(data=url)
 
 @api_required
@@ -622,7 +622,7 @@ def API_get_object_report_url(request, model, pk, report, **kwargs):
     obj = model_bwp.queryset(request, **kwargs).get(pk=pk)
 
     ctx = {'data': obj}
-    url = report.render_to_media_url(context=ctx)
+    url = report.render_to_media_url(context=ctx, user=request.user)
     return JSONResponse(data=url)
 
 QUICKAPI_DEFINED_METHODS = {
