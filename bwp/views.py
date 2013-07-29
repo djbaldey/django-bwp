@@ -460,7 +460,7 @@ def API_commit(request, objects, **kwargs):
                 field = bwp.opts.get_field_by_name(name)[0]
                 if field.rel and isinstance(val, list) and len(val) == 2:
                     item['fields'][name] = val[0]
-                elif isinstance(field, models.DateTimeField):
+                elif isinstance(field, models.DateTimeField) and val:
                     item['fields'][name] = val.replace('T', ' ')
             data = item['fields']
             # Новый объект
