@@ -46,10 +46,17 @@ from django.core.files.base import ContentFile
 
 from bwp.contrib.abstracts.models import AbstractGroup, AbstractFile
 from bwp.contrib.qualifiers.models import Document as GeneralDocument
+from bwp import conf
 from bwp.conf import settings
 from bwp.utils import remove_file, remove_dirs
 
 import os, datetime, hashlib
+
+if conf.REPORT_FILES_UNIDECODE:
+    from unidecode import unidecode
+    prep_filename = lambda x: unidecode(x).replace(' ', '_').replace("'", "")
+else:
+    prep_filename = lambda x: x
 
 class Document(AbstractGroup):
     """ Документ.
@@ -113,6 +120,7 @@ class Document(AbstractGroup):
 
     def render_to_media_url(self, context={}, user=None):
         filename = self.title+'.'+self.format_out
+        filename = prep_filename(filename)
         _file = self.render(context)
         report = Report(
             document=self,
@@ -156,7 +164,7 @@ class Report(AbstractFile):
         dt = datetime.datetime.now()
         date = dt.date()
         dic = {
-            'filename': filename,
+            'filename':filename,
             'date': date.isoformat(),
         }
         sha1 = hashlib.new('md5')

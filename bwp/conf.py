@@ -67,6 +67,8 @@ JQUERY_JSON_VERSION     = getattr(settings, 'JQUERY_JSON_VERSION',      '2.4')
 UNDERSCORE_VERSION      = getattr(settings, 'UNDERSCORE_VERSION',       '1.4.4')
 UNDERSCORE_STRING_VERSION = getattr(settings, 'UNDERSCORE_STRING_VERSION', '2.3.0')
 
+REPORT_FILES_UNIDECODE = getattr(settings, 'REPORT_FILES_UNIDECODE', True)
+
 AUTHORS                 = getattr(settings, 'AUTHORS',                  [])
 COPYRIGHT               = getattr(settings, 'COPYRIGHT',                _(u'Name of company'))
 COPYRIGHT_YEAR          = getattr(settings, 'COPYRIGHT_YEAR',           '2013')
