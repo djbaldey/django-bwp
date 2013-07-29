@@ -37,6 +37,7 @@
 ###############################################################################
 """
 from django import template
+from django.db.models import Q
 from django.core.urlresolvers import reverse
 from bwp import conf
 from datetime import date
@@ -151,6 +152,17 @@ def ordering(objects, ordering):
     if isinstance(ordering, (str, unicode)):
         ordering = [ x.strip(' ') for x in ordering.split(',')]
     return objects.order_by(*ordering)
+
+@register.filter
+def filtering(objects, args):
+    if isinstance(args, (str, unicode)):
+        args = [ x.strip(' ') for x in args.split(',')]
+        args = [ x.split('=') for x in args ]
+        args = [ {x[0]: x[1]} for x in args ]
+        print args
+
+    orm_lookup = [ Q(**x) for x in args ]
+    return objects.filter(*orm_lookup)
 
 @register.filter
 def sums(objects, attrs):
