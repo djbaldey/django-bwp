@@ -39,7 +39,7 @@
         {% }); %}
     </select>
 
-{% } else if ((widget.tag == 'input') || (widget.tag == 'textarea')) { %}
+{% } else if (((widget.tag == 'input') && (widget.name != 'id')) || (widget.tag == 'textarea')) { %}
     <{{ widget.tag }}
     {% _.each(widget.attr, function(val, key) { %}
         {% if (!(key in {'disabled':0,})) { %}
@@ -51,7 +51,7 @@
         data-id="{{ data.id }}">
         </{{ widget.tag }}>
 
-{% } else if (widget.tag == 'select') { %}
+{% } else if ((widget.tag == 'select') || ((widget.tag == 'input') && (widget.name == 'id'))) { %}
     <div class="input-prepend input-append">
         {%/* Кнопка значения и названия */%}
         <button name="{{ widget.name }}" value=""
