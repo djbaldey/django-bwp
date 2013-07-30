@@ -201,6 +201,14 @@ def set_file_fields(bwp_model, instance, data):
 
     return instance
 
+def set_user_field(model_bwp, instance, user, save=False):
+    """ Устанавливает пользователя, изменившего объект """
+    if model_bwp.user_field:
+        setattr(instance, model_bwp.user_field, user)
+    if save:
+        instance.save()
+    return instance
+
 ########################################################################
 #                               API                                    #
 ########################################################################
@@ -426,6 +434,8 @@ def API_m2m_commit(request, model, pk, compose, action, objects, **kwargs):
         if not result:
             return JSONResponse(data=False, status=400)
 
+        set_user_field(model_bwp, object, request.user, save=True)
+
     return JSONResponse(data=True, message=unicode(_("Commited!")))
 
 @api_required
@@ -447,17 +457,17 @@ def API_commit(request, objects, **kwargs):
     if not objects:
         transaction.rollback()
         return JSONResponse(data=False, status=400, message=unicode(_("List objects is blank!")))
-    model_name = bwp = None
+    model_name = model_bwp = None
     try:
         for item in objects:
             # Уменьшение ссылок на объекты, если они существуют
             # в прошлой ротации
             if model_name != item['model']:
                 model_name = item['model']
-                bwp = site.bwp_dict(request).get(model_name)
+                model_bwp = site.bwp_dict(request).get(model_name)
             action = item['action'] # raise AttributeError()
             for name, val in item['fields'].items():
-                field = bwp.opts.get_field_by_name(name)[0]
+                field = model_bwp.opts.get_field_by_name(name)[0]
                 if field.rel and isinstance(val, list) and len(val) == 2:
                     item['fields'][name] = val[0]
                 elif isinstance(field, models.DateTimeField) and val:
@@ -465,32 +475,34 @@ def API_commit(request, objects, **kwargs):
             data = item['fields']
             # Новый объект
             if not item.get('pk', False):
-                if bwp.has_add_permission(request):
-                    instance = bwp.model()
-                    instance = set_file_fields(bwp, instance, data)
-                    form = get_form_instance(request, bwp, data=data, instance=instance)
+                if model_bwp.has_add_permission(request):
+                    instance = model_bwp.model()
+                    instance = set_file_fields(model_bwp, instance, data)
+                    instance = set_user_field(model_bwp, instance, request.user)
+                    form = get_form_instance(request, model_bwp, data=data, instance=instance)
                     if form.is_valid():
                         object = form.save()
-                        bwp.log_addition(request, object)
+                        model_bwp.log_addition(request, object)
                     else:
                         transaction.rollback()
                         return JSONResponse(status=400, message=unicode(form.errors))
             # Удаляемый объект
             elif action == 'delete':
                 instance = get_instance(request, item['pk'], item['model'])
-                if bwp.has_delete_permission(request, instance):
-                    bwp.log_deletion(request, instance, unicode(instance))
+                if model_bwp.has_delete_permission(request, instance):
+                    model_bwp.log_deletion(request, instance, unicode(instance))
                     instance.delete()
             # Обновляемый объект
             elif action == 'change': # raise AttributeError()
                 instance = get_instance(request, item['pk'], item['model'])
-                if bwp.has_change_permission(request, instance):
-                    instance = set_file_fields(bwp, instance, data)
-                    form = get_form_instance(request, bwp, data=data, instance=instance)
+                instance = set_user_field(model_bwp, instance, request.user)
+                if model_bwp.has_change_permission(request, instance):
+                    instance = set_file_fields(model_bwp, instance, data)
+                    form = get_form_instance(request, model_bwp, data=data, instance=instance)
                     if form.is_valid():
                         object = form.save()
                         fix = item.get('fix', {})
-                        bwp.log_change(request, object, ', '.join(fix.keys()))
+                        model_bwp.log_change(request, object, ', '.join(fix.keys()))
                     else:
                         transaction.rollback()
                         return JSONResponse(status=400, message=unicode(form.errors))

@@ -127,33 +127,44 @@ class LogEntry(models.Model):
         "Returns the edited object represented by this log entry"
         return self.content_type.get_object_for_this_type(pk=self.object_id)
 
-#~ class PermissionRead(models.Model):
-    #~ content_type = models.ForeignKey(
-            #~ ContentType,
-            #~ blank=True, null=True,
-            #~ verbose_name=_('content type'))
-    #~ users = models.ManyToManyField(
-            #~ User,
-            #~ blank=True, null=True,
-            #~ verbose_name=_('users'))
-    #~ groups = models.ManyToManyField(
-            #~ Group,
-            #~ blank=True, null=True,
-            #~ verbose_name=_('groups'))
-#~ 
-    #~ class Meta:
-        #~ ordering = ('content_type',)
-        #~ verbose_name = _('permission read')
-        #~ verbose_name_plural = _('permissions read')
-#~ 
-    #~ def __unicode__(self):
-        #~ return unicode(self.content_type)
-#~ 
-    #~ @classmethod
-    #~ def has_perm(cls, user, opts):
-        #~ #objects = cls._default_manager.all()
-        #~ #objects.filter(has_perm(user, opts.app_label)
-        #~ return True
+class PermissionRead(models.Model):
+    hidden = models.BooleanField(
+            default=False,
+            verbose_name=_('as hidden'))
+    content_type = models.ForeignKey(
+            ContentType,
+            blank=True, null=True,
+            verbose_name=_('content type'))
+    users = models.ManyToManyField(
+            User,
+            blank=True, null=True,
+            verbose_name=_('users'))
+    groups = models.ManyToManyField(
+            Group,
+            blank=True, null=True,
+            verbose_name=_('groups'))
+
+    class Meta:
+        ordering = ('content_type',)
+        verbose_name = _('permission read')
+        verbose_name_plural = _('permissions read')
+
+    def __unicode__(self):
+        return unicode(self.content_type)
+
+    @classmethod
+    def has_hidden_perm(cls, user, opts):
+        # TODO: Доработать
+        #objects = cls._default_manager.all()
+        #objects.filter(has_perm(user, opts.app_label)
+        return False
+
+    @classmethod
+    def has_read_perm(cls, user, opts):
+        # TODO: Доработать
+        #objects = cls._default_manager.all()
+        #objects.filter(has_perm(user, opts.app_label)
+        return False
 
 class TempUploadFile(models.Model):
     """ Временно загружаемые файлы для последующей
@@ -251,10 +262,18 @@ class BaseModel(object):
     search_fields       = None # для запрета поиска пустой кортеж
     file_fields         = []
     search_key          = 'query'
+    
+    user_field          = None  # если указано, то в это поле записывается
+                                # Пользователь, производящий действия
 
     ordering            = None
     filters             = None
     actions             = []
+
+    sum_values          = []
+    avg_values          = []
+    min_values          = []
+    max_values          = []
 
     paginator           = Paginator
     form                = None
@@ -709,18 +728,40 @@ class BaseModel(object):
         """ Метод может переопределяться, но по-умолчанию такой """
         qs = self.filter_queryset(request, **kwargs)
         qs = self.page_queryset(request, qs, **kwargs)
+        total = self.get_queryset_total(qs)
         properties = [ x['name'] for x in self.get_list_display()\
             if not x['name'] in self.get_fields() ]
         data = self.serialize(qs, use_natural_keys=True, properties=properties)
+        if total:
+            data['total'] = total
         return JSONResponse(data=data)
+    
+    def get_queryset_total(self, qs):
+        total = {}
+        # TODO: доработать итоговые данные
+        if self.sum_values:
+            total['sum_values'] = {}
+        if self.avg_values:
+            total['avg_values'] = {}
+        if self.min_values:
+            total['min_values'] = {}
+        if self.max_values:
+            total['max_values'] = {}
+        return total
 
-    #~ def has_read_permission(self, request):
-        #~ """
-        #~ Returns True if the given request has permission to read an object.
-        #~ Can be overriden by the user in subclasses.
-        #~ """
-        #~ opts = self.opts
-        #~ return PermissionRead.has_perm(user, opts)
+    def has_hidden_permission(self, request):
+        """
+        Returns True if the given request has permission to read an object.
+        """
+        opts = self.opts
+        return PermissionRead.has_hidden_perm(request.user, opts)
+
+    def has_read_permission(self, request):
+        """
+        Returns True if the given request has permission to read an object.
+        """
+        opts = self.opts
+        return PermissionRead.has_read_perm(request.user, opts)
 
     def has_add_permission(self, request):
         """
@@ -765,6 +806,8 @@ class BaseModel(object):
         of those actions.
         """
         return {
+            'hidden': self.has_hidden_permission(request),
+            'read': self.has_read_permission(request),
             'add': self.has_add_permission(request),
             'change': self.has_change_permission(request),
             'delete': self.has_delete_permission(request),
@@ -878,11 +921,15 @@ class ComposeBWP(BaseModel):
         qs = self.queryset_from_filters(qs, **kwargs)
         qs = self.filter_queryset(request, qs, **kwargs)
         qs = self.page_queryset(request, qs, **kwargs)
+        total = self.get_queryset_total(qs)
+
         properties = [ x['name'] for x in self.get_list_display()\
             if not x['name'] in self.get_fields() ]
         # Задаём использование натуральных ключей для того, чтобы не
         # ставился автоматически use_split_keys = True
         data = self.serialize(qs, use_natural_keys=True, properties=properties)
+        if total:
+            data['total'] = total
         return JSONResponse(data=data)
 
     def get_compose(self, request, object, **kwargs):

@@ -172,14 +172,9 @@ class BWPSite(object):
             return self._registry.items()
         available = []
         for model, model_bwp in self._registry.items():
-            app_label = model._meta.app_label
-            has_module_perms = request.user.has_module_perms(app_label)
-
-            if has_module_perms:
-                perms = model_bwp.get_model_perms(request)
-
-                if True in perms.values():
-                    available.append((model, model_bwp))
+            perms = model_bwp.get_model_perms(request)
+            if True in perms.values():
+                available.append((model, model_bwp))
         return available
 
     def bwp_dict(self, request):
