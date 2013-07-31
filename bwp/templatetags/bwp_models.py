@@ -73,14 +73,18 @@ def sums(objects, attrs):
     if isinstance(attrs, (str, unicode)):
         attrs = [ x.strip(' ') for x in attrs.split(',')]
 
-    def get_value(attr):
+    def get_value(x, a):
+        if isinstance(x, dict):
+            return x.get(a)
+
+        attr = getattr(x, a)
         if callable(attr):
             return attr()
         return attr
 
     SUM = []
     for a in attrs:
-        SUM.append(sum([ get_value(getattr(x, a)) for x in objects ]))
+        SUM.append(sum([ get_value(x, a) for x in objects ]))
 
     return SUM
 
