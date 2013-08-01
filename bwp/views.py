@@ -598,6 +598,8 @@ def API_get_collection_report_url(request, model, report,
     }
 
     qs = model_bwp.filter_queryset(**options)
+    
+    filters = filters or []
 
     ctx = {'data': qs, 'filters': [ x for x in filters if x['active']]}
     url = report.render_to_media_url(context=ctx, user=request.user)
