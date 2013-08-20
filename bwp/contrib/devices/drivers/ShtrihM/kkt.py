@@ -2668,7 +2668,8 @@ class KKT(BaseKKT):
         """
         raise NotImplemented
 
-    def xA4(self):
+## Implemented
+    def xA4(self, number):
         """ Итоги смены по номеру смены ЭКЛЗ
             Команда: A4H. Длина сообщения: 7 байт.
                 Пароль системного администратора (4 байта)
@@ -2678,7 +2679,10 @@ class KKT(BaseKKT):
 
             Примечание: Время выполнения команды – до 40 секунд.
         """
-        raise NotImplemented
+        command = 0xBA
+        params  = self.admin_password + int2.pack(int(number))
+        data, error, command = self.ask(command, params)
+        return True
 
     def xA5(self):
         """ Платежный документ из ЭКЛЗ по номеру КПК
@@ -3002,7 +3006,7 @@ class KKT(BaseKKT):
         command = 0xBA
         params  = self.admin_password + int2.pack(int(number))
         data, error, command = self.ask(command, params)
-        kkm = data[:16].decode(CODE_PAGE)
+        kkm = data.decode(CODE_PAGE)
         return kkm
 
     def xBB(self):
