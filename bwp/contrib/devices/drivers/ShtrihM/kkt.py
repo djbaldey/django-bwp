@@ -2844,7 +2844,7 @@ class KKT(BaseKKT):
                 Порядковый номер оператора (1 байт) 1...30
         """
         command = 0xB0
-        params  = admin_password or self.password
+        params  = self.admin_password
         data, error, command = self.ask(command, params)
         operator = ord(data[0])
         return operator
@@ -2987,8 +2987,9 @@ class KKT(BaseKKT):
         """
         raise NotImplemented
 
-    def xBA(self):
-        """ Запрос в ЭКЛЗ итогов смены по ном еру смены
+## Implemented
+    def xBA(self, number):
+        """ Запрос в ЭКЛЗ итогов смены по номеру смены
             Команда: BAH. Длина сообщения: 7 байт.
                 Пароль системного администратора (4 байта)
                 Номер смены (2 байта) 0000...2100
@@ -2998,7 +2999,11 @@ class KKT(BaseKKT):
 
             Примечание: Время выполнения команды – до 40 секунд.
         """
-        raise NotImplemented
+        command = 0xBA
+        params  = self.admin_password + int2.pack(int(number))
+        data, error, command = self.ask(command, params)
+        kkm = data[:16].decode(CODE_PAGE)
+        return kkm
 
     def xBB(self):
         """ Запрос итога активизации ЭКЛЗ
