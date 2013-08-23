@@ -121,6 +121,7 @@ class Document(AbstractGroup):
     def render_to_media_url(self, context={}, user=None):
         filename = self.title+'.'+self.format_out
         filename = prep_filename(filename)
+        context['DOCUMENT'] = self
         _file = self.render(context)
         report = Report(
             document=self,

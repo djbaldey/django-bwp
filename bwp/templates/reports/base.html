@@ -1,0 +1,82 @@
+{% load i18n l10n bwp_base bwp_models %}
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<HEAD>
+    <META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=utf-8">
+    <TITLE>{% block title %}{{ DOCUMENT }}{% endblock %}</TITLE>
+    <META NAME="GENERATOR" CONTENT="Бизон-РЦ {% SETTINGS 'VERSION' %}">
+    <META NAME="AUTHOR" CONTENT="{{ user }}">
+    <META NAME="CREATED" CONTENT="{% now 'Ymd' %};{% now 'His' %}">
+
+    <STYLE>
+        {% block defaultstyle %}
+        BODY,DIV,TABLE,THEAD,TBODY,TFOOT,TR,TH,TD,P {
+            font-family:"Arial";
+            font-size:x-small;
+        }
+        .bordered {
+            border: 1px solid #000;
+            padding: 0;
+        }
+        .bordered-bg-gray {
+            border: 1px solid #000;
+            padding: 0;
+            background: #eee;
+        }
+        .bordered-fg-gray {
+            border: 1px solid #000;
+            padding: 0;
+            color: #777;
+        }
+        .bordered-bg-red {
+            border: 1px solid #000;
+            padding: 0;
+            background: red;
+        }
+        .bordered-fg-red {
+            border: 1px solid #000;
+            padding: 0;
+            color: red;
+        }
+        .bg-gray {
+            background: #eee;
+        }
+        .fg-gray {
+            color: #777;
+        }
+        .bg-red {
+            background: red;
+        }
+        .fg-red {
+            color: red;
+        }
+        {% endblock %}
+        {% block extrastyle %}{% endblock %}
+    </STYLE>
+</HEAD>
+
+<BODY>
+{% block body %}
+
+{% block header %}{% endblock %}
+
+{% block main_table %}
+    <TABLE WIDTH="100%" CELLSPACING="0" BORDER="0">
+        {% block main_table_colls %}{% endblock %}
+        <THEAD>
+    {% block main_table_thead %}{% endblock %}
+        </THEAD>
+        <TBODY>
+    {% block main_table_tbody %}{% endblock %}
+        </TBODY>
+        <TFOOT>
+    {% block main_table_tfoot %}{% endblock %}
+        </TFOOT>
+    </TABLE>
+{% endblock %}
+
+{% block footer %}{% endblock %}
+
+{% endblock %}
+</BODY>
+</HTML>

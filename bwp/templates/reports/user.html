@@ -1,0 +1,38 @@
+{% extends "reports/base_odt.html" %}
+
+
+{% block header %}
+    <H4>ИНФОРМАЦИЯ О ПОЛЬЗОВАТЕЛЕ: {{ data }}</H4>
+    <DIV ALIGN="RIGHT">печать: {% now "DATETIME_FORMAT" %}</DIV>
+{% endblock %}
+
+{% block main_table_tbody %}
+    <TR>
+        <TH WIDTH=24% ALIGN=RIGHT>ID</TH>
+        <TD WIDTH=76% ALIGN=LEFT>{{ data.pk }}</TD>
+    </TR>
+    <TR>
+        <TH WIDTH=24% ALIGN=RIGHT>Логин</TH>
+        <TD WIDTH=76% ALIGN=LEFT>{{ data.username }}</TD>
+    </TR>
+    <TR>
+        <TH WIDTH=24% ALIGN=RIGHT>Группы</TH>
+        <TD WIDTH=76% ALIGN=LEFT>{% for x in data.groups.all %}{{ x }}; {% endfor %}</TD>
+    </TR>
+    <TR>
+        <TH WIDTH=24% ALIGN=RIGHT>Фамилия</TH>
+        <TD WIDTH=76% ALIGN=LEFT>{{ data.last_name }}</TD>
+    </TR>
+    <TR>
+        <TH WIDTH=24% ALIGN=RIGHT>Имя</TH>
+        <TD WIDTH=76% ALIGN=LEFT>{{ data.first_name }}</TD>
+    </TR>
+    <TR>
+        <TH WIDTH=24% ALIGN=RIGHT>E-mail</TH>
+        <TD WIDTH=76% ALIGN=LEFT>{{ data.email }}</TD>
+    </TR>
+    <TR>
+        <TH WIDTH=24% ALIGN=RIGHT>Пароль</TH>
+        <TD WIDTH=76% ALIGN=LEFT>{% if data.password %}Установлен{% else %}Не установлен{% endif %}</TD>
+    </TR>
+{% endblock %}

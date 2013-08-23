@@ -1,0 +1,40 @@
+{% extends "reports/base_odt_landscape.html" %}
+
+{% block header %}
+    <H4>Список пользователей</H4>
+    <DIV ALIGN="RIGHT">печать: {% now "DATETIME_FORMAT" %}</DIV>
+{% endblock %}
+
+{% block main_table_thead %}
+    <TR>
+        <TH ALIGN="LEFT" CLASS="bordered-bg-gray">№</TH>
+        <TH ALIGN="LEFT" CLASS="bordered-bg-gray">Логин</TH>
+        <TH ALIGN="LEFT" CLASS="bordered-bg-gray">Фамилия</TH>
+        <TH ALIGN="LEFT" CLASS="bordered-bg-gray">Имя</TH>
+        <TH ALIGN="LEFT" CLASS="bordered-bg-gray">Группы</TH>
+        <TH ALIGN="LEFT" CLASS="bordered-bg-gray">Активен</TH>
+        <TH ALIGN="LEFT" CLASS="bordered-bg-gray">Сотрудник</TH>
+        <TH ALIGN="LEFT" CLASS="bordered-bg-gray">Суперюзер</TH>
+    </TR>
+{% endblock %}
+
+{% block main_table_tbody %}
+    {% with objects=data|ordering:"username" %}
+    {% for item in objects %}
+    <TR{% if not item.is_active %} CLASS="bordered-bg-red"{% endif %}>
+        <TD CLASS="bordered">{{ forloop.counter }}</TD>
+        <TD CLASS="bordered">{{ item.username }}</TD>
+        <TD CLASS="bordered">{{ item.last_name }}</TD>
+        <TD CLASS="bordered">{{ item.first_name }}</TD>
+        <TD CLASS="bordered">{% for group in item.groups.all %}{{ group }}; {% endfor %}</TD>
+        <TD CLASS="bordered">{{ item.is_active|yesno:'Да, Нет' }}</TD>
+        <TD CLASS="bordered">{{ item.is_staff|yesno:'Да, Нет' }}</TD>
+        <TD CLASS="bordered">{{ item.is_superuser|yesno:'Да, Нет' }}</TD>
+    </TR>
+    {% endfor %}
+    {% endwith %}
+{% endblock %}
+
+{% block footer %}
+    <P><B>Всего пользователей:</B> {{ data.count }}</P>
+{% endblock %}
