@@ -50,9 +50,10 @@
                     {% if ((data.perms.change) || (!_multiselect)) { %}
                         </a>
                     {% } %}
-<!--
+
                     <div class="pull-right">
                         <div class="btn-group">
+<!--
                         {% if (data.perms.add) { %}
                             <button class="btn btn-mini"
                                 data-action="object_copy"
@@ -72,18 +73,18 @@
                                 <i class="icon-pause"> </i>
                             </button>
                         {% } %}
-
-                        {% if (data.perms.delete) { %}
+-->
+                        {% if (data.perms.delete && data.is_m2m) { %}
                             <button class="btn btn-mini"
                                     data-action="{{ _obj_delete }}"
                                     data-model="{{ obj.model }}"
                                     data-pk="{{ obj.pk }}"
                                     data-id="{{ data.id }}"
                                     title="Удалить">
-                                    <i class="icon-trash"></i>
+                                    <i class="icon-minus-sign"></i>
                             </button>
                         {% } %}
-
+<!--
                         {% if (!_multiselect) { %}
                             <button class="btn btn-mini"
                                 data-action="object_select"
@@ -95,9 +96,9 @@
                             </button>
                         {% } %}
 
+-->
                         </div>
                     </div>
--->
                 {% } else { %}
                     {% if ((column.name == '__unicode__') && (!(column.name in obj.properties))) { %}
                         {{ obj.__unicode__ }}
