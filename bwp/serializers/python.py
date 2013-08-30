@@ -88,6 +88,8 @@ class SerializerWrapper(object):
             else:
                 val = value
             self._properties[name] = val
+        elif isinstance(value, dict):
+            self._properties[name] = value
         else:
             self._properties[name] = unicode(value)
         return self._properties[name]
