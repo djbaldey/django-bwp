@@ -893,6 +893,12 @@ function handlerObjectChange(object, $field) {
 /* Копирование объекта */
 function handlerObjectCopy(data, clone) {
     if (DEBUG) {console.log('function:'+'handlerObjectCopy')};
+    if (data.id) {
+        object = REGISTER[data.id];
+        data = {};
+        data.model = object.model.name;
+        data.pk    = object.pk;
+    };
     args = {
         "method"  : "get_object",
         "model"   : data.model,

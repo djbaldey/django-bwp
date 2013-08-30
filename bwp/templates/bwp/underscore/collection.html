@@ -50,7 +50,7 @@
                     {% if ((data.perms.change) || (!_multiselect)) { %}
                         </a>
                     {% } %}
-
+<!--
                     <div class="pull-right">
                         <div class="btn-group">
                         {% if (data.perms.add) { %}
@@ -62,7 +62,7 @@
                                 <i class="icon-plus"> </i>
                             </button>
                         {% } %}
-<!--
+
                         {% if ((data.perms.add) && (data.meta.has_clone)) { %}
                             <button class="btn btn-mini"
                                 data-action="object_clone"
@@ -72,7 +72,7 @@
                                 <i class="icon-pause"> </i>
                             </button>
                         {% } %}
--->
+
                         {% if (data.perms.delete) { %}
                             <button class="btn btn-mini"
                                     data-action="{{ _obj_delete }}"
@@ -83,7 +83,7 @@
                                     <i class="icon-trash"></i>
                             </button>
                         {% } %}
-<!--
+
                         {% if (!_multiselect) { %}
                             <button class="btn btn-mini"
                                 data-action="object_select"
@@ -94,9 +94,10 @@
                                 <i class="icon-ok"></i>
                             </button>
                         {% } %}
--->
+
                         </div>
                     </div>
+-->
                 {% } else { %}
                     {% if ((column.name == '__unicode__') && (!(column.name in obj.properties))) { %}
                         {{ obj.__unicode__ }}
