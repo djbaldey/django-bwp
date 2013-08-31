@@ -254,7 +254,7 @@ class AbstractDocumentDateTime(models.Model):
             return _('%(document)s from %(date)s') % {
                 'document': ' '.join(doc),
                 'date': dateformat.format(self.date_time,
-                    'Y-m-d H:j:s') if self.date_time else 'None'
+                    'Y-m-d H:i:s') if self.date_time else 'None'
             }
         else:
             return _('New document')
