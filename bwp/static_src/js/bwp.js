@@ -612,7 +612,7 @@ function handlerCommitInstance(instance, done) {
         handlerCollectionGet(_model);
         if (done) { done() };
     };
-    jqxhr = new jsonAPI(args, cb, 'handlerCommitInstance(instance) call jsonAPI()');
+    jqxhr = new jsonAPI(args, cb, 'handlerCommitInstance(instance) call jsonAPI()', true, 300000);
     return jqxhr;
 };
 
@@ -835,7 +835,7 @@ function handlerObjectAdd(instance) {
         object.model.fix[object.id] = object;
         handlerTabOpen(object);
     };
-    jqxhr = new jsonAPI(args, cb, 'handlerObjectAdd(model) call jsonAPI()', true, 60000);
+    jqxhr = new jsonAPI(args, cb, 'handlerObjectAdd(model) call jsonAPI()');
     return jqxhr;
 };
 
@@ -912,7 +912,7 @@ function handlerObjectCopy(data, clone) {
         object.model.fix[object.id] = object;
         handlerTabOpen(object);
     };
-    jqxhr = new jsonAPI(args, cb, 'handlerObjectCopy(data, clone) call jsonAPI()', true, 60000);
+    jqxhr = new jsonAPI(args, cb, 'handlerObjectCopy(data, clone) call jsonAPI()');
 };
 
 /* Удаление объекта */
@@ -932,7 +932,7 @@ function handlerObjectDelete(data, done) {
         handlerCollectionGet(REGISTER[validatorID(data.model)]);
         if (done) { done() };
     };
-    jqxhr = new jsonAPI(args, cb, 'handlerObjectDelete(data, done) call jsonAPI()');
+    jqxhr = new jsonAPI(args, cb, 'handlerObjectDelete(data, done) call jsonAPI()', true, 180000);
 };
 
 /* Функция мутирования строки объекта */
