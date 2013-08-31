@@ -1,21 +1,32 @@
 {# Шаблон Underscore #}{% load bwp_verbatim %}{% verbatim %}
 {% var _obj_add = 'object_add'; var _obj_delete = 'object_delete'; %}
 {% if (data.is_m2m) { _obj_add += '_m2m'; _obj_delete += '_m2m'; } %}
-{% if (data.meta.search_fields.length) { %}
+
 <div class="subnav pull-right">
     <div class="pull-left form-search">
         <div class="input-prepend input-append">
             <button class="btn btn-mini" data-id="{{ data.id }}" title="Обновить" data-action="collection_search_refresh">
                 <i class="icon-refresh"></i>
             </button>
-            <input data-action="collection_search" data-id="{{ data.id }}" type="search" class="search input-large" placeholder="Поиск" value="{{ data.query }}">
+            <input data-action="collection_search"
+                    data-id="{{ data.id }}"
+                {% if (data.meta.search_fields.length) { %}
+                    type="search"
+                {% } else {%}
+                    type="hidden"
+                {% } %}
+                    class="search input-large"
+                    placeholder="Поиск"
+                    value="{{ data.query }}">
+        {% if (data.meta.search_fields.length) { %}
             <button class="btn btn-mini" data-id="{{ data.id }}" data-action="collection_searchsettings">
                 <i class="icon-wrench"></i>
             </button>
+        {% } %}
         </div>
     </div>
 </div>
-{% } %}
+
 {% if (data.paginator) { var _per_page = data.paginator.per_page || data.meta.list_per_page; %}
 {% } else { var _per_page = data.meta.list_per_page;} %}
 <div class="subnav">

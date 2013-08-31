@@ -157,14 +157,14 @@ function handlerShowAlert(msg, type, callback, timeout) {
 };
 
 /* Общая функция для работы с django-quickapi */
-function jsonAPI(args, callback, to_console, sync) {
+function jsonAPI(args, callback, to_console, sync, timeout) {
     if (DEBUG) {console.log('function:'+'jsonAPI')};
     if (!args) { args = { method: "get_settings" } };
     if (!callback) { callback = function(json, status, xhr) {} };
     var jqxhr = $.ajax({
         type: "POST",
         async: !sync,
-        timeout: AJAX_TIMEOUT,
+        timeout: timeout || AJAX_TIMEOUT,
         url: BWP_API_URL,
         data: {'jsonData': $.toJSON(args)},
         dataType: 'json'
@@ -835,7 +835,7 @@ function handlerObjectAdd(instance) {
         object.model.fix[object.id] = object;
         handlerTabOpen(object);
     };
-    jqxhr = new jsonAPI(args, cb, 'handlerObjectAdd(model) call jsonAPI()');
+    jqxhr = new jsonAPI(args, cb, 'handlerObjectAdd(model) call jsonAPI()', true, 60000);
     return jqxhr;
 };
 
@@ -912,7 +912,7 @@ function handlerObjectCopy(data, clone) {
         object.model.fix[object.id] = object;
         handlerTabOpen(object);
     };
-    jqxhr = new jsonAPI(args, cb, 'handlerObjectCopy(data, clone) call jsonAPI()');
+    jqxhr = new jsonAPI(args, cb, 'handlerObjectCopy(data, clone) call jsonAPI()', true, 60000);
 };
 
 /* Удаление объекта */
