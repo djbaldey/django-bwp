@@ -140,8 +140,6 @@ class Document(AbstractGroup):
     def for_model(self):
         return bool(self.bound == Document.BOUND_MODEL)
 
-
-
 class Report(AbstractFile):
     """ Файл сформированного документа """
     default_label_type = u'%s' % _('report')

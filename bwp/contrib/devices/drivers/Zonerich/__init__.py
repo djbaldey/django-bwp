@@ -43,7 +43,8 @@ from bwp.contrib.devices.remote import RemoteCommand
 
 DEFAULT_PORT = '192.168.1.10 9100'
 CODE_PAGE = 'cp866'
-GS = 0x1D
+GS  = 0x1D
+ESC = 0x1B
 
 class ZonerichIP(object):
     is_remote = False
@@ -52,6 +53,7 @@ class ZonerichIP(object):
     COMMAND_CUT      = '\n'+chr(GS)+chr(0x56)+chr(0x01)+'\n'
     COMMAND_HEADER   = '\n'+chr(GS)+chr(0x21)+chr(0x10)+'\n'
     COMMAND_STARDARD = '\n'+chr(GS)+chr(0x21)+chr(0x00)+'\n'
+    COMMAND_BELL     = '\n'+chr(ESC)+chr(0x39)+chr(0)+chr(0)+chr(64)+'\n'
 
     def __init__(self, remote=False, *args, **kwargs):
         if remote:
@@ -132,7 +134,8 @@ class ZonerichIP(object):
         if header:
             doc += self.COMMAND_HEADER + header + '\n'
 
-        doc += self.COMMAND_STARDARD + self._prepare_text(text) + self.COMMAND_CUT
+        doc += self.COMMAND_STARDARD + self._prepare_text(text) \
+            + self.COMMAND_CUT + self.COMMAND_BELL
 
         if self.status():
             self._send(doc)
