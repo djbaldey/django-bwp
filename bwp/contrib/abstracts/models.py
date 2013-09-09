@@ -762,6 +762,7 @@ class AbstractFile(AbstractData):
     """ Абстрактная модель для файлов """
     default_label_type = u'%s' % _('file')
     file = models.FileField(upload_to=upload_to, 
+            max_length=260,
             verbose_name=_('file'))
 
     def save(self):

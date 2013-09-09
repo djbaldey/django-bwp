@@ -60,10 +60,10 @@ osdelete = remove_file
 
 def print_debug(*args):
     if settings.DEBUG:
-        print '<DEBUG START>'
+        #~ print '<DEBUG START>'
         for arg in args:
             print arg,
-        print '\n<DEBUG END>\n'
+        print '\n'#'\n<DEBUG END>\n'
 
 def print_f_code(f_code):
     print 'line %s:\t%s\t%s' % (

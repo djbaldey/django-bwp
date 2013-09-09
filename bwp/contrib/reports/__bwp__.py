@@ -42,7 +42,12 @@ from bwp.models import ModelBWP, ComposeBWP
 from models import *
 
 class DocumentBWP(ModelBWP):
-    list_display = ('title', 'qualifier', 'template_name', 'id')
+    list_display = ('title', 
+        'content_type',
+        'qualifier',
+        'template_name',
+        'id')
+    ordering = ['content_type']
 site.register(Document, DocumentBWP)
 
 class ReportBWP(ModelBWP):
