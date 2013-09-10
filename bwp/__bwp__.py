@@ -69,7 +69,13 @@ class PermissionCompose(ManyToManyBWP):
     model = Permission
 
 class UserAdmin(ModelBWP):
-    list_display = ('__unicode__', 'is_superuser', 'is_staff', 'last_login', 'date_joined', ('id', label_id))
+    list_display = ('__unicode__',
+        'is_active',
+        'is_superuser',
+        'is_staff',
+        'last_login',
+        'date_joined',
+        ('id', label_id))
     list_display_css = {
         'pk': 'input-micro', 'id': 'input-micro',
         'is_superuser': 'input-mini', 'is_staff': 'input-mini',
@@ -84,6 +90,17 @@ site.register(User, UserAdmin)
 
 class UserCompose(ComposeBWP):
     model = User
+    list_display = ('__unicode__',
+        'is_active',
+        'is_superuser',
+        'is_staff',
+        'last_login',
+        'date_joined',
+        ('id', label_id))
+    list_display_css = {
+        'pk': 'input-micro', 'id': 'input-micro',
+        'is_superuser': 'input-mini', 'is_staff': 'input-mini',
+    }
     ordering = ('username',)
 
 class GroupAdmin(ModelBWP):
