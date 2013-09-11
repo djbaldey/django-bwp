@@ -1,6 +1,7 @@
 {# Шаблон Underscore #}{% load bwp_verbatim %}{% verbatim %}
 {% var type   = data.filters[index].type %}
 {% var filter = data.meta.filters_dict[data.filters[index].field] %}
+{% var field  = data.filters[index].field %}
 {% var widget = filter.widget %}
 
 <div class="controls">
@@ -39,7 +40,7 @@
         {% }); %}
     </select>
 
-{% } else if (((widget.tag == 'input') && (widget.name != 'id')) || (widget.tag == 'textarea')) { %}
+{% } else if (((widget.tag == 'input') && ((widget.name != 'id') || (field == 'id'))) || (widget.tag == 'textarea')) { %}
     <{{ widget.tag }}
     {% _.each(widget.attr, function(val, key) { %}
         {% if (!(key in {'disabled':0,})) { %}

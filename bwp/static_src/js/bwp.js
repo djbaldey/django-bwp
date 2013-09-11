@@ -727,6 +727,8 @@ function handlerCollectionGet(instance) {
                 type:    item.type,
                 inverse: item.inverse,
                 values:  item.values,
+                field_title:   item.field_title,
+                type_title:   item.type_title,
             })
         });
     };
@@ -1396,9 +1398,14 @@ function handlerFilterAppend(instance) {
         handlerShowAlert('Не установлены поля для фильтров.');
         return false;
     };
-    newfilter = { type:null, inverse:false, active: false, 
-        field: null,
-        values:null,
+    newfilter = {
+        type:        null,
+        inverse:     false,
+        active:      false, 
+        field:       null,
+        values:      null,
+        field_title: null,
+        type_title:  null,
     };
     if (!instance.filters) { instance.filters = []; };
     instance.filters.push(newfilter);
@@ -1441,7 +1448,9 @@ function eventFilterChangeField() {
         instance = REGISTER[data.id],
         index = data.filter_index,
         val = $(this).val();
+        text = $(this).find('[value='+val+']').text();
     instance.filters[index].field = val;
+    instance.filters[index].field_title = text;
     handlerFilterChangeActive(instance, index, false);
     $('#collection_filters_'+instance.id+
         ' [data-place=filter_values][data-filter_index='+index+']')
@@ -1476,7 +1485,9 @@ function eventFilterChangeType() {
         instance = REGISTER[data.id],
         index = data.filter_index,
         val = $(this).val();
+        text = $(this).find('[value='+val+']').text();
     instance.filters[index].type = val;
+    instance.filters[index].type_title = text;
     handlerFilterChangeActive(instance, index, false);
     if (!val) {
         // блокировка всех прочих
@@ -1501,7 +1512,7 @@ function eventFilterChangeType() {
         ' [data-action=filter_change_inverse][data-filter_index='+index+']')
         .removeAttr('disabled');
 
-    console.log(instance);
+    //~ console.log(instance);
     var html = TEMPLATES.filter_values({data:instance, index:index }),
         $values = $('#collection_filters_'+instance.id+
             ' [data-place=filter_values][data-filter_index='+index+']');
