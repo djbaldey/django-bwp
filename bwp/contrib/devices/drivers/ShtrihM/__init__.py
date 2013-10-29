@@ -290,10 +290,11 @@ class ShtrihFRK(object):
         self.append_spooler(group_hash, self.kkt.x17_loop, text=u'='*36)
 
         if credit or card:
-            _text  = u' \n'*5
-            _text += u'подпись: ___________________________\n \n'
+            _text  = u'\n '*5
+            _text += u'подпись: ___________________________\n \n '
             _text += u'='*36
-            self.append_spooler(group_hash, self.kkt.x17_loop, text=_text)
+            for line in _text.split('\n'):
+                self.append_spooler(group_hash, self.kkt.x17_loop, text=line)
 
         if discount_summa:
             self.append_spooler(group_hash,
@@ -303,9 +304,10 @@ class ShtrihFRK(object):
         summs = [cash,credit,packaging,card]
 
         if double:
-            self.append_spooler(group_hash, self.kkt.x85,
+            res = self.append_spooler(group_hash, self.kkt.x85,
                     summs=summs, taxes=taxes, discount=discount_percent)
-            return self.result_spooler(group_hash, self.kkt.x8C)
+            self.print_copy()
+            return res
         else:
             return self.result_spooler(group_hash, self.kkt.x85,
                     summs=summs, taxes=taxes, discount=discount_percent)
