@@ -201,7 +201,7 @@ class ShtrihFRK(object):
 
     def print_receipt(self, specs, cash=0, credit=0, packaging=0, card=0,
     discount_summa=0, discount_percent=0, document_type=0, nds=0,
-    header=u'', comment=u'', buyer=u''):
+    header=u'', comment=u'', buyer=u'', double=False):
         """ Печать чека.
             specs - Это список словарей проданных позиций:
                 [{'title':u'Хлеб',
@@ -219,7 +219,7 @@ class ShtrihFRK(object):
                 1 – покупка;
                 2 – возврат продажи;
                 3 – возврат покупки
-
+            double - повтор документа (дублирование)
         """
         if self.is_remote:
             return self.remote("print_receipt",
@@ -286,17 +286,30 @@ class ShtrihFRK(object):
 
         for line in comment.split('\n'):
             self.append_spooler(group_hash, self.kkt.x17_loop, text=line)
-        
+
         self.append_spooler(group_hash, self.kkt.x17_loop, text=u'='*36)
-        
+
+        if credit or card:
+            _text  = u' \n'*5
+            _text += u'подпись: ___________________________\n \n'
+            _text += u'='*36
+            self.append_spooler(group_hash, self.kkt.x17_loop, text=_text)
+
         if discount_summa:
             self.append_spooler(group_hash,
                 self.kkt.x86, summa=discount_summa, taxes=taxes)
 
         _text = u"-" * 18
         summs = [cash,credit,packaging,card]
-        return self.result_spooler(group_hash,
-            self.kkt.x85, summs=summs, taxes=taxes, discount=discount_percent)
+
+        if double:
+            self.append_spooler(group_hash, self.kkt.x85,
+                    summs=summs, taxes=taxes, discount=discount_percent)
+            return self.result_spooler(group_hash, self.kkt.x8C)
+        else:
+            return self.result_spooler(group_hash, self.kkt.x85,
+                    summs=summs, taxes=taxes, discount=discount_percent)
+        
 
     def print_copy(self):
         """ Печать копии последнего документа """
