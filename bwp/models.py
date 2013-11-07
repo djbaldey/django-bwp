@@ -40,7 +40,7 @@ from django.db import models, transaction
 from django.db.models.fields.files import FileField, ImageField
 from django.utils.translation import ugettext, ugettext_lazy as _ 
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.auth.models import User, Group
+
 from django.contrib.admin.util import quote
 from django.utils.encoding import smart_unicode, force_unicode
 from django.utils.safestring import mark_safe
@@ -65,6 +65,7 @@ from bwp.utils import print_debug
 from bwp import conf
 from bwp.widgets import get_widget_from_field
 from bwp.contrib.abstracts.models import AbstractUserSettings
+from bwp.contrib.users.models import User, Group
 
 ADDING = 1
 CHANGE = 2
@@ -126,34 +127,6 @@ class LogEntry(models.Model):
     def get_edited_object(self):
         "Returns the edited object represented by this log entry"
         return self.content_type.get_object_for_this_type(pk=self.object_id)
-
-#~ class PermissionRead(models.Model):
-    #~ content_type = models.ForeignKey(
-            #~ ContentType,
-            #~ blank=True, null=True,
-            #~ verbose_name=_('content type'))
-    #~ users = models.ManyToManyField(
-            #~ User,
-            #~ blank=True, null=True,
-            #~ verbose_name=_('users'))
-    #~ groups = models.ManyToManyField(
-            #~ Group,
-            #~ blank=True, null=True,
-            #~ verbose_name=_('groups'))
-#~ 
-    #~ class Meta:
-        #~ ordering = ('content_type',)
-        #~ verbose_name = _('permission read')
-        #~ verbose_name_plural = _('permissions read')
-#~ 
-    #~ def __unicode__(self):
-        #~ return unicode(self.content_type)
-#~ 
-    #~ @classmethod
-    #~ def has_perm(cls, user, opts):
-        #~ #objects = cls._default_manager.all()
-        #~ #objects.filter(has_perm(user, opts.app_label)
-        #~ return True
 
 class TempUploadFile(models.Model):
     """ Временно загружаемые файлы для последующей
@@ -251,10 +224,18 @@ class BaseModel(object):
     search_fields       = None # для запрета поиска пустой кортеж
     file_fields         = []
     search_key          = 'query'
+    
+    user_field          = None  # если указано, то в это поле записывается
+                                # Пользователь, производящий действия
 
     ordering            = None
     filters             = None
     actions             = []
+
+    sum_values          = []
+    avg_values          = []
+    min_values          = []
+    max_values          = []
 
     paginator           = Paginator
     form                = None
@@ -675,7 +656,7 @@ class BaseModel(object):
     def copy(self, request, pk, clone=None, **kwargs):
         """ Получает копию объекта согласно привилегий.
         """
-        if self.has_add_permission(request):
+        if self.has_create_permission(request):
             try:
                 object = self.queryset(request, **kwargs).get(pk=pk)
             except:
@@ -694,7 +675,7 @@ class BaseModel(object):
         """
         Получает шаблон объекта согласно привилегий.
         """
-        if self.has_add_permission(request):
+        if self.has_create_permission(request):
             return self.get_new_object_detail(request, **kwargs)
         else:
             return get_http_403(request)
@@ -709,28 +690,43 @@ class BaseModel(object):
         """ Метод может переопределяться, но по-умолчанию такой """
         qs = self.filter_queryset(request, **kwargs)
         qs = self.page_queryset(request, qs, **kwargs)
+        total = self.get_queryset_total(qs)
         properties = [ x['name'] for x in self.get_list_display()\
             if not x['name'] in self.get_fields() ]
         data = self.serialize(qs, use_natural_keys=True, properties=properties)
+        if total:
+            data['total'] = total
         return JSONResponse(data=data)
+    
+    def get_queryset_total(self, qs):
+        total = {}
+        # TODO: доработать итоговые данные
+        if self.sum_values:
+            total['sum_values'] = {}
+        if self.avg_values:
+            total['avg_values'] = {}
+        if self.min_values:
+            total['min_values'] = {}
+        if self.max_values:
+            total['max_values'] = {}
+        return total
 
-    #~ def has_read_permission(self, request):
-        #~ """
-        #~ Returns True if the given request has permission to read an object.
-        #~ Can be overriden by the user in subclasses.
-        #~ """
-        #~ opts = self.opts
-        #~ return PermissionRead.has_perm(user, opts)
-
-    def has_add_permission(self, request):
+    def has_read_permission(self, request):
         """
-        Returns True if the given request has permission to add an object.
+        Returns True if the given request has permission to read an object.
+        """
+        opts = self.opts
+        return request.user.has_perm('%s.read_%s' % (opts.app_label, opts.object_name.lower()))
+
+    def has_create_permission(self, request):
+        """
+        Returns True if the given request has permission to create an object.
         Can be overriden by the user in subclasses.
         """
         opts = self.opts
-        return request.user.has_perm(opts.app_label + '.' + opts.get_add_permission())
+        return request.user.has_perm('%s.create_%s' % (opts.app_label, opts.object_name.lower()))
 
-    def has_change_permission(self, request, object=None):
+    def has_update_permission(self, request, object=None):
         """
         Returns True if the given request has permission to change the given
         Django model instance, the default implementation doesn't examine the
@@ -742,12 +738,12 @@ class BaseModel(object):
         request has permission to change *any* object of the given type.
         """
         opts = self.opts
-        return request.user.has_perm(opts.app_label + '.' + opts.get_change_permission())
+        return request.user.has_perm('%s.update_%s' % (opts.app_label, opts.object_name.lower()))
 
     def has_delete_permission(self, request, object=None):
         """
-        Returns True if the given request has permission to change the given
-        Django model instance, the default implementation doesn't examine the
+        Returns True if the given request has permission to delete the given
+        BWP model instance, the default implementation doesn't examine the
         `object` parameter.
 
         Can be overriden by the user in subclasses. In such case it should
@@ -756,7 +752,7 @@ class BaseModel(object):
         request has permission to delete *any* object of the given type.
         """
         opts = self.opts
-        return request.user.has_perm(opts.app_label + '.' + opts.get_delete_permission())
+        return request.user.has_perm('%s.delete_%s' % (opts.app_label, opts.object_name.lower()))
 
     def get_model_perms(self, request):
         """
@@ -764,11 +760,15 @@ class BaseModel(object):
         ``add``, ``change``, and ``delete`` mapping to the True/False for each
         of those actions.
         """
-        return {
-            'add': self.has_add_permission(request),
-            'change': self.has_change_permission(request),
+        perms = {
+            'create': self.has_create_permission(request),
+            'read':   self.has_read_permission(request),
+            'update': self.has_update_permission(request),
             'delete': self.has_delete_permission(request),
         }
+        # deprecated old style
+        perms['add'], perms['change'] = perms['create'], perms['update'] 
+        return perms
 
     def log_addition(self, request, object, oldobj=None):
         """
@@ -878,11 +878,15 @@ class ComposeBWP(BaseModel):
         qs = self.queryset_from_filters(qs, **kwargs)
         qs = self.filter_queryset(request, qs, **kwargs)
         qs = self.page_queryset(request, qs, **kwargs)
+        total = self.get_queryset_total(qs)
+
         properties = [ x['name'] for x in self.get_list_display()\
             if not x['name'] in self.get_fields() ]
         # Задаём использование натуральных ключей для того, чтобы не
         # ставился автоматически use_split_keys = True
         data = self.serialize(qs, use_natural_keys=True, properties=properties)
+        if total:
+            data['total'] = total
         return JSONResponse(data=data)
 
     def get_compose(self, request, object, **kwargs):
@@ -1097,8 +1101,9 @@ class ModelBWP(BaseModel):
         for compose in self.compose_instances:
             if request:
                 # Когда все действия недоступны
-                if not (compose.has_add_permission(request) or
-                        compose.has_change_permission(request) or
+                if not (compose.has_create_permission(request) or
+                        compose.has_read_permission(request) or
+                        compose.has_update_permission(request) or
                         compose.has_delete_permission(request)):
                     continue
             compose_instances.append(compose)

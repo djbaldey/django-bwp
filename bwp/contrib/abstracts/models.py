@@ -38,8 +38,10 @@
 """
 from django.db import models, transaction
 from django.utils.translation import ugettext_lazy as _
-from django.contrib.auth.models import User
+from django.utils import dateformat
+from django.conf import settings
 
+from bwp.contrib.users.models import User
 from bwp.utils.classes import upload_to
 from bwp.utils.filters import filterQueryset
 from bwp.utils import remove_file
@@ -250,7 +252,9 @@ class AbstractDocumentDateTime(models.Model):
             doc = self._meta.verbose_name.split(' ')
             doc[0] = doc[0].title()
             return _('%(document)s from %(date)s') % {
-                'document': ' '.join(doc), 'date': self.date_time
+                'document': ' '.join(doc),
+                'date': dateformat.format(self.date_time,
+                    'Y-m-d H:i:s') if self.date_time else 'None'
             }
         else:
             return _('New document')
@@ -758,6 +762,7 @@ class AbstractFile(AbstractData):
     """ Абстрактная модель для файлов """
     default_label_type = u'%s' % _('file')
     file = models.FileField(upload_to=upload_to, 
+            max_length=260,
             verbose_name=_('file'))
 
     def save(self):
