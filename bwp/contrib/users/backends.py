@@ -36,16 +36,41 @@
 #   <http://www.gnu.org/licenses/>.
 ###############################################################################
 """
-from django.conf.urls import patterns, include, url
-from django.contrib.staticfiles.urls import staticfiles_urlpatterns
-#~ from django.contrib import admin
+from __future__ import unicode_literals
+from django.contrib.auth import get_user_model
+from django.contrib.auth.backends import (
+            ModelBackend as DjangoModelBackend,
+            RemoteUserBackend as DjangoRemoteUserBackend)
 
-#~ admin.autodiscover()
+from bwp.contrib.users.models import Permission
 
-urlpatterns = patterns('',
-    url(r'^', include('bwp.urls')),
-    #~ url(r'^admin/', include(admin.site.urls)),
-)
 
-# For develop:
-urlpatterns += staticfiles_urlpatterns()
+class ModelBackend(DjangoModelBackend):
+    """
+    Redefinition with bwp class of permissions
+    """
+
+    def get_group_permissions(self, user_obj, obj=None):
+        """
+        Returns a set of permission strings that this user has through his/her
+        groups.
+        """
+        if user_obj.is_anonymous() or obj is not None:
+            return set()
+        if not hasattr(user_obj, '_group_perm_cache'):
+            if user_obj.is_superuser:
+                perms = Permission.objects.all()
+            else:
+                user_groups_field = get_user_model()._meta.get_field('groups')
+                user_groups_query = 'group__%s' % user_groups_field.related_query_name()
+                perms = Permission.objects.filter(**{user_groups_query: user_obj})
+            perms = perms.values_list('content_type__app_label', 'codename').order_by()
+            user_obj._group_perm_cache = set(["%s.%s" % (ct, name) for ct, name in perms])
+        return user_obj._group_perm_cache
+
+
+class RemoteUserBackend(ModelBackend, DjangoRemoteUserBackend):
+    """
+    Redefinition with bwp class of permissions
+    """
+    pass

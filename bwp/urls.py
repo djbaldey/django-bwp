@@ -37,6 +37,7 @@
 ###############################################################################
 """
 from django.conf.urls import *
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
 def autodiscover():
     """
@@ -83,3 +84,7 @@ urlpatterns = patterns('bwp.views',
     url(r'^accounts/login/$',  'login',  name="bwp_login_redirect"),
     url(r'^accounts/logout/$', 'logout', name="bwp_logout_redirect"),
 )
+
+# For develop:
+urlpatterns += staticfiles_urlpatterns()
+

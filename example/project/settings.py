@@ -71,6 +71,10 @@ DATABASES = {
     }
 }
 
+# Hosts/domain names that are valid for this site; required if DEBUG is False
+# See https://docs.djangoproject.com/en/1.4/ref/settings/#allowed-hosts
+ALLOWED_HOSTS = []
+
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 # although not all choices may be available on all operating systems.
@@ -95,15 +99,7 @@ USE_I18N = True
 USE_L10N = True
 
 # If you set this to False, Django will not use timezone-aware datetimes.
-if DATABASES['default']['ENGINE'] == 'django.db.backends.sqlite3':
-    USE_TZ = False
-else:
-    USE_TZ = True
-
-LOCALE_PATHS = (
-    # abspath('locale'),
-    abspath('app','locale'),
-)
+USE_TZ = True
 
 # Absolute filesystem path to the directory that will hold user-uploaded files.
 # Example: "/home/media/media.lawrence.com/media/"
@@ -174,7 +170,8 @@ TEMPLATE_DIRS = (
     abspath("app","templates"),
 )
 
-TEMPLATE_CONTEXT_PROCESSORS = ('django.contrib.auth.context_processors.auth',
+TEMPLATE_CONTEXT_PROCESSORS = (
+    'django.contrib.auth.context_processors.auth',
     'django.core.context_processors.debug',
     'django.core.context_processors.i18n',
     'django.core.context_processors.media',
@@ -186,38 +183,34 @@ TEMPLATE_CONTEXT_PROCESSORS = ('django.contrib.auth.context_processors.auth',
 )
 
 INSTALLED_APPS = (
-    'django.contrib.auth',
+    ### Обязательные
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # Uncomment the next line to enable the admin:
-    'django.contrib.admin',
-    # Uncomment the next line to enable admin documentation:
-    # 'django.contrib.admindocs',
-    
-    ### Обязательные
     'bwp',
+    'bwp.contrib.users',
     'quickapi',
+
     ### Необязательные
-    'bwp.contrib.webodt',
-    'bwp.contrib.reports',
-    'bwp.contrib.contacts',
-    'bwp.contrib.qualifiers',
-    'bwp.contrib.devices',
+    #~ 'bwp.contrib.reports',
+    #~ 'bwp.contrib.contacts',
+    #~ 'bwp.contrib.qualifiers',
+    #~ 'bwp.contrib.devices',
     'project.tests',
 )
+
 
 ########################################################################
 #                     SETTINGS FOR APPLICATIONS                        #
 ########################################################################
 
-# webodt
-WEBODT_TMP_DIR = abspath('..', 'tmp-webodt')
-if not os.path.exists(WEBODT_TMP_DIR):
-    os.makedirs(WEBODT_TMP_DIR)
-WEBODT_TEMPLATE_PATH = abspath('..', 'media', 'reports')
+AUTH_USER_MODEL = "users.User" # for Django >= 1.5
+AUTHENTICATION_BACKENDS = ('bwp.contrib.users.backends.ModelBackend',)
+LOGIN_URL = '/users/login/'
+LOGOUT_URL = '/users/logout/'
+LOGIN_REDIRECT_URL = '/users/profile/'
 
 ########################################################################
 #                   END SETTINGS FOR APPLICATIONS                      #

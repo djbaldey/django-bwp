@@ -36,16 +36,83 @@
 #   <http://www.gnu.org/licenses/>.
 ###############################################################################
 """
-from django.conf.urls import patterns, include, url
-from django.contrib.staticfiles.urls import staticfiles_urlpatterns
-#~ from django.contrib import admin
+from django.contrib.contenttypes.models import ContentType
+from django.utils.translation import ugettext_lazy as _
 
-#~ admin.autodiscover()
+from bwp.sites import site
+from bwp.contrib.users.models import User, Group, Permission
+from bwp.models import ModelBWP, ComposeBWP, ManyToManyBWP
 
-urlpatterns = patterns('',
-    url(r'^', include('bwp.urls')),
-    #~ url(r'^admin/', include(admin.site.urls)),
-)
+label_id = _('ID')
+label_pk = _('PK')
 
-# For develop:
-urlpatterns += staticfiles_urlpatterns()
+class PermissionAdmin(ModelBWP):
+    list_display = ('__unicode__', 'id')
+    search_fields = (
+        'name',
+        'codename',
+        'content_type__name',
+        'content_type__app_label',
+        'content_type__model',
+    )
+site.register(Permission, PermissionAdmin)
+
+class PermissionCompose(ManyToManyBWP):
+    list_display = ('__unicode__', 'name', 'codename', 'id')
+    search_fields = (
+        'name',
+        'codename',
+        'content_type__name',
+        'content_type__app_label',
+        'content_type__model',
+    )
+    model = Permission
+
+class UserAdmin(ModelBWP):
+    list_display = ('__unicode__',
+        'is_active',
+        'is_superuser',
+        'is_staff',
+        'last_login',
+        'date_joined',
+        ('id', label_id))
+    list_display_css = {
+        'pk': 'input-micro', 'id': 'input-micro',
+        'is_superuser': 'input-mini', 'is_staff': 'input-mini',
+    }
+    ordering = ('username',)
+    exclude = ['password',]
+    search_fields = ('username', 'email')
+    compositions = [
+        ('user_permissions', PermissionCompose),
+    ]
+site.register(User, UserAdmin)
+
+class UserCompose(ComposeBWP):
+    model = User
+    list_display = ('__unicode__',
+        'is_active',
+        'is_superuser',
+        'is_staff',
+        'last_login',
+        'date_joined',
+        ('id', label_id))
+    list_display_css = {
+        'pk': 'input-micro', 'id': 'input-micro',
+        'is_superuser': 'input-mini', 'is_staff': 'input-mini',
+    }
+    ordering = ('username',)
+
+class GroupAdmin(ModelBWP):
+    list_display = ('__unicode__', 'id')
+    compositions = [
+        ('user_set', UserCompose),
+        ('permissions', PermissionCompose),
+    ]
+site.register(Group, GroupAdmin)
+
+class ContentTypeAdmin(ModelBWP):
+    list_display = ('name', 'app_label', 'model', 'id')
+    ordering = ('app_label', 'model')
+    hidden = True
+site.register(ContentType, ContentTypeAdmin)

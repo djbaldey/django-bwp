@@ -39,9 +39,9 @@
 from django.db import models, transaction
 from django.utils.translation import ugettext_lazy as _
 from django.utils import dateformat
-from django.contrib.auth.models import User
-from django.conf import settings 
+from django.conf import settings
 
+from bwp.contrib.users.models import User
 from bwp.utils.classes import upload_to
 from bwp.utils.filters import filterQueryset
 from bwp.utils import remove_file
