@@ -104,7 +104,7 @@ def render_to_response(template_name,
     content_fd = render_to(format, template_name, dictionary, context_instance,
         delete_on_close=True, cache=cache, preprocessors=preprocessors
     )
-    response = HttpResponse(_ifile(content_fd), mimetype=mimetype)
+    response = HttpResponse(_ifile(content_fd), content_type=mimetype)
     if not filename:
         filename = os.path.basename(template_name)
         filename += '.%s' % format

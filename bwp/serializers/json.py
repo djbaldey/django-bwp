@@ -43,7 +43,7 @@ from bwp.serializers.python import SerializerWrapper
 from bwp.serializers.python import Serializer as PythonSerializer
 from bwp.serializers.python import Deserializer as PythonDeserializer
 
-from django.utils import simplejson
+import json as jsonlib
 
 class Serializer(SerializerWrapper, OrignSerializer):
     """
@@ -60,7 +60,7 @@ def Deserializer(stream_or_string, **options):
     else:
         stream = stream_or_string
     try:
-        for obj in PythonDeserializer(simplejson.load(stream), **options):
+        for obj in PythonDeserializer(jsonlib.load(stream), **options):
             yield obj
     except GeneratorExit:
         raise

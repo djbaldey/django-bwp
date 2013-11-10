@@ -55,11 +55,7 @@ from django.contrib.auth.models import (AbstractBaseUser,
     BaseUserManager, SiteProfileNotAvailable,
     _user_get_all_permissions, _user_has_perm, _user_has_module_perms)
 
-GROUP_HARD_KEYS = {
-    1: ugettext('Administrators'),
-    2: ugettext('Managers'),
-    3: ugettext('Operators'),
-}
+from bwp.conf import GROUP_HARD_KEYS
 
 class ObjectCannotChange(Exception):
     message = ugettext("This object cannot be changed")

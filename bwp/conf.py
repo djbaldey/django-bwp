@@ -36,7 +36,7 @@
 #   <http://www.gnu.org/licenses/>.
 ###############################################################################
 """
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext, ugettext_lazy as _
 from django.conf import settings
 import django, bwp, os, datetime, quickapi
 
@@ -71,3 +71,9 @@ REPORT_FILES_UNIDECODE = getattr(settings, 'REPORT_FILES_UNIDECODE', True)
 AUTHORS                 = getattr(settings, 'AUTHORS',                  [])
 COPYRIGHT               = getattr(settings, 'COPYRIGHT',                _(u'Name of company'))
 COPYRIGHT_YEAR          = getattr(settings, 'COPYRIGHT_YEAR',           '2013')
+
+GROUP_HARD_KEYS = getattr(settings, 'GROUP_HARD_KEYS', {
+    1: ugettext('Administrators'),
+    2: ugettext('Managers'),
+    3: ugettext('Operators'),
+})
