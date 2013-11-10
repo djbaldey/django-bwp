@@ -38,13 +38,13 @@
 """
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
-from django.contrib.auth.models import User
 
+from bwp import User
+from bwp.db import managers as bwpmanagers, fields
 from bwp.contrib.abstracts.models import AbstractGroupUnique, AbstractGroup
 from bwp.contrib.contacts.models import Org, Person
 from bwp.contrib.qualifiers.models import MeasureUnit, Country, Currency
 from bwp.contrib.reports.models import Template
-from bwp.db import managers as bwpmanagers, fields
 from bwp.utils.classes import upload_to, autonumber
 
 import datetime

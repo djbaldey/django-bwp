@@ -37,13 +37,14 @@
 ###############################################################################
 """
 from django.db import models
-from django.contrib.auth.models import User, Group
 from django.utils.translation import ugettext_lazy as _
-from bwp.contrib.abstracts.models import AbstractGroup
-from bwp.db import fields
-import hashlib, datetime
 
-from drivers import DRIVER_CLASSES
+from bwp import User, Group
+from bwp.db import fields
+from bwp.contrib.abstracts.models import AbstractGroup
+from bwp.contrib.devices.drivers import DRIVER_CLASSES
+
+import hashlib, datetime
 
 class Register(object):
     """ Класс-регистратор локальных устройств """

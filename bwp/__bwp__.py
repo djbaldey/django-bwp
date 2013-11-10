@@ -41,7 +41,7 @@ from django.contrib.contenttypes.models import ContentType
 from bwp.sites import site
 from bwp.models import ModelBWP, ComposeBWP, LogEntry,\
         GlobalUserSettings, TempUploadFile, ManyToManyBWP
-from bwp.contrib.users.models import User, Group, Permission
+from bwp import User, Group, Permission, check_builtin_users
 
 label_id = _('ID')
 label_pk = _('PK')
@@ -59,3 +59,75 @@ site.register(GlobalUserSettings, GlobalUserSettingsAdmin)
 class TempUploadFileAdmin(ModelBWP):
     list_display = ('__unicode__', 'user', 'created')
 site.register(TempUploadFile, TempUploadFileAdmin)
+
+if not check_builtin_users():
+    class PermissionAdmin(ModelBWP):
+        list_display = ('__unicode__', 'id')
+        search_fields = (
+            'name',
+            'codename',
+            'content_type__name',
+            'content_type__app_label',
+            'content_type__model',
+        )
+    site.register(Permission, PermissionAdmin)
+
+    class PermissionCompose(ManyToManyBWP):
+        list_display = ('__unicode__', 'name', 'codename', 'id')
+        search_fields = (
+            'name',
+            'codename',
+            'content_type__name',
+            'content_type__app_label',
+            'content_type__model',
+        )
+        model = Permission
+
+    class UserAdmin(ModelBWP):
+        list_display = ('__unicode__',
+            'is_active',
+            'is_superuser',
+            'is_staff',
+            'last_login',
+            'date_joined',
+            ('id', label_id))
+        list_display_css = {
+            'pk': 'input-micro', 'id': 'input-micro',
+            'is_superuser': 'input-mini', 'is_staff': 'input-mini',
+        }
+        ordering = ('username',)
+        exclude = ['password',]
+        search_fields = ('username', 'email')
+        compositions = [
+            ('user_permissions', PermissionCompose),
+        ]
+    site.register(User, UserAdmin)
+
+    class UserCompose(ComposeBWP):
+        model = User
+        list_display = ('__unicode__',
+            'is_active',
+            'is_superuser',
+            'is_staff',
+            'last_login',
+            'date_joined',
+            ('id', label_id))
+        list_display_css = {
+            'pk': 'input-micro', 'id': 'input-micro',
+            'is_superuser': 'input-mini', 'is_staff': 'input-mini',
+        }
+        ordering = ('username',)
+
+    class GroupAdmin(ModelBWP):
+        list_display = ('__unicode__', 'id')
+        compositions = [
+            ('user_set', UserCompose),
+            ('permissions', PermissionCompose),
+        ]
+    site.register(Group, GroupAdmin)
+
+    class ContentTypeAdmin(ModelBWP):
+        list_display = ('name', 'app_label', 'model', 'id')
+        ordering = ('app_label', 'model')
+        hidden = True
+    site.register(ContentType, ContentTypeAdmin)

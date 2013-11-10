@@ -1,0 +1,222 @@
+# BWP.
+# Copyright (C) 2013 Grigoriy Kramarenko
+# This file is distributed under the same license as the BWP package.
+# Grigoriy Kramarenko <root@rosix.ru>, 2013.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: 0.1.1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2013-11-10 16:35+1100\n"
+"PO-Revision-Date: 2013-11-10 15:11+1100\n"
+"Last-Translator: Grigoriy Kramarenko <root@rosix.ru>\n"
+"Language: RU\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
+
+#: __bwp__.py:46
+msgid "ID"
+msgstr ""
+
+#: __bwp__.py:47
+msgid "PK"
+msgstr ""
+
+#: __bwp__.py:76 __bwp__.py:97
+msgid "last login"
+msgstr "последний вход"
+
+#: __init__.py:40 models.py:258
+msgid "users"
+msgstr "пользователи"
+
+#: models.py:59
+msgid "Administrators"
+msgstr "Администраторы"
+
+#: models.py:60
+msgid "Managers"
+msgstr "Менеджеры"
+
+#: models.py:61
+msgid "Operators"
+msgstr "Операторы"
+
+#: models.py:65
+msgid "This object cannot be changed"
+msgstr "Этот объект нельзя изменить"
+
+#: models.py:67
+msgid "This object cannot be removed"
+msgstr "Этот объект нельзя удалить"
+
+#: models.py:102 models.py:151
+msgid "name"
+msgstr "имя"
+
+#: models.py:103
+msgid "content type"
+msgstr "тип содержимого"
+
+#: models.py:105
+msgid "codename"
+msgstr "кодовое имя"
+
+#: models.py:109
+msgid "permission"
+msgstr "разрешение"
+
+#: models.py:110 models.py:153
+msgid "permissions"
+msgstr "разрешения"
+
+#: models.py:158
+msgid "group"
+msgstr "группа"
+
+#: models.py:159 models.py:239
+msgid "groups"
+msgstr "группы"
+
+#: models.py:175
+msgid "This is a hard coded object"
+msgstr "Это жёстко заданный объект"
+
+#: models.py:224
+msgid "created"
+msgstr "создан"
+
+#: models.py:225
+msgid "updated"
+msgstr "обновлён"
+
+#: models.py:226
+msgid "username"
+msgstr "логин"
+
+#: models.py:228
+msgid "email address"
+msgstr "адрес email"
+
+#: models.py:229
+msgid "active"
+msgstr "активен"
+
+#: models.py:230
+msgid ""
+"Designates whether this user should be treated as active. Unselect this "
+"instead of deleting accounts."
+msgstr ""
+"Определяет, будет ли этот пользователь рассматриваться как активный. Снимите "
+"это вместо того, чтобы удалять учетные записи."
+
+#: models.py:232
+msgid "staff status"
+msgstr "статус сотрудника"
+
+#: models.py:233
+msgid "Designates whether the user can log into this admin site."
+msgstr ""
+"Определяет, будет ли этот пользователь работать с административной частью."
+
+#: models.py:235
+msgid "superuser status"
+msgstr "статус суперпользователя"
+
+#: models.py:236
+msgid ""
+"Designates that this user has all permissions without explicitly assigning "
+"them."
+msgstr ""
+"Определяет, будет ли этот пользователь работать с абсолютно полными правами "
+"в системе."
+
+#: models.py:240
+msgid ""
+"The groups this user belongs to. A user will get all permissions granted to "
+"each of his/her group."
+msgstr ""
+"Группы, к которой принадлежит этот пользователь. Пользователь получает все "
+"права, предоставленные каждой из его групп."
+
+#: models.py:244
+msgid "user permissions"
+msgstr "права пользователя"
+
+#: models.py:247
+msgid "last name"
+msgstr "фамилия"
+
+#: models.py:248
+msgid "first name"
+msgstr "имя"
+
+#: models.py:249
+msgid "middle name"
+msgstr "отчество"
+
+#: models.py:257
+msgid "user"
+msgstr "пользователь"
+
+#: models.py:355
+msgid "This is a root superuser"
+msgstr "Это основной суперпользователь"
+
+#: management/__init__.py:79
+msgid "Can create"
+msgstr "Может создавать"
+
+#: management/__init__.py:80
+msgid "Can read"
+msgstr "Может просматривать"
+
+#: management/__init__.py:81
+msgid "Can update"
+msgstr "Может обновлять"
+
+#: management/__init__.py:82
+msgid "Can delete"
+msgstr "Может удалять"
+
+#: management/__init__.py:99
+#, python-format
+msgid ""
+"The permission codename '%(codename)s' is duplicated  for model "
+"'%(app_label)s.%(model_class)s'."
+msgstr ""
+"Разрешение с кодовым именем '%(codename)s' повторяется для модели "
+"'%(app_label)s.%(model_class)s'."
+
+#: management/__init__.py:107
+#, python-format
+msgid ""
+"The permission codename '%(codename)s' clashes with a builtin permission for "
+"model '%(app_label)s.%(model_class)s'."
+msgstr ""
+"Разрешение с кодовым именем '%(codename)s' столкнулось со встроенным для "
+"'%(app_label)s.%(model_class)s'."
+
+#: management/__init__.py:153
+#, python-format
+msgid "Adding permission '%s'"
+msgstr "Добавлено разрешение '%s'"
+
+#: management/__init__.py:162
+msgid ""
+"\n"
+"You just installed BWP auth system, which means you don't have any "
+"superusers defined.\n"
+"Would you like to create one now? (yes/no): "
+msgstr ""
+"\n"
+"Вы только что установили встроенную авторизацию в BWP, это означает, что "
+"сейчас вы не имеете ни одного суперпользователя.\n"
+"Вы хотели бы создать его прямо сейчас? (yes/no): "
+
+#: management/__init__.py:168
+msgid "Please enter either \"yes\" or \"no\": "
+msgstr "Пожалуйста, введите \"yes\" или \"no\": "

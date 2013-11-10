@@ -38,10 +38,11 @@
 """
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
-from django.contrib.auth.models import User
+
+from bwp import User
+from bwp.conf import settings
 from bwp.contrib.abstracts.models import AbstractGroup
 from bwp.contrib.contacts.models import Org, Client
-from bwp.conf import settings
 
 class Template(models.Model):
     """ Шаблоны документов """

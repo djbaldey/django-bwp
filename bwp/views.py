@@ -425,7 +425,7 @@ def API_m2m_commit(request, model, pk, compose, action, objects, **kwargs):
     except:
         return get_http_404(request)
     else:
-        if action == 'add' and compose.has_add_permission(request):
+        if action in ('add', 'create') and compose.has_create_permission(request):
             result = compose.add_objects_in_m2m(object, objects)
         elif action == 'delete' and compose.has_delete_permission(request):
             result = compose.delete_objects_in_m2m(object, objects)
@@ -475,7 +475,7 @@ def API_commit(request, objects, **kwargs):
             data = item['fields']
             # Новый объект
             if not item.get('pk', False):
-                if model_bwp.has_add_permission(request):
+                if model_bwp.has_create_permission(request):
                     instance = model_bwp.model()
                     instance = set_file_fields(model_bwp, instance, data)
                     instance = set_user_field(model_bwp, instance, request.user)
@@ -493,10 +493,10 @@ def API_commit(request, objects, **kwargs):
                     model_bwp.log_deletion(request, instance, unicode(instance))
                     instance.delete()
             # Обновляемый объект
-            elif action == 'change': # raise AttributeError()
+            elif action in ('change', 'update'): # raise AttributeError()
                 instance = get_instance(request, item['pk'], item['model'])
                 instance = set_user_field(model_bwp, instance, request.user)
-                if model_bwp.has_change_permission(request, instance):
+                if model_bwp.has_update_permission(request, instance):
                     instance = set_file_fields(model_bwp, instance, data)
                     form = get_form_instance(request, model_bwp, data=data, instance=instance)
                     if form.is_valid():

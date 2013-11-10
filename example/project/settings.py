@@ -184,13 +184,14 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 
 INSTALLED_APPS = (
     ### Обязательные
+    #~ 'django.contrib.auth', #for Django 1.4 and below
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'bwp',
-    'bwp.contrib.users',
+    'bwp.contrib.users', #for Django 1.5 and above
     'quickapi',
 
     ### Необязательные

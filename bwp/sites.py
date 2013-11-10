@@ -191,7 +191,7 @@ class BWPSite(object):
         """
         Возвращает словарь, где ключом является имя модели приложения,
         а значением - сама модель, например:
-            {'auth.user':<Model Auth.User>,}
+            {'auth.user': <Model Auth.User>,}
         """
         return dict([ (str(model._meta), model) \
             for model, model_bwp in self.get_registry_items(request)

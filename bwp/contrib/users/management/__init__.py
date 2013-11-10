@@ -60,7 +60,6 @@ from bwp.contrib.users import models as auth_app
 def _get_permission_codename(action, opts):
     return '%s_%s' % (action, opts.object_name.lower())
 
-
 def _get_all_permissions(opts, ctype):
     """
     Returns (codename, name) for all permissions in the given opts.
@@ -76,14 +75,14 @@ def _get_builtin_permissions(opts):
     """
     perms = []
     defaults = (
-        ('create', _('create')),
-        ('read',   _('read')),
-        ('update', _('update')),
-        ('delete', _('delete'))
+        ('create', ugettext('Can create')),
+        ('read',   ugettext('Can read')),
+        ('update', ugettext('Can update')),
+        ('delete', ugettext('Can delete'))
     )
     for action, label in defaults:
         perms.append((_get_permission_codename(action, opts),
-            _('Can %s %s') % (label, opts.verbose_name_raw)))
+            '%s %s' % (label, opts.verbose_name_raw)))
     return perms
 
 def _check_permission_clashing(custom, builtin, ctype):
@@ -96,13 +95,20 @@ def _check_permission_clashing(custom, builtin, ctype):
     for codename, _name in custom:
         if codename in pool:
             raise CommandError(
-                _("The permission codename '%s' is duplicated for model '%s.%s'.") %
-                (codename, ctype.app_label, ctype.model_class().__name__))
+                ugettext("The permission codename '%(codename)s' is duplicated "
+                  " for model '%(app_label)s.%(model_class)s'.") % {
+                    'codename': codename,
+                    'app_label': ctype.app_label,
+                    'model_class': ctype.model_class().__name__}
+                )
         elif codename in builtin_codenames:
             raise CommandError(
-                _("The permission codename '%s' clashes with a builtin permission "
-                "for model '%s.%s'.") %
-                (codename, ctype.app_label, ctype.model_class().__name__))
+                ugettext("The permission codename '%(codename)s' clashes with a builtin permission "
+                "for model '%(app_label)s.%(model_class)s'.") % {
+                    'codename': codename,
+                    'app_label': ctype.app_label,
+                    'model_class': ctype.model_class().__name__}
+                )
         pool.add(codename)
 
 def create_permissions(app, created_models, verbosity, db=DEFAULT_DB_ALIAS, **kwargs):
@@ -143,8 +149,7 @@ def create_permissions(app, created_models, verbosity, db=DEFAULT_DB_ALIAS, **kw
     auth_app.Permission.objects.using(db).bulk_create(perms)
     if verbosity >= 2:
         for perm in perms:
-            print(_("Adding permission '%s'") % perm)
-
+            print(ugettext("Adding permission '%s'") % perm)
 
 def create_superuser(app, created_models, verbosity, db, **kwargs):
     from django.core.management import call_command
@@ -163,7 +168,6 @@ def create_superuser(app, created_models, verbosity, db, **kwargs):
             if confirm == 'yes':
                 call_command("createsuperuser", interactive=True, database=db)
             break
-
 
 def get_system_username():
     """
@@ -192,7 +196,6 @@ def get_system_username():
             # UnicodeDecodeError - preventive treatment for non-latin Windows.
             return ''
     return result
-
 
 def get_default_username(check_db=True):
     """

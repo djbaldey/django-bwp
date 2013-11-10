@@ -36,10 +36,11 @@
 #   <http://www.gnu.org/licenses/>.
 ###############################################################################
 """
+from bwp import Group, User
 from bwp.sites import site
 from bwp.models import ModelBWP, ManyToManyBWP
 from django.utils.translation import ugettext_lazy as _
-from django.contrib.auth.models import Group, User
+
 from models import *
 
 

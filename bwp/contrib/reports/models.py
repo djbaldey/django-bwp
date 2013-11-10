@@ -39,15 +39,15 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.auth.models import User
 from django.template import Context
 from django.template.loader import get_template
 from django.core.files.base import ContentFile
 
-from bwp.contrib.abstracts.models import AbstractGroup, AbstractFile
-from bwp.contrib.qualifiers.models import Document as GeneralDocument
+from bwp import User
 from bwp import conf
 from bwp.conf import settings
+from bwp.contrib.abstracts.models import AbstractGroup, AbstractFile
+from bwp.contrib.qualifiers.models import Document as GeneralDocument
 from bwp.utils import remove_file, remove_dirs
 
 import os, datetime, hashlib

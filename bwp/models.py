@@ -36,6 +36,7 @@
 #   <http://www.gnu.org/licenses/>.
 ###############################################################################
 """
+import django
 from django.db import models, transaction
 from django.db.models.fields.files import FileField, ImageField
 from django.utils.translation import ugettext, ugettext_lazy as _ 
@@ -62,10 +63,9 @@ from bwp.utils.filters import filterQueryset
 from bwp.utils.classes import upload_to
 from bwp.utils import print_debug
 
-from bwp import conf
+from bwp import conf, User, Group, Permission
 from bwp.widgets import get_widget_from_field
 from bwp.contrib.abstracts.models import AbstractUserSettings
-from bwp.contrib.users.models import User, Group
 
 ADDING = 1
 CHANGE = 2

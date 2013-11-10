@@ -56,9 +56,9 @@ from django.contrib.auth.models import (AbstractBaseUser,
     _user_get_all_permissions, _user_has_perm, _user_has_module_perms)
 
 GROUP_HARD_KEYS = {
-    1: _('Administrators'),
-    2: _('Managers'),
-    3: _('Operators'),
+    1: ugettext('Administrators'),
+    2: ugettext('Managers'),
+    3: ugettext('Operators'),
 }
 
 class ObjectCannotChange(Exception):
@@ -179,12 +179,11 @@ def update_groups(verbosity=2, db=DEFAULT_DB_ALIAS, **kwargs):
     """
     Create or replace hard groups.
     """
-    with transaction.commit_on_success():
-        for pk, name in Group.HARD_KEYS.items():
-            group, created = Group.objects.get_or_create(
-                pk=pk, defaults={'name': name})
-            if not created and group.name != name:
-                group.save()
+    for pk, name in Group.HARD_KEYS.items():
+        group, created = Group.objects.get_or_create(
+            pk=pk, defaults={'name': name})
+        if not created and group.name != name:
+            group.save()
 
 signals.post_syncdb.connect(update_groups)
 

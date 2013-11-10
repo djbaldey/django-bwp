@@ -38,11 +38,11 @@
 """
 from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
-import bwp, os, datetime, quickapi
+import django, bwp, os, datetime, quickapi
 
-QUICKAPI_VERSION        = quickapi.__version__
-
+DJANGO_VERSION          = django.get_version()
 BWP_VERSION             = bwp.__version__
+QUICKAPI_VERSION        = quickapi.__version__
 
 BWP_TEMP_UPLOAD_FILE          = getattr(settings, 'BWP_TEMP_UPLOAD_FILE', 'bwp_tmp_upload')
 BWP_TEMP_UPLOAD_FILE_EXPIRES  = getattr(settings, 'BWP_TEMP_UPLOAD_FILE_EXPIRES', 120) # 3 minutes
@@ -60,7 +60,6 @@ PROJECT_NAME            = getattr(settings, 'PROJECT_NAME',             _(u'Exam
 PROJECT_SHORTNAME       = getattr(settings, 'PROJECT_SHORTNAME',        _(u'BWP-Example'))
 PROJECT_DESCRIPTION     = getattr(settings, 'PROJECT_DESCRIPTION',      _(u'Example project on Business Web Platform'))
 
-DJANGO_VERSION          = getattr(settings, 'DJANGO_VERSION',           '1.4')
 BOOTSTRAP_VERSION       = getattr(settings, 'BOOTSTRAP_VERSION',        '2.3.1')
 JQUERY_VERSION          = getattr(settings, 'JQUERY_VERSION',           '1.9.1')
 JQUERY_JSON_VERSION     = getattr(settings, 'JQUERY_JSON_VERSION',      '2.4')

@@ -16,7 +16,7 @@ framework.
 import os, sys
 
 # Set name directory of environ
-ENV = 'env-django1.4'
+ENV = 'env-django1.6'
 
 def getenv():
     """ Find full path for name directory of environ """
@@ -37,13 +37,14 @@ env = getenv()
 if env:
     python = 'python%s.%s' % ( str(sys.version_info[0]),  str(sys.version_info[1]) )
     packages = os.path.join(env, 'lib', python, 'site-packages')
-    sys.path.insert(0, packages)
+    if not packages in sys.path:
+        sys.path.insert(0, packages)
 
 # additional local develop folder:
 cwd = os.path.abspath(os.path.dirname(__file__))
 example_dir = os.path.dirname(cwd)
 develop_dir = os.path.dirname(example_dir)
-if os.path.exists(develop_dir):
+if os.path.exists(develop_dir) and not develop_dir in sys.path:
     sys.path.insert(0, develop_dir)
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "project.settings")

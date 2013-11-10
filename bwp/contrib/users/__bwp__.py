@@ -73,8 +73,8 @@ class UserAdmin(ModelBWP):
         'is_active',
         'is_superuser',
         'is_staff',
-        'last_login',
-        'date_joined',
+        ('last_login', _('last login')),
+        'created',
         ('id', label_id))
     list_display_css = {
         'pk': 'input-micro', 'id': 'input-micro',
@@ -94,8 +94,8 @@ class UserCompose(ComposeBWP):
         'is_active',
         'is_superuser',
         'is_staff',
-        'last_login',
-        'date_joined',
+        ('last_login', _('last login')),
+        'created',
         ('id', label_id))
     list_display_css = {
         'pk': 'input-micro', 'id': 'input-micro',

@@ -38,11 +38,11 @@
 """
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
-from django.contrib.auth.models import User
 
-from bwp.contrib.abstracts.models import AbstractOrg, AbstractPerson, AbstractGroupUnique
+from bwp import User
 from bwp.db import managers, fields
 from bwp.utils.classes import upload_to
+from bwp.contrib.abstracts.models import AbstractOrg, AbstractPerson, AbstractGroupUnique
 
 class Person(AbstractPerson):
     """ Персоналии """

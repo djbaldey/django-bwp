@@ -1,11 +1,9 @@
 from django import forms
-
+from django.utils.translation import ugettext_lazy, ugettext as _
 from django.contrib.auth import authenticate
 from django.contrib.auth.forms import AuthenticationForm
-from django.contrib.auth.models import User
 
-from django.utils.translation import ugettext_lazy, ugettext as _
-
+from bwp import User
 from bwp.models import TempUploadFile
 
 ERROR_MESSAGE = ugettext_lazy("Please enter the correct username and password "
