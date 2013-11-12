@@ -42,6 +42,11 @@ from quickapi.http import DjangoJSONEncoder
 from bwp.utils import print_debug
 from bwp.db import fields as bwp_fields
 
+try:
+    from tinymce.models import HTMLField
+except ImportError:
+    from django.db.models import TextField as HTMLField
+
 import json as jsonlib
 
 class GeneralWidget(object):
@@ -188,6 +193,7 @@ WIDGETS_FOR_DBFIELD = {
     models.TimeField:                   (TimeWidget, {'class': 'timefield'}),
     models.URLField:                    (URLWidget,   None),
     bwp_fields.JSONField:               (TextWidget,  {'class': 'textfield', "rows": "3",}),
+    HTMLField:                          (TextWidget,  {'class': 'textfield', "rows": "3",}),
 }
 
 def get_widget_from_field(field, force_visible=False):
