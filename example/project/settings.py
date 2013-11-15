@@ -192,11 +192,12 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'bwp',
     'bwp.contrib.users', #for Django 1.5 and above
+    #~ 'bwp.contrib.abstracts',
     'quickapi',
 
     ### Необязательные
     #~ 'bwp.contrib.reports',
-    #~ 'bwp.contrib.contacts',
+    'bwp.contrib.contacts',
     #~ 'bwp.contrib.qualifiers',
     #~ 'bwp.contrib.devices',
     'project.tests',

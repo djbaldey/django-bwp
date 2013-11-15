@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 0.1.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-05-26 18:52+1100\n"
+"POT-Creation-Date: 2013-11-15 19:46+1100\n"
 "PO-Revision-Date: 2013-01-29 01:26+1100\n"
 "Last-Translator: Grigoriy Kramarenko <root@rosix.ru>\n"
 "Language: RU\n"
@@ -19,11 +19,11 @@ msgstr ""
 
 #: __bwp__.py:46
 msgid "ID"
-msgstr "ИД"
+msgstr ""
 
 #: __bwp__.py:47
 msgid "PK"
-msgstr "ПК"
+msgstr ""
 
 #: __init__.py:41
 msgid "platform"
@@ -41,28 +41,41 @@ msgstr "BWP-Пример"
 msgid "Example project on Business Web Platform"
 msgstr "Пример проекта на Business Web Platform"
 
-#: conf.py:71
+#: conf.py:72
 msgid "Name of company"
 msgstr "Название компании"
 
-#: forms.py:11
+#: conf.py:76
+msgid "Administrators"
+msgstr "Администраторы"
+
+#: conf.py:77
+msgid "Managers"
+msgstr "Менеджеры"
+
+#: conf.py:78
+msgid "Operators"
+msgstr "Операторы"
+
+#: forms.py:52
 msgid ""
-"Please enter the correct username and password for a staff account. Note "
-"that both fields are case-sensitive."
+"Please enter a correct username and password. Note that both fields are case-"
+"sensitive."
 msgstr ""
-"Пожалуйста, введите корректное имя пользователя и пароль учётной записи "
-"администратора. Помните, что оба поля чувствительны к регистру."
+"Пожалуйста, введите корректное имя пользователя и пароль. Помните, что оба "
+"поля чувствительны к регистру."
 
-#: forms.py:20
-msgid "Please log in again, because your session has expired."
-msgstr "Пожалуйста, войдите снова, поскольку ваша сессия устарела."
-
-#: forms.py:39
-#, python-format
-msgid "Your e-mail address is not your username. Try '%s' instead."
+#: forms.py:54
+msgid ""
+"Your Web browser doesn't appear to have cookies enabled. Cookies are "
+"required for logging in."
 msgstr ""
-"Ваш адрес электронной почты не является вашим именем пользователя. "
-"Попробуйте '%s' взамен."
+"В ваше Веб-браузере, кажется, не включены файлы cookie. Cookies необходимы "
+"для входа в систему."
+
+#: forms.py:56
+msgid "This account is inactive."
+msgstr "Этот аккаунт неактивен."
 
 #: models.py:83
 msgid "action time"
@@ -108,12 +121,11 @@ msgstr "удалено"
 msgid "LogEntry Object"
 msgstr "Запись в журнале"
 
-#: models.py:137 contrib/abstracts/models.py:293
-#: contrib/abstracts/models.py:382 contrib/abstracts/models.py:384
+#: models.py:137 db/abstracts.py:673 db/abstracts.py:762 db/abstracts.py:765
 msgid "file"
 msgstr "файл"
 
-#: models.py:141 contrib/abstracts/models.py:414
+#: models.py:141 db/abstracts.py:795
 msgid "user"
 msgstr "пользователь"
 
@@ -125,243 +137,247 @@ msgstr "временно загружаемый файл"
 msgid "temporarily upload files"
 msgstr "временно загружаемые файлы"
 
-#: models.py:667
+#: models.py:781
 #, python-format
 msgid "clone from #%s"
 msgstr "клон из #%s"
 
-#: models.py:999 models.py:1000
+#: models.py:1125 models.py:1126
 msgid "global settings"
 msgstr "глобальные настройки"
 
-#: views.py:74
+#: views.py:76
 msgid "bwp"
 msgstr ""
 
-#: views.py:87 templates/registration/password_reset_complete.html:20
+#: views.py:89 templates/registration/password_reset_complete.html:20
 msgid "Log in"
 msgstr "Войти"
 
-#: views.py:399 views.py:439
+#: views.py:417 views.py:459
 msgid "List objects is blank!"
 msgstr "Список объектов пуст!"
 
-#: views.py:419 views.py:503
+#: views.py:439 views.py:518
 msgid "Commited!"
 msgstr "Принято!"
 
-#: contrib/abstracts/__init__.py:40
-msgid "abstracts"
-msgstr "абстрактное"
-
-#: contrib/abstracts/models.py:52
+#: db/abstracts.py:54
 msgid "certificate"
 msgstr "свидетельство"
 
-#: contrib/abstracts/models.py:53
+#: db/abstracts.py:55
 msgid "license"
 msgstr "лицензия"
 
-#: contrib/abstracts/models.py:57
+#: db/abstracts.py:59
 msgid "INN"
 msgstr "ИНН"
 
-#: contrib/abstracts/models.py:60 contrib/abstracts/models.py:87
-#: contrib/abstracts/models.py:251 contrib/abstracts/models.py:263
-#: contrib/abstracts/models.py:277
+#: db/abstracts.py:62 db/abstracts.py:89 db/abstracts.py:273
+#: db/abstracts.py:285 db/abstracts.py:299 db/abstracts.py:354
+#: db/abstracts.py:583 db/abstracts.py:635
 msgid "title"
 msgstr "название"
 
-#: contrib/abstracts/models.py:63
+#: db/abstracts.py:65
 msgid "full title"
 msgstr "полное название"
 
-#: contrib/abstracts/models.py:67
+#: db/abstracts.py:69
 msgid "KPP"
 msgstr "КПП"
 
-#: contrib/abstracts/models.py:71
+#: db/abstracts.py:73
 msgid "OGRN"
 msgstr "ОГРН"
 
-#: contrib/abstracts/models.py:74 contrib/abstracts/models.py:171
+#: db/abstracts.py:76 db/abstracts.py:173
 msgid "address"
 msgstr "адрес"
 
-#: contrib/abstracts/models.py:77 contrib/abstracts/models.py:168
+#: db/abstracts.py:79 db/abstracts.py:170
 msgid "phones"
 msgstr "телефоны"
 
-#: contrib/abstracts/models.py:83
+#: db/abstracts.py:85
 msgid "BIK"
 msgstr "БИК"
 
-#: contrib/abstracts/models.py:84
+#: db/abstracts.py:86
 msgid "identification code of bank"
 msgstr "банковский идентификационный код"
 
-#: contrib/abstracts/models.py:88
+#: db/abstracts.py:90
 msgid "title of bank"
 msgstr "название банка"
 
-#: contrib/abstracts/models.py:92
+#: db/abstracts.py:94
 msgid "set/account"
 msgstr "расчётный счёт"
 
-#: contrib/abstracts/models.py:93
+#: db/abstracts.py:95
 msgid "settlement account"
 msgstr "расчётный счёт"
 
-#: contrib/abstracts/models.py:97
+#: db/abstracts.py:99
 msgid "cor/account"
 msgstr "корреспондентский счёт"
 
-#: contrib/abstracts/models.py:98
+#: db/abstracts.py:100
 msgid "correspondent account"
 msgstr "корреспондентский счёт"
 
-#: contrib/abstracts/models.py:103
+#: db/abstracts.py:105
 msgid "type"
 msgstr "тип"
 
-#: contrib/abstracts/models.py:104
+#: db/abstracts.py:106
 msgid "type of document"
 msgstr "тип документа"
 
-#: contrib/abstracts/models.py:108
+#: db/abstracts.py:110
 msgid "series"
 msgstr "серия"
 
-#: contrib/abstracts/models.py:109
+#: db/abstracts.py:111
 msgid "series of document"
 msgstr "серия документа"
 
-#: contrib/abstracts/models.py:113
+#: db/abstracts.py:115
 msgid "number"
 msgstr "номер"
 
-#: contrib/abstracts/models.py:114
+#: db/abstracts.py:116
 msgid "number of document"
 msgstr "номер документа"
 
-#: contrib/abstracts/models.py:118
+#: db/abstracts.py:120
 msgid "issue"
 msgstr "выдан"
 
-#: contrib/abstracts/models.py:119
+#: db/abstracts.py:121
 msgid "issue of document"
 msgstr "дата выдачи документа"
 
-#: contrib/abstracts/models.py:122
+#: db/abstracts.py:124
 msgid "organ"
 msgstr "орган"
 
-#: contrib/abstracts/models.py:123
+#: db/abstracts.py:125
 msgid "organization of issue"
 msgstr "орган выдачи документа"
 
-#: contrib/abstracts/models.py:127
+#: db/abstracts.py:129
 msgid "code organ"
 msgstr "код органа"
 
-#: contrib/abstracts/models.py:128
+#: db/abstracts.py:130
 msgid "code organization of issue"
 msgstr "код органа выдачи"
 
-#: contrib/abstracts/models.py:133 contrib/abstracts/models.py:178
+#: db/abstracts.py:135 db/abstracts.py:180
 msgid "site"
 msgstr "сайт"
 
-#: contrib/abstracts/models.py:134 contrib/abstracts/models.py:179
+#: db/abstracts.py:136 db/abstracts.py:181
 msgid "web site"
 msgstr "web сайт"
 
-#: contrib/abstracts/models.py:138 contrib/abstracts/models.py:174
+#: db/abstracts.py:140 db/abstracts.py:176
 msgid "email"
 msgstr ""
 
-#: contrib/abstracts/models.py:139 contrib/abstracts/models.py:175
+#: db/abstracts.py:141 db/abstracts.py:177
 msgid "email address"
 msgstr "адрес e-mail"
 
-#: contrib/abstracts/models.py:142 contrib/abstracts/models.py:189
+#: db/abstracts.py:144 db/abstracts.py:191
 msgid "about"
 msgstr "описание"
 
-#: contrib/abstracts/models.py:143
+#: db/abstracts.py:145
 msgid "about organization"
 msgstr "об организации"
 
-#: contrib/abstracts/models.py:156
+#: db/abstracts.py:158
 msgid "last name"
 msgstr "фамилия"
 
-#: contrib/abstracts/models.py:160
+#: db/abstracts.py:162
 msgid "first name"
 msgstr "имя"
 
-#: contrib/abstracts/models.py:164
+#: db/abstracts.py:166
 msgid "middle name"
 msgstr "отчество"
 
-#: contrib/abstracts/models.py:183
+#: db/abstracts.py:185
 msgid "skype"
 msgstr "скайп"
 
-#: contrib/abstracts/models.py:186
+#: db/abstracts.py:188
 msgid "jabber"
 msgstr "джаббер"
 
-#: contrib/abstracts/models.py:190
+#: db/abstracts.py:192
 msgid "about person"
 msgstr "о персоне"
 
-#: contrib/abstracts/models.py:209
+#: db/abstracts.py:221
 msgid "date"
 msgstr "дата"
 
-#: contrib/abstracts/models.py:213 contrib/abstracts/models.py:235
+#: db/abstracts.py:227 db/abstracts.py:253
 #, python-format
 msgid "%(document)s from %(date)s"
 msgstr "%(document)s от %(date)s"
 
-#: contrib/abstracts/models.py:215 contrib/abstracts/models.py:237
+#: db/abstracts.py:231 db/abstracts.py:259
 msgid "New document"
 msgstr "Новый документ"
 
-#: contrib/abstracts/models.py:231
+#: db/abstracts.py:247
 msgid "date and time"
 msgstr "дата и время"
 
-#: contrib/abstracts/models.py:291
+#: db/abstracts.py:580 db/abstracts.py:627
+msgid "parent path"
+msgstr "родительский путь"
+
+#: db/abstracts.py:632
+msgid "path"
+msgstr "путь"
+
+#: db/abstracts.py:671
 msgid "label"
 msgstr "метка"
 
-#: contrib/abstracts/models.py:322
+#: db/abstracts.py:702
 msgid "videocode"
 msgstr "видео"
 
-#: contrib/abstracts/models.py:324
+#: db/abstracts.py:704
 msgid "code"
 msgstr "код"
 
-#: contrib/abstracts/models.py:325
+#: db/abstracts.py:705
 msgid "Set your code for video on the www.youtube.com"
 msgstr "Установите код видео с www.youtube.com"
 
-#: contrib/abstracts/models.py:344 contrib/abstracts/models.py:346
+#: db/abstracts.py:724 db/abstracts.py:726
 msgid "image"
 msgstr "изображение"
 
-#: contrib/abstracts/models.py:417
+#: db/abstracts.py:798
 msgid "JSON value"
 msgstr "значение JSON"
 
-#: templates/bwp/404.html:5
+#: templates/404.html:5
 msgid "Excuse, the page isn't found."
 msgstr "Извините, страница не найдена."
 
-#: templates/bwp/500.html:9
+#: templates/500.html:9
 msgid "Internal error of the server."
 msgstr "Внутренняя ошибка сервера."
 
@@ -560,10 +576,6 @@ msgstr "Адрес электронной почты:"
 msgid "Reset my password"
 msgstr "Восстановить мой пароль"
 
-#: templatetags/bwp_list.py:336
-msgid "All dates"
-msgstr "Все даты"
-
 #: templatetags/bwp_locale.py:46
 msgid "administration"
 msgstr "администрирование"
@@ -579,6 +591,17 @@ msgstr "сайты"
 #: templatetags/bwp_locale.py:49
 msgid "content types"
 msgstr "типы контента"
+
+#~ msgid "Please log in again, because your session has expired."
+#~ msgstr "Пожалуйста, войдите снова, поскольку ваша сессия устарела."
+
+#~ msgid "Your e-mail address is not your username. Try '%s' instead."
+#~ msgstr ""
+#~ "Ваш адрес электронной почты не является вашим именем пользователя. "
+#~ "Попробуйте '%s' взамен."
+
+#~ msgid "All dates"
+#~ msgstr "Все даты"
 
 #~ msgid "time"
 #~ msgstr "время"
