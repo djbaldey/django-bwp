@@ -44,47 +44,11 @@ from bwp.db import managers as bwpmanagers, fields
 from bwp.contrib.abstracts.models import AbstractGroupUnique, AbstractGroup
 from bwp.contrib.contacts.models import Org, Person
 from bwp.contrib.qualifiers.models import MeasureUnit, Country, Currency
-from bwp.contrib.reports.models import Template
+from bwp.contrib.reports.models import Document
 from bwp.utils.classes import upload_to, autonumber
 
 import datetime
 import managers
-
-class Post(AbstractGroupUnique):
-    """ Должность """
-
-    priority = models.IntegerField(
-            default=0,
-            verbose_name = _('priority'),
-            help_text=_("Priority for ordering"))
-    class Meta:
-        ordering = ['-priority', 'title',]
-        verbose_name = _('post')
-        verbose_name_plural = _('posts')
-
-class Employee(models.Model):
-    """ Сотрудники """
-
-    person = models.ForeignKey(
-            Person,
-            verbose_name = _('person'))
-    org = models.ForeignKey(
-            Org,
-            verbose_name = _('organization'))
-    post = models.ForeignKey(
-            Post,
-            verbose_name = _('post'))
-
-    def __unicode__(self):
-        return unicode(self.person)
-
-    class Meta:
-        ordering = ['org',
-                    'person__last_name', 'person__first_name',
-                    'person__middle_name']
-        verbose_name = _('employee')
-        verbose_name_plural = _('employees')
-        unique_together = ('person', 'org')
 
 class Client(models.Model):
     """ Клиент, как организация, так и частное лицо """
@@ -321,9 +285,15 @@ class Contract(models.Model):
 
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
-    user = models.ForeignKey(
-            User,
-            verbose_name=_('user'))
+
+    state = models.IntegerField(
+            choices=STATE_CHOICES,
+            default=STATE_CREATED,
+            verbose_name = _('state'))
+    number = models.CharField(
+            max_length=6,
+            blank=True,
+            verbose_name=_('number'))
     supplier = models.ForeignKey(
             Org,
             limit_choices_to={'is_active': True},
@@ -333,15 +303,11 @@ class Contract(models.Model):
             Client,
             null=True, blank=True,
             verbose_name=_('client'))
-    state = models.IntegerField(
-            choices=STATE_CHOICES,
-            default=STATE_CREATED,
-            verbose_name = _('state'))
     date = models.DateField(
             null=True, blank=True,
             verbose_name=_('date'))
     template = models.ForeignKey(
-            Template,
+            Document,
             blank=True, null=True,
             verbose_name=_('template'))
     comment = models.TextField(
@@ -355,8 +321,8 @@ class Contract(models.Model):
 
     def __unicode__(self):
         return _('Contract %(num)s of %(date)s') % {
-            'num': unicode(self.id),
-            'date': self.date.strftime("%d.%m.%Y")
+            'num': unicode(self.number or self.id),
+            'date': self.date.strftime("%d.%m.%Y") if self.date else self.updated.strftime("%d.%m.%Y")
             }
 
 class Invoice(models.Model):
@@ -378,9 +344,6 @@ class Invoice(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
-    user = models.ForeignKey(
-            User,
-            verbose_name=_('user'))
     contract = models.ForeignKey(
             Contract,
             null=True, blank=True,
@@ -412,11 +375,11 @@ class Invoice(models.Model):
     def __unicode__(self):
         return _('Invoice %(id)s of %(date)s') % {
             'id': unicode(self.id),
-            'date': self.date.strftime("%d.%m.%Y")
+            'date': self.date.strftime("%d.%m.%Y") if self.date else self.updated.strftime("%d.%m.%Y")
             }
 
     class Meta:
-        ordering = ['user', '-created',]
+        ordering = ['-created',]
         verbose_name = _('invoice')
         verbose_name_plural = _('invoices')
         get_latest_by = 'date'
@@ -475,9 +438,7 @@ class Payment(models.Model):
         )
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
-    user = models.ForeignKey(
-            User,
-            verbose_name=_('user'))
+
     kind = models.IntegerField(
             choices=KIND_CHOICES,
             default=KIND_CASH,
@@ -504,7 +465,7 @@ class Payment(models.Model):
             }
 
     class Meta:
-        ordering = ['user', '-created',]
+        ordering = ['-created',]
         verbose_name = _('payment')
         verbose_name_plural = _('payments')
 
@@ -540,9 +501,6 @@ class Act(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
-    user = models.ForeignKey(
-            User,
-            verbose_name=_('user'))
     contract = models.ForeignKey(
             Contract,
             null=True, blank=True,
@@ -565,11 +523,11 @@ class Act(models.Model):
     def __unicode__(self):
         return _('Act %(id)s of %(date)s') % {
             'id': unicode(self.id),
-            'date': self.date.strftime("%d.%m.%Y"),
+            'date': self.date.strftime("%d.%m.%Y") if self.date else self.updated.strftime("%d.%m.%Y"),
             }
 
     class Meta:
-        ordering = ['user', '-created']
+        ordering = ['-created']
         verbose_name = _('act')
         verbose_name_plural = _('acts')
 

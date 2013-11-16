@@ -40,6 +40,7 @@
 # this deprecated in future
 
 from bwp.db.abstracts import (
+    fields,
     AbstractOrg,
     AbstractPerson,
     AbstractDocumentDate,

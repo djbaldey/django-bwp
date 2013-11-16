@@ -54,30 +54,29 @@
         /* Negative indent footer by it's height */
         margin: 0 auto -40px;
     }
-
-      /* Set the fixed height of the footer here */
-      #push,
-      #footer {
-        height: 40px;
-      }
-      #footer {
+    #header, #footer {
         background-color: #f5f5f5;
-      }
+    }
+    /* Set the fixed height of the footer here */
+    #push,
+    #footer {
+        height: 40px;
+    }
 
-      /* Lastly, apply responsive CSS fixes as necessary */
-      @media (max-width: 767px) {
+    /* Lastly, apply responsive CSS fixes as necessary */
+    @media (max-width: 767px) {
         #footer {
           margin-left: -20px;
           margin-right: -20px;
           padding-left: 20px;
           padding-right: 20px;
         }
-      }
+    }
 
     /* TABLES */
     .table-hover tbody tr:hover td,
     .table-hover tbody tr:hover th {
-      background-color: #EDEDED;
+        background-color: #EDEDED;
     }
 /* END ALTER BOOTSTRAP */
 
@@ -87,6 +86,10 @@
     height: 100px; margin-top: -50px;
     width: 600px; margin-left: -300px;
     z-index: -1000;
+}
+
+#main-tab {
+    background: gainsboro;
 }
 
 .tab-content {

@@ -41,14 +41,6 @@ from bwp.sites import site
 from bwp.models import ModelBWP
 from models import *
 
-class PostAdmin(ModelBWP):
-    list_display = ('__unicode__', 'id')
-site.register(Post, PostAdmin)
-
-class EmployeeAdmin(ModelBWP):
-    list_display = ('__unicode__', 'org', 'id')
-site.register(Employee, EmployeeAdmin)
-
 class ClientAdmin(ModelBWP):
     list_display = ('__unicode__', 'id')
 site.register(Client, ClientAdmin)
@@ -79,17 +71,14 @@ site.register(Spec, SpecAdmin)
 
 class ContractAdmin(ModelBWP):
     list_display = ('__unicode__', 'id')
-    raw_id_fields = ['user']
 site.register(Contract, ContractAdmin)
 
 class InvoiceAdmin(ModelBWP):
     list_display = ('__unicode__', 'id')
-    raw_id_fields = ['user']
 site.register(Invoice, InvoiceAdmin)
 
 class PaymentAdmin(ModelBWP):
     list_display = ('__unicode__', 'id')
-    raw_id_fields = ['user']
 site.register(Payment, PaymentAdmin)
 
 class ActAdmin(ModelBWP):
