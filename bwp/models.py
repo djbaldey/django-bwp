@@ -176,9 +176,7 @@ class TempUploadFile(models.Model):
         super(TempUploadFile, self).delete(**kwargs)
 
 class BaseModel(object):
-    """ Functionality common to both ModelBWP and ComposeBWP.
-
-        TODO:
+    """ Общие функции для ModelBWP, ComposeBWP, SelectorBWP.
 
         Варианты описания аргументов:
         list_display = ('__unicode__', 'real_field')
@@ -210,6 +208,10 @@ class BaseModel(object):
 
     """
 
+    site = None
+    icon = None
+    label = ''
+
     list_display        = ('__unicode__',)
     list_display_css    = {'pk': 'input-micro', 'id': 'input-micro'} # by default
     list_per_page       = 10
@@ -224,7 +226,7 @@ class BaseModel(object):
     search_fields       = None # для запрета поиска пустой кортеж
     file_fields         = []
     search_key          = 'query'
-    
+
     user_field          = None  # если указано, то в это поле записывается
                                 # Пользователь, производящий действия
 
@@ -249,6 +251,38 @@ class BaseModel(object):
                 'list_max_show_all', 'show_column_pk', 'fields',
                 'search_fields', 'search_key', 'ordering', 'has_copy',
                 'has_clone', 'hidden', 'file_fields')
+
+    def get_scheme(self, request):
+        """ Возвращает схему модели, согласно прав пользователя """
+        if request:
+            perms = self.get_permissions(request)
+            if True not in perms.values():
+                return False
+
+        MODEL = {
+            'icon': self.icon,
+            'label': self.label,
+            'has_cloning': None, #self.has_cloning(),
+            'has_coping': None, #self.has_coping(),
+            'permissions': None, #self.get_all_permissions(request),
+            'fields': None, #self.get_fields(),
+            'fieldsets': None, #self.get_fieldsets(),
+            'column_default': '__unicode__',
+            'columns': None, #get_columns(),
+            'row_class_rules': None,
+            'row_class_rules_list': None,
+            'actions': None,
+            'actions_list': None,
+            'filters': None,
+            'filters_list': None,
+            'compositions': None,
+            'compositions_list': None,
+            'model_reports': None,
+            'object_reports': None,
+            'summary': None,
+        }
+
+        return MODEL
 
     @property
     def opts(self):

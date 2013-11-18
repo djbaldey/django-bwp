@@ -46,25 +46,82 @@ from bwp.forms import BWPAuthenticationForm
 from bwp.conf import settings
 from bwp.templatetags.bwp_locale import app_label_locale
 
-
 class AlreadyRegistered(Exception):
     pass
 
 class NotRegistered(Exception):
     pass
 
-class BWPSite(object):
-    """ Класс объекта для регистрации моделей в BWP из одного экземпляра """
+class AppBWP(object):
+    """ Класс приложения для регистрации BWP-моделей """
 
-    devices = None # local devices, such as
-                   # fiscal register, receipt printer, etc.
+    def __init__(self, site, icon=None, label=''):
+        self.site = site
+        self.icon = icon
+        self.label = label
+        self.models_list = []
+        self.models = {}
 
-    def __init__(self, name='bwp', app_name='bwp'):
+    def has_permission(self, request):
+        """
+        Возвращает True, если данный HttpRequest имеет разрешение на
+        просмотр по крайней мере одной модели в приложении
+        """
+        def check_models():
+            for model in self.models.values():
+                if model.has_permission(request):
+                    return True
+            return False
+        return check_models()
+
+    def get_available_models(self, request):
+        """ Возвращает модели, доступные для пользователя """
+        models = {}
+        for name, model in self.models.items():
+            if model.has_permission(request):
+                models[name] = model
+        return models
+
+    def get_scheme(self, request):
+        """ Возвращает схему приложения для пользователя """
+        APP = {
+            'icon': self.icon,
+            'label': self.label,
+            'models_list':[],
+            'models':{},
+        }
+        for name in self.models_list:
+            if not name:
+                # TODO: чтобы использовать разделители, нужно реализовать 
+                # site.register_model(...)
+                # site.unregister_model(...)
+                APP['models_list'].append(None)
+            else:
+                model = self.models[name]
+                scheme = model.get_scheme(request)
+                if scheme:
+                    APP['models_list'].append(name)
+                    APP['models'][name] = scheme
+        return APP
+
+class SiteBWP(object):
+    """ Класс сайта для регистрации приложений BWP, панели приборов,
+        меню, локальных устройств и прочего.
+    """
+
+    def __init__(self, icon=None, label=_('BWP')):
         self._registry = {} # model_class class -> bwp_class instance
-        self.name = name
-        self.app_name = app_name
+        self.icon = icon
+        self.label = label
 
-    def register(self, model_or_iterable, bwp_class=None, **options):
+        self.dashboard  = None # экземпляр DashboardBWP
+        self.reports    = {}
+        self.apps_list  = []   # меню приложений AppBWP
+        self.apps       = {}   # экземпляры AppBWP
+        self.devices    = None # local devices, such as
+                               # fiscal register, receipt printer, etc.
+
+    def register_model(self, itermodel, bwp_class=None, separator=False, **options):
         """
         Registers the given model(s) with the given bwp class.
 
@@ -88,14 +145,29 @@ class BWPSite(object):
             validate = lambda model, bwpclass: None
         validate = lambda model, bwpclass: None
 
-        if isinstance(model_or_iterable, ModelBase):
-            model_or_iterable = [model_or_iterable]
-        for model in model_or_iterable:
-            if model._meta.abstract:
+        if isinstance(itermodel, ModelBase):
+            itermodel = [itermodel]
+
+        for model in itermodel:
+
+            meta = model._meta
+
+            if meta.abstract:
                 raise ImproperlyConfigured('The model %s is abstract, so it '
                       'cannot be registered with bwp.' % model.__name__)
 
-            if model in self._registry:
+            app_label = meta.app_label
+            model_name = meta.model_name
+            if not app_label in self.apps:
+                self.apps[app_label] = AppBWP(
+                    site=self,
+                    icon=None, # TODO: сделать чтение из __init__.py
+                    label=app_label_locale(capfirst(app_label)),
+                    )
+                self.apps_list.append(app_label)
+            app = self.apps[app_label]
+
+            if model in app.models:
                 raise AlreadyRegistered('The model %s is already registered' % model.__name__)
 
             # If we got **options then dynamically construct a subclass of
@@ -111,23 +183,54 @@ class BWPSite(object):
             validate(bwp_class, model)
 
             # Instantiate the bwp class to save in the registry
-            self._registry[model] = bwp_class(model, self)
+            app.models[model_name] = bwp_class(model, self)
+
+            # Регистрируем разделитель в списке моделей
+            # TODO: чтобы использовать разделители, нужно реализовать 
+            # self.unregister_model(...)
+            #~ if separator:
+                #~ app.models_list.append(None)
+            # Регистрируем модель в списке
+            app.models_list.append(model_name)
 
             # В модели делаем ссылку на сайт, это нужно для доступа к нему
             model.site = self
 
-    def unregister(self, model_or_iterable):
+    # Deprecated
+    def register(self, *args, **kwargs):
+        return self.register_model(*args, **kwargs)
+
+    def unregister_model(self, itermodel):
         """
         Unregisters the given model(s).
 
         If a model isn't already registered, this will raise NotRegistered.
         """
-        if isinstance(model_or_iterable, ModelBase):
-            model_or_iterable = [model_or_iterable]
-        for model in model_or_iterable:
-            if model not in self._registry:
+        if isinstance(itermodel, ModelBase):
+            itermodel = [itermodel]
+        for model in itermodel:
+            meta = model._meta
+            app_label = meta.app_label
+            model_name = meta.model_name
+
+            if app_label not in self.apps or model_name not in self.apps[app_label].models:
                 raise NotRegistered('The model %s is not registered' % model.__name__)
-            del self._registry[model]
+
+            app = self.apps[app_label]
+            free_model = app.models.pop(model_name)
+
+            if model_name in app.models_list:
+                del app.models_list[app.models_list.index(model_name)]
+
+            if not app.models.keys():
+                del self.apps[app_label]
+                del self.apps_list[self.apps_list.index(app_label)]
+
+            return free_model
+
+    # Deprecated
+    def unregister(self, *args, **kwargs):
+        return self.unregister_model(*args, **kwargs)
 
     def has_permission(self, request):
         """
@@ -160,6 +263,65 @@ class BWPSite(object):
             raise ImproperlyConfigured("Put 'django.contrib.auth.context_processors.auth' "
                 "in your TEMPLATE_CONTEXT_PROCESSORS setting in order to use the bwp application.")
 
+    def get_available_apps(self, request):
+        """ Возвращает приложения, доступные для пользователя """
+        apps = {}
+        for name, app in self.apps.items():
+            if app.has_permission(request):
+                apps[name] = app
+        return apps
+
+    def get_scheme(self, request=None):
+        """ Возвращает схему приложения, доступную для пользователя и 
+            состоящую из простых объектов Python, готовых к
+            сериализации в любую структуру
+        """
+
+        SCHEME = {
+            'icon': self.icon,
+            'label': self.label,
+            'dashboard': [],
+            'reports': {},
+            'apps_list': [],
+            'apps': {},
+        }
+
+        for name in self.apps_list:
+            app = self.apps[name]
+            scheme = app.get_scheme(request)
+            if scheme:
+                SCHEME['apps_list'].append(name)
+                SCHEME['apps'][name] = scheme
+
+        return SCHEME
+
+    def get_registry_devices(self, request=None):
+        """
+        Общий метод для проверки привилегий на объекты устройств. 
+        
+        Если не задан запрос, то возвращает весь список, без учёта
+        привилегий.
+        """
+        if self.devices is None:
+            return []
+        if request is None: 
+            return self.devices
+        available = []
+        for device in self.devices:
+            if device.has_permission(request) or device.has_admin_permission(request):
+                available.append(device)
+        return available
+
+    def devices_dict(self, request):
+        """
+        Возвращает словарь, где ключом является название устройства,
+        а значением - само устройство
+        """
+        return dict([ (device.title, device) \
+            for device in self.get_registry_devices(request)
+        ])
+
+    #old
     def get_registry_items(self, request=None):
         """
         Общий метод для проверки привилегий на объекты моделей BWP
@@ -197,30 +359,37 @@ class BWPSite(object):
             for model, model_bwp in self.get_registry_items(request)
         ])
 
-    def app_dict(self, request):
+    def app_dict(self, request, scheme=False):
         """
         Возвращает сложный словарь, где первым ключом является имя
         приложения, его значением словарь с ключом `models` - список
         вложенных моделей:
+        новый стиль со схемой:
+        
+        
+        старый стиль без схемы:
         {'auth': { 'models':[<Model Auth.User>,<Model Auth.Group>], ...}
         """
         app_dict = {}
-        for model, model_bwp in self.get_registry_items(request):
-            app_label = model._meta.app_label
-            has_module_perms = request.user.has_module_perms(app_label)
+        if scheme:
+            pass
+        else:
+            for model, model_bwp in self.get_registry_items(request):
+                app_label = model._meta.app_label
+                has_module_perms = request.user.has_module_perms(app_label)
 
-            # Разрешения уже проверены в методе get_registry_items(request)
-            model_dict = model_bwp.get_model_info(request, bwp=True)
+                # Разрешения уже проверены в методе get_registry_items(request)
+                model_dict = model_bwp.get_model_info(request, bwp=True)
 
-            if app_label in app_dict:
-                app_dict[app_label]['models'].append(model_dict)
-            else:
-                app_dict[app_label] = {
-                    'name': app_label,
-                    'label': app_label_locale(capfirst(app_label)),
-                    'has_module_perms': has_module_perms,
-                    'models': [model_dict],
-                }
+                if app_label in app_dict:
+                    app_dict[app_label]['models'].append(model_dict)
+                else:
+                    app_dict[app_label] = {
+                        'name': app_label,
+                        'label': app_label_locale(capfirst(app_label)),
+                        'has_module_perms': has_module_perms,
+                        'models': [model_dict],
+                    }
         return app_dict
 
     def app_list(self, request):
@@ -246,34 +415,8 @@ class BWPSite(object):
                 dicmodel.pop('bwp')
         return app_list
 
-    def get_registry_devices(self, request=None):
-        """
-        Общий метод для проверки привилегий на объекты устройств. 
-        
-        Если не задан запрос, то возвращает весь список, без учёта
-        привилегий.
-        """
-        if self.devices is None:
-            return []
-        if request is None: 
-            return self.devices
-        available = []
-        for device in self.devices:
-            if device.has_permission(request) or \
-            device.has_admin_permission(request):
-                available.append(device)
-        return available
-
-    def devices_dict(self, request):
-        """
-        Возвращает словарь, где ключом является название устройства,
-        а значением - само устройство
-        """
-        return dict([ (device.title, device) \
-            for device in self.get_registry_devices(request)
-        ])
 
 
 # This global object represents the default bwp site, for the common case.
-# You can instantiate BWPSite in your own code to create a custom bwp site.
-site = BWPSite()
+# You can instantiate SiteBWP in your own code to create a custom bwp site.
+site = SiteBWP()

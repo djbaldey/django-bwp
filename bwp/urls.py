@@ -56,14 +56,16 @@ def autodiscover():
         mod = import_module(app)
         # Attempt to import the app's bwp module.
         try:
-            before_import_registry = copy.copy(site._registry)
+            before_apps_list = copy.copy(site.apps_list)
+            before_apps = copy.copy(site.apps)
             import_module('%s.__bwp__' % app)
         except:
             # Reset the model registry to the state before the last import as
             # this import will have to reoccur on the next request and this
             # could raise NotRegistered and AlreadyRegistered exceptions
             # (see #8245).
-            site._registry = before_import_registry
+            site.apps_list = before_apps_list
+            site.apps = before_apps
 
             # Decide whether to bubble up this error. If the app just
             # doesn't have an bwp module, we can ignore the error

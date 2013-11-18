@@ -234,6 +234,27 @@ def API_get_settings(request):
 
 @api_required
 @login_required
+def API_get_scheme(request, **kwargs):
+    """ *Возвращает схему приложения, сформированную для конкретного
+        пользователя.*
+        
+        ##### ЗАПРОС
+        Без параметров.
+        
+        ##### ОТВЕТ
+        Формат ключа **"data"**:
+        `{
+            TODO: написать
+        }`
+    """
+    if not site.has_permission(request):
+        return JSONResponse(message=403)
+    data = site.get_scheme(request)
+    #~ print data
+    return JSONResponse(data=data)
+
+@api_required
+@login_required
 def API_get_apps(request, device=None, **kwargs):
     """ *Возвращает список из доступных приложений и их моделей.*
         
@@ -640,7 +661,7 @@ def API_get_object_report_url(request, model, pk, report, **kwargs):
     return JSONResponse(data=url)
 
 QUICKAPI_DEFINED_METHODS = {
-    'get_apps':         'bwp.views.API_get_apps',
+    'get_scheme':       'bwp.views.API_get_scheme',
     'get_settings':     'bwp.views.API_get_settings',
     'get_object':       'bwp.views.API_get_object',
     'get_collection':   'bwp.views.API_get_collection',

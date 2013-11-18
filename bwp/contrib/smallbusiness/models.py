@@ -38,6 +38,7 @@
 """
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
+from django.utils import timezone
 
 from bwp import User
 from bwp.db import managers as bwpmanagers, fields
@@ -151,15 +152,18 @@ class Good(AbstractGroup):
         verbose_name = _('good')
         verbose_name_plural = _('goods')
 
+def tomorrow():
+    return timezone.now().date() + datetime.timedelta(1)
+
 class Price(models.Model):
     """ Цены на товары """
-    NDSTYPE_NOT = 0
-    NDSTYPE_ADD = 1
-    NDSTYPE_CUT = 2
-    NDSTYPE_CHOICES = (
-        (NDSTYPE_NOT,_('no')),
-        (NDSTYPE_ADD,_('to add')),
-        (NDSTYPE_CUT,_('to cut')),
+    VATTYPE_NOT = 0
+    VATTYPE_ADD = 1
+    VATTYPE_CUT = 2
+    VATTYPE_CHOICES = (
+        (VATTYPE_NOT,_('no')),
+        (VATTYPE_ADD,_('to add')),
+        (VATTYPE_CUT,_('to cut')),
     )
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
@@ -177,22 +181,26 @@ class Price(models.Model):
             Currency,
             blank=True, null=True,
             verbose_name = _('currency'))
-    nds = models.IntegerField(
+    vat = models.IntegerField(
             blank=True, null=True,
-            verbose_name = _('NDS'))
-    ndstype = models.IntegerField(
-            choices=NDSTYPE_CHOICES,
+            verbose_name = _('VAT'))
+    vattype = models.IntegerField(
+            choices=VATTYPE_CHOICES,
             default=0,
-            verbose_name = _('NDS type'))
+            verbose_name = _('VAT type'))
     start = models.DateField(
-            default=datetime.date.today() + datetime.timedelta(1),
+            default=tomorrow,
             verbose_name = _('start'))
 
     objects = models.Manager()
     actives = managers.ActivePriceManager()
 
     def __unicode__(self):
-        return unicode(self.good)
+        s = '%s - %0.2f %s' % (unicode(self.good), self.summa, self.currency or '')
+        s = s.strip()
+        if self.vat and self.vattype:
+            s += ' (%s %s%%)' % (unicode(_('including VAT')), self.vat)
+        return s
 
     class Meta:
         ordering = ['good__group__title','good','start',]
@@ -212,24 +220,24 @@ class Price(models.Model):
         qs.update(is_active=False)
 
     @property
-    def NDS(self):
-        if not self.nds:
+    def VAT(self):
+        if not self.vat:
             return 0
         price = float(self.price)
-        if self.ndstype == NDSTYPE_ADD:
+        if self.vattype == Price.VATTYPE_ADD:
             # Начислить НДС
-            return price * (self.nds/100)
-        elif self.ndstype == NDSTYPE_CUT:
+            return price * (self.vat/100)
+        elif self.vattype == Price.VATTYPE_CUT:
             # Выделить НДС
-            return price - (price / (1 + self.nds/100))
+            return price - (price / (1 + self.vat/100))
         else:
             return 0
 
     @property
     def summa(self):
-        if self.nds and self.ndstype == NDSTYPE_ADD:
+        if self.vat and self.vattype == Price.VATTYPE_ADD:
             # Начислить НДС
-            return float(self.price) + self.NDS
+            return float(self.price) + self.VAT
         else:
             return float(self.price)
 
@@ -240,7 +248,8 @@ class Spec(models.Model):
 
     price = models.ForeignKey(
             Price,
-            verbose_name=_('price'))
+            limit_choices_to={'is_active': True, 'start__lte': tomorrow},
+            verbose_name=_('price list'))
     count = models.PositiveIntegerField(
             null=True, blank=True,
             verbose_name=_('count'))
@@ -262,8 +271,8 @@ class Spec(models.Model):
         return s * self.count
 
     @property
-    def NDS(self):
-        n = self.price.NDS - (self.price.NDS * self.discount/100)
+    def VAT(self):
+        n = self.price.VAT - (self.price.VAT * self.discount/100)
         return n * self.count
 
 ###
@@ -396,8 +405,8 @@ class Invoice(models.Model):
         return sum([ x.summa for x in self.specs.all()])
 
     @property
-    def NDS(self):
-        return sum([ x.NDS for x in self.specs.all()])
+    def VAT(self):
+        return sum([ x.VAT for x in self.specs.all()])
 
     @property
     def state_created(self):
@@ -543,8 +552,8 @@ class Act(models.Model):
         return sum([ x.summa for x in self.invoice.specs.all()])
 
     @property
-    def NDS(self):
-        return sum([ x.NDS for x in self.invoice.specs.all()])
+    def VAT(self):
+        return sum([ x.VAT for x in self.invoice.specs.all()])
 
     @property
     def state_created(self):
