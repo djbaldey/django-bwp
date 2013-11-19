@@ -38,9 +38,9 @@
 """
 import os
 from django.utils.translation import ugettext_lazy as _
-__label__ = _('platform')
+__label__ = _('Platform')
 
-VERSION = (0, 4, 4)
+VERSION = (0, 5, 0)
 __version__ = '.'.join([ str(x) for x in VERSION ])
 
 import django

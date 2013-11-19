@@ -36,7 +36,7 @@
 #   <http://www.gnu.org/licenses/>.
 ###############################################################################
 """
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 from django.db.models.base import ModelBase
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.text import capfirst
@@ -45,6 +45,16 @@ from bwp.models import ModelBWP
 from bwp.forms import BWPAuthenticationForm
 from bwp.conf import settings
 from bwp.templatetags.bwp_locale import app_label_locale
+
+APP_LABELS = getattr(settings, 'APP_LABELS',
+    {
+        'admin':            _('Administration'),
+        'auth':             _('Users'),
+        'sites':            _('Sites'),
+        'contenttypes':     _('Content types'),
+    }
+)
+
 
 class AlreadyRegistered(Exception):
     pass
@@ -162,7 +172,7 @@ class SiteBWP(object):
                 self.apps[app_label] = AppBWP(
                     site=self,
                     icon=None, # TODO: сделать чтение из __init__.py
-                    label=app_label_locale(capfirst(app_label)),
+                    label=APP_LABELS.get(app_label, _(app_label)),
                     )
                 self.apps_list.append(app_label)
             app = self.apps[app_label]

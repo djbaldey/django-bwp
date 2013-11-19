@@ -46,22 +46,13 @@ from bwp.contrib.abstracts.models import AbstractOrg, AbstractPerson, AbstractGr
 
 class Person(AbstractPerson):
     """ Персоналии """
-    IMAGE_SETTINGS = {
-        'resize': True,
-        'thumb_square': True,
-        'thumb_width': 256,
-        'thumb_height': 256,
-        'max_width': 1024,
-        'max_height': 1024,
-    }
     user = models.ForeignKey(
             User,
             null=True, blank=True,
             verbose_name = _('user'))
-    photo = fields.ThumbnailImageField(upload_to=upload_to,
+    photo = models.ImageField(upload_to=upload_to,
             null=True, blank=True,
-            verbose_name=_('photo'),
-            **IMAGE_SETTINGS)
+            verbose_name=_('photo'))
 
     class Meta:
         ordering = ['last_name', 'first_name', 'middle_name']

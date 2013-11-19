@@ -713,18 +713,9 @@ class AbstractVideoCode(AbstractData):
 
 class AbstractImage(AbstractData):
     """ Абстрактная модель для изображений """
-    IMGAGE_SETTINGS = {
-        'resize': True,
-        'thumb_square': True,
-        'thumb_width': 256,
-        'thumb_height': 256,
-        'max_width': 1024,
-        'max_height': 1024,
-    }
     default_label_type = u'%s' % _('image')
-    image = fields.ThumbnailImageField(upload_to=upload_to, 
-            verbose_name=_('image'),
-            **IMGAGE_SETTINGS)
+    image = models.ImageField(upload_to=upload_to, 
+            verbose_name=_('image'))
 
     def save(self, **kwargs):
         if self.id:
@@ -739,19 +730,13 @@ class AbstractImage(AbstractData):
                     pass
                 else:
                     if self.image != presave_obj.image:
-                        # delete old image files:
-                        for name in (
-                            presave_obj.image.path, presave_obj.image.thumb_path, 
-                            ):
-                            remove_file(name)
+                        # delete old image file:
+                        remove_file(presave_obj.image.path)
         super(AbstractImage, self).save(**kwargs)
 
     def delete(self, **kwargs):
         # delete files:
-        for name in (
-            self.image.path, self.image.thumb_path, 
-            ):
-            remove_file(name)
+        remove_file(self.image.path)
         super(AbstractImage, self).delete(**kwargs)
 
     class Meta:

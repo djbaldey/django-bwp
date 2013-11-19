@@ -54,12 +54,18 @@ def autodiscover():
 
     for app in settings.INSTALLED_APPS:
         mod = import_module(app)
+        app_label = mod.__name__.split('.')[-1]
         # Attempt to import the app's bwp module.
         try:
             before_apps_list = copy.copy(site.apps_list)
             before_apps = copy.copy(site.apps)
-            import_module('%s.__bwp__' % app)
-        except:
+            bwp = import_module('%s.__bwp__' % app)
+            if hasattr(mod, '__label__') and app_label in site.apps:
+                site.apps[app_label].label = mod.__label__
+            elif hasattr(bwp, '__label__') and app_label in site.apps:
+                site.apps[app_label].label = bwp.__label__
+        except Exception as e:
+            #~ print e, app
             # Reset the model registry to the state before the last import as
             # this import will have to reoccur on the next request and this
             # could raise NotRegistered and AlreadyRegistered exceptions

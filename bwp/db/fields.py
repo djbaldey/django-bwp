@@ -36,35 +36,37 @@
 #   <http://www.gnu.org/licenses/>.
 ###############################################################################
 """
-from django.db.models import SubfieldBase, TextField
-from django.db.models.fields.files import ImageField, ImageFieldFile
-from django.forms.widgets import Textarea
-from django.template.defaultfilters import slugify
+from django.db import models
+from django.utils.translation import ugettext_lazy as _ 
+from django.forms import widgets
+from quickapi.http import JSONEncoder
+from bwp.utils import print_debug
+from bwp.conf import settings 
 
-import json as simplejson
+import os, datetime, json as jsonlib
 
-from quickapi.http import DjangoJSONEncoder
-
-from bwp.conf import settings  
-
-from PIL import Image
-from PIL.ExifTags import TAGS
+try:
+    from tinymce.models import TinyMCEField
+except ImportError:
+    from django.db.models import TextField as TinyMCEField
 
 try:
     from unidecode import unidecode
     use_unidecode = True
-except:
+except ImportError:
     use_unidecode = False
 
-import os
+class HTMLField(models.TextField):
+    pass
 
-try:
-    from tinymce.models import HTMLField
-except ImportError:
-    from django.db.models.fields import TextField as HTMLField
+class MarkdownField(models.TextField):
+    pass
 
-class JSONField(TextField):
-    __metaclass__ = SubfieldBase
+class PasswordField(models.CharField):
+    pass
+
+class JSONField(models.TextField):
+    __metaclass__ = models.SubfieldBase
 
     def contribute_to_class(self, cls, name):
         super(JSONField, self).contribute_to_class(cls, name)
@@ -78,7 +80,7 @@ class JSONField(TextField):
         setattr(cls, 'set_%s_json' % self.name, set_json)
 
     def formfield(self, **kwargs):
-        defaults = {'widget': Textarea}
+        defaults = {'widget': widgets.Textarea}
         defaults.update(kwargs)
         return super(JSONField, self).formfield(**defaults)
 
@@ -89,7 +91,7 @@ class JSONField(TextField):
             return None
 
         if isinstance(value, (list, dict)):
-            value = simplejson.dumps(value, cls=DjangoJSONEncoder,
+            value = jsonlib.dumps(value, cls=JSONEncoder,
                     ensure_ascii=False,
                     indent=4)
             try:
@@ -110,7 +112,7 @@ class JSONField(TextField):
             return value
 
         try:
-            return simplejson.loads(value, encoding=settings.DEFAULT_CHARSET)
+            return jsonlib.loads(value, encoding=settings.DEFAULT_CHARSET)
         except ValueError, e:
             # If string could not parse as JSON it's means that it's Python
             # string saved to JSONField.
@@ -123,128 +125,76 @@ class JSONField(TextField):
         else:
             return self.get_db_prep_save(self.get_default(), connection=None)
 
-class JSONWidget(Textarea):
-    """ Prettify dumps of all non-string JSON data. """
-    def render(self, name, value, attrs=None):
-        if not isinstance(value, basestring) and value is not None:
-            value = simplejson.dumps(value, indent=4, sort_keys=True)
-        return super(JSONWidget, self).render(name, value, attrs)
+FIELD_TYPES = {
+    models.ForeignKey:                  {'type': 'object'},
+    models.ManyToManyField:             {'type': 'object_list'},
+    models.OneToOneField:               {'type': 'object'},
+    models.AutoField:                   {'type': 'int'},
+    models.BigIntegerField:             {'type': 'int', 'min': -9223372036854775808, 'max': 9223372036854775807},
+    models.BooleanField:                {'type': 'bool'},
+    models.CharField:                   {'type': 'str'},
+    models.CommaSeparatedIntegerField:  {'type': 'int_list'},
+    models.DateField:                   {'type': 'date', 'format': settings.DATE_FORMAT},
+    models.DateTimeField:               {'type': 'datetime', 'format': settings.DATETIME_FORMAT},
+    models.DecimalField:                {'type': 'decimal'},
+    models.EmailField:                  {'type': 'email'},
+    models.FileField:                   {'type': 'file'},
+    models.FilePathField:               {'type': 'path'},
+    models.FloatField:                  {'type': 'float'},
+    models.ImageField:                  {'type': 'image'},
+    models.IntegerField:                {'type': 'int'},
+    models.IPAddressField:              {'type': 'ip'},
+    models.GenericIPAddressField:       {'type': 'ip'},
+    models.NullBooleanField:            {'type': 'null_bool'},
+    models.PositiveIntegerField:        {'type': 'int', 'min': 0},
+    models.PositiveSmallIntegerField:   {'type': 'int', 'min': 0, 'max': 32767},
+    models.SlugField:                   {'type': 'str', 'format': '[-\w]+'},
+    models.SmallIntegerField:           {'type': 'int', 'min': -32768, 'max': 32767},
+    models.TextField:                   {'type': 'text'},
+    models.TimeField:                   {'type': 'time', 'format': settings.TIME_FORMAT},
+    models.URLField:                    {'type': 'url'},
+    HTMLField:                          {'type': 'html'},
+    MarkdownField:                      {'type': 'markdown'},
+    PasswordField:                      {'type': 'password'},
+    JSONField:                          {'type': 'json'},
+    TinyMCEField:                       {'type': 'html'},
+}
 
-def _add_thumb(s):
-    """ Изменяет строку (имя файла или URL), содержащую имя файла 
-        изображения, добавляя '.thumb' в конец и приводя к слагу,
-        если это возможно.
-    """
-    # Что-то не так с сохранением путей
-    s = [ x for x in os.path.split(s) ] # from tuple to list
-    name, ext = os.path.splitext(s[-1])
-    if use_unidecode:
-        name = unidecode(unicode(name))
-        name = slugify(name)
-    s[-1] = '.'.join([name.lower(), ext.lower()])
-    s = '.'.join(s)
-    return '%s.thumb' % s
+def get_scheme_fields(iterfield):
+    if not isinstance(iterfield, (list, tuple)):
+        iterfield = [iterfield]
 
-def maxSize(image, maxSize, method = 3):
-    if image.size[0] > maxSize[0] and image.size[0] > maxSize[1] or \
-       image.size[1] > maxSize[0] and image.size[1] > maxSize[1]:
+    fields = {}
 
-            imAspect = float(image.size[0])/float(image.size[1])
-            outAspect = float(maxSize[0])/float(maxSize[1])
-            if imAspect >= outAspect:
-                return image.resize((maxSize[0], int((float(maxSize[0])/imAspect) + 0.5)), method)
+    for field in iterfield:
+        _type = type(field)
+        d = FIELD_TYPES.get(_type, {'type': 'str'}).copy()
+        d['label'] = field.verbose_name
+        if field.choices:
+            d['options'] = field.choices
+        if field.rel:
+            d['placeholder'] = _('Select object')
+        if not field.editable:
+            d['disabled'] = True
+        if field.auto_created:
+            d['hidden'] = True
+        if not field.blank:
+            d['required'] = True
+        if field.has_default():
+            if isinstance(field, models.DateField):
+                if isinstance(field.default, (datetime.datetime, datetime.date)):
+                    d['default'] = 0
+                elif isinstance(field.default, (datetime.timedelta)):
+                    d['default'] = field.get_default().total_seconds()
+                else:
+                    d['placeholder'] = _('Automatic field')
             else:
-                return image.resize((int((float(maxSize[1])*imAspect) + 0.5), maxSize[1]), method)
-    else:
-        return image
+                d['default'] = field.get_default()
+        if field.help_text:
+            d['help'] = field.help_text
+        if field.max_length:
+            d['max'] = field.max_length
 
-def get_square_image(img):
-    width, height = img.size
-    if width > height:
-       delta = width - height
-       left = int(delta/2)
-       upper = 0
-       right = height + left
-       lower = height
-    else:
-       delta = height - width
-       left = 0
-       upper = int(delta/2)
-       right = width
-       lower = width + upper
-    img = img.crop((left, upper, right, lower))
-    return img
+        fields[field.name] = d
 
-class ThumbnailImageFieldFile(ImageFieldFile):
-    @property
-    def thumb_path(self):
-        return _add_thumb(self.path)
-    @property
-    def thumb_url(self):
-        end = self.thumb_path.replace(os.path.abspath(settings.MEDIA_ROOT), '').lstrip('/')
-        return settings.MEDIA_URL + end
-    @property
-    def url(self):
-        end = self.path.replace(os.path.abspath(settings.MEDIA_ROOT), '').lstrip('/')
-        return settings.MEDIA_URL + end
-
-    def save(self, name, content, save=True):
-        super(ThumbnailImageFieldFile, self).save(name, content, save)
-
-        img = Image.open(self.path)
-        try:
-            exif = img._getexif()
-        except:
-            exif = None
-        if exif != None:
-            for tag, value in exif.items():
-                decoded = TAGS.get(tag, tag)
-                if decoded == 'Orientation':
-                    if value == 3: img = img.rotate(180)
-                    if value == 6: img = img.rotate(270)
-                    if value == 8: img = img.rotate(90)
-                    break
-        if self.field.square:
-            img = get_square_image(img)
-        if self.field.resize:
-            img = maxSize(img, 
-                (self.field.max_width, self.field.max_height), 
-                Image.ANTIALIAS
-                )
-            img.save(self.path)
-        if self.field.thumb_square and not self.field.square:
-            img = get_square_image(img)
-        img.thumbnail(
-            (self.field.thumb_width, self.field.thumb_height),
-            Image.ANTIALIAS
-            )
-        img.save(self.thumb_path, 'JPEG')
-
-class ThumbnailImageField(ImageField):
-    """ Ведёт себя также как и класс ImageField, но дополнительно
-        сохраняет миниатюру изображения и предоставляет методы
-        get_FIELD_thumb_url() и get_FIELD_thumb_filename().
-
-        Принимает два дополнительных, необязательных аргумента:
-        thumb_width и thumb_height, каждый из которых имеет значение 
-        по умолчанию 128 пикселей. При изсенении размеров, отношение 
-        ширины к высоте сохраняется, обеспечивая пропорциональность 
-        изображения.
-
-        Также см. Image.thumbnail() библиотеки PIL.
-    """
-    attr_class = ThumbnailImageFieldFile
-
-    def __init__(self, thumb_width=256, thumb_height=256, 
-                max_width=1024, max_height=1024, resize=True, 
-                square=False, thumb_square=False,
-                *args, **kwargs):
-
-        self.resize = resize
-        self.square = square
-        self.thumb_square = thumb_square
-        self.thumb_width = thumb_width
-        self.thumb_height = thumb_height
-        self.max_width = max_width
-        self.max_height = max_height
-        super(ThumbnailImageField, self).__init__(*args, **kwargs)
+    return fields

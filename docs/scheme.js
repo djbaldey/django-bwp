@@ -18,6 +18,9 @@ SCHEME = {
                     label: 'Товары',
                     has_cloning: false,
                     has_coping: false,
+                    per_page: 10,
+                    per_page_min: 5,
+                    per_page_max: 100,
                     permissions: {
                         'create': true, 'read': true, 'update': true,
                         'delete': true, 'other': false},
@@ -27,16 +30,20 @@ SCHEME = {
                         'id': {
                             'label': 'ID', // название поля
                             'type': 'int', // возможные типы:
-                                           // int, float, 'decimal',
-                                           // str, html, markdown,
+                                           // int, int_list, float, decimal,
+                                           // str, password, text, email, url, path,
+                                           // html, markdown,
                                            // datetime, date, time, timedelta
-                                           // file, select, object, list
+                                           // file, image, bool, null_bool,
+                                           // select, object, object_list
                             // необязательные поля:
                             'disabled': true, // общий режим редактирования
                             'not_upgrade': false, // не обновлять поле сохранённого объекта 
                             'hidden': true, // скрытое поле
                             'required': false, // обязательно к заполнению
-                            'default': null, // значение по-умолчанию
+                            'default': null, // значение по-умолчанию,
+                                             // для дат это количество
+                                             // секунд от текущего времени
                             'placeholder': null, // заполнитель поля
                             'help': null, // подсказка
                             'options': null, // для выбора из жесткого списка
@@ -79,8 +86,7 @@ SCHEME = {
                             'help': 'Не менее 1 символа, но не более 50',
                             'min': 1,
                             'max': 50,
-                            'format': {'integer':10, 'rational':2, 'separator':','}, 
-                            'round': 2, // до 2 знака после запятой
+                            'format': {'max_digits':10, 'decimal_places':2, 'separator':','}, 
                         },
                         'file': {
                             'label': 'Файл',
@@ -114,7 +120,7 @@ SCHEME = {
                             ],
                         },
                     },
-                    fieldsets: [
+                    fields_set: [
                         {
                             'label': 'Обязательные поля',
                             'fields':[
@@ -122,7 +128,9 @@ SCHEME = {
                             ],
                         },
                         'forein_key', 'many_to_many',
+                        ['created', 'file'],
                     ],
+                    fields_search: ['title'],
                     column_default: '__unicode__', // либо ['title', 'summa', ...]
                     columns: [
                         {'name': null, 'label': 'объект', 'ordering': false, 'order_by': null},
@@ -131,7 +139,7 @@ SCHEME = {
                         {'name': 'property_or_method', 'label': 'Свойство', 'ordering': false, 'order_by': null},
                         {'name': 'id', 'label': 'ID', 'ordering': true, 'order_by': 'DESC'},
                     ],
-                    row_class_rules: {
+                    rows_rules: {
                         'is_active': {
                             'is_null': {'value': true, 'class': 'muted'},
                             'eq': {'value': false, 'class': 'danger'},
@@ -143,7 +151,7 @@ SCHEME = {
                             'range': {'value': ['2013-10-10', '2013-12-31'], 'class': 'class_X'}, 
                         },
                     },
-                    row_class_rules_list: ['is_active', 'created'],
+                    rows_rules_list: ['is_active', 'created'],
                     actions: {
                         'delete': {'label': 'Удалить выбранные', 'confirm': true},
                         'set_active': {'label': 'Сделать активными', 'confirm': false},
@@ -156,10 +164,13 @@ SCHEME = {
                         'secondmodel_set': {
                             icon: null,
                             label: 'Композиция второй модели',
-                            app: 'tests',
-                            model: 'secondmodel',
+                            app_name: 'tests',
+                            model_name: 'secondmodel',
                             has_cloning: true,
                             has_coping: true,
+                            per_page: 10,
+                            per_page_min: 5,
+                            per_page_max: 100,
                             permissions: {
                                 'create': true, 'read': true, 'update': true,
                                 'delete': true, 'other': false},
@@ -183,15 +194,16 @@ SCHEME = {
                                     'hidden': true,
                                 },
                             },
-                            fieldsets: null,
+                            fields_set: null,
+                            fields_search: ['title'],
                             column_default: '__unicode__',
                             columns: [
                                 {'name': null, 'label': 'объект', 'ordering': false, 'order_by': null},
                                 {'name': 'property_or_method', 'label': 'Свойство', 'ordering': false, 'order_by': null},
                                 {'name': 'id', 'label': 'ID', 'ordering': true, 'order_by': 'DESC'},
                             ],
-                            row_class_rules: null,
-                            row_class_rules_list: null,
+                            rows_rules: null,
+                            rows_rules_list: null,
                             actions: {
                                 'delete': {'label': 'Удалить выбранные', 'confirm': true},
                             },

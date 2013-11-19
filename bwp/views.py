@@ -37,6 +37,7 @@
 ###############################################################################
 """
 from django.http import HttpResponseBadRequest, HttpResponseForbidden
+#~ from django.utils import translation
 from django.utils.translation import ugettext_lazy as _
 from django.template import RequestContext
 from django.shortcuts import render_to_response, get_object_or_404, redirect
@@ -48,7 +49,7 @@ from django.db import transaction, models
 from django.forms.models import modelform_factory
 
 from quickapi.http import JSONResponse, JSONRedirect, MESSAGES, DjangoJSONEncoder
-from quickapi.views import index as quickapi_index
+from quickapi.views import switch_language, index as quickapi_index
 from quickapi.decorators import login_required, api_required
 
 from bwp.sites import site
@@ -72,9 +73,8 @@ def index(request, extra_context={}):
     Displays the main bwp index page, which lists all of the installed
     apps that have been registered in this site.
     """
-
+    switch_language(request)
     ctx = {'DEBUG': settings.DEBUG, 'title': _('bwp')}
-    
     user = request.user
     if not user.is_authenticated():
         return redirect('bwp.views.login')
@@ -85,6 +85,7 @@ def index(request, extra_context={}):
 @never_cache
 def login(request, extra_context={}):
     """ Displays the login form for the given HttpRequest. """
+    switch_language(request)
     context = {
         'title': _('Log in'),
         'app_path': request.get_full_path(),
@@ -104,6 +105,7 @@ def logout(request, extra_context={}):
     """ Logs out the user for the given HttpRequest.
         This should *not* assume the user is already logged in.
     """
+    switch_language(request)
     defaults = {
         'extra_context': extra_context,
         'template_name': 'bwp/logout.html',
@@ -121,6 +123,7 @@ def upload(request, model, **kwargs):
             'name': 'имя файла',
         }
     """
+    switch_language(request)
     user = request.user
 
     if not user.is_authenticated() and not conf.BWP_TMP_UPLOAD_ANONYMOUS:
@@ -671,11 +674,12 @@ QUICKAPI_DEFINED_METHODS = {
     'get_object_report_url': 'bwp.views.API_get_object_report_url',
 }
 
+if site.devices:
+    QUICKAPI_DEFINED_METHODS['device_list']    = 'bwp.views.API_device_list'
+    QUICKAPI_DEFINED_METHODS['device_command'] = 'bwp.views.API_device_command'
+
 @csrf_exempt
 def api(request):
-    if site.devices:
-        QUICKAPI_DEFINED_METHODS['device_list']    = 'bwp.views.API_device_list'
-        QUICKAPI_DEFINED_METHODS['device_command'] = 'bwp.views.API_device_command'
     return quickapi_index(request, QUICKAPI_DEFINED_METHODS)
 
 ########################################################################

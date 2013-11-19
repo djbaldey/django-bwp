@@ -39,7 +39,7 @@
 import django
 from django.db import models, transaction
 from django.db.models.fields.files import FileField, ImageField
-from django.utils.translation import ugettext, ugettext_lazy as _ 
+from django.utils.translation import ugettext_lazy as _ 
 from django.contrib.contenttypes.models import ContentType
 
 from django.contrib.admin.util import quote
@@ -64,29 +64,36 @@ from bwp.utils.classes import upload_to
 from bwp.utils import print_debug
 
 from bwp import conf, User, Group, Permission
-from bwp.widgets import get_widget_from_field
+from bwp.db import fields
 from bwp.contrib.abstracts.models import AbstractUserSettings
 
-ADDING = 1
-CHANGE = 2
-DELETE = 3
+SEARCH_KEY = 'query'
+DEFAULT_SEARCH_FIELDS = (
+    # Основные классы, от которых наследуются другие
+    models.CharField,
+    models.TextField,
+)
 
 class LogEntryManager(models.Manager):
     def log_action(self, user_id, content_type_id, object_id,
-    object_repr, action_flag, change_message=''):
-        e = self.model(None, None, user_id, content_type_id,
+    object_repr, action_flag, message=None):
+        e = self.model(None, user_id, content_type_id,
             smart_unicode(object_id), object_repr[:200],
-            action_flag, change_message)
+            action_flag, message)
         e.save()
 
 class LogEntry(models.Model):
+    CREATE = 1
+    UPDATE = 2
+    DELETE = 3
+
     action_time = models.DateTimeField(_('action time'), auto_now=True)
     user = models.ForeignKey(User, related_name='bwp_log_set')
     content_type = models.ForeignKey(ContentType, blank=True, null=True, related_name='bwp_log_set')
     object_id = models.TextField(_('object id'), blank=True, null=True)
     object_repr = models.CharField(_('object repr'), max_length=200)
     action_flag = models.PositiveSmallIntegerField(_('action flag'))
-    change_message = models.TextField(_('change message'), blank=True)
+    message = models.TextField(_('message'), blank=True)
 
     objects = LogEntryManager()
 
@@ -100,29 +107,29 @@ class LogEntry(models.Model):
         return smart_unicode(self.action_time)
 
     def __unicode__(self):
-        D = {'object': self.object_repr, 'changes': self.change_message}
-        if self.action_flag == ADDING:
-            D['action'] = _('added').title()
-        elif self.action_flag == CHANGE:
-            D['action'] = _('changed').title()
-        elif self.action_flag == DELETE:
+        D = {'object': self.object_repr, 'message': self.message}
+        if self.action_flag == LogEntry.CREATE:
+            D['action'] = _('created').title()
+        elif self.action_flag == LogEntry.UPDATE:
+            D['action'] = _('updated').title()
+        elif self.action_flag == LogEntry.DELETE:
             D['action'] = _('deleted').title()
-        if self.action_flag in [ADDING, CHANGE, DELETE]:
+        if self.action_flag in [LogEntry.CREATE, LogEntry.UPDATE, LogEntry.DELETE]:
             if self.change_message:
-                return u'%(action)s «%(object)s» - %(changes)s' % D
+                return u'%(action)s «%(object)s» - %(message)s' % D
             else:
                 return u'%(action)s «%(object)s»' % D
 
         return _('LogEntry Object')
 
-    def is_addition(self):
-        return self.action_flag == ADDING
+    def is_create(self):
+        return self.action_flag == LogEntry.CREATE
 
-    def is_change(self):
-        return self.action_flag == CHANGE
+    def is_update(self):
+        return self.action_flag == LogEntry.UPDATE
 
-    def is_deletion(self):
-        return self.action_flag == DELETE
+    def is_delete(self):
+        return self.action_flag == LogEntry.DELETE
 
     def get_edited_object(self):
         "Returns the edited object represented by this log entry"
@@ -175,114 +182,85 @@ class TempUploadFile(models.Model):
             pass
         super(TempUploadFile, self).delete(**kwargs)
 
+def _replace_attname(value, fields=[]):
+    """ Общий метод замены attname на name.
+        Словари должны содержать ключ 'fields' или 'name'.
+    """
+    attnames = dict([ (x.attname, x.name) for x in fields if x.attname != x.name ])
+    if not attnames:
+        return value
+    if isinstance(value, tuple):
+        value = list(value)
+    def _get_name(v):
+        if isinstance(v, dict):
+            if v.has_key('fields'):
+                v['fields'] = _get_name(v['fields'])
+            elif v.has_key('name'):
+                v['name'] = _get_name(v['name'])
+        elif isinstance(v, list):
+            for i,s in enumerate(v):
+                v[i] = _get_name(s)
+        elif isinstance(v, (str, unicode)) and v in attnames:
+            return attnames[v]
+        return v
+    return _get_name(value)
+
+def _get_order_by(name, ordering):
+    if name in ordering:
+        return 'ASC'
+    elif '-%s' % name in ordering:
+        return 'DESC'
+    return None
+
 class BaseModel(object):
     """ Общие функции для ModelBWP, ComposeBWP, SelectorBWP.
-
-        Варианты описания аргументов:
-        list_display = ('__unicode__', 'real_field')
-        list_display = (
-            ('real_field or model_method', _('Translate Name')),
-            'real_field',
-        )
-        list_display = (
-            ('real_field or model_method', _('Translate Name'), 'css'),
-            'real_field',
-        )
-        list_display = (
-            {
-                'name': 'real_field or model_method',
-                'label': _('Translate Name'),
-                'css': 'classes of CSS',
-            },
-            'real_field',
-        )
-
-        # Стили могут добавляться в специально выделенный атрибут 
-        list_display_css = {'pk': 'input-micro', 'id': 'input-micro'} # by default
-
-        fields  = None
-        fields  = ['real_field', ...]
-
-        exclude = []
-        exclude = ['real_field', ...]
-
     """
 
-    site = None
-    icon = None
-    label = ''
+    site           = None
+    icon           = None
+    label          = None
+    per_page       = 10
+    per_page_min   = 5
+    per_page_max   = 100
+    coping         = True # разрешение копирования
+    cloning        = None # разрешение клонирования
 
-    list_display        = ('__unicode__',)
-    list_display_css    = {'pk': 'input-micro', 'id': 'input-micro'} # by default
-    list_per_page       = 10
-    list_max_show_all   = 200
-    show_column_pk      = False
+    column_default = '__unicode__'
+    columns        = None
 
-    fields              = None
-    exclude             = []
-    fieldsets           = None
-    widgets             = None
-    widgetsets          = None
-    search_fields       = None # для запрета поиска пустой кортеж
-    file_fields         = []
-    search_key          = 'query'
+    fields              = None # по-умолчанию - все
+    fields_set          = None # порядок, набор полей
+    fields_exclude      = None # исключённые поля
+    fields_search       = None # для запрета поиска пустой кортеж
+    fields_html         = None # список полей с разметкой HTML
+    fields_markdown     = None # список полей c разметкой Markdown
+    fields_not_upgrade  = None # список полей с запретом повторного изменения
+    fields_min          = None # словарь полей с минимальными значениями
+    fields_max          = None # словарь полей с максимальными значениями
+    fields_round        = None # словарь полей со значениями округления
 
-    user_field          = None  # если указано, то в это поле записывается
-                                # Пользователь, производящий действия
+    user_field          = None # если указано, то в это поле записывается
+                               # Пользователь, производящий действия
 
-    ordering            = None
-    filters             = None
-    actions             = []
-
-    sum_values          = []
-    avg_values          = []
-    min_values          = []
-    max_values          = []
+    ordering            = None # список сортировки (по-умолчанию из модели)
+    filters             = None # список фильтров (по-умолчанию нет)
+    actions             = None # список действий (по-умолчанию ActionDelete)
 
     paginator           = Paginator
-    form                = None
-    site                = None
-    hidden              = False
-    allow_copy          = True
-    allow_clone         = None
-    
-    # Набор ключей для предоставления метаданных об этой модели.
-    metakeys = ('list_display', 'list_display_css', 'list_per_page',
-                'list_max_show_all', 'show_column_pk', 'fields',
-                'search_fields', 'search_key', 'ordering', 'has_copy',
-                'has_clone', 'hidden', 'file_fields')
 
-    def get_scheme(self, request):
-        """ Возвращает схему модели, согласно прав пользователя """
-        if request:
-            perms = self.get_permissions(request)
-            if True not in perms.values():
-                return False
+    def __init__(self, *args, **kwargs):
+        # Установка значений по-умолчанию для изменяемых объектов
+        self.columns             = self.columns             or ['__unicode__', 'pk']
+        self.fields_set          = self.fields_set          or []
+        self.fields_exclude      = self.fields_exclude      or []
+        self.fields_html         = self.fields_html         or []
+        self.fields_markdown     = self.fields_markdown     or []
+        self.fields_not_upgrade  = self.fields_not_upgrade  or []
+        self.fields_min          = self.fields_min          or {}
+        self.fields_max          = self.fields_max          or {}
+        self.fields_round        = self.fields_round        or {}
 
-        MODEL = {
-            'icon': self.icon,
-            'label': self.label,
-            'has_cloning': None, #self.has_cloning(),
-            'has_coping': None, #self.has_coping(),
-            'permissions': None, #self.get_all_permissions(request),
-            'fields': None, #self.get_fields(),
-            'fieldsets': None, #self.get_fieldsets(),
-            'column_default': '__unicode__',
-            'columns': None, #get_columns(),
-            'row_class_rules': None,
-            'row_class_rules_list': None,
-            'actions': None,
-            'actions_list': None,
-            'filters': None,
-            'filters_list': None,
-            'compositions': None,
-            'compositions_list': None,
-            'model_reports': None,
-            'object_reports': None,
-            'summary': None,
-        }
-
-        return MODEL
+        super(BaseModel, self).__init__(*args, **kwargs)
 
     @property
     def opts(self):
@@ -290,69 +268,322 @@ class BaseModel(object):
             raise NotImplementedError('Set the "model" in %s.' % self.__class__.__name__)
         return self.model._meta
 
-    def get_meta(self):
-        """ Возвращает словарь метаданных об этой модели.
-        
-            Этот метод можно переопределить в дочернем классе,
-            например, чтобы добавить информацию из него
-        """
-        return dict([ (key, getattr(self, key)) for key in self.metakeys ])
+    def _get_scheme(self):
+        """ Возвращает жесткую схему для всех пользователей """
+        if hasattr(self, '_SCHEME'):
+            SCHEME = self._SCHEME.copy()
+        else:
+            SCHEME = {
+                'icon':         self.icon,
+                'label':        self.verbose_name,
+                'has_cloning':  self.has_cloning,
+                'has_coping':   self.has_coping,
+                'per_page':     self.per_page,
+                'per_page_min': self.per_page_min,
+                'per_page_max': self.per_page_max,
+            }
+            SCHEME.update(self.scheme_fields)
+            SCHEME.update(self.scheme_columns)
+            SCHEME.update(self.scheme_row_rules)
+            SCHEME.update(self.scheme_filters)
+            SCHEME.update(self.scheme_summary)
+            self._SCHEME = SCHEME.copy()
+        return SCHEME
+
+    def get_scheme(self, request):
+        """ Возвращает динамическую схему модели, согласно прав пользователя """
+        if request:
+            perms = self.get_model_perms(request)
+            if True not in perms.values():
+                return False
+
+        SCHEME = self._get_scheme()
+
+        SCHEME.update(self.get_scheme_actions(request))
+        SCHEME.update(self.get_scheme_compositions(request))
+        SCHEME.update(self.get_scheme_reports(request))
+        SCHEME.update(self.get_scheme_permissions(request))
+
+        return SCHEME
 
     @property
-    def meta(self):
-        """ Регистрирует в словаре расширенную информацию о данной
-            модели для клиента.
-            
-            Это свойство можно переопределить в наследуемом классе,
-            например, чтобы добавить информацию из наследуемого класса
-        """
-        self.get_list_display()  # инициализация колонок списка объектов модели
-        self.get_fields()        # инициализация полей
-        self.get_search_fields() # инициализация поисковых полей
-        self.get_file_fields()   # инициализация файловых полей
-        self.get_filters()       # инициализация фильтров
-        if not hasattr(self, '_meta'):
-            self._meta = self.get_meta()
-        return self._meta
+    def has_coping(self):
+        """ Проверяет, могут ли объекты копироваться """
+        return bool(self.coping)
 
     @property
-    def has_copy(self):
-        """ Проверяет, могут ли объекты копироваться
-        """
-        return self.allow_copy
-
-    @property
-    def has_clone(self):
-        """ Проверяет, могут ли объекты клонироваться
-        """
-        if not hasattr(self, '_has_clone'):
-            if self.allow_clone is None:
-                L = [bool(self.opts.unique_together)]
+    def has_cloning(self):
+        """ Проверяет, могут ли объекты клонироваться """
+        if not hasattr(self, '_has_cloning'):
+            if self.cloning is None:
+                L = [ bool(self.opts.unique_together) ]
                 L.extend([ f.unique for f in self.opts.local_fields if not f is self.opts.pk ])
                 L.extend([ f.unique for f in self.opts.local_many_to_many ])
-                self._has_clone = not True in L
+                self._has_cloning = not True in L
             else:
-                self._has_clone = self.allow_clone
-        return self._has_clone
+                self._has_cloning = self.cloning
+        return self._has_cloning
 
-    def prepare_meta(self, request):
-        """ Обновляет информацию о метаданных согласно запроса """
-        meta = deepcopy(self.meta)
-        return meta
+    @property
+    def verbose_name(self):
+        return self.label or self.opts.verbose_name_plural
 
-    def get_model_info(self, request, bwp=False):
-        """ Информация о модели """
-        label = getattr(self, 'verbose_name', self.opts.verbose_name_plural)
-        dic = {
-            'name':  unicode(self.opts),
-            'label': capfirst(unicode(label)),
-            'perms': self.get_model_perms(request),
-            'meta':  self.prepare_meta(request),
-        }
-        if bwp:
-            dic['bwp'] = self
+    @property
+    def scheme_fields(self):
+        """ Возвращает схему описания полей модели
         
-        return dic
+            fields: {
+                // Пример PrimaryKey и описание возможных атрибутов
+                // прочих полей
+                'id': {
+                    'label': 'ID', // название поля
+                    'type': 'int', // возможные типы:
+                                   // int, int_list, float, decimal,
+                                   // str, password, text, email, url, path,
+                                   // html, markdown,
+                                   // datetime, date, time, timedelta
+                                   // file, image, bool, null_bool,
+                                   // select, object, object_list
+                    // необязательные поля:
+                    'disabled': true, // общий режим редактирования
+                    'not_upgrade': false, // не обновлять поле сохранённого объекта 
+                    'hidden': true, // скрытое поле
+                    'required': false, // обязательно к заполнению
+                    'default': null, // значение по-умолчанию,
+                                     // для дат это количество
+                                     // секунд от текущего времени
+                    'placeholder': null, // заполнитель поля
+                    'help': null, // подсказка
+                    'options': null, // для выбора из жесткого списка
+                    'min': null, // минимальное значение
+                    'max': null, // максимальное значение
+                    'format': null, // формат вывода на экран
+                                    // regexp, словарь или строка
+                    'round': null,  // если == null, то не производить
+                                    // округление, или указать разряд
+                }
+            },
+            fields_set: [
+                {
+                    'label': 'Обязательные поля',
+                    'fields':[
+                        'is_active', 'title', 'count',
+                    ],
+                },
+                'forein_key', 'many_to_many',
+                ['created', 'file'],
+            ],
+            fields_search: ['title']
+        """
+
+        def check(f):
+            if self.fields is None and not self.fields_exclude:
+                return True
+            elif self.fields and (
+                f.attname in self.fields or f.name in self.fields):
+                return True
+            elif self.fields_exclude and (
+                f.attname not in self.fields_exclude and \
+                f.name not in self.fields_exclude):
+                return True
+            return False
+
+        all_fields = [ x[0] for x in self.opts.get_fields_with_model() if check(x[0])]
+
+        scheme = fields.get_scheme_fields(all_fields)
+        for f in self.fields_html:
+            scheme[f]['type'] = 'html'
+        for f in self.fields_markdown:
+            scheme[f]['type'] = 'markdown'
+        for f in self.fields_not_upgrade:
+            scheme[f]['not_upgrade'] = True
+        for f,v in self.fields_min.items():
+            scheme[f]['min'] = v
+        for f,v in self.fields_max.items():
+            scheme[f]['max'] = v
+        for f,v in self.fields_max.items():
+            scheme[f]['max'] = v
+
+        fields_set = _replace_attname(self.fields_set, all_fields)
+        self.fields_set = fields_set
+
+        if not self.fields_search:
+            fields_search = [
+                '%s__icontains' % x[0].name for x in self.opts.get_fields_with_model() \
+                if isinstance(x[0], tuple(DEFAULT_SEARCH_FIELDS))
+            ]
+            self.fields_search = fields_search
+
+        return {'fields': scheme, 'fields_set': fields_set, 'fields_search': self.fields_search }
+
+    @property
+    def scheme_columns(self):
+        """ Возвращает схему описания колонок таблицы.
+
+            column_default: '__unicode__', // либо ['title', 'summa', ...]
+            columns: [
+                {'name': null, 'label': 'объект', 'ordering': false, 'order_by': null},
+                {'name': 'is_active', 'label': 'активно', 'ordering': true, 'order_by': 'ASC'},
+                {'name': 'select', 'label': 'пр.выбор', 'ordering': true, 'order_by': null},
+                {'name': 'property_or_method', 'label': 'Свойство', 'ordering': false, 'order_by': null},
+                {'name': 'id', 'label': 'ID', 'ordering': true, 'order_by': 'DESC'},
+            ]
+        """
+
+        all_fields = [ x[0] for x in self.opts.get_fields_with_model() ]
+        all_names = [ x.name for x in all_fields]
+        column_default = _replace_attname(self.column_default, all_fields)
+        columns = _replace_attname(self.columns, all_fields)
+        ordering = self.get_ordering()
+
+        for i,col in enumerate(columns):
+            if not isinstance(col, dict):
+                if col == '__unicode__':
+                    columns[i] = {
+                        'name': None,
+                        'label': self.opts.verbose_name,
+                        'ordering': False,
+                        'order_by': None
+                    }
+                elif col == 'pk':
+                    columns[i] = {
+                        'name': 'pk',
+                        'label': 'ID',
+                        'ordering': True,
+                        'order_by': _get_order_by(col, ordering)
+                    }
+                elif col in all_names:
+                    columns[i] = {
+                        'name': col,
+                        'label': self.opts.get_field_by_name(col)[0].verbose_name,
+                        'ordering': True,
+                        'order_by': _get_order_by(col, ordering)
+                    }
+                else:
+                    try:
+                        # related fields
+                        columns[i] = {
+                            'name': col,
+                            'label': self.opts.get_field_by_name(col)[0].verbose_name,
+                            'ordering': True,
+                            'order_by': _get_order_by(col, ordering)
+                        }
+                    except Exception as e:
+                        raise e
+            else:
+                if col['name'] in all_names:
+                    col['ordering'] = True
+                    col['order_by'] = _get_order_by(col['name'], ordering)
+
+        self.columns = columns
+        self.column_default = column_default
+
+        return {'column_default': column_default, 'columns': columns }
+
+    @property
+    def scheme_row_rules(self):
+        """ Возвращает схему описания правил для строк в таблице
+        
+            rows_rules: {
+                'is_active': {
+                    'is_null': {'value': true, 'class': 'muted'},
+                    'eq': {'value': false, 'class': 'danger'},
+                },
+                'created': {
+                    'lt': {'value': '2013-10-10', 'class': 'muted'}, // парсинг даты
+                    'eq': {'value': null, 'class': 'class_X'}, // null == new Date()
+                    'gt': {'value': -3600, 'class': 'class_X'}, // new Date() - 3600 секунд
+                    'range': {'value': ['2013-10-10', '2013-12-31'], 'class': 'class_X'}, 
+                },
+            },
+            rows_rules_list: ['is_active', 'created']
+        """
+        # TODO: сделать
+        return {'rows_rules': {}, 'rows_rules_list': []}
+
+    @property
+    def scheme_filters(self):
+        """ Возвращает схему описания фильтров модели
+        
+            filters: {},
+            filters_list: []
+        """
+        # TODO: сделать
+        return {'filters': {}, 'filters_list': []}
+
+    @property
+    def scheme_summary(self):
+        """ Возвращает схему описания суммарной информации, итогов
+
+            summary: [
+                {'name': 'total_summa', 'label': 'Итого'},
+            ]
+        """
+        # TODO: сделать
+        return {'summary': []}
+
+    def get_scheme_actions(self, request):
+        """ Возвращает схему описания доступных действий с наборами данных
+
+            actions: {
+                'delete': {'label': 'Удалить выбранные', 'confirm': true},
+                'set_active': {'label': 'Сделать активными', 'confirm': false},
+                'set_nonactive': {'label': 'Сделать неактивными', 'confirm': false},
+            },
+            actions_list: ['delete', 'set_active', 'set_nonactive']
+        """
+        # TODO: сделать
+        return {'actions': {}, 'actions_list': []}
+
+    def get_scheme_compositions(self, request):
+        """ Возвращает схему описания композиций объектов
+
+            compositions: {
+                'secondmodel_set': {
+                    icon: null,
+                    label: 'Композиция второй модели',
+                    app_name: 'tests',
+                    model_name: 'secondmodel',
+                    ...
+                },
+            },
+            compositions_list: ['secondmodel_set']
+        """
+        # TODO: сделать
+        return {'compositions': {}, 'compositions_list': []}
+
+    def get_scheme_reports(self, request):
+        """ Возвращает схему описания простых отчётов
+
+            model_reports: [['model_report1', 'Отчёт №1'], ['model_report2', 'Отчёт №2']],
+            object_reports: [['object_report1', 'Отчёт №1'], ['object_report2', 'Отчёт №2']]
+        """
+        # TODO: сделать
+        return {'model_reports': [], 'object_reports': []}
+
+    def get_scheme_permissions(self, request):
+        """ Возвращает схему описания разрешений пользователя
+
+            permissions: {
+                'create': true, 'read': true, 'update': true, 'delete': true,
+                'other': false,
+            }
+        """
+        perms = self.get_model_perms(request)
+        # TODO: сделать подгрузку дополнительных прав
+        return {'permissions': perms}
+
+    def get_ordering(self, request=None, **kwargs):
+        """ Hook for specifying field ordering. """
+        if self.ordering is None:
+            return self.opts.ordering or ()
+        return self.ordering
+
+
+
+
+
+
 
     def get_list_display(self):
         """ Устанавливает и/или возвращает список колонок списка
@@ -374,13 +605,13 @@ class BaseModel(object):
                         if name == '__unicode__':
                             label = self.opts.verbose_name
                         elif name in ('pk', 'id'):
-                            label = ugettext(name.upper())
+                            label = _(name.upper())
                             col['sorted'] = True
                         elif name in self.dict_all_local_fields:
                             label = self.opts.get_field_by_name(name)[0].verbose_name
                             col['sorted'] = True
                         else:
-                            label = ugettext(name)
+                            label = _(name)
                     col['name'] = name
                     col['label'] = label
                 # Перезапись ошибочного разрешения сортировки
@@ -605,12 +836,6 @@ class BaseModel(object):
             qs = self.queryset_from_filters(qs, filters, **kwargs)
         return qs
 
-    def get_ordering(self, request=None, **kwargs):
-        """
-        Hook for specifying field ordering.
-        """
-        return self.ordering or ()  # otherwise we might try to *None, which is bad ;)
-
     def order_queryset(self, request, queryset=None, ordering=None, **kwargs):
         """
         Сортировка определённого, либо общего набора данных.
@@ -745,12 +970,14 @@ class BaseModel(object):
             total['max_values'] = {}
         return total
 
+    # Разрешения
+
     def has_read_permission(self, request):
         """
         Returns True if the given request has permission to read an object.
         """
         opts = self.opts
-        return request.user.has_perm('%s.read_%s' % (opts.app_label, opts.object_name.lower()))
+        return request.user.has_perm('%s.read_%s' % (opts.app_label, opts.model_name))
 
     def has_create_permission(self, request):
         """
@@ -758,7 +985,7 @@ class BaseModel(object):
         Can be overriden by the user in subclasses.
         """
         opts = self.opts
-        return request.user.has_perm('%s.create_%s' % (opts.app_label, opts.object_name.lower()))
+        return request.user.has_perm('%s.create_%s' % (opts.app_label, opts.model_name))
 
     def has_update_permission(self, request, object=None):
         """
@@ -772,7 +999,7 @@ class BaseModel(object):
         request has permission to change *any* object of the given type.
         """
         opts = self.opts
-        return request.user.has_perm('%s.update_%s' % (opts.app_label, opts.object_name.lower()))
+        return request.user.has_perm('%s.update_%s' % (opts.app_label, opts.model_name))
 
     def has_delete_permission(self, request, object=None):
         """
@@ -786,7 +1013,7 @@ class BaseModel(object):
         request has permission to delete *any* object of the given type.
         """
         opts = self.opts
-        return request.user.has_perm('%s.delete_%s' % (opts.app_label, opts.object_name.lower()))
+        return request.user.has_perm('%s.delete_%s' % (opts.app_label, opts.model_name))
 
     def get_model_perms(self, request):
         """
@@ -794,67 +1021,42 @@ class BaseModel(object):
         ``add``, ``change``, and ``delete`` mapping to the True/False for each
         of those actions.
         """
-        perms = {
+        return {
             'create': self.has_create_permission(request),
             'read':   self.has_read_permission(request),
             'update': self.has_update_permission(request),
             'delete': self.has_delete_permission(request),
         }
-        # deprecated old style
-        perms['add'], perms['change'] = perms['create'], perms['update'] 
-        return perms
 
-    def log_addition(self, request, object, oldobj=None):
-        """
-        Log that an object has been successfully added.
+    # Логгирование
 
-        The default implementation creates an bwp LogEntry object.
-        """
-        if isinstance(object, LogEntry): return
-        if oldobj:
-            message = _('clone from #%s') % oldobj.pk
-        else:
-            message = ""
-        LogEntry.objects.log_action(
-            user_id         = request.user.pk,
-            content_type_id = ContentType.objects.get_for_model(object).pk,
-            object_id       = object.pk,
-            object_repr     = force_unicode(object),
-            action_flag     = ADDING,
-            change_message  = message
-        )
-
-    def log_change(self, request, object, message):
-        """
-        Log that an object has been successfully changed.
-
-        The default implementation creates an bwp LogEntry object.
-        """
+    def log_write(self, request, object, action, message):
+        """ Запись в лог о действиях пользователя """
         if isinstance(object, LogEntry): return
         LogEntry.objects.log_action(
             user_id         = request.user.pk,
             content_type_id = ContentType.objects.get_for_model(object).pk,
             object_id       = object.pk,
             object_repr     = force_unicode(object),
-            action_flag     = CHANGE,
-            change_message  = message
+            action_flag     = action,
+            message         = message
         )
 
-    def log_deletion(self, request, object, object_repr):
-        """
-        Log that an object will be deleted. Note that this method is called
-        before the deletion.
+    def log_create(self, request, object, message=None):
+        """ Запись о создании объекта """
+        self.log_write(request=request, object=object,
+            action=LogEntry.CREATE, message=message)
 
-        The default implementation creates an bwp LogEntry object.
-        """
-        if isinstance(object, LogEntry): return
-        LogEntry.objects.log_action(
-            user_id         = request.user.id,
-            content_type_id = ContentType.objects.get_for_model(self.model).pk,
-            object_id       = object.pk,
-            object_repr     = object_repr,
-            action_flag     = DELETE
-        )
+    def log_update(self, request, object, message=None):
+        """ Запись об изменении объекта """
+        self.log_write(request=request, object=object,
+            action=LogEntry.UPDATE, message=message)
+
+    def log_delete(self, request, object, message=None):
+        """ Запись об удалении объекта """
+        self.log_write(request=request, object=object,
+            action=LogEntry.DELETE, message=message)
+
 
 class ComposeBWP(BaseModel):
     """ Модель для описания вложенных объектов BWP. 
@@ -883,6 +1085,8 @@ class ComposeBWP(BaseModel):
         if self.verbose_name is None:
             # TODO: сделать установку имени из поля
             self.verbose_name = self.opts.verbose_name_plural or self.opts.verbose_name
+
+        super(ComposeBWP, self).__init__()
 
     def get_meta(self):
         """ Возвращает словарь метаданных об этой модели. """
@@ -1013,6 +1217,7 @@ class ModelBWP(BaseModel):
     def __init__(self, model, bwp_site):
         self.model = model
         self.bwp_site = bwp_site
+        super(ModelBWP, self).__init__()
 
     def get_meta(self):
         """ Возвращает словарь метаданных об этой модели. """
