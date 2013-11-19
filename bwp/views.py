@@ -258,28 +258,6 @@ def API_get_scheme(request, **kwargs):
 
 @api_required
 @login_required
-def API_get_apps(request, device=None, **kwargs):
-    """ *Возвращает список из доступных приложений и их моделей.*
-        
-        ##### ЗАПРОС
-        Параметры:
-        
-        1. **"device"** - название устройства для которого есть
-            доступные приложения (нереализовано).
-        
-        ##### ОТВЕТ
-        Формат ключа **"data"**:
-        `{
-            TODO: написать
-        }`
-    """
-    data=site.serialize(request)
-    if not data:
-        return JSONResponse(message=403)
-    return JSONResponse(data=data)
-
-@api_required
-@login_required
 def API_get_objects(request, model, list_pk, **kwargs):
     """ *Возвращает выбранные экземпляры указанной модели.*
 

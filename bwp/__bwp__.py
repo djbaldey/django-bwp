@@ -43,91 +43,79 @@ from bwp.models import ModelBWP, ComposeBWP, LogEntry,\
         GlobalUserSettings, TempUploadFile, ManyToManyBWP
 from bwp import User, Group, Permission, check_builtin_users
 
-label_id = _('ID')
-label_pk = _('PK')
-
 class LogEntryAdmin(ModelBWP):
-    list_display = ('action_time', 'user', '__unicode__', 'id')
-    search_fields = ('user__username', 'object_repr', 'change_message')
+    columns = ('action_time', 'user', '__unicode__', 'id')
+    fields_search = (
+        'user__username__icontains',
+        'object_repr__icontains',
+        'change_message__icontains'
+    )
     allow_clone = False
-site.register(LogEntry, LogEntryAdmin)
+site.register_model(LogEntry, LogEntryAdmin)
 
-class GlobalUserSettingsAdmin(ModelBWP):
-    list_display = ('__unicode__', 'id')
-site.register(GlobalUserSettings, GlobalUserSettingsAdmin)
+site.register_model(GlobalUserSettings)
 
 class TempUploadFileAdmin(ModelBWP):
-    list_display = ('__unicode__', 'user', 'created')
-site.register(TempUploadFile, TempUploadFileAdmin)
+    columns = ('__unicode__', 'user', 'created')
+site.register_model(TempUploadFile, TempUploadFileAdmin)
 
 if not check_builtin_users():
     class PermissionAdmin(ModelBWP):
-        list_display = ('__unicode__', 'id')
-        search_fields = (
-            'name',
-            'codename',
-            'content_type__name',
-            'content_type__app_label',
-            'content_type__model',
+        fields_search = (
+            'name__icontains',
+            'codename__icontains',
+            'content_type__name__icontains',
+            'content_type__app_label__icontains',
+            'content_type__model__icontains',
         )
-    site.register(Permission, PermissionAdmin)
+    site.register_model(Permission, PermissionAdmin)
 
     class PermissionCompose(ManyToManyBWP):
-        list_display = ('__unicode__', 'name', 'codename', 'id')
-        search_fields = (
-            'name',
-            'codename',
-            'content_type__name',
-            'content_type__app_label',
-            'content_type__model',
+        columns = ('__unicode__', 'name', 'codename', 'id')
+        fields_search = (
+            'name__icontains',
+            'codename__icontains',
+            'content_type__name__icontains',
+            'content_type__app_label__icontains',
+            'content_type__model__icontains',
         )
         model = Permission
 
     class UserAdmin(ModelBWP):
-        list_display = ('__unicode__',
+        columns = ('__unicode__',
             'is_active',
             'is_superuser',
             'is_staff',
             'last_login',
             'date_joined',
-            ('id', label_id))
-        list_display_css = {
-            'pk': 'input-micro', 'id': 'input-micro',
-            'is_superuser': 'input-mini', 'is_staff': 'input-mini',
-        }
+            'id')
         ordering = ('username',)
-        exclude = ['password',]
-        search_fields = ('username', 'email')
+        fields_exclude = ['password',]
+        fields_search = ('username', 'email')
         compositions = [
             ('user_permissions', PermissionCompose),
         ]
-    site.register(User, UserAdmin)
+    site.register_model(User, UserAdmin)
 
     class UserCompose(ComposeBWP):
         model = User
-        list_display = ('__unicode__',
+        columns = ('__unicode__',
             'is_active',
             'is_superuser',
             'is_staff',
             'last_login',
             'date_joined',
-            ('id', label_id))
-        list_display_css = {
-            'pk': 'input-micro', 'id': 'input-micro',
-            'is_superuser': 'input-mini', 'is_staff': 'input-mini',
-        }
+            'id')
         ordering = ('username',)
 
     class GroupAdmin(ModelBWP):
-        list_display = ('__unicode__', 'id')
         compositions = [
             ('user_set', UserCompose),
-            ('permissions', PermissionCompose),
+            #~ ('permissions', PermissionCompose),
         ]
-    site.register(Group, GroupAdmin)
+    site.register_model(Group, GroupAdmin)
 
     class ContentTypeAdmin(ModelBWP):
-        list_display = ('name', 'app_label', 'model', 'id')
+        columns = ('name', 'app_label', 'model', 'id')
         ordering = ('app_label', 'model')
-        hidden = True
-    site.register(ContentType, ContentTypeAdmin)
+    site.register_model(ContentType, ContentTypeAdmin)

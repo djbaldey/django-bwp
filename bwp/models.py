@@ -67,11 +67,12 @@ from bwp import conf, User, Group, Permission
 from bwp.db import fields
 from bwp.contrib.abstracts.models import AbstractUserSettings
 
-SEARCH_KEY = 'query'
-DEFAULT_SEARCH_FIELDS = (
-    # Основные классы, от которых наследуются другие
-    models.CharField,
-    models.TextField,
+SEARCH_KEY            = getattr(conf, 'SEARCH_KEY', 'query')
+DEFAULT_SEARCH_FIELDS = getattr(conf, 'DEFAULT_SEARCH_FIELDS',
+    (# Основные классы, от которых наследуются другие
+        models.CharField,
+        models.TextField
+    )
 )
 
 class LogEntryManager(models.Manager):
@@ -213,8 +214,7 @@ def _get_order_by(name, ordering):
     return None
 
 class BaseModel(object):
-    """ Общие функции для ModelBWP, ComposeBWP, SelectorBWP.
-    """
+    """ Общие функции для ModelBWP, ComposeBWP, SelectorBWP. """
 
     site           = None
     icon           = None

@@ -43,10 +43,12 @@ from django.utils.text import capfirst
 
 from bwp.models import ModelBWP
 from bwp.forms import BWPAuthenticationForm
+from bwp import conf
 from bwp.conf import settings
 from bwp.templatetags.bwp_locale import app_label_locale
 
-APP_LABELS = getattr(settings, 'APP_LABELS',
+SORTING_APPS_LIST = getattr(conf, 'SORTING_APPS_LIST', True)
+APP_LABELS        = getattr(conf, 'APP_LABELS',
     {
         'admin':            _('Administration'),
         'auth':             _('Users'),
@@ -54,7 +56,6 @@ APP_LABELS = getattr(settings, 'APP_LABELS',
         'contenttypes':     _('Content types'),
     }
 )
-
 
 class AlreadyRegistered(Exception):
     pass
@@ -167,7 +168,7 @@ class SiteBWP(object):
                       'cannot be registered with bwp.' % model.__name__)
 
             app_label = meta.app_label
-            model_name = meta.model_name
+            model_name = getattr(meta, 'model_name',  meta.object_name.lower()) 
             if not app_label in self.apps:
                 self.apps[app_label] = AppBWP(
                     site=self,
@@ -292,16 +293,22 @@ class SiteBWP(object):
             'label': self.label,
             'dashboard': [],
             'reports': {},
-            'apps_list': [],
             'apps': {},
         }
+
+        apps_list = []
 
         for name in self.apps_list:
             app = self.apps[name]
             scheme = app.get_scheme(request)
             if scheme:
-                SCHEME['apps_list'].append(name)
+                apps_list.append((name, unicode(app.label)))
                 SCHEME['apps'][name] = scheme
+
+        if SORTING_APPS_LIST:
+            apps_list = sorted(apps_list, key=lambda x: x[1])
+
+        SCHEME['apps_list'] = [ x[0] for x in apps_list ]
 
         return SCHEME
 
@@ -330,101 +337,6 @@ class SiteBWP(object):
         return dict([ (device.title, device) \
             for device in self.get_registry_devices(request)
         ])
-
-    #old
-    def get_registry_items(self, request=None):
-        """
-        Общий метод для проверки привилегий на объекты моделей BWP
-        и моделей приложений. 
-        
-        Если не задан запрос, то возвращает весь список, без учёта
-        привилегий.
-        """
-        if request is None: 
-            return self._registry.items()
-        available = []
-        for model, model_bwp in self._registry.items():
-            perms = model_bwp.get_model_perms(request)
-            if True in perms.values():
-                available.append((model, model_bwp))
-        return available
-
-    def bwp_dict(self, request):
-        """
-        Возвращает словарь, где ключом является имя модели BWP,
-        а значением - сама модель, например:
-            {'auth.user': <Model Contacts.UserBWP> }
-        """
-        return dict([ (str(model._meta), model_bwp) \
-            for model, model_bwp in self.get_registry_items(request)
-        ])
-
-    def model_dict(self, request):
-        """
-        Возвращает словарь, где ключом является имя модели приложения,
-        а значением - сама модель, например:
-            {'auth.user': <Model Auth.User>,}
-        """
-        return dict([ (str(model._meta), model) \
-            for model, model_bwp in self.get_registry_items(request)
-        ])
-
-    def app_dict(self, request, scheme=False):
-        """
-        Возвращает сложный словарь, где первым ключом является имя
-        приложения, его значением словарь с ключом `models` - список
-        вложенных моделей:
-        новый стиль со схемой:
-        
-        
-        старый стиль без схемы:
-        {'auth': { 'models':[<Model Auth.User>,<Model Auth.Group>], ...}
-        """
-        app_dict = {}
-        if scheme:
-            pass
-        else:
-            for model, model_bwp in self.get_registry_items(request):
-                app_label = model._meta.app_label
-                has_module_perms = request.user.has_module_perms(app_label)
-
-                # Разрешения уже проверены в методе get_registry_items(request)
-                model_dict = model_bwp.get_model_info(request, bwp=True)
-
-                if app_label in app_dict:
-                    app_dict[app_label]['models'].append(model_dict)
-                else:
-                    app_dict[app_label] = {
-                        'name': app_label,
-                        'label': app_label_locale(capfirst(app_label)),
-                        'has_module_perms': has_module_perms,
-                        'models': [model_dict],
-                    }
-        return app_dict
-
-    def app_list(self, request):
-        """
-        Возвращает отсортированный по названию список моделей приложений.
-        """
-        # Sort the apps alphabetically.
-        app_list = self.app_dict(request).values()
-        app_list.sort(key=lambda x: x['label'])
-
-        # Sort the models alphabetically within each app.
-        for app in app_list:
-            app['models'].sort(key=lambda x: x['label'])
-
-        return app_list
-
-    def serialize(self, request):
-        """ Сериализует все объекты сайта в Python """
-        app_list = self.app_list(request)
-        # Удаляем модели BWP из словарей
-        for app in app_list:
-            for dicmodel in app['models']:
-                dicmodel.pop('bwp')
-        return app_list
-
 
 
 # This global object represents the default bwp site, for the common case.
