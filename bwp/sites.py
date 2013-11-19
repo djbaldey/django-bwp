@@ -222,7 +222,7 @@ class SiteBWP(object):
         for model in itermodel:
             meta = model._meta
             app_label = meta.app_label
-            model_name = meta.model_name
+            model_name = getattr(meta, 'model_name',  meta.object_name.lower()) 
 
             if app_label not in self.apps or model_name not in self.apps[app_label].models:
                 raise NotRegistered('The model %s is not registered' % model.__name__)
