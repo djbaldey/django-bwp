@@ -246,9 +246,9 @@ def API_get_scheme(request, **kwargs):
         
         ##### ОТВЕТ
         Формат ключа **"data"**:
-        `{
-            TODO: написать
-        }`
+        `
+        - возвращается словарь схемы сервиса.
+        `
     """
     if not site.has_permission(request):
         return JSONResponse(message=403)

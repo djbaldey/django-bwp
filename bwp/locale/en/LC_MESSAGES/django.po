@@ -5,149 +5,143 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: 0.1.1\n"
+"Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-11-24 21:25+1100\n"
-"PO-Revision-Date: 2013-01-29 01:26+1100\n"
+"PO-Revision-Date: 2013-11-24 21:25+1100\n"
 "Last-Translator: Grigoriy Kramarenko <root@rosix.ru>\n"
-"Language: RU\n"
+"Language: EN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
-"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
 
 #: __init__.py:41
 msgid "Platform"
-msgstr "Платформа"
+msgstr ""
 
 #: conf.py:59
 msgid "Example project"
-msgstr "Пример проекта"
+msgstr ""
 
 #: conf.py:60
 msgid "BWP-Example"
-msgstr "BWP-Пример"
+msgstr ""
 
 #: conf.py:61
 msgid "Example project on Business Web Platform"
-msgstr "Пример проекта на Business Web Platform"
+msgstr ""
 
 #: conf.py:72
 msgid "Name of company"
-msgstr "Название компании"
+msgstr ""
 
 #: conf.py:76
 msgid "Administrators"
-msgstr "Администраторы"
+msgstr ""
 
 #: conf.py:77
 msgid "Managers"
-msgstr "Менеджеры"
+msgstr ""
 
 #: conf.py:78
 msgid "Operators"
-msgstr "Операторы"
+msgstr ""
 
 #: forms.py:52
 msgid ""
 "Please enter a correct username and password. Note that both fields are case-"
 "sensitive."
 msgstr ""
-"Пожалуйста, введите корректное имя пользователя и пароль. Помните, что оба "
-"поля чувствительны к регистру."
 
 #: forms.py:54
 msgid ""
 "Your Web browser doesn't appear to have cookies enabled. Cookies are "
 "required for logging in."
 msgstr ""
-"В ваше Веб-браузере, кажется, не включены файлы cookie. Cookies необходимы "
-"для входа в систему."
 
 #: forms.py:56
 msgid "This account is inactive."
-msgstr "Этот аккаунт неактивен."
+msgstr ""
 
 #: models.py:91
 msgid "action time"
-msgstr "время действия"
+msgstr ""
 
 #: models.py:94
 msgid "object id"
-msgstr "идентификатор объекта"
+msgstr ""
 
 #: models.py:95
 msgid "object repr"
-msgstr "представление объекта"
+msgstr ""
 
 #: models.py:96
 msgid "action flag"
-msgstr "тип действия"
+msgstr ""
 
 #: models.py:97
 msgid "message"
-msgstr "сообщение"
+msgstr ""
 
 #: models.py:102
 msgid "log entry"
-msgstr "запись в журнале"
+msgstr ""
 
 #: models.py:103
 msgid "log entries"
-msgstr "записи в журнале"
+msgstr ""
 
 #: models.py:113
 msgid "created"
-msgstr "создано"
+msgstr ""
 
 #: models.py:115
 msgid "updated"
-msgstr "обновлено"
+msgstr ""
 
 #: models.py:117
 msgid "deleted"
-msgstr "удалено"
+msgstr ""
 
 #: models.py:124
 msgid "LogEntry Object"
-msgstr "Запись в журнале"
+msgstr ""
 
 #: models.py:145 db/abstracts.py:673 db/abstracts.py:747 db/abstracts.py:750
 msgid "file"
-msgstr "файл"
+msgstr ""
 
 #: models.py:149 db/abstracts.py:780
 msgid "user"
-msgstr "пользователь"
+msgstr ""
 
 #: models.py:156
 msgid "temporarily upload file"
-msgstr "временно загружаемый файл"
+msgstr ""
 
 #: models.py:157
 msgid "temporarily upload files"
-msgstr "временно загружаемые файлы"
+msgstr ""
 
 #: models.py:1364 models.py:1365
 msgid "global settings"
-msgstr "глобальные настройки"
+msgstr ""
 
 #: sites.py:53
 msgid "Administration"
-msgstr "Администрирование"
+msgstr ""
 
 #: sites.py:54
 msgid "Users"
-msgstr "Пользователи"
+msgstr ""
 
 #: sites.py:55
 msgid "Sites"
-msgstr "Сайты"
+msgstr ""
 
 #: sites.py:56
 msgid "Content types"
-msgstr "Типы контента"
+msgstr ""
 
 #: sites.py:123
 msgid "BWP"
@@ -159,137 +153,137 @@ msgstr ""
 
 #: views.py:90 templates/registration/password_reset_complete.html:20
 msgid "Log in"
-msgstr "Войти"
+msgstr ""
 
 #: views.py:419 views.py:461
 msgid "List objects is blank!"
-msgstr "Список объектов пуст!"
+msgstr ""
 
 #: views.py:441 views.py:520
 msgid "Commited!"
-msgstr "Принято!"
+msgstr ""
 
 #: db/abstracts.py:54
 msgid "certificate"
-msgstr "свидетельство"
+msgstr ""
 
 #: db/abstracts.py:55
 msgid "license"
-msgstr "лицензия"
+msgstr ""
 
 #: db/abstracts.py:59
 msgid "INN"
-msgstr "ИНН"
+msgstr ""
 
 #: db/abstracts.py:62 db/abstracts.py:89 db/abstracts.py:273
 #: db/abstracts.py:285 db/abstracts.py:299 db/abstracts.py:354
 #: db/abstracts.py:583 db/abstracts.py:635
 msgid "title"
-msgstr "название"
+msgstr ""
 
 #: db/abstracts.py:65
 msgid "full title"
-msgstr "полное название"
+msgstr ""
 
 #: db/abstracts.py:69
 msgid "KPP"
-msgstr "КПП"
+msgstr ""
 
 #: db/abstracts.py:73
 msgid "OGRN"
-msgstr "ОГРН"
+msgstr ""
 
 #: db/abstracts.py:76 db/abstracts.py:173
 msgid "address"
-msgstr "адрес"
+msgstr ""
 
 #: db/abstracts.py:79 db/abstracts.py:170
 msgid "phones"
-msgstr "телефоны"
+msgstr ""
 
 #: db/abstracts.py:85
 msgid "BIK"
-msgstr "БИК"
+msgstr ""
 
 #: db/abstracts.py:86
 msgid "identification code of bank"
-msgstr "банковский идентификационный код"
+msgstr ""
 
 #: db/abstracts.py:90
 msgid "title of bank"
-msgstr "название банка"
+msgstr ""
 
 #: db/abstracts.py:94
 msgid "set/account"
-msgstr "расчётный счёт"
+msgstr ""
 
 #: db/abstracts.py:95
 msgid "settlement account"
-msgstr "расчётный счёт"
+msgstr ""
 
 #: db/abstracts.py:99
 msgid "cor/account"
-msgstr "корреспондентский счёт"
+msgstr ""
 
 #: db/abstracts.py:100
 msgid "correspondent account"
-msgstr "корреспондентский счёт"
+msgstr ""
 
 #: db/abstracts.py:105
 msgid "type"
-msgstr "тип"
+msgstr ""
 
 #: db/abstracts.py:106
 msgid "type of document"
-msgstr "тип документа"
+msgstr ""
 
 #: db/abstracts.py:110
 msgid "series"
-msgstr "серия"
+msgstr ""
 
 #: db/abstracts.py:111
 msgid "series of document"
-msgstr "серия документа"
+msgstr ""
 
 #: db/abstracts.py:115
 msgid "number"
-msgstr "номер"
+msgstr ""
 
 #: db/abstracts.py:116
 msgid "number of document"
-msgstr "номер документа"
+msgstr ""
 
 #: db/abstracts.py:120
 msgid "issue"
-msgstr "выдан"
+msgstr ""
 
 #: db/abstracts.py:121
 msgid "issue of document"
-msgstr "дата выдачи документа"
+msgstr ""
 
 #: db/abstracts.py:124
 msgid "organ"
-msgstr "орган"
+msgstr ""
 
 #: db/abstracts.py:125
 msgid "organization of issue"
-msgstr "орган выдачи документа"
+msgstr ""
 
 #: db/abstracts.py:129
 msgid "code organ"
-msgstr "код органа"
+msgstr ""
 
 #: db/abstracts.py:130
 msgid "code organization of issue"
-msgstr "код органа выдачи"
+msgstr ""
 
 #: db/abstracts.py:135 db/abstracts.py:180
 msgid "site"
-msgstr "сайт"
+msgstr ""
 
 #: db/abstracts.py:136 db/abstracts.py:181
 msgid "web site"
-msgstr "web сайт"
+msgstr ""
 
 #: db/abstracts.py:140 db/abstracts.py:176
 msgid "email"
@@ -297,156 +291,154 @@ msgstr ""
 
 #: db/abstracts.py:141 db/abstracts.py:177
 msgid "email address"
-msgstr "адрес e-mail"
+msgstr ""
 
 #: db/abstracts.py:144 db/abstracts.py:191
 msgid "about"
-msgstr "описание"
+msgstr ""
 
 #: db/abstracts.py:145
 msgid "about organization"
-msgstr "об организации"
+msgstr ""
 
 #: db/abstracts.py:158
 msgid "last name"
-msgstr "фамилия"
+msgstr ""
 
 #: db/abstracts.py:162
 msgid "first name"
-msgstr "имя"
+msgstr ""
 
 #: db/abstracts.py:166
 msgid "middle name"
-msgstr "отчество"
+msgstr ""
 
 #: db/abstracts.py:185
 msgid "skype"
-msgstr "скайп"
+msgstr ""
 
 #: db/abstracts.py:188
 msgid "jabber"
-msgstr "джаббер"
+msgstr ""
 
 #: db/abstracts.py:192
 msgid "about person"
-msgstr "о персоне"
+msgstr ""
 
 #: db/abstracts.py:221
 msgid "date"
-msgstr "дата"
+msgstr ""
 
 #: db/abstracts.py:227 db/abstracts.py:253
 #, python-format
 msgid "%(document)s from %(date)s"
-msgstr "%(document)s от %(date)s"
+msgstr ""
 
 #: db/abstracts.py:231 db/abstracts.py:259
 msgid "New document"
-msgstr "Новый документ"
+msgstr ""
 
 #: db/abstracts.py:247
 msgid "date and time"
-msgstr "дата и время"
+msgstr ""
 
 #: db/abstracts.py:580 db/abstracts.py:627
 msgid "parent path"
-msgstr "родительский путь"
+msgstr ""
 
 #: db/abstracts.py:632
 msgid "path"
-msgstr "путь"
+msgstr ""
 
 #: db/abstracts.py:671
 msgid "label"
-msgstr "метка"
+msgstr ""
 
 #: db/abstracts.py:702
 msgid "videocode"
-msgstr "видео"
+msgstr ""
 
 #: db/abstracts.py:704
 msgid "code"
-msgstr "код"
+msgstr ""
 
 #: db/abstracts.py:705
 msgid "Set your code for video on the www.youtube.com"
-msgstr "Установите код видео с www.youtube.com"
+msgstr ""
 
 #: db/abstracts.py:716 db/abstracts.py:718
 msgid "image"
-msgstr "изображение"
+msgstr ""
 
 #: db/abstracts.py:783
 msgid "JSON value"
-msgstr "значение JSON"
+msgstr ""
 
 #: db/fields.py:176
 msgid "Select object"
-msgstr "Выберите объект"
+msgstr ""
 
 #: db/fields.py:190
 msgid "Automatic field"
-msgstr "Автоматическое поле"
+msgstr ""
 
 #: templates/404.html:5
 msgid "Excuse, the page isn't found."
-msgstr "Извините, страница не найдена."
+msgstr ""
 
 #: templates/500.html:9
 msgid "Internal error of the server."
-msgstr "Внутренняя ошибка сервера."
+msgstr ""
 
 #: templates/bwp/for_IE.html:7
 msgid "Attention! You get the error!"
-msgstr "Внимание! Вы получили ошибку!"
+msgstr ""
 
 #: templates/bwp/for_IE.html:8
 msgid ""
 "It happened for the reason that Your browser has not passed testing, "
 "insecure and does not meet modern technical requirements."
 msgstr ""
-"Это произошло по причине того, что Ваш браузер не прошёл тестирование, "
-"небезопасен и не отвечает современным техническим требованиям."
 
 #: templates/bwp/for_IE.html:11
 msgid "Install another"
-msgstr "Установить другой"
+msgstr ""
 
 #: templates/bwp/index.html:12
 msgid "Applications"
-msgstr "Приложения"
+msgstr ""
 
 #: templates/bwp/index.html:16
 msgid "Functions"
-msgstr "Функции"
+msgstr ""
 
 #: templates/bwp/index.html:24
 msgid "Exit"
-msgstr "Выход"
+msgstr ""
 
 #: templates/bwp/login.html:32
 msgid "Error!"
-msgstr "Ошибка!"
+msgstr ""
 
 #: templates/bwp/login.html:43
 msgid "login name"
-msgstr "регистрационное имя"
+msgstr ""
 
 #: templates/bwp/login.html:45
 msgid "password"
-msgstr "пароль"
+msgstr ""
 
 #: templates/bwp/login.html:46
 msgid "Enter"
-msgstr "Войти"
+msgstr ""
 
 #: templates/bwp/logout.html:6
 msgid "Thank You for the work done."
-msgstr "Благодарим за выполненную работу."
+msgstr ""
 
 #: templates/bwp/logout.html:9 templates/registration/logged_out.html:11
 msgid "Log in again"
-msgstr "Войти снова"
+msgstr ""
 
 #: templates/registration/logged_out.html:5
 #: templates/registration/password_change_done.html:7
@@ -456,74 +448,71 @@ msgstr "Войти снова"
 #: templates/registration/password_reset_done.html:7
 #: templates/registration/password_reset_form.html:7
 msgid "Home"
-msgstr "Начало"
+msgstr ""
 
 #: templates/registration/logged_out.html:9
 msgid "Thanks for spending some quality time with the Web site today."
-msgstr "Благодарим вас за время, проведенное на этом сайте."
+msgstr ""
 
 #: templates/registration/password_change_done.html:4
 #: templates/registration/password_change_form.html:5
 msgid "Documentation"
-msgstr "Документация"
+msgstr ""
 
 #: templates/registration/password_change_done.html:4
 #: templates/registration/password_change_form.html:5
 msgid "Change password"
-msgstr "Изменить пароль"
+msgstr ""
 
 #: templates/registration/password_change_done.html:4
 #: templates/registration/password_change_form.html:5
 msgid "Log out"
-msgstr "Выйти"
+msgstr ""
 
 #: templates/registration/password_change_done.html:8
 #: templates/registration/password_change_form.html:9
 #: templates/registration/password_change_form.html:13
 #: templates/registration/password_change_form.html:25
 msgid "Password change"
-msgstr "Изменение пароля"
+msgstr ""
 
 #: templates/registration/password_change_done.html:12
 #: templates/registration/password_change_done.html:16
 msgid "Password change successful"
-msgstr "Пароль успешно изменен"
+msgstr ""
 
 #: templates/registration/password_change_done.html:18
 msgid "Your password was changed."
-msgstr "Ваш пароль был изменен."
+msgstr ""
 
 #: templates/registration/password_change_form.html:21
 msgid "Please correct the error below."
 msgid_plural "Please correct the errors below."
-msgstr[0] "Пожалуйста, исправьте ошибку ниже."
-msgstr[1] "Пожалуйста, исправьте ошибки ниже."
-msgstr[2] "Пожалуйста, исправьте ошибки ниже."
+msgstr[0] ""
+msgstr[1] ""
 
 #: templates/registration/password_change_form.html:27
 msgid ""
 "Please enter your old password, for security's sake, and then enter your new "
 "password twice so we can verify you typed it in correctly."
 msgstr ""
-"В целях безопасности, пожалуйста, введите свой старый пароль, затем введите "
-"новый пароль дважды, чтобы мы могли убедиться в правильности написания."
 
 #: templates/registration/password_change_form.html:33
 msgid "Old password"
-msgstr "Старый пароль"
+msgstr ""
 
 #: templates/registration/password_change_form.html:38
 msgid "New password"
-msgstr "Новый пароль"
+msgstr ""
 
 #: templates/registration/password_change_form.html:43
 msgid "Password (again)"
-msgstr "Пароль (еще раз)"
+msgstr ""
 
 #: templates/registration/password_change_form.html:49
 #: templates/registration/password_reset_confirm.html:27
 msgid "Change my password"
-msgstr "Изменить мой пароль"
+msgstr ""
 
 #: templates/registration/password_reset_complete.html:8
 #: templates/registration/password_reset_confirm.html:12
@@ -532,65 +521,59 @@ msgstr "Изменить мой пароль"
 #: templates/registration/password_reset_form.html:12
 #: templates/registration/password_reset_form.html:16
 msgid "Password reset"
-msgstr "Восстановление пароля"
+msgstr ""
 
 #: templates/registration/password_reset_complete.html:12
 #: templates/registration/password_reset_complete.html:16
 msgid "Password reset complete"
-msgstr "Восстановление пароля завершено"
+msgstr ""
 
 #: templates/registration/password_reset_complete.html:18
 msgid "Your password has been set.  You may go ahead and log in now."
-msgstr "Ваш пароль был сохранен.  Теперь вы можете войти."
+msgstr ""
 
 #: templates/registration/password_reset_confirm.html:8
 msgid "Password reset confirmation"
-msgstr "Подтверждение восстановления пароля"
+msgstr ""
 
 #: templates/registration/password_reset_confirm.html:18
 msgid "Enter new password"
-msgstr "Введите новый пароль:"
+msgstr ""
 
 #: templates/registration/password_reset_confirm.html:20
 msgid ""
 "Please enter your new password twice so we can verify you typed it in "
 "correctly."
 msgstr ""
-"Пожалуйста, введите новый пароль дважды, чтобы мы могли убедиться в "
-"правильности написания."
 
 #: templates/registration/password_reset_confirm.html:24
 msgid "New password:"
-msgstr "Новый пароль:"
+msgstr ""
 
 #: templates/registration/password_reset_confirm.html:26
 msgid "Confirm password:"
-msgstr "Подтвердите пароль:"
+msgstr ""
 
 #: templates/registration/password_reset_confirm.html:32
 msgid "Password reset unsuccessful"
-msgstr "Ошибка восстановления пароля"
+msgstr ""
 
 #: templates/registration/password_reset_confirm.html:34
 msgid ""
 "The password reset link was invalid, possibly because it has already been "
 "used.  Please request a new password reset."
 msgstr ""
-"Неверная ссылка для восстановления пароля. Возможно, ей уже воспользовались. "
-"Пожалуйста, попробуйте восстановить пароль еще раз."
 
 #: templates/registration/password_reset_done.html:12
 #: templates/registration/password_reset_done.html:16
 msgid "Password reset successful"
-msgstr "Пароль успешно восстановлен"
+msgstr ""
 
 #: templates/registration/password_reset_done.html:18
 msgid ""
 "We've e-mailed you instructions for setting your password to the e-mail "
 "address you submitted. You should be receiving it shortly."
 msgstr ""
-"Мы отправили инструкцию по восстановлению пароля на адрес электронной почты, "
-"который вы указали. Вы должны ее вскоре получить."
 
 #: templates/registration/password_reset_email.html:2
 #, python-format
@@ -598,55 +581,50 @@ msgid ""
 "You're receiving this e-mail because you requested a password reset for your "
 "user account at %(site_name)s."
 msgstr ""
-"Вы получили это письмо, потому что вы (или кто-то другой) запросили "
-"восстановление пароля от учётной записи на сайте %(site_name)s, которая "
-"связана с этим адресом электронной почты."
 
 #: templates/registration/password_reset_email.html:4
 msgid "Please go to the following page and choose a new password:"
-msgstr "Пожалуйста, перейдите на эту страницу и введите новый пароль:"
+msgstr ""
 
 #: templates/registration/password_reset_email.html:8
 msgid "Your username, in case you've forgotten:"
-msgstr "Ваше имя пользователя (на случай, если вы его забыли):"
+msgstr ""
 
 #: templates/registration/password_reset_email.html:10
 msgid "Thanks for using our site!"
-msgstr "Спасибо, что используете наш сайт!"
+msgstr ""
 
 #: templates/registration/password_reset_email.html:12
 #, python-format
 msgid "The %(site_name)s team"
-msgstr "Команда сайта %(site_name)s"
+msgstr ""
 
 #: templates/registration/password_reset_form.html:18
 msgid ""
 "Forgotten your password? Enter your e-mail address below, and we'll e-mail "
 "instructions for setting a new one."
 msgstr ""
-"Забыли пароль? Введите свой адрес электронной почты ниже, и мы вышлем вам "
-"инструкцию, как установить новый пароль."
 
 #: templates/registration/password_reset_form.html:22
 msgid "E-mail address:"
-msgstr "Адрес электронной почты:"
+msgstr ""
 
 #: templates/registration/password_reset_form.html:22
 msgid "Reset my password"
-msgstr "Восстановить мой пароль"
+msgstr ""
 
 #: templatetags/bwp_locale.py:46
 msgid "administration"
-msgstr "администрирование"
+msgstr ""
 
 #: templatetags/bwp_locale.py:47
 msgid "authentication"
-msgstr "авторизация"
+msgstr ""
 
 #: templatetags/bwp_locale.py:48
 msgid "sites"
-msgstr "сайты"
+msgstr ""
 
 #: templatetags/bwp_locale.py:49
 msgid "content types"
-msgstr "типы контента"
+msgstr ""

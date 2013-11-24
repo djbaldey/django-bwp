@@ -1,6 +1,5 @@
 {% extends "bwp/base.html" %}
-{% load i18n bwp_base bwp_static bwp_locale %}
-{% load url from future %}
+{% load i18n bwp_base bwp_static bwp_locale %}{% load url from future %}
 
 {% block bodyclass %}index{% endblock %}
 
@@ -10,11 +9,11 @@
         <td class="span6">
             <div class="pull-left">
                 <span id="menu-app" class="dropdown">
-                    <a href="#" data-toggle="dropdown" data-target="#" class="label label-info">Приложения</a>
+                    <a href="#" data-toggle="dropdown" data-target="#" class="label label-info">{% trans "Applications" %}</a>
                     <ul class="dropdown-menu" role="menu"></ul>
                 </span>
                 <span id="menu-func" class="dropdown">
-                    <a href="#" data-toggle="dropdown" data-target="#" class="label label-important">Функции</a>
+                    <a href="#" data-toggle="dropdown" data-target="#" class="label label-important">{% trans "Functions" %}</a>
                     <ul class="dropdown-menu" role="menu"></ul>
                 </span>
             </div>
@@ -22,7 +21,7 @@
         <td class="span6">
             <div class="pull-right">
                 <span class="label label-success">{% full_username user %}</span>
-                <a href="{% url "bwp_logout" %}" title="Выход" class="label"><i class="icon-off"></i></a>
+                <a href="{% url "bwp_logout" %}" title="{% trans "Exit" %}" class="label"><i class="icon-off"></i></a>
             </div>
         </td>
     </tr>

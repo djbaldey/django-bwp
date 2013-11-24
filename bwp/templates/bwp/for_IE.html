@@ -1,15 +1,14 @@
+{% load i18n %}
 <!--noindex-->
 <!--[if lte IE 9]>
 <div class="container">
     <div class="alert alert-block alert-error fade in">
         <button type="button" class="close" data-dismiss="alert">×</button>
-        <h4 class="alert-heading">Внимание! Вы получили ошибку!</h4>
-        <p> Это произошло по той причине, что Ваш браузер не прошёл 
-            проверку на совместимость, небезопасен и не отвечает
-            современным техническим требованиям.
+        <h4 class="alert-heading">{% trans 'Attention! You get the error!' %}</h4>
+        <p> {% trans 'It happened for the reason that Your browser has not passed testing, insecure and does not meet modern technical requirements.' %}
         </p>
         <p>
-          <a class="btn btn-danger" href="http://browsehappy.com/">Установить другой</a>
+          <a class="btn btn-danger" href="http://browsehappy.com/">{% trans 'Install another' %}</a>
         </p>
     </div>
 </div>
