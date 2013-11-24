@@ -49,7 +49,7 @@ from django.db import transaction, models
 from django.forms.models import modelform_factory
 
 from quickapi.http import JSONResponse, JSONRedirect, MESSAGES, DjangoJSONEncoder
-from quickapi.views import switch_language, index as quickapi_index
+from quickapi.views import switch_language, index as quickapi_index, get_methods
 from quickapi.decorators import login_required, api_required
 
 from bwp.sites import site
@@ -641,7 +641,7 @@ def API_get_object_report_url(request, model, pk, report, **kwargs):
     url = report.render_to_media_url(context=ctx, user=request.user)
     return JSONResponse(data=url)
 
-QUICKAPI_DEFINED_METHODS = {
+dict_methods = {
     'get_scheme':       'bwp.views.API_get_scheme',
     'get_settings':     'bwp.views.API_get_settings',
     'get_object':       'bwp.views.API_get_object',
@@ -653,12 +653,14 @@ QUICKAPI_DEFINED_METHODS = {
 }
 
 if site.devices:
-    QUICKAPI_DEFINED_METHODS['device_list']    = 'bwp.views.API_device_list'
-    QUICKAPI_DEFINED_METHODS['device_command'] = 'bwp.views.API_device_command'
+    dict_methods['device_list']    = 'bwp.views.API_device_list'
+    dict_methods['device_command'] = 'bwp.views.API_device_command'
+
+METHODS = get_methods(dict_methods)
 
 @csrf_exempt
 def api(request):
-    return quickapi_index(request, QUICKAPI_DEFINED_METHODS)
+    return quickapi_index(request, methods=METHODS)
 
 ########################################################################
 #                             END API                                  #
