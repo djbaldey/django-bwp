@@ -274,13 +274,13 @@ class SiteBWP(object):
             raise ImproperlyConfigured("Put 'django.contrib.auth.context_processors.auth' "
                 "in your TEMPLATE_CONTEXT_PROCESSORS setting in order to use the bwp application.")
 
-    def get_available_apps(self, request):
-        """ Возвращает приложения, доступные для пользователя """
-        apps = {}
-        for name, app in self.apps.items():
-            if app.has_permission(request):
-                apps[name] = app
-        return apps
+    #~ def get_available_apps(self, request):
+        #~ """ Возвращает приложения, доступные для пользователя """
+        #~ apps = {}
+        #~ for name, app in self.apps.items():
+            #~ if app.has_permission(request):
+                #~ apps[name] = app
+        #~ return apps
 
     def get_scheme(self, request=None):
         """ Возвращает схему приложения, доступную для пользователя и 
@@ -309,8 +309,15 @@ class SiteBWP(object):
             apps_list = sorted(apps_list, key=lambda x: x[1])
 
         SCHEME['apps_list'] = [ x[0] for x in apps_list ]
+        SCHEME['settings'] = self.get_scheme_settings(request)
 
         return SCHEME
+
+    def get_scheme_settings(self, request):
+        """ Возвращает схему настроек пользователя """
+        # TODO: реализовать
+        SETTINGS = {}
+        return SETTINGS
 
     def get_registry_devices(self, request=None):
         """

@@ -212,28 +212,39 @@ def set_user_field(model_bwp, instance, user, save=False):
         instance.save()
     return instance
 
+class MethodError(Exception):
+    message = _('Error in parameters for the method')
+
+class PermissionError(Exception):
+    message = _('Access denied')
+
+def _get_app(request, app):
+    """ Выполняет проверку прав и возвращает приложение """
+
+    if site.has_permission(request):
+        app = site.apps[app]
+        if app.has_permission(request):
+            return app
+    raise PermissionError()
+
+def _get_model(request, app, model):
+    """ Выполняет проверку любых прав CRUD и возвращает модель """
+
+    app = _get_app(request, app)
+    model = app.models[model]
+    if   model.has_read_permission(request):
+        return model
+    elif model.has_create_permission(request):
+        return model
+    elif model.has_update_permission(request):
+        return model
+    elif model.has_delete_permission(request):
+        return model
+    raise PermissionError()
+
 ########################################################################
 #                               API                                    #
 ########################################################################
-
-@api_required
-@login_required
-def API_get_settings(request):
-    """ *Возвращает настройки пользователя.*
-        
-        ##### ЗАПРОС
-        Без параметров.
-        
-        ##### ОТВЕТ
-        Формат ключа **"data"**:
-        `
-        - возвращается словарь с ключами из установленных настроек.
-        `
-    """
-    user = request.user
-    session = request.session
-    us = {}
-    return JSONResponse(data=us)
 
 @api_required
 @login_required
@@ -253,32 +264,108 @@ def API_get_scheme(request, **kwargs):
     if not site.has_permission(request):
         return JSONResponse(message=403)
     data = site.get_scheme(request)
-    #~ print data
     return JSONResponse(data=data)
 
 @api_required
 @login_required
-def API_get_objects(request, model, list_pk, **kwargs):
-    """ *Возвращает выбранные экземпляры указанной модели.*
+def API_get_objects(request, app, model, pk=None, foreign=None, compose=None, 
+    page=1, per_page=None, query=None, ordering=None, fields_search=None, filters=None, **kwargs):
+    """ *Возвращает список объектов.*
+        Если не указан объект, то возвращает список объектов модели.
+        Иначе возвращает связанные объекты композиции или
+        поля для указанного, конкретного объекта.
 
         ##### ЗАПРОС
         Параметры:
-        
-        1. **"model"** - уникальное название модели, например:
-                        "auth.user".
-        2. **"list_pk"** - список первичных ключей объектов.
+
+        1. **"app"**        - название приложения, например: "users";
+        2. **"model"**      - название модели приложения, например: "user";
+        3. **"pk"**         - ключ объекта модели, по-умолчанию == None;
+        4. **"foreign"**    - поле объекта с внешним ключом (fk, m2m, o2o),
+                            объекты которого должны быть возвращены,
+                            по-умолчанию == None;
+        5. **"compose"**    - уникальное название класса модели Compose, 
+                            объекты которой должны быть возвращены,
+                            по-умолчанию == None;
+
+        6. **"page"**       - номер страницы, по-умолчанию == 1;
+        7. **"per_page"**   - количество на странице, по-умолчанию определяется моделью;
+        8. **"query"**      - поисковый запрос, если есть;
+        9. **"ordering"**   - сортировка объектов, если отлична от умолчания;
+        10. **"fields_search"** - поля объектов для поиска, если отлично от умолчания;
+        11. **"filters"** - дополнительные фильтры, если есть;
 
         ##### ОТВЕТ
         Формат ключа **"data"**:
         `{
-            TODO: написать
+            'count': 2,
+            'end_index': 2,
+            'has_next': false,
+            'has_other_pages': false,
+            'has_previous': false,
+            'next_page_number': 2,
+            'num_pages': 1,
+            'number': 1,
+            'object_list': [
+                {
+                    'fields': {'first_name': u'First'},
+                    'model': u'auth.user',
+                    'pk': 1
+                },
+                {
+                    'fields': {'first_name': u'Second'},
+                    'model': u'auth.user',
+                    'pk': 2
+                }
+            ],
+            'previous_page_number': 0,
+            'start_index': 1
         }`
     """
 
-    # Получаем модель BWP со стандартной проверкой прав
-    model_bwp = site.bwp_dict(request).get(model)
+    model = _get_model(request, app, model)
+    # запрещено обновлять объект
+    if pk and not model.has_update_permission(request):
+        raise PermissionError()
 
-    return []
+    options = {
+        'request': request,
+        'page': page,
+        'per_page': per_page,
+        'query': query,
+        'ordering': ordering,
+        'fields_search': fields_search,
+        'filters': filters,
+    }
+
+    if pk:
+        # Возвращаем объекты композиции, если указано
+        if compose:
+            object = model.get(pk=pk)
+            options['object'] = object
+            compose = model.composes[compose]
+            return compose.filter(**options)
+
+        # Возвращаем объекты внешних связей, если указано
+        elif foreign:
+            field, raw_model, direct, m2m = model.opts.get_field_by_name(foreign)
+            rel_app = site.apps.get(raw_model._meta.app_label)
+            rel_model = rel_app.models.get(raw_model.__class__.__name__.lower())
+            return rel_model.filter(**options)
+
+        else:
+            raise MethodError()
+
+    # Возвращаем объекты модели
+    return model.filter(**options)
+
+
+
+
+
+
+
+
 
 @api_required
 @login_required
@@ -325,77 +412,7 @@ def API_get_object(request, model, pk=None, copy=None, clone=None, filler={}, **
         # Существующий
         return model_bwp.get(request, pk)
 
-@api_required
-@login_required
-def API_get_collection(request, model, pk=None, compose=None, page=1,
-    per_page=None, query=None, order_by=None, fields=None, filters=None, **kwargs):
-    """ *Возвращает коллекцию экземпляров указанной модели.*
-        
-        ##### ЗАПРОС
-        Параметры:
-        
-        1. **"model"** - уникальное название модели, например: "auth.user";
-        2. **"pk"** - ключ объекта модели, по умолчанию == None;
-        3. **"compose"** - уникальное название модели Compose, 
-            объекты которой должны быть возвращены: "group_set",
-            по-умолчанию не используется;
-        4. **"page"** -  номер страницы, по-умолчанию == 1;
-        5. **"per_page"** - количество на странице, по-умолчанию определяется BWP;
-        6. **"query"** - поисковый запрос;
-        7. **"order_by"** - сортировка объектов.
-        8. **"fields"** - поля объектов для поиска.
-        9. **"filters"** - дополнительные фильтры.
-        
-        ##### ОТВЕТ
-        Формат ключа **"data"**:
-        `{
-            'count': 2,
-            'end_index': 2,
-            'has_next': false,
-            'has_other_pages': false,
-            'has_previous': false,
-            'next_page_number': 2,
-            'num_pages': 1,
-            'number': 1,
-            'object_list': [
-                {
-                    'fields': {'first_name': u'First'},
-                    'model': u'auth.user',
-                    'pk': 1
-                },
-                {
-                    'fields': {'first_name': u'Second'},
-                    'model': u'auth.user',
-                    'pk': 2
-                }
-            ],
-            'previous_page_number': 0,
-            'start_index': 1
-        }`
-    """
 
-    # Получаем модель BWP со стандартной проверкой прав
-    model_bwp = site.bwp_dict(request).get(model)
-
-    options = {
-        'request': request,
-        'page': page,
-        'query': query,
-        'per_page': per_page,
-        'order_by': order_by,
-        'fields': fields,
-        'filters': filters,
-        'pk':pk, 
-    }
-
-    # Возвращаем коллекцию композиции, если указано
-    if compose:
-        dic = model_bwp.compose_dict(request)
-        compose = dic.get(compose)
-        return compose.get(**options)
-
-    # Возвращаем коллекцию в JSONResponse
-    return model_bwp.get(**options)
 
 @api_required
 @login_required
@@ -643,7 +660,6 @@ def API_get_object_report_url(request, model, pk, report, **kwargs):
 
 dict_methods = {
     'get_scheme':       'bwp.views.API_get_scheme',
-    'get_settings':     'bwp.views.API_get_settings',
     'get_object':       'bwp.views.API_get_object',
     'get_collection':   'bwp.views.API_get_collection',
     'm2m_commit':       'bwp.views.API_m2m_commit',

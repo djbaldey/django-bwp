@@ -225,6 +225,7 @@ SCHEME = {
             },
         },
     }
+    settings: {},
 }
 
 data = [
