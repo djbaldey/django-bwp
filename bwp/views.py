@@ -45,7 +45,7 @@ from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.contrib.auth.views import login as _login, logout as _logout
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
-from django.db import transaction, models
+from django.db import transaction, models, router
 from django.forms.models import modelform_factory
 
 from quickapi.http import JSONResponse, JSONRedirect, MESSAGES, DjangoJSONEncoder
@@ -157,60 +157,6 @@ def upload(request, model, **kwargs):
 ########################################################################
 #                             END PAGES                                #
 ########################################################################
-def get_form_instance(request, bwp_model, data=None, files={}, instance=None):
-    """
-    Возвращает экземпляр формы, которая используются для добавления
-    или редактирования объекта.
-
-    Аргумент `instance` является экземпляром модели `model_name`
-    (принимается только если эта форма будет использоваться для
-    редактирования существующего объекта).
-    
-    files = {'field': ('фото.jpg', 'path/in/bwp_tmp_upload/фото.jpg'}
-    """
-    model = bwp_model.model
-    defaults = {}
-    if bwp_model.form:
-        defaults['form'] = bwp_model.form
-    if bwp_model.fields:
-        defaults['fields'] = bwp_model.fields
-
-    print_debug('defaults:', defaults, '\ndata:', data, '\nfiles:', files)
-    return modelform_factory(model, **defaults)(data=data, files=files, instance=instance)
-
-def get_instance(request, pk, model_name):
-    """ Возвращает зкземпляр указаной модели """
-    model = site.model_dict(request).get(model_name)
-    return model.objects.get(pk=pk)
-
-def set_file_fields(bwp_model, instance, data):
-    """ Устанавливает файловые поля и возвращает зкземпляр указаной
-        модели без сохранения
-    """
-    for field in bwp_model.get_file_fields():
-        temp_id = data.get(field, None)
-        if temp_id in (0, ''):
-            real_field = getattr(instance, field)
-            real_field.delete(save=False)
-        elif not temp_id is None:
-            try:
-                upl = TempUploadFile.objects.get(pk=temp_id) 
-            except Exception as e:
-                print e
-                continue
-            else:
-                real_field = getattr(instance, field)
-                real_field.save(upl.file.name, upl.file.file, save=False)
-
-    return instance
-
-def set_user_field(model_bwp, instance, user, save=False):
-    """ Устанавливает пользователя, изменившего объект """
-    if model_bwp.user_field:
-        setattr(instance, model_bwp.user_field, user)
-    if save:
-        instance.save()
-    return instance
 
 class MethodError(Exception):
     message = _('Error in parameters for the method')
@@ -309,13 +255,13 @@ def API_get_objects(request, app, model, pk=None, foreign=None, compose=None,
             'object_list': [
                 {
                     'fields': {'first_name': u'First'},
-                    'model': u'auth.user',
-                    'pk': 1
+                    'pk': 1,
+                    '__unicode__': 'Первый'
                 },
                 {
                     'fields': {'first_name': u'Second'},
-                    'model': u'auth.user',
-                    'pk': 2
+                    'pk': 2,
+                    '__unicode__': 'Второй'
                 }
             ],
             'previous_page_number': 0,
@@ -324,7 +270,11 @@ def API_get_objects(request, app, model, pk=None, foreign=None, compose=None,
     """
 
     model = _get_model(request, app, model)
-    # запрещено обновлять объект
+
+    # Если запрещено обновлять объект, то поля внешних связей должны
+    # быть нередактируемые, соотвественно, такого сочетания входных
+    # параметров просто не должно быть в принципе.
+    # Поэтому это - "проверка на дурака".
     if pk and not model.has_update_permission(request):
         raise PermissionError()
 
@@ -341,200 +291,384 @@ def API_get_objects(request, app, model, pk=None, foreign=None, compose=None,
     if pk:
         # Возвращаем объекты композиции, если указано
         if compose:
-            object = model.get(pk=pk)
+            object = model.get_object(pk=pk)
             options['object'] = object
             compose = model.composes[compose]
-            return compose.filter(**options)
+            objects = compose.serialize_queryset(**options)
 
         # Возвращаем объекты внешних связей, если указано
         elif foreign:
-            field, raw_model, direct, m2m = model.opts.get_field_by_name(foreign)
-            rel_app = site.apps.get(raw_model._meta.app_label)
-            rel_model = rel_app.models.get(raw_model.__class__.__name__.lower())
-            return rel_model.filter(**options)
+            field, _null, direct, m2m = model.opts.get_field_by_name(foreign)
+            rel_app = site.apps.get(field.model._meta.app_label)
+            rel_model = rel_app.models.get(field.model.__class__.__name__.lower())
+            options['limit_choices_to'] = field.rel.limit_choices_to
+            options['columns'] = ['__unicode__']
+            objects = rel_model.serialize_queryset(**options)
 
         else:
             raise MethodError()
 
-    # Возвращаем объекты модели
-    return model.filter(**options)
+    else:
+        # Возвращаем объекты модели
+        objects = model.serialize_queryset(**options)
 
-
-
-
-
-
-
-
+    return JSONResponse(data=objects)
 
 @api_required
 @login_required
-def API_get_object(request, model, pk=None, copy=None, clone=None, filler={}, **kwargs):
-    """ *Возвращает экземпляр указанной модели.*
+def API_get_summary(request, app, model, pk=None, compose=None, 
+    query=None, ordering=None, fields_search=None, filters=None, **kwargs):
+    """ *Возвращает итоговые данные по набору данных.*
+        Если не указан объект, то возвращает для объектов модели.
+        Иначе возвращает для композиции объекта.
 
         ##### ЗАПРОС
         Параметры:
-        
-        1. **"model"** - уникальное название модели, например:
-                        "auth.user".
-        2. **"pk"**    - первичный ключ объекта, если отсутствует, то
-                        вернётся пустой новый объект (тоже без pk).
-        3. **"copy"**  - если задано, то возвращается простая копия
-                        объекта (без pk).
-        4. **"clone"**  - если задано и допустимо выполнять такую
-                        операцию, то возвращается абсолютная копия
-                        объекта (включая новый pk и копии m2m полей). 
-        5. **"filler"** - словарь полей для заполнения нового объекта.
+
+        1. **"app"**        - название приложения, например: "users";
+        2. **"model"**      - название модели приложения, например: "user";
+        3. **"pk"**         - ключ объекта модели, по-умолчанию == None;
+        4. **"compose"**    - уникальное название класса модели Compose, 
+                            объекты которой должны быть возвращены,
+                            по-умолчанию == None;
+        5. **"query"**      - поисковый запрос, если есть;
+        6. **"ordering"**   - сортировка объектов, если отлична от умолчания;
+        7. **"fields_search"** - поля объектов для поиска, если отлично от умолчания;
+        8. **"filters"** - дополнительные фильтры, если есть;
 
         ##### ОТВЕТ
         Формат ключа **"data"**:
         `{
-            TODO: написать
+            'total_sum': 2000.00,
+            'total_avg': 200.00,
+            'discount_sum': 100.00,
+            'discount_avg': 10.00,
         }`
     """
 
-    # Получаем модель BWP со стандартной проверкой прав
-    model_bwp = site.bwp_dict(request).get(model)
+    model = _get_model(request, app, model)
 
-    # Возвращаем новый пустой объект или существующий (либо его копию)
-    if not pk:
-        # Новый
-        print_debug(kwargs)
-        fil = {}
-        fields = model_bwp.get_fields()
-        fil = dict([(key, val) for key, val in filler.items() \
-                                            if key in fields])
-        return model_bwp.new(request, filler=fil)
-    else:
-        if copy or clone:
-            # Копия
-            return model_bwp.copy(request, pk, clone)
-        # Существующий
-        return model_bwp.get(request, pk)
+    options = {
+        'request': request,
+        'query': query,
+        'ordering': ordering,
+        'fields_search': fields_search,
+        'filters': filters,
+    }
 
+    if pk:
+        # Возвращаем итоги композиции, если указано
+        if compose:
+            object = model.get_object(pk=pk)
+            options['object'] = object
+            compose = model.composes[compose]
+            summary = compose.get_summary(**options)
 
-
-@api_required
-@login_required
-def API_m2m_commit(request, model, pk, compose, action, objects, **kwargs):
-    """ *Добавление или удаление объектов в M2M полях.*
-        
-        ##### ЗАПРОС
-        Параметры:
-        
-        1. **"model"** - модель объекта, которому принадлежит поле;
-        2. **"pk"**    - ключ объекта, которому принадлежит поле;
-        3. **"compose"** - композиция(поле);
-        4. **"action"** - действие, которое необходимо выполнить;
-        5. **"objects"** - список идентификаторов объектов;
-        
-        ##### ОТВЕТ
-        Формат ключа **"data"**:
-        `Boolean`
-    """
-    if not objects:
-        return JSONResponse(data=False, status=400, message=unicode(_("List objects is blank!")))
-
-    # Получаем модель BWP и композиции со стандартной проверкой прав
-    model_bwp = site.bwp_dict(request).get(model)
-    compose = model_bwp.compose_dict(request).get(compose)
-    objects = compose.queryset().filter(pk__in=objects)
-    try:
-        object = compose.related_model.queryset(request, **kwargs).get(pk=pk)
-    except:
-        return get_http_404(request)
-    else:
-        if action in ('add', 'create') and compose.has_create_permission(request):
-            result = compose.add_objects_in_m2m(object, objects)
-        elif action == 'delete' and compose.has_delete_permission(request):
-            result = compose.delete_objects_in_m2m(object, objects)
         else:
-            result = False
-        if not result:
-            return JSONResponse(data=False, status=400)
+            raise MethodError()
 
-        set_user_field(model_bwp, object, request.user, save=True)
+    else:
+        # Возвращаем итоги модели
+        summary = model.get_summary(**options)
 
-    return JSONResponse(data=True, message=unicode(_("Commited!")))
+    return JSONResponse(data=summary)
 
 @api_required
 @login_required
-@transaction.commit_manually
-def API_commit(request, objects, **kwargs):
-    """ *Сохрание и/или удаление переданных объектов.*
-        
+def API_read_object(request, app, model, pk, **kwargs):
+    """ *Считывает из базы данных и возвращает объект.*
+
         ##### ЗАПРОС
         Параметры:
         
-        1. **"objects"** - список объектов для изменения;
-        
+        1. **"app"**    - название приложения, например: "users";
+        2. **"model"**  - название модели приложения, например: "user";
+        3. **"pk"**     - ключ объекта модели;
+
         ##### ОТВЕТ
         Формат ключа **"data"**:
-        `Boolean`
+        `{
+            объект
+        }`
     """
-    transaction.commit()
-    if not objects:
-        transaction.rollback()
-        return JSONResponse(data=False, status=400, message=unicode(_("List objects is blank!")))
-    model_name = model_bwp = None
-    try:
-        for item in objects:
-            # Уменьшение ссылок на объекты, если они существуют
-            # в прошлой ротации
-            if model_name != item['model']:
-                model_name = item['model']
-                model_bwp = site.bwp_dict(request).get(model_name)
-            action = item['action'] # raise AttributeError()
-            for name, val in item['fields'].items():
-                field = model_bwp.opts.get_field_by_name(name)[0]
-                if field.rel and isinstance(val, list) and len(val) == 2:
-                    item['fields'][name] = val[0]
-                elif isinstance(field, models.DateTimeField) and val:
-                    item['fields'][name] = val.replace('T', ' ')
-            data = item['fields']
-            # Новый объект
-            if not item.get('pk', False):
-                if model_bwp.has_create_permission(request):
-                    instance = model_bwp.model()
-                    instance = set_file_fields(model_bwp, instance, data)
-                    instance = set_user_field(model_bwp, instance, request.user)
-                    form = get_form_instance(request, model_bwp, data=data, instance=instance)
-                    if form.is_valid():
-                        object = form.save()
-                        model_bwp.log_addition(request, object)
-                    else:
-                        transaction.rollback()
-                        return JSONResponse(status=400, message=unicode(form.errors))
-            # Удаляемый объект
-            elif action == 'delete':
-                instance = get_instance(request, item['pk'], item['model'])
-                if model_bwp.has_delete_permission(request, instance):
-                    model_bwp.log_deletion(request, instance, unicode(instance))
-                    instance.delete()
-            # Обновляемый объект
-            elif action in ('change', 'update'): # raise AttributeError()
-                instance = get_instance(request, item['pk'], item['model'])
-                instance = set_user_field(model_bwp, instance, request.user)
-                if model_bwp.has_update_permission(request, instance):
-                    instance = set_file_fields(model_bwp, instance, data)
-                    form = get_form_instance(request, model_bwp, data=data, instance=instance)
-                    if form.is_valid():
-                        object = form.save()
-                        fix = item.get('fix', {})
-                        model_bwp.log_change(request, object, ', '.join(fix.keys()))
-                    else:
-                        transaction.rollback()
-                        return JSONResponse(status=400, message=unicode(form.errors))
 
+    model = _get_model(request, app, model)
+
+    # Если запрещено считывать объект, то и на клиенте не должен
+    # вызываться данный метод.
+    # Поэтому это - "проверка на дурака".
+    if not model.has_read_permission(request):
+        raise PermissionError()
+
+    object = model.get_object(pk=pk)
+
+    return JSONResponse(data=model.serialize(object))
+
+@api_required
+@login_required
+def API_create_object(request, app, model, fields, **kwargs):
+    """ *Создание объекта.*
+
+        ##### ЗАПРОС
+        Параметры:
+
+        1. **"app"**    - название приложения, например: "users";
+        2. **"model"**  - название модели приложения, например: "user";
+        4. **"fields"** - словарь полей для заполнения;
+
+        ##### ОТВЕТ
+        Формат ключа **"data"**:
+        `{
+            объект
+        }`
+    """
+
+    model = _get_model(request, app, model)
+
+    # Если запрещено создавать объект, то и на клиенте не должен
+    # вызываться данный метод.
+    # Поэтому это - "проверка на дурака".
+    if not model.has_create_permission(request):
+        raise PermissionError()
+
+    # сразу же должны установиться поля пользователя,
+    # если в модели такие есть
+    object = model.model()
+
+    TMP = []    # список временных файлов, подлежащих удалению
+                # после сохранения объекта
+    M2M = []    # отложенная запись m2m полей
+
+    editable_fields = set(model.editable_fields).intersection(fields.keys())
+    for fname in editable_fields:
+        field, _null, direct, m2m = model.opts.get_field_by_name(fname)
+        value = fields[fname]
+        attr = getattr(object, fname)
+
+        # Поля с внешними связями
+        if hasattr(field, 'rel'):
+            using = router.db_for_write(field.model)
+            full_manager = field.rel.to._default_manager.using(using)
+            manager = full_manager.complex_filter(field.rel.limit_choices_to)
+            if m2m:
+                objects = manager.filter(pk__in=value)
+                M2M.append((attr, objects))
+            elif value:
+                attr = manager.get(pk=value)
+
+        # Файловые поля с идентификаторами предварительно
+        # загруженных файлов
+        elif fname in model.fields_file and value:
+            tmp = TempUploadFile.objects.get(pk=value)
+            attr.save(tmp.file.name, tmp.file.file, save=False)
+            TMP.append(tmp)
+
+        # Обычные поля
+        else:
+            attr = v
+
+    object = model.set_user_field(object, request.user)
+    try:
+        object.save()
     except Exception as e:
-        transaction.rollback()
-        print_debug('def API_commit.objects ==', objects)
-        if settings.DEBUG:
-            return JSONResponse(status=500, message=unicode(e))
-        raise e
+        return JSONResponse(status=400, message=unicode(e))
+
+    for t in TMP:
+        t.delete()
+
+    return JSONResponse(data=model.serialize(object))
+
+@api_required
+@login_required
+def API_update_object(request, app, model, pk, fields, **kwargs):
+    """ *Обновление полей объекта.*
+
+        ##### ЗАПРОС
+        Параметры:
+
+        1. **"app"**    - название приложения, например: "users";
+        2. **"model"**  - название модели приложения, например: "user";
+        3. **"pk"**     - ключ объекта модели;
+        4. **"fields"** - словарь полей для изменения;
+
+        ##### ОТВЕТ
+        Формат ключа **"data"**:
+        `{
+            объект
+        }`
+    """
+
+    if not fields:
+        return JSONResponse(data=False, status=400,
+                            message=_("List fileds is blank!"))
+
+    model = _get_model(request, app, model)
+
+    # Если запрещено обновлять объект, то и на клиенте не должен
+    # вызываться данный метод.
+    # Поэтому это - "проверка на дурака".
+    if not model.has_update_permission(request):
+        raise PermissionError()
+
+    # сразу же должны установиться поля пользователя,
+    # если в модели такие есть
+    object = model.get_object(pk=pk, user=request.user)
+
+    TMP = []    # список временных файлов, подлежащих удалению
+                # после сохранения объекта
+
+    editable_fields = set(model.editable_fields).intersection(fields.keys())
+    for fname in editable_fields:
+        field, _null, direct, m2m = model.opts.get_field_by_name(fname)
+        value = fields[fname]
+        attr = getattr(object, fname)
+
+        # Поля с внешними связями
+        if hasattr(field, 'rel'):
+            using = router.db_for_write(field.model)
+            full_manager = field.rel.to._default_manager.using(using)
+            manager = full_manager.complex_filter(field.rel.limit_choices_to)
+            if m2m:
+                _value = set(attr.values_list('pk', flat=True))
+                objects = full_manager.filter(pk__in=_value.difference(value))
+                attr.remove(*objects)
+
+                objects = manager.filter(pk__in=value)
+                attr.add(*objects)
+            else:
+                if value:
+                    attr = manager.get(pk=value)
+                else:
+                    attr = None
+
+        # Файловые поля с идентификаторами предварительно
+        # загруженных файлов
+        elif fname in model.fields_file:
+            if not value:
+                attr.delete(save=False)
+            else:
+                tmp = TempUploadFile.objects.get(pk=value)
+                attr.save(tmp.file.name, tmp.file.file, save=False)
+                TMP.append(tmp)
+
+        # Обычные поля
+        else:
+            attr = v
+
+    try:
+        object.save()
+    except Exception as e:
+        return JSONResponse(status=400, message=unicode(e))
+
+    for t in TMP:
+        t.delete()
+
+    return JSONResponse(data=model.serialize(object))
+
+@api_required
+@login_required
+def API_delete_object(request, app, model, pk, confirm=False, **kwargs):
+    """ *Удаление объекта.*
+
+        ##### ЗАПРОС
+        Параметры:
+
+        1. **"app"**    - название приложения, например: "users";
+        2. **"model"**  - название модели приложения, например: "user";
+        3. **"pk"**     - ключ объекта модели;
+        4. **"confirm"** - флаг подтверждения удаления;
+
+        ##### ОТВЕТ
+        Формат ключа **"data"**, если подтверждено:
+        `Boolean`
+
+        Если не подтверждено, то передаётся список зависимых объектов,
+        которые будут удалены вместе с этим объектом.
+
+    """
+
+    model = _get_model(request, app, model)
+
+    # Если запрещено удалять объект, то и на клиенте не должен
+    # вызываться данный метод.
+    # Поэтому это - "проверка на дурака".
+    if not model.has_delete_permission(request):
+        raise PermissionError()
+
+    using = router.db_for_write(model.model)
+    manager = model.model._default_manager.usung(using)
+
+    object = manager.get(pk=pk)
+
+    # TODO: реализовать удаление и возврат списка удаляемых объектов
+
+    if confirm:
+        try:
+            object.delete()
+        except Exception as e:
+            return JSONResponse(status=400, message=unicode(e))
+        else:
+            return JSONResponse(data=True)
     else:
-        transaction.commit()
-    return JSONResponse(data=True, message=unicode(_("Commited!")))
+        roots = []
+        #~ related_objects = model.opts.get_all_related_objects()
+
+        return JSONResponse(data=roots)
+
+@api_required
+@login_required
+def API_action(request, app, model, action, list_pk, confirm=False, **kwargs):
+    """ *Действие со списком объектов.*
+        
+        ##### ЗАПРОС
+        1. **"app"**     - название приложения, например: "users";
+        2. **"model"**   - название модели приложения, например: "user";
+        3. **"action"**  - действие, например: "delete";
+        4. **"list_pk"** - список ключей объекта модели;
+        5. **"confirm"**  - флаг подтверждения действия, если нужен;
+        
+        ##### ОТВЕТ
+        Формат ключа **"data"**, если подтверждено:
+        `Boolean`
+
+        Если не подтверждено и если требуется подтверждение,
+        то передаётся иерархический список объектов,
+        и сообщение подтверждения, например:
+        `{
+        'message': 'Все объекты будут удалены. Вы дествительно желаете сделать это?',
+        'objects': [
+            <object1>,
+            [<object2>, [<nested_2.1>, <nested_2.2>]],
+            [<object3>, [
+                [<nested_3.1>, [<nested_3.1.1>, <nested_3.1.2>]],
+                [<nested_3.2>, [<nested_3.2.1>, <nested_3.2.2>]],
+                ...
+            ]],
+        }`
+    """
+
+    model = _get_model(request, app, model)
+
+    using = router.db_for_write(model.model)
+    manager = model.model._default_manager.usung(using)
+
+    objects = manager.filter(pk__in=list_pk)
+
+    # TODO: реализовать действия и возврат списка удаляемых объектов
+
+    if confirm:
+        try:
+            model.action(action, objects)
+        except Exception as e:
+            return JSONResponse(status=400, message=unicode(e))
+        else:
+            return JSONResponse(data=True)
+    else:
+        roots = []
+        #~ related_objects = model.opts.get_all_related_objects()
+
+        return JSONResponse(data=roots)
+
 
 @api_required
 @login_required
@@ -577,7 +711,7 @@ def API_device_command(request, device, command, params={}, **kwargs):
             data = attr(**params)
             return JSONResponse(data=data)
         except Exception as e:
-            print e
+            print 'API_device_command', e
             try:
                 message = unicode(e)
             except UnicodeError:
@@ -659,13 +793,12 @@ def API_get_object_report_url(request, model, pk, report, **kwargs):
     return JSONResponse(data=url)
 
 dict_methods = {
-    'get_scheme':       'bwp.views.API_get_scheme',
-    'get_object':       'bwp.views.API_get_object',
-    'get_collection':   'bwp.views.API_get_collection',
-    'm2m_commit':       'bwp.views.API_m2m_commit',
-    'commit':           'bwp.views.API_commit',
-    'get_collection_report_url': 'bwp.views.API_get_collection_report_url',
-    'get_object_report_url': 'bwp.views.API_get_object_report_url',
+    'get_scheme':    'bwp.views.API_get_scheme',
+    'get_objects':   'bwp.views.API_get_objects',
+    'read_object':   'bwp.views.API_read_object',
+    'create_object': 'bwp.views.API_create_object',
+    'update_object': 'bwp.views.API_update_object',
+    'delete_object': 'bwp.views.API_delete_object',
 }
 
 if site.devices:

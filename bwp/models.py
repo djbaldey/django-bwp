@@ -37,7 +37,7 @@
 ###############################################################################
 """
 import django
-from django.db import models, transaction
+from django.db import models, transaction, router
 from django.db.models.fields.files import FileField, ImageField
 from django.utils.translation import ugettext_lazy as _ 
 from django.contrib.contenttypes.models import ContentType
@@ -71,19 +71,31 @@ SEARCH_KEY            = getattr(conf, 'SEARCH_KEY', 'query')
 DEFAULT_SEARCH_FIELDS = getattr(conf, 'DEFAULT_SEARCH_FIELDS',
     (# Основные классы, от которых наследуются другие
         models.CharField,
-        models.TextField
+        models.TextField,
+    )
+)
+DEFAULT_FILE_FIELDS = getattr(conf, 'DEFAULT_FILE_FIELDS',
+    (# Основные классы, от которых наследуются другие
+        models.FileField,
+        models.ImageField,
     )
 )
 
 class LogEntryManager(models.Manager):
+    """
+    """
     def log_action(self, user_id, content_type_id, object_id,
     object_repr, action_flag, message=None):
+        """
+        """
         e = self.model(None, user_id, content_type_id,
             smart_unicode(object_id), object_repr[:200],
             action_flag, message)
         e.save()
 
 class LogEntry(models.Model):
+    """
+    """
     CREATE = 1
     UPDATE = 2
     DELETE = 3
@@ -105,9 +117,13 @@ class LogEntry(models.Model):
         ordering = ('-action_time',)
 
     def __repr__(self):
+        """
+        """
         return smart_unicode(self.action_time)
 
     def __unicode__(self):
+        """
+        """
         D = {'object': self.object_repr, 'message': self.message}
         if self.action_flag == LogEntry.CREATE:
             D['action'] = _('created').title()
@@ -124,21 +140,30 @@ class LogEntry(models.Model):
         return _('LogEntry Object')
 
     def is_create(self):
+        """
+        """
         return self.action_flag == LogEntry.CREATE
 
     def is_update(self):
+        """
+        """
         return self.action_flag == LogEntry.UPDATE
 
     def is_delete(self):
+        """
+        """
         return self.action_flag == LogEntry.DELETE
 
     def get_edited_object(self):
-        "Returns the edited object represented by this log entry"
+        """
+        Returns the edited object represented by this log entry
+        """
         return self.content_type.get_object_for_this_type(pk=self.object_id)
 
 class TempUploadFile(models.Model):
-    """ Временно загружаемые файлы для последующей
-        передачи в нужную модель и требуемое поле
+    """
+    Временно загружаемые файлы для последующей
+    передачи в нужную модель и требуемое поле
     """
     created = models.DateTimeField(auto_now_add=True)
     file = models.FileField(upload_to=upload_to, 
@@ -184,8 +209,9 @@ class TempUploadFile(models.Model):
         super(TempUploadFile, self).delete(**kwargs)
 
 def _replace_attname(value, fields=[]):
-    """ Общий метод замены attname на name.
-        Словари должны содержать ключ 'fields' или 'name'.
+    """
+    Общий метод замены attname на name.
+    Словари должны содержать ключ 'fields' или 'name'.
     """
     attnames = dict([ (x.attname, x.name) for x in fields if x.attname != x.name ])
     if not attnames:
@@ -207,6 +233,8 @@ def _replace_attname(value, fields=[]):
     return _get_name(value)
 
 def _get_order_by(name, ordering):
+    """
+    """
     if name in ordering:
         return 'ASC'
     elif '-%s' % name in ordering:
@@ -214,7 +242,9 @@ def _get_order_by(name, ordering):
     return None
 
 class BaseModel(object):
-    """ Общие функции для ModelBWP, ComposeBWP, SelectorBWP. """
+    """
+    Общие функции для ModelBWP, ComposeBWP, SelectorBWP.
+    """
 
     site           = None
     icon           = None
@@ -234,10 +264,14 @@ class BaseModel(object):
     fields_search       = None # для запрета поиска пустой кортеж
     fields_html         = None # список полей с разметкой HTML
     fields_markdown     = None # список полей c разметкой Markdown
+    fields_file         = None # список полей c объектами файлов
     fields_not_upgrade  = None # список полей с запретом повторного изменения
     fields_min          = None # словарь полей с минимальными значениями
     fields_max          = None # словарь полей с максимальными значениями
     fields_round        = None # словарь полей со значениями округления
+
+    summary             = None # список обработчиков суммарной
+                               # информации о наборах данных
 
     user_field          = None # если указано, то в это поле записывается
                                # Пользователь, производящий действия
@@ -249,27 +283,37 @@ class BaseModel(object):
     paginator           = Paginator
 
     def __init__(self, *args, **kwargs):
-        # Установка значений по-умолчанию для изменяемых объектов
+        """
+        Установка значений по-умолчанию для изменяемых объектов
+        """
         self.columns             = self.columns             or ['__unicode__', 'pk']
         self.fields_set          = self.fields_set          or []
         self.fields_exclude      = self.fields_exclude      or []
         self.fields_html         = self.fields_html         or []
         self.fields_markdown     = self.fields_markdown     or []
+        self.fields_file         = self.fields_file         or []
         self.fields_not_upgrade  = self.fields_not_upgrade  or []
         self.fields_min          = self.fields_min          or {}
         self.fields_max          = self.fields_max          or {}
         self.fields_round        = self.fields_round        or {}
+        self.summary             = self.summary             or []
+
+        self._get_scheme() # Заполнение общих атрибутов
 
         super(BaseModel, self).__init__(*args, **kwargs)
 
     @property
     def opts(self):
+        """
+        """
         if self.model is None:
             raise NotImplementedError('Set the "model" in %s.' % self.__class__.__name__)
         return self.model._meta
 
     def _get_scheme(self):
-        """ Возвращает жесткую схему для всех пользователей """
+        """
+        Возвращает жесткую схему для всех пользователей
+        """
         if hasattr(self, '_SCHEME'):
             SCHEME = self._SCHEME.copy()
         else:
@@ -291,7 +335,9 @@ class BaseModel(object):
         return SCHEME
 
     def get_scheme(self, request):
-        """ Возвращает динамическую схему модели, согласно прав пользователя """
+        """
+        Возвращает динамическую схему модели, согласно прав пользователя
+        """
         if request:
             perms = self.get_model_perms(request)
             if True not in perms.values():
@@ -308,12 +354,16 @@ class BaseModel(object):
 
     @property
     def has_coping(self):
-        """ Проверяет, могут ли объекты копироваться """
+        """
+        Проверяет, могут ли объекты копироваться
+        """
         return bool(self.coping)
 
     @property
     def has_cloning(self):
-        """ Проверяет, могут ли объекты клонироваться """
+        """
+        Проверяет, могут ли объекты клонироваться
+        """
         if not hasattr(self, '_has_cloning'):
             if self.cloning is None:
                 L = [ bool(self.opts.unique_together) ]
@@ -326,54 +376,57 @@ class BaseModel(object):
 
     @property
     def verbose_name(self):
+        """
+        """
         return self.label or self.opts.verbose_name_plural
 
     @property
     def scheme_fields(self):
-        """ Возвращает схему описания полей модели
-        
-            fields: {
-                // Пример PrimaryKey и описание возможных атрибутов
-                // прочих полей
-                'id': {
-                    'label': 'ID', // название поля
-                    'type': 'int', // возможные типы:
-                                   // int, int_list, float, decimal,
-                                   // str, password, text, email, url, path,
-                                   // html, markdown,
-                                   // datetime, date, time, timedelta
-                                   // file, image, bool, null_bool,
-                                   // select, object, object_list
-                    // необязательные поля:
-                    'disabled': true, // общий режим редактирования
-                    'not_upgrade': false, // не обновлять поле сохранённого объекта 
-                    'hidden': true, // скрытое поле
-                    'required': false, // обязательно к заполнению
-                    'default': null, // значение по-умолчанию,
-                                     // для дат это количество
-                                     // секунд от текущего времени
-                    'placeholder': null, // заполнитель поля
-                    'help': null, // подсказка
-                    'options': null, // для выбора из жесткого списка
-                    'min': null, // минимальное значение
-                    'max': null, // максимальное значение
-                    'format': null, // формат вывода на экран
-                                    // regexp, словарь или строка
-                    'round': null,  // если == null, то не производить
-                                    // округление, или указать разряд
-                }
+        """
+        Возвращает схему описания полей модели
+
+        fields: {
+            // Пример PrimaryKey и описание возможных атрибутов
+            // прочих полей
+            'id': {
+                'label': 'ID', // название поля
+                'type': 'int', // возможные типы:
+                               // int, int_list, float, decimal,
+                               // str, password, text, email, url, path,
+                               // html, markdown,
+                               // datetime, date, time, timedelta
+                               // file, image, bool, null_bool,
+                               // select, object, object_list
+                // необязательные поля:
+                'disabled': true, // общий режим редактирования
+                'not_upgrade': false, // не обновлять поле сохранённого объекта 
+                'hidden': true, // скрытое поле
+                'required': false, // обязательно к заполнению
+                'default': null, // значение по-умолчанию,
+                                 // для дат это количество
+                                 // секунд от текущего времени
+                'placeholder': null, // заполнитель поля
+                'help': null, // подсказка
+                'options': null, // для выбора из жесткого списка
+                'min': null, // минимальное значение
+                'max': null, // максимальное значение
+                'format': null, // формат вывода на экран
+                                // regexp, словарь или строка
+                'round': null,  // если == null, то не производить
+                                // округление, или указать разряд
+            }
+        },
+        fields_set: [
+            {
+                'label': 'Обязательные поля',
+                'fields':[
+                    'is_active', 'title', 'count',
+                ],
             },
-            fields_set: [
-                {
-                    'label': 'Обязательные поля',
-                    'fields':[
-                        'is_active', 'title', 'count',
-                    ],
-                },
-                'forein_key', 'many_to_many',
-                ['created', 'file'],
-            ],
-            fields_search: ['title']
+            'forein_key', 'many_to_many',
+            ['created', 'file'],
+        ],
+        fields_search: ['title__icontains']
         """
 
         def check(f):
@@ -410,24 +463,37 @@ class BaseModel(object):
         if not self.fields_search:
             fields_search = [
                 '%s__icontains' % x[0].name for x in self.opts.get_fields_with_model() \
-                if isinstance(x[0], tuple(DEFAULT_SEARCH_FIELDS))
+                if isinstance(x[0], DEFAULT_SEARCH_FIELDS)
             ]
             self.fields_search = fields_search
 
-        return {'fields': scheme, 'fields_set': fields_set, 'fields_search': self.fields_search }
+        if not self.fields_file:
+            fields_file = [
+                x[0].name for x in self.opts.get_fields_with_model() \
+                if isinstance(x[0], DEFAULT_FILE_FIELDS)
+            ]
+            self.fields_file = fields_file
+
+        return {
+            'fields': scheme,
+            'fields_set': fields_set,
+            'fields_search': self.fields_search,
+            'fields_file': self.fields_file,
+        }
 
     @property
     def scheme_columns(self):
-        """ Возвращает схему описания колонок таблицы.
+        """
+        Возвращает схему описания колонок таблицы.
 
-            column_default: '__unicode__', // либо ['title', 'summa', ...]
-            columns: [
-                {'name': null, 'label': 'объект', 'ordering': false, 'order_by': null},
-                {'name': 'is_active', 'label': 'активно', 'ordering': true, 'order_by': 'ASC'},
-                {'name': 'select', 'label': 'пр.выбор', 'ordering': true, 'order_by': null},
-                {'name': 'property_or_method', 'label': 'Свойство', 'ordering': false, 'order_by': null},
-                {'name': 'id', 'label': 'ID', 'ordering': true, 'order_by': 'DESC'},
-            ]
+        column_default: '__unicode__', // либо ['title', 'summa', ...]
+        columns: [
+            {'name': null, 'label': 'объект', 'ordering': false, 'order_by': null},
+            {'name': 'is_active', 'label': 'активно', 'ordering': true, 'order_by': 'ASC'},
+            {'name': 'select', 'label': 'пр.выбор', 'ordering': true, 'order_by': null},
+            {'name': 'property_or_method', 'label': 'Свойство', 'ordering': false, 'order_by': null},
+            {'name': 'id', 'label': 'ID', 'ordering': true, 'order_by': 'DESC'},
+        ]
         """
 
         all_fields = [ x[0] for x in self.opts.get_fields_with_model() ]
@@ -482,181 +548,273 @@ class BaseModel(object):
 
     @property
     def scheme_row_rules(self):
-        """ Возвращает схему описания правил для строк в таблице
+        """
+        Возвращает схему описания правил для строк в таблице
         
-            rows_rules: {
-                'is_active': {
-                    'is_null': {'value': true, 'class': 'muted'},
-                    'eq': {'value': false, 'class': 'danger'},
-                },
-                'created': {
-                    'lt': {'value': '2013-10-10', 'class': 'muted'}, // парсинг даты
-                    'eq': {'value': null, 'class': 'class_X'}, // null == new Date()
-                    'gt': {'value': -3600, 'class': 'class_X'}, // new Date() - 3600 секунд
-                    'range': {'value': ['2013-10-10', '2013-12-31'], 'class': 'class_X'}, 
-                },
+        rows_rules: {
+            'is_active': {
+                'is_null': {'value': true, 'class': 'muted'},
+                'eq': {'value': false, 'class': 'danger'},
             },
-            rows_rules_list: ['is_active', 'created']
+            'created': {
+                'lt': {'value': '2013-10-10', 'class': 'muted'}, // парсинг даты
+                'eq': {'value': null, 'class': 'class_X'}, // null == new Date()
+                'gt': {'value': -3600, 'class': 'class_X'}, // new Date() - 3600 секунд
+                'range': {'value': ['2013-10-10', '2013-12-31'], 'class': 'class_X'}, 
+            },
+        },
+        rows_rules_list: ['is_active', 'created']
         """
         # TODO: сделать
         return {'rows_rules': {}, 'rows_rules_list': []}
 
     @property
     def scheme_filters(self):
-        """ Возвращает схему описания фильтров модели
+        """
+        Возвращает схему описания фильтров модели
         
-            filters: {},
-            filters_list: []
+        filters: {},
+        filters_list: []
         """
         # TODO: сделать
         return {'filters': {}, 'filters_list': []}
 
     @property
     def scheme_summary(self):
-        """ Возвращает схему описания суммарной информации, итогов
-
-            summary: [
-                {'name': 'total_summa', 'label': 'Итого'},
-            ]
         """
-        # TODO: сделать
-        return {'summary': []}
+        Возвращает схему описания суммарной информации, итогов
+
+        summary: [
+            {'name': 'total_summa', 'label': 'Итого'},
+        ]
+        """
+        L = []
+        for i in self.summary:
+            L.append({'name': i.name, 'label': i.label})
+        return {'summary': L}
+
+    @property
+    def editable_fields(self):
+        """
+        """
+        if hasattr(self, '_editable_fields'):
+            pass
+        else:
+            self._editable_fields = []
+            for f in sorted(self.opts.fields + self.opts.many_to_many):
+                if not f.editable:
+                    continue
+                if self.fields is not None and not f.name in self.fields:
+                    continue
+                if self.exclude and f.name in self.exclude:
+                    continue
+                if isinstance(f, models.AutoField):
+                    continue
+
+                self._editable_fields.append(f.name)
+
+        return self._editable_fields
 
     def get_scheme_actions(self, request):
-        """ Возвращает схему описания доступных действий с наборами данных
+        """
+        Возвращает схему описания доступных действий с наборами данных
 
-            actions: {
-                'delete': {'label': 'Удалить выбранные', 'confirm': true},
-                'set_active': {'label': 'Сделать активными', 'confirm': false},
-                'set_nonactive': {'label': 'Сделать неактивными', 'confirm': false},
-            },
-            actions_list: ['delete', 'set_active', 'set_nonactive']
+        actions: {
+            'delete': {'label': 'Удалить выбранные', 'confirm': true},
+            'set_active': {'label': 'Сделать активными', 'confirm': false},
+            'set_nonactive': {'label': 'Сделать неактивными', 'confirm': false},
+        },
+        actions_list: ['delete', 'set_active', 'set_nonactive']
         """
         # TODO: сделать
         return {'actions': {}, 'actions_list': []}
 
     def get_scheme_compositions(self, request):
-        """ Возвращает схему описания композиций объектов
+        """
+        Возвращает схему описания композиций объектов
 
-            compositions: {
-                'secondmodel_set': {
-                    icon: null,
-                    label: 'Композиция второй модели',
-                    app_name: 'tests',
-                    model_name: 'secondmodel',
-                    ...
-                },
+        compositions: {
+            'secondmodel_set': {
+                icon: null,
+                label: 'Композиция второй модели',
+                app_name: 'tests',
+                model_name: 'secondmodel',
+                ...
             },
-            compositions_list: ['secondmodel_set']
+        },
+        compositions_list: ['secondmodel_set']
         """
         # TODO: сделать
         return {'compositions': {}, 'compositions_list': []}
 
     def get_scheme_reports(self, request):
-        """ Возвращает схему описания простых отчётов
+        """
+        Возвращает схему описания простых отчётов
 
-            model_reports: [['model_report1', 'Отчёт №1'], ['model_report2', 'Отчёт №2']],
-            object_reports: [['object_report1', 'Отчёт №1'], ['object_report2', 'Отчёт №2']]
+        model_reports: [['model_report1', 'Отчёт №1'], ['model_report2', 'Отчёт №2']],
+        object_reports: [['object_report1', 'Отчёт №1'], ['object_report2', 'Отчёт №2']]
         """
         # TODO: сделать
         return {'model_reports': [], 'object_reports': []}
 
     def get_scheme_permissions(self, request):
-        """ Возвращает схему описания разрешений пользователя
+        """
+        Возвращает схему описания разрешений пользователя
 
-            permissions: {
-                'create': true, 'read': true, 'update': true, 'delete': true,
-                'other': false,
-            }
+        permissions: {
+            'create': true, 'read': true, 'update': true, 'delete': true,
+            'other': false,
+        }
         """
         perms = self.get_model_perms(request)
         # TODO: сделать подгрузку дополнительных прав
         return {'permissions': perms}
 
-    def get_ordering(self, request=None, **kwargs):
-        """ Hook for specifying field ordering. """
+    def get_ordering(self, **kwargs):
+        """
+        Hook for specifying field ordering.
+        """
         if self.ordering is None:
             return self.opts.ordering or ()
         return self.ordering
 
-
-
-
-
-
-
-    def get_list_display(self):
-        """ Устанавливает и/или возвращает список колонок списка
-            объектов модели
+    def set_user_field(self, object, user, **kwargs):
         """
-        if not hasattr(self, '_prepared_list_display'):
-            new = []
+        Если у модели есть поле для отметки пользователя, то ставит его.
+        """
+        if self.user_field:
+            setattr(object, self.user_field, user)
+        return object
 
-            for obj in self.list_display:
-                col = {'name':None,'label':None,'css':'','sorted':False}
-                if   isinstance(obj, dict):
-                    col.update(obj)
-                elif isinstance(obj, (tuple, list)):
-                    d = dict(zip(['name', 'label', 'css', 'sorted'], obj))
-                    col.update(d)
-                elif isinstance(obj, (str, unicode)):
-                    name, label = obj, None
-                    if label is None:
-                        if name == '__unicode__':
-                            label = self.opts.verbose_name
-                        elif name in ('pk', 'id'):
-                            label = _(name.upper())
-                            col['sorted'] = True
-                        elif name in self.dict_all_local_fields:
-                            label = self.opts.get_field_by_name(name)[0].verbose_name
-                            col['sorted'] = True
-                        else:
-                            label = _(name)
-                    col['name'] = name
-                    col['label'] = label
-                # Перезапись ошибочного разрешения сортировки
-                if not col['name'] in ('pk', 'id') and not col['name'] in self.dict_all_local_fields:
-                    col['sorted'] = False
-                # Обновление значения css
-                if col['name'] in self.list_display_css:
-                    col['css'] = self.list_display_css[col['name']]
-                
-                new.append(col)
+    def get_object(self, pk, user=None, **kwargs):
+        """
+        Получает объект из модели.
+        Если у модели есть поле для отметки пользователя, то ставит его.
+        """
+        object = self.get_queryset(**kwargs).get(pk=pk)
+        if user:
+            object = self.set_user_field(object, user)
+        return object
 
-            self.list_display = new
-            self._prepared_list_display = True
+    def get_queryset(self, filters={}, **kwargs):
+        """
+        """
+        using = router.db_for_write(self.model)
+        qs = self.model._default_manager.using(using)
+        if filters:
+            qs = qs.complex_filter(**filters)
+        return qs
 
-        return self.list_display
+    def order_queryset(self, queryset=None, ordering=None, **kwargs):
+        """
+        Сортировка определённого, либо общего набора данных.
+        """
+        if queryset is None:
+            queryset = self.get_queryset(**kwargs)
+        if ordering is None:
+            ordering = self.get_ordering(**kwargs)
+        if ordering:
+            queryset = queryset.order_by(*ordering)
+        return queryset
 
-    def get_search_fields(self):
-        """ Устанавливает и/или возвращает значение полей поиска """
-        if self.search_fields is None:
-            self.search_fields = [
-                x.name for x in self.get_fields_objects() if \
-                    x.rel is None
-            ]
-        return self.search_fields
+    def search_queryset(self, queryset=None, query=None, fields_search=[], **kwargs):
+        """
+        Возвращает отфильтрованный QuerySet для всех экземпляров модели.
+        """
+        if queryset is None:
+            queryset = self.get_queryset(**kwargs)
 
-    @property
-    def dict_all_local_fields(self):
-        if hasattr(self, '_dict_all_local_fields'):
-            return self._dict_all_local_fields
+        fields_search = fields_search or ()
 
-        self._dict_all_local_fields = dict([
-            (field.name, field) for field in self.opts.local_fields
-        ])
-        return self._dict_all_local_fields
+        fields = tuple(set(self.fields_search).intersection(fields_search))
 
-    def get_fields(self):
-        """ Устанавливает и/или возвращает список полей объектов """
-        if not self.fields:
-            fields = [ field.name for field in self.opts.local_fields if field.editable ]
-            self.fields = [ name for name in fields if name not in self.exclude ]
-        return self.fields
+        return filterQueryset(queryset, fields, query)
 
-    def get_fields_objects(self):
-        """ Возвращает реальные объекты полей """
-        return [ self.opts.get_field_by_name(name)[0] for name in self.get_fields() ]
+    def get_paginator(self, queryset, per_page=None, orphans=0, allow_empty_first_page=True, **kwargs):
+        """
+        Возвращает экземпляр паджинатора согласно заявленного или
+        установленного количества на странице, но не выходящего за рамки
+        минимума и максимума.
+        """
+        per_page = per_page or self.per_page
+        if per_page < self.per_page_min or per_page > self.per_page_max:
+            per_page = self.per_page
+
+        return self.paginator(queryset, per_page, orphans, allow_empty_first_page)
+
+    def get_page_queryset(self, queryset, page=1, **kwargs):
+        """
+        Возвращает объект страницы паджинатора для набора объектов
+        """
+
+        paginator = self.get_paginator(queryset=queryset, **kwargs)
+
+        try:
+            page = int(page)
+        except:
+            page=1
+        try:
+            page_queryset = paginator.page(page)
+        except PageNotAnInteger:
+            # If page is not an integer, deliver first page.
+            page_queryset = paginator.page(1)
+        except EmptyPage:
+            # If page is out of range (e.g. 9999), deliver last page of results.
+            page_queryset = paginator.page(paginator.num_pages)
+        return page_queryset
+
+    def pagination_queryset(self, queryset=None, **kwargs):
+        """
+        Возвращает отфильтрованную и отсортированную страницу набора
+        данных.
+        """
+        queryset = self.search_queryset(queryset=queryset, **kwargs)
+        queryset = self.order_queryset(queryset=queryset, **kwargs)
+        return self.get_page_queryset(queryset=queryset, **kwargs)
+
+    def serialize_queryset(self, queryset=None, columns=[], **kwargs):
+        """
+        Возвращает сериализованную, отфильтрованную и отсортированную
+        страницу набора данных.
+        Если заданы специализированные колонки(поля, методы или атрибуты
+        объектов), то сериализация объектов происходит только по ним.
+        """
+        paginator = self.pagination_queryset(queryset=queryset, **kwargs)
+
+        attrs = columns or [ x['name'] for x in self.columns if x['name'] ]
+
+        data = self.serialize(paginator, use_natural_keys=True, attrs=attrs)
+
+        return data
+
+    def serialize(self, objects, **options):
+        """
+        Сериализатор в объект(ы) Python, принимает либо один,
+        либо несколько объектов или объект паджинации
+        и точно также возвращает.
+        """
+        if isinstance(objects, models.Model):
+            fields = self.fields or self.editable_fields
+            options['attrs'] = options.get('attrs', fields)
+        return serialize(objects, **options)
+
+    def get_summary(self, queryset=None, **kwargs):
+        """
+        Возвращает сводную информацию о наборе данных,
+        если сбор такой информации возможен.
+        """
+
+        qs = self.search_queryset(queryset=queryset, **kwargs)
+        D = {}
+        for i in self.summary:
+            name, result, qs = i.run(qs)
+            D[name] = result
+
+        return D
+
+
+
+
 
     def get_file_fields(self):
         """ Устанавливает и/или возвращает список полей File/Image """
@@ -713,262 +871,6 @@ class BaseModel(object):
                 })
         return L
 
-    def prepare_widget(self, field_name):
-        """ Возвращает виджет с заменой атрибутов, согласно настроек
-            текущего класса.
-        """
-        dic = dict([ (field.name, field) for field in self.get_fields_objects() ])
-        widget = get_widget_from_field(dic[field_name])
-        if not widget.is_configured:
-            if self.list_display_css.has_key(field_name):
-                new_class = '%s %s' % (widget.attr.get('class', ''), self.list_display_css[field_name])
-                widget.attr.update({'class': new_class})
-                widget.is_configured = True
-        return widget
-
-    def set_widgets(self):
-        """ Устанавливает и возвращает виджеты. """
-        self.widgets = [ self.prepare_widget(field.name) for field in self.get_fields_objects() ]
-        return self.widgets
-
-    def get_widgets(self):
-        """ Возвращает виджеты. """
-        return self.widgets or self.set_widgets()
-
-    def get_list_widgets(self):
-        """ Возвращает виджеты в виде списка словарей, пригодного для JSON """
-        return [ widget.get_dict() for widget in self.get_widgets() ]
-
-    def set_widgetsets(self):
-        """ Устанавливает и возвращает наборы виджетов. """
-        if self.fieldsets:
-            fieldsets = self.fieldsets
-        else:
-            fieldsets = (( None, { 'classes': '', 'fields': self.fields }), )
-        self.widgetsets = []
-        for label, dic in fieldsets:
-            L = []
-            dic = deepcopy(dic)
-            if not dic['fields']:
-                continue
-            for group in dic['fields']:
-                if isinstance(group, (tuple, list)):
-                    L.append([ self.prepare_widget(field) for field in group ])
-                else:
-                    L.append(self.prepare_widget(group))
-            dic['fields'] = L
-            self.widgetsets.append((label, dic))
-        return self.widgetsets
-
-    def get_widgetsets(self):
-        """ Возвращает наборы виджетов. """
-        return self.widgetsets or self.set_widgetsets()
-
-    def get_list_widgetsets(self):
-        """ Возвращает наборы виджетов в виде списка, пригодного для JSON """
-        widgetsets = []
-        for label, dic in self.get_widgetsets():
-            L = []
-            dic = deepcopy(dic)
-            for group in dic['fields']:
-                if isinstance(group, (tuple, list)):
-                    L.append([ widget.get_dict() for widget in group ])
-                else:
-                    L.append(group.get_dict())
-            dic['fields'] = L
-            widgetsets.append((label, dic))
-        return widgetsets
-
-    def get_instance(self, pk, model_name=None):
-        """ Возвращает зкземпляр указаной модели, либо собственной """
-        if model_name is None:
-            model = self.model
-        else:
-            model = self.site.model_dict(model_name)
-        return model.objects.get(pk=pk)
-
-    def serialize(self, objects, **options):
-        """ Сериализатор в объект(ы) Python, принимает либо один,
-            либо несколько объектов или объект паджинации
-            и точно также возвращает.
-        """
-        return serialize(objects, **options)
-
-    def get_paginator(self, queryset, per_page=None, orphans=0, allow_empty_first_page=True, **kwargs):
-        per_page = per_page or self.list_per_page
-        return self.paginator(queryset, per_page, orphans, allow_empty_first_page)
-
-    def queryset_from_filters(self, queryset, filters, **kwargs):
-        qs = queryset
-        for f in filters:
-            #~ print f
-            if f.get('active', False):
-                if f.get('inverse', False):
-                    action = qs.exclude
-                else:
-                    action = qs.filter
-                _type = f.get('type', 'exact')
-                _field = f.get('field', 'id')
-                if _type == 'blank':
-                    orm_lookup = '%s__exact' % _field
-                    bit = ''
-                elif _type in ('in', 'range'):
-                    orm_lookup = '%s__%s' % (_field, _type)
-                    bit = f.get('values')
-                    if not isinstance(bit, (list, tuple)):
-                        bit = []
-                    if _type == 'range' and len(bit) != 2:
-                        bit = [None, None]
-                else:
-                    orm_lookup = '%s__%s' % (_field, _type)
-                    try:
-                        bit = f.get('values')[0]
-                    except:
-                        continue
-                    if bit == '':
-                        continue
-                qs = action(models.Q(**{orm_lookup: bit}),)
-        return qs
-
-    def queryset(self, request=None, filters=[], **kwargs):
-        qs = self.model._default_manager.get_query_set()
-        if filters:
-            qs = self.queryset_from_filters(qs, filters, **kwargs)
-        return qs
-
-    def order_queryset(self, request, queryset=None, ordering=None, **kwargs):
-        """
-        Сортировка определённого, либо общего набора данных.
-        """
-        
-        if queryset is None:
-            queryset = self.queryset()
-        if ordering is None:
-            ordering = self.get_ordering(request)
-        if ordering:
-            queryset = queryset.order_by(*ordering)
-        return queryset
-
-    def page_queryset(self, request, queryset=None, page=1, **kwargs):
-        """
-        Возвращает объект страницы паджинатора для набора объектов
-        """
-        queryset = self.order_queryset(request=request, queryset=queryset)
-        paginator = self.get_paginator(queryset=queryset, **kwargs)
-
-        # request может быть пустым
-        try:
-            page = int(request.REQUEST.get('page', page))
-        except:
-            pass
-        try:
-            page_queryset = paginator.page(page)
-        except PageNotAnInteger:
-            # If page is not an integer, deliver first page.
-            page_queryset = paginator.page(1)
-        except EmptyPage:
-            # If page is out of range (e.g. 9999), deliver last page of results.
-            page_queryset = paginator.page(paginator.num_pages)
-        return page_queryset
-
-    def get_search_query(self, request, search_key=None, **kwargs):
-        """ Возвращает значение поискового запроса. """
-        if search_key is None:
-            return request.REQUEST.get(self.search_key, None)
-        else:
-            return request.REQUEST.get(search_key, None)
-
-    def filter_queryset(self, request, queryset=None, query=None, fields=None, **kwargs):
-        """ Возвращает отфильтрованный QuerySet для всех экземпляров модели. """
-        if queryset is None:
-            queryset = self.queryset(**kwargs)
-
-        search_fields = self.get_search_fields()
-        if fields and search_fields:
-            fields = [ x for x in fields if x in search_fields ]
-        else:
-            fields = search_fields
-        return filterQueryset(queryset, fields,
-            query or self.get_search_query(request,**kwargs))
-
-    def get_bwp_model(self, request, model_name, **kwargs):
-        """ Получает объект модели BWP согласно привилегий """
-        return self.site.bwp_dict(request).get(model_name)
-
-    def get(self, request, pk=None, **kwargs):
-        """ Получает объект согласно привилегий """
-        if pk:
-            try:
-                object = self.queryset(request, **kwargs).get(pk=pk)
-            except:
-                return get_http_404(request)
-            return self.get_object_detail(request, object, **kwargs)
-        else:
-            return self.get_collection(request, **kwargs)
-
-    def get_object_detail(self, request, object, **kwargs):
-        """
-        Вызывается для окончательного формирования ответа сервера.
-        """
-        raise NotImplementedError
-
-    def copy(self, request, pk, clone=None, **kwargs):
-        """ Получает копию объекта согласно привилегий.
-        """
-        if self.has_create_permission(request):
-            try:
-                object = self.queryset(request, **kwargs).get(pk=pk)
-            except:
-                return get_http_404(request)
-            return self.get_copy_object_detail(request, object, clone, **kwargs)
-        else:
-            return get_http_403(request)
-
-    def get_copy_object_detail(self, request, object, clone, **kwargs):
-        """
-        Вызывается для окончательного формирования ответа сервера.
-        """
-        raise NotImplementedError
-
-    def new(self, request, **kwargs):
-        """
-        Получает шаблон объекта согласно привилегий.
-        """
-        if self.has_create_permission(request):
-            return self.get_new_object_detail(request, **kwargs)
-        else:
-            return get_http_403(request)
-
-    def get_new_object_detail(self, request, **kwargs):
-        """
-        Вызывается для окончательного формирования ответа сервера.
-        """
-        raise NotImplementedError
-
-    def get_collection(self, request, **kwargs):
-        """ Метод может переопределяться, но по-умолчанию такой """
-        qs = self.filter_queryset(request, **kwargs)
-        qs = self.page_queryset(request, qs, **kwargs)
-        total = self.get_queryset_total(qs)
-        properties = [ x['name'] for x in self.get_list_display()\
-            if not x['name'] in self.get_fields() ]
-        data = self.serialize(qs, use_natural_keys=True, properties=properties)
-        if total:
-            data['total'] = total
-        return JSONResponse(data=data)
-    
-    def get_queryset_total(self, qs):
-        total = {}
-        # TODO: доработать итоговые данные
-        if self.sum_values:
-            total['sum_values'] = {}
-        if self.avg_values:
-            total['avg_values'] = {}
-        if self.min_values:
-            total['min_values'] = {}
-        if self.max_values:
-            total['max_values'] = {}
-        return total
 
     # Разрешения
 
@@ -1027,6 +929,20 @@ class BaseModel(object):
             'update': self.has_update_permission(request),
             'delete': self.has_delete_permission(request),
         }
+
+    def has_permission(self, request):
+        """
+        Возвращает True, если данный HttpRequest имеет любое разрешение
+        """
+        if self.has_read_permission(request):
+            return True
+        elif self.has_create_permission(request):
+            return True
+        elif self.has_update_permission(request):
+            return True
+        elif self.has_delete_permission(request):
+            return True
+        return False
 
     # Логгирование
 

@@ -130,7 +130,8 @@ SCHEME = {
                         'forein_key', 'many_to_many',
                         ['created', 'file'],
                     ],
-                    fields_search: ['title'],
+                    fields_search: ['title__icontains'],
+                    fields_file: ['img'],
                     column_default: '__unicode__', // либо ['title', 'summa', ...]
                     columns: [
                         {'name': null, 'label': 'объект', 'ordering': false, 'order_by': null},

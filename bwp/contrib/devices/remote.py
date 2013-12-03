@@ -39,6 +39,9 @@
 
 import json, urllib, base64, traceback
 
+class BaseAPICleanError(Exception):
+    pass
+
 class BaseAPI(object):
     """ Соединение с удалённым API, где расположено устройство """
 
@@ -56,7 +59,10 @@ class BaseAPI(object):
     @property
     def format_error(self):
         """ Выводит ошибку в презентабельном виде """
-        return unicode(traceback.format_exc(self.error))
+        try:
+            return unicode(traceback.format_exc(self.error))
+        except:
+            return 'Undefined Error'
 
     def get_request(self, data, **kwargs):
         """ Возвращает новый объект запроса. """
@@ -112,7 +118,7 @@ class BaseAPI(object):
             except:
                 pass
             print 'RemoteCommand:', msg
-            raise RuntimeError(msg)
+            raise BaseAPICleanError(msg)
         return data['data']
 
     def method(self, method, **kwargs):

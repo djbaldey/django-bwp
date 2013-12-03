@@ -54,131 +54,105 @@ class SerializerWrapper(object):
     """
     def handle_field(self, obj, field):
         value = field._get_val_from_obj(obj)
-        # Protected types (i.e., primitives like None, numbers, dates,
-        # and Decimals) are passed through as is. All other values are
-        # converted to string first.
-        if is_protected_type(value):
-            if   isinstance(value, datetime):
-                val = value.isoformat()
-                val = val.split('.')[0] # обрезаем милисекунды
-                val = val.replace(' ', 'T') # на случай, если не локальное время 
-            elif isinstance(value, (date, time)):
-                val = value.isoformat()
-            else:
-                val = value
-            self._current[field.name] = val
-        elif field.name == 'password':
-            self._current[field.name] = ''
-        else:
-            self._current[field.name] = field.value_to_string(obj)
-        return self._current[field.name]
+        self._current[field.name] = value
+        return value
 
-    def handle_properties(self, obj, name):
+    def handle_property(self, obj, name):
         value = getattr(obj, name)
         if callable(value):
             value = value()
-        # Protected types (i.e., primitives like None, numbers, dates,
-        # and Decimals) are passed through as is. All other values are
-        # converted to string first.
-        if is_protected_type(value):
-            if   isinstance(value, datetime):
-                val = str(value).split('.')[0] # обрезаем милисекунды
-            elif isinstance(value, (date, time)):
-                val = str(value)
-            else:
-                val = value
-            self._properties[name] = val
-        elif isinstance(value, dict):
-            self._properties[name] = value
-        else:
-            self._properties[name] = unicode(value)
-        return self._properties[name]
-    
+        if isinstance(value, models.Model):
+            app, model = smart_unicode(value._meta).split('.')
+            value = {
+                '__unicode__': smart_unicode(value),
+                'pk': value.pk,
+                'app': app,
+                'model': model,
+            }
+        self._current[name] = value
+        return value
+
     def handle_fk_field(self, obj, field):
-        if obj.pk and (self.use_split_keys or self.use_natural_keys):
+        if obj.pk:
             related = getattr(obj, field.name)
             if related:
-                if self.use_natural_keys and hasattr(field.rel.to, 'natural_key'):
-                    value = related.natural_key()[0]
-                elif self.use_split_keys:
-                    value = (related.pk, unicode(related))
-                else:
-                    value = unicode(related)
+                value = (related.pk, smart_unicode(related))
             else:
                 value = None
         else:
             value = getattr(obj, field.get_attname())
             rel_model = field.rel.to
-            if self.use_split_keys:
-                try:
-                    related = rel_model._default_manager.get(pk=value)
-                    value = (related.pk, unicode(related))
-                except:
-                    pass
-            
+            try:
+                related = rel_model._default_manager.get(pk=value)
+                value = (related.pk, smart_unicode(related))
+            except:
+                value = None
+
         self._current[field.name] = value
+        return value
 
     def handle_m2m_field(self, obj, field):
-        if not obj.pk:
-            self._current[field.name] = []
-        elif field.rel.through._meta.auto_created:
-            if self.use_split_keys:
-                m2m_value = lambda value: (value.pk, unicode(value))
-            elif self.use_natural_keys and hasattr(field.rel.to, 'natural_key'):
-                m2m_value = lambda value: value.natural_key()
-            else:
-                m2m_value = lambda value: smart_unicode(value._get_pk_val(), strings_only=True)
-            self._current[field.name] = [m2m_value(related)
-                               for related in getattr(obj, field.name).iterator()]
+        value = []
+        if obj.pk and field.rel.through._meta.auto_created:
+            m2m_value = lambda value: (value.pk, smart_unicode(value))
+            value = [m2m_value(related)
+                            for related in getattr(obj, field.name).iterator()]
 
-    def serialize_queryset(self, queryset, **options):
+        self._current[field.name] = value
+        return value
+
+    def serialize_objects(self, objects, **options):
         """
         Практически в точности копирует оригинальный метод serialize,
         но не запускает в конце метод окончания сериализации
         """
-        self.options = options
 
         self.stream = options.pop("stream", StringIO())
-        self.selected_fields = options.pop("fields", None)
-        self.properties = options.pop("properties", [])
-        self.use_split_keys = options.pop("use_split_keys", False)
-        self.use_natural_keys = options.pop("use_natural_keys", False)
-        if self.use_split_keys:
-            self.use_natural_keys = False
+        self.attrs = options.pop("attrs", [])
 
         self.start_serialization()
-        for obj in queryset:
+
+        if isinstance(objects, models.Model):
+            opts = objects._meta
+            objects = [objects]
+        else:
+            opts = objects.model._meta
+            objects = objects.select_related()
+
+        local_fields = [x.name for x in opts.local_fields]
+        many_to_many = [x.name for x in opts.many_to_many]
+
+        for obj in objects:
+
             self.start_object(obj)
-            # Use the concrete parent class' _meta instead of the object's _meta
-            # This is to avoid local_fields problems for proxy models. Refs #17717.
-            concrete_model = obj._meta.concrete_model
-            for field in concrete_model._meta.local_fields:
-                #~ if field.serialize: # Чтобы сериализовать поля PK нужно отключить это
+
+            for attr in self.attrs:
+                if attr in local_fields:
+                    field = opts.local_fields[local_fields.index(attr)]
                     if field.rel is None:
-                        if self.selected_fields is None or field.attname in self.selected_fields:
-                            self.handle_field(obj, field)
+                        self.handle_field(obj, field)
                     else:
-                        if self.selected_fields is None or field.attname[:-3] in self.selected_fields:
-                            self.handle_fk_field(obj, field)
-            for field in concrete_model._meta.many_to_many:
-                if field.serialize:
-                    if self.selected_fields is None or field.attname in self.selected_fields:
-                        self.handle_m2m_field(obj, field)
-            for field in self.properties:
-                self.handle_properties(obj, field)
+                        self.handle_fk_field(obj, field)
+                elif attr in many_to_many:
+                    field = opts.many_to_many[many_to_many.index(attr)]
+                    self.handle_m2m_field(obj, field)
+                elif not attr in ('pk', '__unicode__'):
+                    self.handle_property(obj, attr)
+
             self.end_object(obj)
+
         return self.objects
 
-    def serialize(self, queryset, **options):
+    def serialize(self, objects, **options):
         """
-        Serialize a QuerySet or page of Paginator.
+        Serialize a Model insnance, QuerySet or page of Paginator.
         """
-        if isinstance(queryset, Page):
+        if isinstance(objects, Page):
             result = {}
             wanted = ("end_index", "has_next", "has_other_pages", "has_previous",
                     "next_page_number", "number", "start_index", "previous_page_number")
             for attr in wanted:
-                v = getattr(queryset, attr)
+                v = getattr(objects, attr)
                 if isinstance(v, MethodType):
                     try:
                         result[attr] = v()
@@ -186,20 +160,25 @@ class SerializerWrapper(object):
                         result[attr] = None
                 elif isinstance(v, (str, int)):
                     result[attr] = v
-            result['count'] = queryset.paginator.count
-            result['num_pages'] = queryset.paginator.num_pages
-            result['per_page']  = queryset.paginator.per_page
-            result['page_range'] = page_range_dots(queryset)
-            result['object_list'] = self.serialize_queryset(queryset.object_list, **options)
+            result['count']       = objects.paginator.count
+            result['num_pages']   = objects.paginator.num_pages
+            result['per_page']    = objects.paginator.per_page
+            result['page_range']  = page_range_dots(objects)
+            result['object_list'] = self.serialize_objects(objects.object_list, **options)
             self.objects = result
         else:
-            self.serialize_queryset(queryset, **options)
+            self.serialize_objects(objects, **options)
+
         self.end_serialization() # Окончательно сериализуем
-        return self.getvalue()
+        value = self.getvalue()
+
+        if isinstance(objects, models.Model):
+            return value[0]
+        else:
+            return value
 
     def start_object(self, obj):
         self._current    = {}
-        self._properties = {}
 
     def end_object(self, obj):
         _unicode = ""
@@ -207,15 +186,10 @@ class SerializerWrapper(object):
             _unicode = smart_unicode(obj)
         except:
             pass
-        self.objects.append({
-            "model"  :      smart_unicode(obj._meta),
-            "pk"     :      smart_unicode(obj._get_pk_val(), strings_only=True),
-            "fields":       self._current,
-            "properties":   self._properties,
-            "__unicode__" : _unicode,
-        })
-        self._current    = None
-        self._properties = None
+        self._current["__unicode__"] = _unicode
+        self._current["pk"] = smart_unicode(obj._get_pk_val(), strings_only=True)
+        self.objects.append(self._current)
+        self._current = None
 
 class Serializer(SerializerWrapper, OrignSerializer):
     """
@@ -289,6 +263,7 @@ def Deserializer(object_list, **options):
                 data[field.name] = field.to_python(field_value)
 
         yield base.DeserializedObject(Model(**data), m2m_data)
+
 
 def _get_model(model_identifier):
     """
