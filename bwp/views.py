@@ -254,14 +254,16 @@ def API_get_objects(request, app, model, pk=None, foreign=None, compose=None,
             'number': 1,
             'object_list': [
                 {
-                    'fields': {'first_name': u'First'},
                     'pk': 1,
-                    '__unicode__': 'Первый'
+                    '__unicode__': 'Первый',
+                    'first_name': u'First',
+                    ...
                 },
                 {
-                    'fields': {'first_name': u'Second'},
                     'pk': 2,
-                    '__unicode__': 'Второй'
+                    '__unicode__': 'Второй',
+                    'first_name': u'Second',
+                    ...
                 }
             ],
             'previous_page_number': 0,
