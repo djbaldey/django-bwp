@@ -38,6 +38,7 @@
 """
 
 import json, urllib, base64, traceback
+from django.utils.encoding import smart_unicode
 
 class BaseAPICleanError(Exception):
     pass
@@ -60,7 +61,7 @@ class BaseAPI(object):
     def format_error(self):
         """ Выводит ошибку в презентабельном виде """
         try:
-            return unicode(traceback.format_exc(self.error))
+            return smart_unicode(traceback.format_exc(self.error))
         except:
             return 'Undefined Error'
 
@@ -112,13 +113,8 @@ class BaseAPI(object):
         status = data.get('status', None)
         if status != 200:
             msg = data.get('message')
-            print repr(msg)
-            try:
-                msg = msg.encode('utf-8')
-            except:
-                pass
             print 'RemoteCommand:', msg
-            raise BaseAPICleanError(msg)
+            raise BaseAPICleanError(smart_unicode(msg))
         return data['data']
 
     def method(self, method, **kwargs):

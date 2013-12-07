@@ -46,6 +46,7 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
 from django.db import transaction, models
 from django.forms.models import modelform_factory
+from django.utils.encoding import smart_unicode
 
 from quickapi.http import JSONResponse, JSONRedirect, MESSAGES, DjangoJSONEncoder
 from quickapi.views import index as quickapi_index
@@ -414,7 +415,7 @@ def API_m2m_commit(request, model, pk, compose, action, objects, **kwargs):
         `Boolean`
     """
     if not objects:
-        return JSONResponse(data=False, status=400, message=unicode(_("List objects is blank!")))
+        return JSONResponse(data=False, status=400, message=_("List objects is blank!"))
 
     # Получаем модель BWP и композиции со стандартной проверкой прав
     model_bwp = site.bwp_dict(request).get(model)
@@ -436,7 +437,7 @@ def API_m2m_commit(request, model, pk, compose, action, objects, **kwargs):
 
         set_user_field(model_bwp, object, request.user, save=True)
 
-    return JSONResponse(data=True, message=unicode(_("Commited!")))
+    return JSONResponse(data=True, message=_("Commited!"))
 
 @api_required
 @login_required
@@ -456,7 +457,7 @@ def API_commit(request, objects, **kwargs):
     transaction.commit()
     if not objects:
         transaction.rollback()
-        return JSONResponse(data=False, status=400, message=unicode(_("List objects is blank!")))
+        return JSONResponse(data=False, status=400, message=_("List objects is blank!"))
     model_name = model_bwp = None
     try:
         for item in objects:
@@ -485,7 +486,7 @@ def API_commit(request, objects, **kwargs):
                         model_bwp.log_addition(request, object)
                     else:
                         transaction.rollback()
-                        return JSONResponse(status=400, message=unicode(form.errors))
+                        return JSONResponse(status=400, message=smart_unicode(form.errors))
             # Удаляемый объект
             elif action == 'delete':
                 instance = get_instance(request, item['pk'], item['model'])
@@ -505,17 +506,18 @@ def API_commit(request, objects, **kwargs):
                         model_bwp.log_change(request, object, ', '.join(fix.keys()))
                     else:
                         transaction.rollback()
-                        return JSONResponse(status=400, message=unicode(form.errors))
+                        return JSONResponse(status=400, message=smart_unicode(form.errors))
 
     except Exception as e:
+        print e
         transaction.rollback()
         print_debug('def API_commit.objects ==', objects)
         if settings.DEBUG:
-            return JSONResponse(status=500, message=unicode(e))
+            return JSONResponse(status=500, message=smart_unicode(e))
         raise e
     else:
         transaction.commit()
-    return JSONResponse(data=True, message=unicode(_("Commited!")))
+    return JSONResponse(data=True, message=_("Commited!"))
 
 @api_required
 @login_required
@@ -559,11 +561,7 @@ def API_device_command(request, device, command, params={}, **kwargs):
             return JSONResponse(data=data)
         except Exception as e:
             print e
-            try:
-                message = unicode(e)
-            except UnicodeError:
-                message = str(e)
-            return JSONResponse(status=400, message=message)
+            return JSONResponse(status=400, message=smart_unicode(e))
     return JSONResponse(status=400)
 
 @api_required
