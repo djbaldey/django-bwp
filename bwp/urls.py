@@ -37,6 +37,13 @@
 ###############################################################################
 """
 from django.conf.urls import *
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+
+import copy
+from bwp.conf import settings
+from bwp.sites import site
+from django.utils.importlib import import_module
+from django.utils.module_loading import module_has_submodule
 
 def autodiscover():
     """
@@ -44,12 +51,6 @@ def autodiscover():
     not present. This forces an import on them to register any bwp bits they
     may want.
     """
-
-    import copy
-    from bwp.conf import settings
-    from bwp.sites import site
-    from django.utils.importlib import import_module
-    from django.utils.module_loading import module_has_submodule
 
     for app in settings.INSTALLED_APPS:
         mod = import_module(app)
@@ -83,3 +84,23 @@ urlpatterns = patterns('bwp.views',
     url(r'^accounts/login/$',  'login',  name="bwp_login_redirect"),
     url(r'^accounts/logout/$', 'logout', name="bwp_logout_redirect"),
 )
+
+if 'tinymce' in settings.INSTALLED_APPS:
+    urlpatterns += patterns('',
+        url(r'^tinymce/', include('tinymce.urls')),
+    )
+
+if 'filebrowser' in settings.INSTALLED_APPS:
+    urlpatterns += patterns('',
+        url(r'^tinymce/filebrowser/', include('filebrowser.urls')),
+    )
+
+# For develop:
+urlpatterns += staticfiles_urlpatterns()
+if settings.DEBUG:
+    urlpatterns += patterns('',
+        url(r'^media/(?P<path>.*)$', 'django.views.static.serve', {
+            'document_root': settings.MEDIA_ROOT,
+            }),
+    )
+
