@@ -21,9 +21,12 @@
         <td class="span6">
             <div class="pull-right">
             {% if languages %}
+<!--
+                <span class="label">
+-->
                     <span id="menu-language" class="btn-group dropdown">
                         <a class="btn btn-mini dropdown-toggle" data-toggle="dropdown" href="#menu-language">
-                            <img height="15" width="20" src="{{ STATIC_URL }}img/countries/languages/{{ LANGUAGE_CODE }}.svg" alt="{{ lang.name_local }}">
+                            <img src="{{ STATIC_URL }}img/flags/{{ LANGUAGE_CODE }}.png" alt="{{ lang.name_local }}">
                             {{ lang.name_local }}
                             <b class="caret"></b>
                         </a>
@@ -32,7 +35,7 @@
                             {% language lang_code %}
                             <li class="{% if lang_code == LANGUAGE_CODE %}active{% endif %}">
                                 <a href="{% url 'bwp:index' %}" title="{{ lang_name }}">
-                                    <img height="15" width="20" src="{{ STATIC_URL }}img/countries/languages/{{ lang_code }}.svg">
+                                    <img src="{{ STATIC_URL }}img/flags/{{ lang_code }}.png">
                                     {{ lang_code|language_name_local }}
                                 </a>
                             </li>
@@ -40,6 +43,9 @@
                         {% endfor %}
                         </ul>
                     </span>
+<!--
+                </span>
+-->
             {% endif %}
                 <span class="label label-success">{% full_username user %}</span>
                 <a href="{% url "bwp:logout" %}" title="{% trans "Exit" %}" class="btn btn-mini btn-danger"><i class="icon-off"></i></a>
