@@ -39,11 +39,11 @@
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.contenttypes.models import ContentType
 from bwp.sites import site
-from bwp.models import ModelBWP, ComposeBWP, LogEntry,\
-        GlobalUserSettings, TempUploadFile, ManyToManyBWP
+from bwp.models import ModelBWP, ComponentBWP, LogEntry,\
+        UserSettings, TempUploadFile
 from bwp import User, Group, Permission, check_builtin_users
 
-class LogEntryAdmin(ModelBWP):
+class LogEntryBWP(ModelBWP):
     columns = ('action_time', 'user', '__unicode__', 'id')
     fields_search = (
         'user__username__icontains',
@@ -51,16 +51,16 @@ class LogEntryAdmin(ModelBWP):
         'change_message__icontains'
     )
     allow_clone = False
-site.register_model(LogEntry, LogEntryAdmin)
+site.register_model(LogEntry, LogEntryBWP)
 
-site.register_model(GlobalUserSettings)
+site.register_model(UserSettings)
 
-class TempUploadFileAdmin(ModelBWP):
+class TempUploadFileBWP(ModelBWP):
     columns = ('__unicode__', 'user', 'created')
-site.register_model(TempUploadFile, TempUploadFileAdmin)
+site.register_model(TempUploadFile, TempUploadFileBWP)
 
 if not check_builtin_users():
-    class PermissionAdmin(ModelBWP):
+    class PermissionBWP(ModelBWP):
         fields_search = (
             'name__icontains',
             'codename__icontains',
@@ -68,20 +68,9 @@ if not check_builtin_users():
             'content_type__app_label__icontains',
             'content_type__model__icontains',
         )
-    site.register_model(Permission, PermissionAdmin)
+    site.register_model(Permission, PermissionBWP)
 
-    class PermissionCompose(ManyToManyBWP):
-        columns = ('__unicode__', 'name', 'codename', 'id')
-        fields_search = (
-            'name__icontains',
-            'codename__icontains',
-            'content_type__name__icontains',
-            'content_type__app_label__icontains',
-            'content_type__model__icontains',
-        )
-        model = Permission
-
-    class UserAdmin(ModelBWP):
+    class UserBWP(ModelBWP):
         columns = ('__unicode__',
             'is_active',
             'is_superuser',
@@ -92,30 +81,26 @@ if not check_builtin_users():
         ordering = ('username',)
         fields_exclude = ['password',]
         fields_search = ('username', 'email')
-        compositions = [
-            ('user_permissions', PermissionCompose),
-        ]
-    site.register_model(User, UserAdmin)
+    site.register_model(User, UserBWP)
 
-    class UserCompose(ComposeBWP):
-        model = User
-        columns = ('__unicode__',
-            'is_active',
-            'is_superuser',
-            'is_staff',
-            'last_login',
-            'date_joined',
-            'id')
-        ordering = ('username',)
+    class GroupBWP(ModelBWP):
+        components = (
+            ComponentBWP(
+                site=site, model=User, field='groups',
+                ordering = ('username',),
+                columns = ('__unicode__',
+                    'is_active',
+                    'is_superuser',
+                    'is_staff',
+                    'last_login',
+                    'date_joined',
+                    'id'
+                ),
+            ),
+        )
+    site.register_model(Group, GroupBWP)
 
-    class GroupAdmin(ModelBWP):
-        compositions = [
-            ('user_set', UserCompose),
-            #~ ('permissions', PermissionCompose),
-        ]
-    site.register_model(Group, GroupAdmin)
-
-    class ContentTypeAdmin(ModelBWP):
+    class ContentTypeBWP(ModelBWP):
         columns = ('name', 'app_label', 'model', 'id')
         ordering = ('app_label', 'model')
-    site.register_model(ContentType, ContentTypeAdmin)
+    site.register_model(ContentType, ContentTypeBWP)

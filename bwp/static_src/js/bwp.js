@@ -166,7 +166,7 @@ function jsonAPI(args, callback, to_console, sync, timeout) {
         async: !sync,
         timeout: timeout || AJAX_TIMEOUT,
         url: BWP_API_URL,
-        data: {'jsonData': $.toJSON(args)},
+        data: {'jsonData': $.toJSON(args), 'language': window.LANGUAGE_CODE},
         dataType: 'json'
     })
     // Обработка ошибок протокола HTTP
@@ -1821,26 +1821,26 @@ function handlerBindinds() {
 $(document).ready(function($) {
     if (DEBUG) {console.log('function:'+'$(document).ready')};
     // Инициализация шаблонов Underscore
-    handlerTemplates();
+    //~ handlerTemplates();
 
     // Загрузка меню
     $('#menu-app').hide();
     $('#menu-func').hide();
-    handlerMenuAppLoad()
+    //~ handlerMenuAppLoad()
 
     /* Инициализируем настройки */
-    window.SETTINGS = new classSettings();
+    //~ window.SETTINGS = new classSettings();
 
     // Инициализация для Bootstrap
     $("alert").alert();
     $(".dropdown-toggle").dropdown();
 
     // Если настройки готовы, то запускаем все процессы
-    if (SETTINGS.init().ready) {
-        $('#search').focus();
-        handlerBindinds();
-        handlerFiltersFromSettings();
-    } else {
-        console.log("ОШИБКА! Загрузка настроек не удалась.");
-    }
+    //~ if (SETTINGS.init().ready) {
+        //~ $('#search').focus();
+        //~ handlerBindinds();
+        //~ handlerFiltersFromSettings();
+    //~ } else {
+        //~ console.log("ОШИБКА! Загрузка настроек не удалась.");
+    //~ }
 });

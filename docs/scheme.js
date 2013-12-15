@@ -161,7 +161,7 @@ SCHEME = {
                     actions_list: ['delete', 'set_active', 'set_nonactive'],
                     filters: {},
                     filters_list: [],
-                    compositions: {
+                    components: {
                         'secondmodel_set': {
                             icon: null,
                             label: 'Композиция второй модели',
@@ -216,7 +216,7 @@ SCHEME = {
                             ],
                         },
                     },
-                    compositions_list: ['secondmodel_set'],
+                    components_list: ['secondmodel_set'],
                     model_reports: [['model_report1', 'Отчёт №1'], ['model_report2', 'Отчёт №2']],
                     object_reports: [['object_report1', 'Отчёт №1'], ['object_report2', 'Отчёт №2']],
                     summary: [

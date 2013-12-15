@@ -38,62 +38,52 @@
 """
 from django.utils.translation import ugettext_lazy as _
 from bwp.sites import site
-from bwp.models import ModelBWP, ComposeBWP
+from bwp.models import ModelBWP, ComponentBWP
 from models import *
 
-class CountryAdmin(ModelBWP):
-    list_display = ('title', 'code')
-    list_display_css = { 'code': 'input-micro',}
-    search_fields = ['title', 'code']
+class CountryBWP(ModelBWP):
+    columns = ('title', 'code')
+    fields_search = ['title', 'code']
     ordering = ['title']
-site.register(Country, CountryAdmin)
+site.register(Country, CountryBWP)
 
-class CurrencyAdmin(ModelBWP):
-    list_display = ('title', 'code',)
-    list_display_css = { 'code': 'input-micro',}
-    search_fields = ['title', 'countries__title','code']
-    filter_horizontal = ['countries']
+class CurrencyBWP(ModelBWP):
+    columns = ('title', 'code',)
+    fields_search = ['title', 'countries__title','code']
     ordering = ['title', 'code']
-site.register(Currency, CurrencyAdmin)
+site.register(Currency, CurrencyBWP)
 
-class DocumentCompose(ComposeBWP):
+class DocumentComponent(ComponentBWP):
+    site = site
     model = Document
 
-class DocumentAdmin(ModelBWP):
-    list_display = ('title', 'code',)
-    list_display_css = { 'code': 'input-micro',}
-    search_fields = ['title', 'code','parent__code']
-    #~ list_filter = ('parent', )
-    raw_id_fields = ['parent']
+class DocumentBWP(ModelBWP):
+    columns = ('title', 'code',)
+    fields_search = ['title', 'code','parent__code']
     ordering = ['title']
-    compositions = [('document_set', DocumentCompose)]
-site.register(Document, DocumentAdmin)
+    components = [DocumentComponent(field='parent')]
+site.register(Document, DocumentBWP)
 
-class MeasureUnitCompose(ComposeBWP):
+class MeasureUnitComponent(ComponentBWP):
+    site = site
     model = MeasureUnit
 
-class MeasureUnitCategoryAdmin(ModelBWP):
-    list_display = ('title', 'id')
-    compositions = [('measureunit_set', MeasureUnitCompose)]
-site.register(MeasureUnitCategory, MeasureUnitCategoryAdmin)
+class MeasureUnitCategoryBWP(ModelBWP):
+    columns = ('title', 'id')
+    components = [MeasureUnitComponent(field='group')]
+site.register(MeasureUnitCategory, MeasureUnitCategoryBWP)
 
-class MeasureUnitGroupAdmin(ModelBWP):
-    list_display = ('title', 'id')
-    compositions = [('measureunit_set', MeasureUnitCompose)]
-site.register(MeasureUnitGroup, MeasureUnitGroupAdmin)
+class MeasureUnitGroupBWP(ModelBWP):
+    columns = ('title', 'id')
+    components = [MeasureUnitComponent(field='category')]
+site.register(MeasureUnitGroup, MeasureUnitGroupBWP)
 
 
-class MeasureUnitAdmin(ModelBWP):
-    list_display = ('title', 'note_ru', 'note_iso', 'symbol_ru',
+class MeasureUnitBWP(ModelBWP):
+    columns = ('title', 'note_ru', 'note_iso', 'symbol_ru',
                     'symbol_iso', 'category','group', 'code')
-    list_display_css = {
-            'code': 'input-micro',
-            'note_ru': 'input-mini',
-            'symbol_ru': 'input-mini',
-            'note_iso': 'input-mini',
-            'symbol_iso': 'input-mini',}
-    list_filter = ('category', 'group')
-    search_fields = ['title', 'code', 'category__title', 'group__title']
-    
-site.register(MeasureUnit, MeasureUnitAdmin)
+
+    #~ list_filter = ('category', 'group')
+    fields_search = ['title', 'code', 'category__title', 'group__title']
+site.register(MeasureUnit, MeasureUnitBWP)
 

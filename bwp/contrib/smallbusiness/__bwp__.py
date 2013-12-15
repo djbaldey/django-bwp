@@ -41,47 +41,43 @@ from bwp.sites import site
 from bwp.models import ModelBWP
 from models import *
 
-class ClientAdmin(ModelBWP):
-    list_display = ('__unicode__', 'id')
-site.register(Client, ClientAdmin)
+class ClientBWP(ModelBWP):
+    pass
+site.register(Client, ClientBWP)
 
-class UnitAdmin(ModelBWP):
-    list_display = ('__unicode__', 'id')
-    raw_id_fields = ['qualifier']
-site.register(Unit, UnitAdmin)
+class UnitBWP(ModelBWP):
+   pass
+site.register(Unit, UnitBWP)
 
-class GoodGroupAdmin(ModelBWP):
-    list_display = ('__unicode__', 'id')
-site.register(GoodGroup, GoodGroupAdmin)
+class GoodGroupBWP(ModelBWP):
+    pass
+site.register(GoodGroup, GoodGroupBWP)
 
-class GoodAdmin(ModelBWP):
-    list_display = ('__unicode__', 'id')
-    raw_id_fields = ['group', 'unit', 'package']
-site.register(Good, GoodAdmin)
+class GoodBWP(ModelBWP):
+    pass
+site.register(Good, GoodBWP)
 
-class PriceAdmin(ModelBWP):
-    list_display = ('__unicode__', 'id')
-    raw_id_fields = ['good']
-site.register(Price, PriceAdmin)
+class PriceBWP(ModelBWP):
+    pass
+site.register(Price, PriceBWP)
 
-class SpecAdmin(ModelBWP):
-    list_display = ('__unicode__', 'id')
-    raw_id_fields = ['price']
-site.register(Spec, SpecAdmin)
+class SpecBWP(ModelBWP):
+    pass
+site.register(Spec, SpecBWP)
 
-class ContractAdmin(ModelBWP):
-    list_display = ('__unicode__', 'id')
-site.register(Contract, ContractAdmin)
+class ContractBWP(ModelBWP):
+    pass
+site.register(Contract, ContractBWP)
 
-class InvoiceAdmin(ModelBWP):
-    list_display = ('__unicode__', 'id')
-site.register(Invoice, InvoiceAdmin)
+class InvoiceBWP(ModelBWP):
+    pass
+site.register(Invoice, InvoiceBWP)
 
-class PaymentAdmin(ModelBWP):
-    list_display = ('__unicode__', 'id')
-site.register(Payment, PaymentAdmin)
+class PaymentBWP(ModelBWP):
+    pass
+site.register(Payment, PaymentBWP)
 
-class ActAdmin(ModelBWP):
-    list_display = ('__unicode__', 'id')
-site.register(Act, ActAdmin)
+class ActBWP(ModelBWP):
+    pass
+site.register(Act, ActBWP)
 

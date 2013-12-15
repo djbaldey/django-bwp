@@ -38,58 +38,26 @@
 """
 from bwp import Group, User
 from bwp.sites import site
-from bwp.models import ModelBWP, ManyToManyBWP
+from bwp.models import ModelBWP
 from django.utils.translation import ugettext_lazy as _
 
 from models import *
 
+class SpoolerDeviceBWP(ModelBWP):
+    columns = ('local_device', 'state', 'method', 'group_hash', 'id')
 
-class UserCompose(ManyToManyBWP):
-    model = User
+site.register(SpoolerDevice, SpoolerDeviceBWP)
 
-class AdminUserCompose(ManyToManyBWP):
-    model = User
-    verbose_name = _('admin users')
+class LocalDeviceBWP(ModelBWP):
+    columns = ('title', 'driver', 'port', 'username', 'id')
+    fields_search = ['title', ]
 
-class GroupCompose(ManyToManyBWP):
-    model = Group
+site.register(LocalDevice, LocalDeviceBWP)
 
-class AdminGroupCompose(ManyToManyBWP):
-    model = Group
-    verbose_name = _('admin groups')
+class RemoteDeviceBWP(ModelBWP):
+    columns = ('title', 'driver', 'remote_url', 'remote_id', 'username', 'id')
+    fields_search = ['title', ]
 
-class SpoolerDeviceCompose(ManyToManyBWP):
-    model = SpoolerDevice
-    list_display = ('state', 'method', 'group_hash', 'id')
+site.register(RemoteDevice, RemoteDeviceBWP)
 
-class SpoolerDeviceAdmin(ModelBWP):
-    list_display = ('local_device', 'state', 'method', 'group_hash', 'id')
-
-site.register(SpoolerDevice, SpoolerDeviceAdmin)
-
-class LocalDeviceAdmin(ModelBWP):
-    list_display = ('title', 'driver', 'port', 'username', 'id')
-    search_fields = ['title', ]
-    compositions = [
-        ('users', UserCompose),
-        ('groups', GroupCompose),
-        ('admin_users', AdminUserCompose),
-        ('admin_groups', AdminGroupCompose),
-        ('spoolerdevice_set', SpoolerDeviceCompose),
-    ]
-
-site.register(LocalDevice, LocalDeviceAdmin)
-
-class RemoteDeviceAdmin(ModelBWP):
-    list_display = ('title', 'driver', 'remote_url', 'remote_id', 'username', 'id')
-    search_fields = ['title', ]
-    compositions = [
-        ('users', UserCompose),
-        ('groups', GroupCompose),
-        ('admin_users', AdminUserCompose),
-        ('admin_groups', AdminGroupCompose),
-    ]
-
-site.register(RemoteDevice, RemoteDeviceAdmin)
-
-site.devices = register
+#~ site.devices = register

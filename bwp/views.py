@@ -49,7 +49,7 @@ from django.db import transaction, models, router
 from django.forms.models import modelform_factory
 
 from quickapi.http import JSONResponse, JSONRedirect, MESSAGES, DjangoJSONEncoder
-from quickapi.views import switch_language, index as quickapi_index, get_methods
+from quickapi.views import index as quickapi_index, get_methods
 from quickapi.decorators import login_required, api_required
 
 from bwp.sites import site
@@ -73,11 +73,10 @@ def index(request, extra_context={}):
     Displays the main bwp index page, which lists all of the installed
     apps that have been registered in this site.
     """
-    switch_language(request)
     ctx = {'DEBUG': settings.DEBUG, 'title': _('bwp')}
     user = request.user
     if not user.is_authenticated():
-        return redirect('bwp.views.login')
+        return redirect('bwp:login')
     ctx.update(extra_context)
     return render_to_response('bwp/index.html', ctx,
                             context_instance=RequestContext(request,))
@@ -85,11 +84,10 @@ def index(request, extra_context={}):
 @never_cache
 def login(request, extra_context={}):
     """ Displays the login form for the given HttpRequest. """
-    switch_language(request)
     context = {
         'title': _('Log in'),
         'app_path': request.get_full_path(),
-        REDIRECT_FIELD_NAME: redirect('bwp.views.index').get('Location', '/'),
+        REDIRECT_FIELD_NAME: redirect('bwp:index').get('Location', '/'),
     }
     context.update(extra_context)
     defaults = {
@@ -105,7 +103,6 @@ def logout(request, extra_context={}):
     """ Logs out the user for the given HttpRequest.
         This should *not* assume the user is already logged in.
     """
-    switch_language(request)
     defaults = {
         'extra_context': extra_context,
         'template_name': 'bwp/logout.html',
@@ -123,11 +120,10 @@ def upload(request, model, **kwargs):
             'name': 'имя файла',
         }
     """
-    switch_language(request)
     user = request.user
 
     if not user.is_authenticated() and not conf.BWP_TMP_UPLOAD_ANONYMOUS:
-        return redirect('bwp.views.login')
+        return redirect('bwp:login')
 
     # Получаем модель BWP со стандартной проверкой прав
     model_bwp = site.bwp_dict(request).get(model)
@@ -214,7 +210,7 @@ def API_get_scheme(request, **kwargs):
 
 @api_required
 @login_required
-def API_get_objects(request, app, model, pk=None, foreign=None, compose=None, 
+def API_get_objects(request, app, model, pk=None, foreign=None, component=None, 
     page=1, per_page=None, query=None, ordering=None, fields_search=None, filters=None, **kwargs):
     """ *Возвращает список объектов.*
         Если не указан объект, то возвращает список объектов модели.
@@ -230,7 +226,7 @@ def API_get_objects(request, app, model, pk=None, foreign=None, compose=None,
         4. **"foreign"**    - поле объекта с внешним ключом (fk, m2m, o2o),
                             объекты которого должны быть возвращены,
                             по-умолчанию == None;
-        5. **"compose"**    - уникальное название класса модели Compose, 
+        5. **"component"**  - название отношения к модели ComponentBWP, 
                             объекты которой должны быть возвращены,
                             по-умолчанию == None;
 
@@ -291,12 +287,15 @@ def API_get_objects(request, app, model, pk=None, foreign=None, compose=None,
     }
 
     if pk:
-        # Возвращаем объекты композиции, если указано
-        if compose:
+        # Возвращаем компоненты, если указано
+        if component:
+            component_bwp = model.components_dict[component]
+            if not component_bwp.has_permission(request):
+                raise PermissionError()
             object = model.get_object(pk=pk)
-            options['object'] = object
-            compose = model.composes[compose]
-            objects = compose.serialize_queryset(**options)
+            rel = getattr(object, component)
+            options['queryset'] = rel.select_related()
+            objects = component_bwp.serialize_queryset(**options)
 
         # Возвращаем объекты внешних связей, если указано
         elif foreign:
@@ -318,7 +317,7 @@ def API_get_objects(request, app, model, pk=None, foreign=None, compose=None,
 
 @api_required
 @login_required
-def API_get_summary(request, app, model, pk=None, compose=None, 
+def API_get_summary(request, app, model, pk=None, component=None, 
     query=None, ordering=None, fields_search=None, filters=None, **kwargs):
     """ *Возвращает итоговые данные по набору данных.*
         Если не указан объект, то возвращает для объектов модели.
@@ -330,7 +329,7 @@ def API_get_summary(request, app, model, pk=None, compose=None,
         1. **"app"**        - название приложения, например: "users";
         2. **"model"**      - название модели приложения, например: "user";
         3. **"pk"**         - ключ объекта модели, по-умолчанию == None;
-        4. **"compose"**    - уникальное название класса модели Compose, 
+        4. **"component"**  - название отношения к модели ComponentBWP, 
                             объекты которой должны быть возвращены,
                             по-умолчанию == None;
         5. **"query"**      - поисковый запрос, если есть;
@@ -359,12 +358,15 @@ def API_get_summary(request, app, model, pk=None, compose=None,
     }
 
     if pk:
-        # Возвращаем итоги композиции, если указано
-        if compose:
+        # Возвращаем итоги компонентов, если указано
+        if component:
+            component_bwp = model.components_dict[component]
+            if not component_bwp.has_permission(request):
+                raise PermissionError()
             object = model.get_object(pk=pk)
-            options['object'] = object
-            compose = model.composes[compose]
-            summary = compose.get_summary(**options)
+            rel = getattr(object, component)
+            options['queryset'] = rel.select_related()
+            summary = component_bwp.get_summary(**options)
 
         else:
             raise MethodError()
@@ -803,7 +805,7 @@ dict_methods = {
     'delete_object': 'bwp.views.API_delete_object',
 }
 
-if site.devices:
+if hasattr(site, 'devices'):
     dict_methods['device_list']    = 'bwp.views.API_device_list'
     dict_methods['device_command'] = 'bwp.views.API_device_command'
 

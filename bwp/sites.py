@@ -44,7 +44,7 @@ from django.utils.text import capfirst
 from bwp.models import ModelBWP
 from bwp.forms import BWPAuthenticationForm
 from bwp import conf
-from bwp.conf import settings
+from bwp.conf import settings, BWP_VERSION, VERSION
 from bwp.templatetags.bwp_locale import app_label_locale
 
 SORTING_APPS_LIST = getattr(conf, 'SORTING_APPS_LIST', True)
@@ -129,8 +129,8 @@ class SiteBWP(object):
         self.reports    = {}
         self.apps_list  = []   # меню приложений AppBWP
         self.apps       = {}   # экземпляры AppBWP
-        self.devices    = None # local devices, such as
-                               # fiscal register, receipt printer, etc.
+        #~ self.devices    = None # local devices, such as
+                               #~ # fiscal register, receipt printer, etc.
 
     def register_model(self, itermodel, bwp_class=None, separator=False, **options):
         """
@@ -178,7 +178,7 @@ class SiteBWP(object):
                 self.apps_list.append(app_label)
             app = self.apps[app_label]
 
-            if model in app.models:
+            if model_name in app.models:
                 raise AlreadyRegistered('The model %s is already registered' % model.__name__)
 
             # If we got **options then dynamically construct a subclass of
@@ -194,7 +194,8 @@ class SiteBWP(object):
             validate(bwp_class, model)
 
             # Instantiate the bwp class to save in the registry
-            app.models[model_name] = bwp_class(model, self)
+            bwp_model = bwp_class(site=self, model=model)
+            app.models[model_name] = bwp_model
 
             # Регистрируем разделитель в списке моделей
             # TODO: чтобы использовать разделители, нужно реализовать 
@@ -203,9 +204,6 @@ class SiteBWP(object):
                 #~ app.models_list.append(None)
             # Регистрируем модель в списке
             app.models_list.append(model_name)
-
-            # В модели делаем ссылку на сайт, это нужно для доступа к нему
-            model.site = self
 
     # Deprecated
     def register(self, *args, **kwargs):
@@ -274,14 +272,6 @@ class SiteBWP(object):
             raise ImproperlyConfigured("Put 'django.contrib.auth.context_processors.auth' "
                 "in your TEMPLATE_CONTEXT_PROCESSORS setting in order to use the bwp application.")
 
-    #~ def get_available_apps(self, request):
-        #~ """ Возвращает приложения, доступные для пользователя """
-        #~ apps = {}
-        #~ for name, app in self.apps.items():
-            #~ if app.has_permission(request):
-                #~ apps[name] = app
-        #~ return apps
-
     def get_scheme(self, request=None):
         """ Возвращает схему приложения, доступную для пользователя и 
             состоящую из простых объектов Python, готовых к
@@ -294,6 +284,8 @@ class SiteBWP(object):
             'dashboard': [],
             'reports': {},
             'apps': {},
+            'bwp_version': BWP_VERSION,
+            'version': VERSION,
         }
 
         apps_list = []
@@ -319,31 +311,31 @@ class SiteBWP(object):
         SETTINGS = {}
         return SETTINGS
 
-    def get_registry_devices(self, request=None):
-        """
-        Общий метод для проверки привилегий на объекты устройств. 
-        
-        Если не задан запрос, то возвращает весь список, без учёта
-        привилегий.
-        """
-        if self.devices is None:
-            return []
-        if request is None: 
-            return self.devices
-        available = []
-        for device in self.devices:
-            if device.has_permission(request) or device.has_admin_permission(request):
-                available.append(device)
-        return available
-
-    def devices_dict(self, request):
-        """
-        Возвращает словарь, где ключом является название устройства,
-        а значением - само устройство
-        """
-        return dict([ (device.title, device) \
-            for device in self.get_registry_devices(request)
-        ])
+    #~ def get_registry_devices(self, request=None):
+        #~ """
+        #~ Общий метод для проверки привилегий на объекты устройств. 
+        #~ 
+        #~ Если не задан запрос, то возвращает весь список, без учёта
+        #~ привилегий.
+        #~ """
+        #~ if self.devices is None:
+            #~ return []
+        #~ if request is None: 
+            #~ return self.devices
+        #~ available = []
+        #~ for device in self.devices:
+            #~ if device.has_permission(request) or device.has_admin_permission(request):
+                #~ available.append(device)
+        #~ return available
+#~ 
+    #~ def devices_dict(self, request):
+        #~ """
+        #~ Возвращает словарь, где ключом является название устройства,
+        #~ а значением - само устройство
+        #~ """
+        #~ return dict([ (device.title, device) \
+            #~ for device in self.get_registry_devices(request)
+        #~ ])
 
 
 # This global object represents the default bwp site, for the common case.

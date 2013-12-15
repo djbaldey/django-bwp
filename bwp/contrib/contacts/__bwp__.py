@@ -41,12 +41,10 @@ from bwp.models import ModelBWP
 from django.utils.translation import ugettext_lazy as _
 from models import *
 
-class PersonAdmin(ModelBWP):
-    list_display = ('__unicode__', 'id')
-    search_fields = ['last_name','first_name','middle_name', 'id']
-    raw_id_fields = ['user']
-site.register(Person, PersonAdmin)
+class PersonBWP(ModelBWP):
+    fields_search = ['last_name','first_name','middle_name', 'id']
+site.register(Person, PersonBWP)
 
-class OrgAdmin(ModelBWP):
-    list_display = ('__unicode__', 'id')
-site.register(Org, OrgAdmin)
+class OrgBWP(ModelBWP):
+    pass
+site.register(Org, OrgBWP)

@@ -41,78 +41,52 @@ from django.utils.translation import ugettext_lazy as _
 
 from bwp.sites import site
 from bwp.contrib.users.models import User, Group, Permission
-from bwp.models import ModelBWP, ComposeBWP, ManyToManyBWP
+from bwp.models import ModelBWP, ComponentBWP
 
 label_id = _('ID')
 label_pk = _('PK')
 
-class PermissionAdmin(ModelBWP):
-    list_display = ('__unicode__', 'id')
-    search_fields = (
-        'name',
-        'codename',
-        'content_type__name',
-        'content_type__app_label',
-        'content_type__model',
+class PermissionBWP(ModelBWP):
+    fields_search = (
+        'name__icontains',
+        'codename__icontains',
+        'content_type__name__icontains',
+        'content_type__app_label__icontains',
+        'content_type__model__icontains',
     )
-site.register(Permission, PermissionAdmin)
+site.register_model(Permission, PermissionBWP)
 
-class PermissionCompose(ManyToManyBWP):
-    list_display = ('__unicode__', 'name', 'codename', 'id')
-    search_fields = (
-        'name',
-        'codename',
-        'content_type__name',
-        'content_type__app_label',
-        'content_type__model',
-    )
-    model = Permission
-
-class UserAdmin(ModelBWP):
-    list_display = ('__unicode__',
+class UserBWP(ModelBWP):
+    columns = ('__unicode__',
         'is_active',
         'is_superuser',
         'is_staff',
-        ('last_login', _('last login')),
+        'last_login',
         'created',
-        ('id', label_id))
-    list_display_css = {
-        'pk': 'input-micro', 'id': 'input-micro',
-        'is_superuser': 'input-mini', 'is_staff': 'input-mini',
-    }
+        'id')
     ordering = ('username',)
-    exclude = ['password',]
-    search_fields = ('username', 'email')
-    compositions = [
-        ('user_permissions', PermissionCompose),
-    ]
-site.register(User, UserAdmin)
+    fields_exclude = ['password',]
+    fields_search = ('username', 'email')
+site.register_model(User, UserBWP)
 
-class UserCompose(ComposeBWP):
-    model = User
-    list_display = ('__unicode__',
-        'is_active',
-        'is_superuser',
-        'is_staff',
-        ('last_login', _('last login')),
-        'created',
-        ('id', label_id))
-    list_display_css = {
-        'pk': 'input-micro', 'id': 'input-micro',
-        'is_superuser': 'input-mini', 'is_staff': 'input-mini',
-    }
-    ordering = ('username',)
+class GroupBWP(ModelBWP):
+    components = (
+        ComponentBWP(
+            site=site, model=User, field='groups',
+            ordering = ('username',),
+            columns = ('__unicode__',
+                'is_active',
+                'is_superuser',
+                'is_staff',
+                'last_login',
+                'created',
+                'id'
+            ),
+        ),
+    )
+site.register_model(Group, GroupBWP)
 
-class GroupAdmin(ModelBWP):
-    list_display = ('__unicode__', 'id')
-    compositions = [
-        ('user_set', UserCompose),
-        ('permissions', PermissionCompose),
-    ]
-site.register(Group, GroupAdmin)
-
-class ContentTypeAdmin(ModelBWP):
-    list_display = ('name', 'app_label', 'model', 'id')
+class ContentTypeBWP(ModelBWP):
+    columns = ('name', 'app_label', 'model', 'id')
     ordering = ('app_label', 'model')
-    hidden = True
-site.register(ContentType, ContentTypeAdmin)
+site.register_model(ContentType, ContentTypeBWP)

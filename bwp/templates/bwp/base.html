@@ -34,8 +34,13 @@
 #   вместе с этой программой. Если это не так, см.
 #   <http://www.gnu.org/licenses/>.
 ###############################################################################
--->{% endcomment %}
+-->{% endcomment %}{% spaceless %}
 {% load i18n l10n bwp_base bwp_static bwp_locale %}{% load url from future %}<!DOCTYPE html>
+
+{% get_language_info for LANGUAGE_CODE as lang %}
+{% get_available_languages as languages %}
+
+{% endspaceless %}
 <html lang="{{ LANGUAGE_CODE|default:"ru" }}" {% if LANGUAGE_BIDI %}dir="rtl"{% endif %}>
 <head>
     <title>{% SETTINGS 'PROJECT_SHORTNAME' %}: {% block title %}{% filter force_escape %}{% SETTINGS 'PROJECT_DESCRIPTION' %}{% endfilter %}{% endblock %}</title>
@@ -47,7 +52,7 @@
 {% endblock %}
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="{% filter force_escape %}{% SETTINGS 'PROJECT_DESCRIPTION' %}{% endfilter %}">
-    <meta name="author" content="{% filter force_escape %}{% AUTHORS %}{% endfilter %}">
+    <meta name="author" content="{% spaceless %}{% filter force_escape %}{% AUTHORS %}{% endfilter %}{% endspaceless %}">
     <meta name="version" content="{% SETTINGS 'BWP_VERSION' %}">
 
 <!-- START: styles -->
@@ -55,7 +60,7 @@
     {% block responsive_style %}<link rel="stylesheet" href="{{ STATIC_URL }}css/bootstrap/{% SETTINGS 'BOOTSTRAP_VERSION' %}/bootstrap-responsive{% mini_library %}.css">{% endblock %}
     <link rel="stylesheet" href="{{ STATIC_URL }}css/bwp/{% SETTINGS 'BWP_VERSION' %}/bwp{% mini_library %}.css">
     
-    <!-- for IE6-8 support of HTML5 elements -->
+    <!-- for IE6-9 support of HTML5 elements -->
     <!--[if lte IE 9]>
       <script src="{{ STATIC_URL }}js/html5/3.6/html5.js"></script>
     <![endif]-->
@@ -108,7 +113,7 @@
                     <a href="/">{% SETTINGS 'PROJECT_SHORTNAME' %}:<span title="{% SETTINGS 'VERSION_DATE' %}">{% SETTINGS 'VERSION' %}</span></a>
                     | <a href="http://djangoproject.com">Django:{% SETTINGS 'DJANGO_VERSION' %}</a>
                     | <a href="http://rosix.ru/project/9/">BWP:<span title="{% SETTINGS 'BWP_VERSION_DATE' %}">{% SETTINGS 'BWP_VERSION' %}</span></a>
-                    | <a href="{% url "bwp_api" %}">QuickAPI:{% SETTINGS 'QUICKAPI_VERSION' %}</a>
+                    | <a href="{% url "bwp:api" %}">QuickAPI:{% SETTINGS 'QUICKAPI_VERSION' %}</a>
                 {% endblock %}
                 </div>
             </footer>
@@ -175,7 +180,7 @@
         /* GLOBAL VARS */
         window.__bwp_media_prefix__ = "{% filter escapejs %}{% static "bwp/" %}{% endfilter %}";
         window.AJAX_TIMEOUT = 10000;
-        window.BWP_API_URL = "{% filter escapejs %}{% url "bwp_api" %}{% endfilter %}";
+        window.BWP_API_URL = "{% filter escapejs %}{% url "bwp:api" %}{% endfilter %}";
         window.SETTINGS_UNIQUE_KEY = "{% filter escapejs %}{% SETTINGS 'PROJECT_SHORTNAME' %}__user_{{ user.id|default:0 }}{% endfilter %}";
         window.USER_ID = "{{ user.id|default:0 }}";
         window.USER_NAME = "{{ user.username }}";
@@ -183,6 +188,7 @@
         window.USER_FIRST_NAME = "{{ user.first_name }}";
         window.USER = "{{ user }}";
         window.DEBUG = {% filter lower %}{% SETTINGS 'DEBUG' %}{% endfilter %};
+        window.LANGUAGE_CODE = "{{ LANGUAGE_CODE }}" || undefined;
     </script>
 {% endblock %}
 <!-- END: block jsglobalvars -->

@@ -36,7 +36,7 @@
 #   <http://www.gnu.org/licenses/>.
 ###############################################################################
 """
-from django.conf.urls import *
+from django.conf.urls import patterns, include, url
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
 import copy
@@ -82,15 +82,15 @@ def autodiscover():
 autodiscover()
 
 urlpatterns = patterns('bwp.views',
-    url(r'^$',        'index',  name='bwp_index'),
-    url(r'^login/$',  'login',  name="bwp_login"),
-    url(r'^logout/$', 'logout', name="bwp_logout"),
-    url(r'^api/$',    'api',    name="bwp_api"),
+    url(r'^$',        'index',  name='index'),
+    url(r'^login/$',  'login',  name="login"),
+    url(r'^logout/$', 'logout', name="logout"),
+    url(r'^api/$',    'api',    name="api"),
 
-    url(r'^upload/(?P<model>[-\.\w]+)/$', 'upload', name="bwp_upload"),
+    url(r'^upload/(?P<model>[-\.\w]+)/$', 'upload', name="upload"),
     
-    url(r'^accounts/login/$',  'login',  name="bwp_login_redirect"),
-    url(r'^accounts/logout/$', 'logout', name="bwp_logout_redirect"),
+    url(r'^accounts/login/$',  'login',  name="login_redirect"),
+    url(r'^accounts/logout/$', 'logout', name="logout_redirect"),
 )
 
 if 'tinymce' in settings.INSTALLED_APPS:
