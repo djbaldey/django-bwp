@@ -38,11 +38,11 @@
 """
 from django.utils.translation import ugettext_lazy as _
 from bwp.sites import site
-from bwp.models import ModelBWP, ComposeBWP
+from bwp.models import ModelBWP, ComponentBWP
 from models import *
 
 class DocumentBWP(ModelBWP):
-    list_display = ('title', 
+    columns = ('title', 
         'content_type',
         'qualifier',
         'template_name',
@@ -51,5 +51,5 @@ class DocumentBWP(ModelBWP):
 site.register(Document, DocumentBWP)
 
 class ReportBWP(ModelBWP):
-    list_display = ('label', 'created', 'document', 'user', 'url', 'id')
+    columns = ('label', 'created', 'document', 'user', 'url', 'id')
 site.register(Report, ReportBWP)

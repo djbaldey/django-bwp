@@ -77,3 +77,9 @@ GROUP_HARD_KEYS = getattr(settings, 'GROUP_HARD_KEYS', {
     2: _('Managers'),
     3: _('Operators'),
 })
+
+# for Django 1.5 and above
+USERNAME_FIELD  = getattr(settings, 'USERNAME_FIELD', 'username')
+REQUIRED_FIELDS = getattr(settings, 'REQUIRED_FIELDS', [])
+
+

@@ -55,7 +55,7 @@ from django.contrib.auth.models import (AbstractBaseUser,
     BaseUserManager, SiteProfileNotAvailable,
     _user_get_all_permissions, _user_has_perm, _user_has_module_perms)
 
-from bwp.conf import GROUP_HARD_KEYS
+from bwp.conf import (GROUP_HARD_KEYS, USERNAME_FIELD, REQUIRED_FIELDS)
 
 class ObjectCannotChange(Exception):
     message = ugettext("This object cannot be changed")
@@ -220,7 +220,7 @@ class User(AbstractBaseUser):
     updated = models.DateTimeField(_('updated'), auto_now=True, editable=False)
     username = models.CharField(_('username'), max_length=50, unique=True)
 
-    email = models.EmailField(_('email address'),blank=True)
+    email = models.EmailField(_('email address'), blank=True, unique=True)
     is_active = models.BooleanField(_('active'), default=True,
         help_text=_('Designates whether this user should be treated as '
                     'active. Unselect this instead of deleting accounts.'))
@@ -245,8 +245,8 @@ class User(AbstractBaseUser):
 
     objects = UserManager()
 
-    USERNAME_FIELD = 'username'
-    #~ REQUIRED_FIELDS = ['email']
+    USERNAME_FIELD  = USERNAME_FIELD
+    REQUIRED_FIELDS = REQUIRED_FIELDS
 
     class Meta:
         verbose_name = _('user')

@@ -36,73 +36,69 @@
 #   <http://www.gnu.org/licenses/>.
 ###############################################################################
 """
-from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
 from bwp.sites import site
-from bwp.models import ModelBWP, ComposeBWP
+from bwp.models import ModelBWP, ComponentBWP
 from models import *
 
-class OrgCompose(ComposeBWP):
-    list_display = ('__unicode__', ('get_group', _('group')), 'pk', 'id')
-    #~ fields = ('title', 'fulltitle')
+class OrgComponent(ComponentBWP):
+    columns = ('__unicode__', ('get_group', _('group')), 'pk', 'id')
+    site = site
     model = Org
 
-class PersonCompose(ComposeBWP):
+class PersonComponent(ComponentBWP):
+    site = site
     model = Person
 
-class VideoCodeCompose(ComposeBWP):
+class VideoCodeComponent(ComponentBWP):
+    site = site
     model = VideoCode
 
-class ImageCompose(ComposeBWP):
+class ImageComponent(ComponentBWP):
+    site = site
     model = Image
 
-class FileCompose(ComposeBWP):
+class FileComponent(ComponentBWP):
+    site = site
     model = File
 
-class GroupAdmin(ModelBWP):
-    compositions = [
-        ('org_set',         OrgCompose),
-        ('person_set',      PersonCompose),
-        ('videocode_set',   VideoCodeCompose),
-        ('image_set',       ImageCompose),
-        ('file_set',        FileCompose),
+class GroupBWP(ModelBWP):
+    components = [
+        OrgComponent(field='group'),
+        PersonComponent(field='group'),
+        VideoCodeComponent(field='group'),
+        ImageComponent(field='group'),
+        FileComponent(field='group'),
     ]
-site.register(Group, GroupAdmin)
-admin.site.register(Group, admin.ModelAdmin)
+site.register(Group, GroupBWP)
 
-class GroupUniqueAdmin(ModelBWP):
-    compositions = [
-        ('org_set',         OrgCompose),
-        ('person_set',      PersonCompose),
-        ('videocode_set',   VideoCodeCompose),
-        ('image_set',       ImageCompose),
-        ('file_set',        FileCompose),
+class GroupUniqueBWP(ModelBWP):
+    components = [
+        OrgComponent(field='groupunique'),
+        PersonComponent(field='groupunique'),
+        VideoCodeComponent(field='groupunique'),
+        ImageComponent(field='groupunique'),
+        FileComponent(field='groupunique'),
     ]
-site.register(GroupUnique, GroupUniqueAdmin)
-admin.site.register(GroupUnique, admin.ModelAdmin)
+site.register(GroupUnique, GroupUniqueBWP)
 
-class OrgAdmin(ModelBWP):
-    list_display = ('__unicode__', ('get_group', _('group')), 'pk', 'id')
+class OrgBWP(ModelBWP):
+    columns = ('__unicode__', ('get_group', _('group')), 'pk', 'id')
     pass
-site.register(Org, OrgAdmin)
-admin.site.register(Org, admin.ModelAdmin)
+site.register(Org, OrgBWP)
 
-class PersonAdmin(ModelBWP):
+class PersonBWP(ModelBWP):
     pass
-site.register(Person, PersonAdmin)
-admin.site.register(Person, admin.ModelAdmin)
+site.register(Person, PersonBWP)
 
-class VideoCodeAdmin(ModelBWP):
+class VideoCodeBWP(ModelBWP):
     pass
-site.register(VideoCode, VideoCodeAdmin)
-admin.site.register(VideoCode, admin.ModelAdmin)
+site.register(VideoCode, VideoCodeBWP)
 
-class ImageAdmin(ModelBWP):
+class ImageBWP(ModelBWP):
     pass
-site.register(Image, ImageAdmin)
-admin.site.register(Image, admin.ModelAdmin)
+site.register(Image, ImageBWP)
 
-class FileAdmin(ModelBWP):
+class FileBWP(ModelBWP):
     pass
-site.register(File, FileAdmin)
-admin.site.register(File, admin.ModelAdmin)
+site.register(File, FileBWP)

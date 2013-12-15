@@ -65,7 +65,7 @@ from bwp.utils import print_debug
 
 from bwp import conf, User, Group, Permission
 from bwp.db import fields
-from bwp.contrib.abstracts.models import AbstractUserSettings
+from bwp.db.abstracts import AbstractUserSettings
 
 SEARCH_KEY            = getattr(conf, 'SEARCH_KEY', 'query')
 DEFAULT_SEARCH_FIELDS = getattr(conf, 'DEFAULT_SEARCH_FIELDS',
@@ -213,11 +213,14 @@ def _replace_attname(value, fields=[]):
     Общий метод замены attname на name.
     Словари должны содержать ключ 'fields' или 'name'.
     """
-    attnames = dict([ (x.attname, x.name) for x in fields if x.attname != x.name ])
-    if not attnames:
-        return value
     if isinstance(value, tuple):
         value = list(value)
+
+    attnames = dict([ (x.attname, x.name) for x in fields if x.attname != x.name ])
+
+    if not attnames:
+        return value
+
     def _get_name(v):
         if isinstance(v, dict):
             if v.has_key('fields'):
@@ -230,6 +233,7 @@ def _replace_attname(value, fields=[]):
         elif isinstance(v, (str, unicode)) and v in attnames:
             return attnames[v]
         return v
+
     return _get_name(value)
 
 def _get_order_by(name, ordering):
@@ -241,34 +245,39 @@ def _get_order_by(name, ordering):
         return 'DESC'
     return None
 
+def raise_set_site(klass):
+    raise NotImplementedError('Set the "site" in %s.' % klass)
+
+def raise_set_model(klass):
+    raise NotImplementedError('Set the "model" in %s.' % klass)
+
 class BaseModel(object):
     """
-    Общие функции для ModelBWP, ComposeBWP, SelectorBWP.
-    """
+    Общие функции для ModelBWP, ComponentBWP, SelectorBWP.
 
-    site           = None
-    icon           = None
-    label          = None
-    per_page       = 10
-    per_page_min   = 5
-    per_page_max   = 100
+    icon           = None # иконка модели приложения
+    label          = None # название модели
+    per_page       = 10   # кол-во на странице
+    per_page_min   = 5    # минимальное кол-во на странице
+    per_page_max   = 100  # максимальное кол-во на странице
     coping         = True # разрешение копирования
     cloning        = None # разрешение клонирования
 
-    column_default = '__unicode__'
-    columns        = None
+    column_default = '__unicode__' # колонка вывода названия объекта
+    columns        = ['__unicode__', 'pk'] # колонки в таблице модели
+                                           # (поля и методы модели)
 
-    fields              = None # по-умолчанию - все
-    fields_set          = None # порядок, набор полей
-    fields_exclude      = None # исключённые поля
+    fields              = [] # по-умолчанию - все
+    fields_set          = [] # порядок, набор полей
+    fields_exclude      = [] # исключённые поля
     fields_search       = None # для запрета поиска пустой кортеж
-    fields_html         = None # список полей с разметкой HTML
-    fields_markdown     = None # список полей c разметкой Markdown
-    fields_file         = None # список полей c объектами файлов
-    fields_not_upgrade  = None # список полей с запретом повторного изменения
-    fields_min          = None # словарь полей с минимальными значениями
-    fields_max          = None # словарь полей с максимальными значениями
-    fields_round        = None # словарь полей со значениями округления
+    fields_html         = [] # список полей с разметкой HTML
+    fields_markdown     = [] # список полей c разметкой Markdown
+    fields_file         = [] # список полей c объектами файлов
+    fields_not_upgrade  = [] # список полей с запретом повторного изменения
+    fields_min          = {} # словарь полей с минимальными значениями
+    fields_max          = {} # словарь полей с максимальными значениями
+    fields_round        = {} # словарь полей со значениями округления
 
     summary             = None # список обработчиков суммарной
                                # информации о наборах данных
@@ -277,30 +286,49 @@ class BaseModel(object):
                                # Пользователь, производящий действия
 
     ordering            = None # список сортировки (по-умолчанию из модели)
-    filters             = None # список фильтров (по-умолчанию нет)
-    actions             = None # список действий (по-умолчанию ActionDelete)
+    filters             = [] # список фильтров (по-умолчанию нет)
+    actions             = [] # список действий (по-умолчанию ActionDelete)
+    """
 
-    paginator           = Paginator
+    def __init__(self, site=None, model=None, **kwargs):
+        """
+        Установка значений по-умолчанию
+        """
+        self.site           = site  or getattr(self, 'site', None) or raise_set_site(self.__class__.__name__)
+        self.model          = model or getattr(self, 'model', None) or raise_set_model(self.__class__.__name__)
 
-    def __init__(self, *args, **kwargs):
-        """
-        Установка значений по-умолчанию для изменяемых объектов
-        """
-        self.columns             = self.columns             or ['__unicode__', 'pk']
-        self.fields_set          = self.fields_set          or []
-        self.fields_exclude      = self.fields_exclude      or []
-        self.fields_html         = self.fields_html         or []
-        self.fields_markdown     = self.fields_markdown     or []
-        self.fields_file         = self.fields_file         or []
-        self.fields_not_upgrade  = self.fields_not_upgrade  or []
-        self.fields_min          = self.fields_min          or {}
-        self.fields_max          = self.fields_max          or {}
-        self.fields_round        = self.fields_round        or {}
-        self.summary             = self.summary             or []
+        self.icon           = kwargs.get('icon', None)          or getattr(self, 'icon',           None)
+        self.label          = kwargs.get('label', None)         or getattr(self, 'label',          None)
+        self.per_page       = kwargs.get('per_page', None)      or getattr(self, 'per_page',       10)
+        self.per_page_min   = kwargs.get('per_page_min', None)  or getattr(self, 'per_page_min',   5)
+        self.per_page_max   = kwargs.get('per_page_max', None)  or getattr(self, 'per_page_max',   100)
+        self.coping         = kwargs.get('coping', None)        or getattr(self, 'coping',         True)
+        self.cloning        = kwargs.get('cloning', None)       or getattr(self, 'cloning',        None)
+        self.user_field     = kwargs.get('user_field', None)    or getattr(self, 'user_field',     None)
+
+        self.column_default     = kwargs.get('column_default', None)        or getattr(self, 'column_default',     '__unicode__')
+        self.columns            = kwargs.get('columns', None)               or getattr(self, 'columns',            ['__unicode__', 'pk'])
+        self.fields             = kwargs.get('fields', None)                or getattr(self, 'fields',             [])
+        self.fields_set         = kwargs.get('fields_set', None)            or getattr(self, 'fields_set',         [])
+        self.fields_exclude     = kwargs.get('fields_exclude', None)        or getattr(self, 'fields_exclude',     [])
+        self.fields_search      = kwargs.get('fields_search', None)         or getattr(self, 'fields_search',      None)
+        self.fields_html        = kwargs.get('fields_html', None)           or getattr(self, 'fields_html',        [])
+        self.fields_markdown    = kwargs.get('fields_markdown', None)       or getattr(self, 'fields_markdown',    [])
+        self.fields_file        = kwargs.get('fields_file', None)           or getattr(self, 'fields_file',        [])
+        self.fields_not_upgrade = kwargs.get('fields_not_upgrade', None)    or getattr(self, 'fields_not_upgrade', [])
+        self.fields_min         = kwargs.get('fields_min', None)            or getattr(self, 'fields_min',         {})
+        self.fields_max         = kwargs.get('fields_max', None)            or getattr(self, 'fields_max',         {})
+        self.fields_round       = kwargs.get('fields_round', None)          or getattr(self, 'fields_round',       {})
+        self.summary            = kwargs.get('summary', None)               or getattr(self, 'summary',            [])
+        self.filters            = kwargs.get('filters', None)               or getattr(self, 'filters',            [])
+        self.actions            = kwargs.get('actions', None)               or getattr(self, 'actions',            [])
+
+        if not hasattr(self, 'ordering') or 'ordering' in kwargs:
+            self.ordering = kwargs.get('ordering', None)
 
         self._get_scheme() # Заполнение общих атрибутов
 
-        super(BaseModel, self).__init__(*args, **kwargs)
+        super(BaseModel, self).__init__()
 
     @property
     def opts(self):
@@ -346,7 +374,7 @@ class BaseModel(object):
         SCHEME = self._get_scheme()
 
         SCHEME.update(self.get_scheme_actions(request))
-        SCHEME.update(self.get_scheme_compositions(request))
+        SCHEME.update(self.get_scheme_components(request))
         SCHEME.update(self.get_scheme_reports(request))
         SCHEME.update(self.get_scheme_permissions(request))
 
@@ -501,6 +529,7 @@ class BaseModel(object):
         column_default = _replace_attname(self.column_default, all_fields)
         columns = _replace_attname(self.columns, all_fields)
         ordering = self.get_ordering()
+        related_names = self.get_related_names()
 
         for i,col in enumerate(columns):
             if not isinstance(col, dict):
@@ -535,11 +564,18 @@ class BaseModel(object):
                             'order_by': _get_order_by(col, ordering)
                         }
                     except Exception as e:
-                        raise e
+                        columns[i] = {
+                            'name': col,
+                            'label': col,
+                            'ordering': False,
+                            'order_by': None
+                        }
             else:
                 if col['name'] in all_names:
                     col['ordering'] = True
                     col['order_by'] = _get_order_by(col['name'], ordering)
+                else:
+                    pass
 
         self.columns = columns
         self.column_default = column_default
@@ -629,11 +665,11 @@ class BaseModel(object):
         # TODO: сделать
         return {'actions': {}, 'actions_list': []}
 
-    def get_scheme_compositions(self, request):
+    def get_scheme_components(self, request):
         """
-        Возвращает схему описания композиций объектов
+        Возвращает схему описания компонентов объектов модели
 
-        compositions: {
+        components: {
             'secondmodel_set': {
                 icon: null,
                 label: 'Композиция второй модели',
@@ -642,10 +678,22 @@ class BaseModel(object):
                 ...
             },
         },
-        compositions_list: ['secondmodel_set']
+        components_list: ['secondmodel_set']
         """
-        # TODO: сделать
-        return {'compositions': {}, 'compositions_list': []}
+        if not hasattr(self, 'components'):
+            return {}
+
+        SCHEME = {
+            'components': {},
+            'components_list':[],
+        }
+        for comp in self.components:
+            name   = comp.related_name
+            scheme = comp.get_scheme(request)
+            if scheme:
+                SCHEME['components_list'].append(name)
+                SCHEME['components'][name] = scheme
+        return SCHEME
 
     def get_scheme_reports(self, request):
         """
@@ -669,6 +717,14 @@ class BaseModel(object):
         perms = self.get_model_perms(request)
         # TODO: сделать подгрузку дополнительных прав
         return {'permissions': perms}
+
+    def get_related_names(self):
+        """
+        Возвращает список названий всех отношений
+        """
+        if not hasattr(self, '_all_related_names'):
+            self._all_related_names = [x.get_accessor_name() for x in self.opts.get_all_related_objects()]
+        return self._all_related_names
 
     def get_ordering(self, **kwargs):
         """
@@ -740,7 +796,7 @@ class BaseModel(object):
         if per_page < self.per_page_min or per_page > self.per_page_max:
             per_page = self.per_page
 
-        return self.paginator(queryset, per_page, orphans, allow_empty_first_page)
+        return Paginator(queryset, per_page, orphans, allow_empty_first_page)
 
     def get_page_queryset(self, queryset, page=1, **kwargs):
         """
@@ -973,310 +1029,44 @@ class BaseModel(object):
         self.log_write(request=request, object=object,
             action=LogEntry.DELETE, message=message)
 
-
-class ComposeBWP(BaseModel):
-    """ Модель для описания вложенных объектов BWP. 
-        multiply_fields = [ ('column_title', ('field_1', 'field_2')) ]
-    """
-
-    verbose_name = None
-    related_name = None
-    related_field = None
-    is_many_to_many = False
-
-    def __init__(self, related_name, related_model, bwp_site, model=None):
-        if model:
-            self.model = model
-        self.related_name  = related_name
-        self.related_model = related_model
-
-        manager = getattr(related_model.model, related_name)
-        if hasattr(manager, 'related'):
-            field = manager.related.field
-        else:
-            field = manager.field
-        self.related_field = field.name
-
-        self.bwp_site = bwp_site
-        if self.verbose_name is None:
-            # TODO: сделать установку имени из поля
-            self.verbose_name = self.opts.verbose_name_plural or self.opts.verbose_name
-
-        super(ComposeBWP, self).__init__()
-
-    def get_meta(self):
-        """ Возвращает словарь метаданных об этой модели. """
-        meta = dict([ (key, getattr(self, key)) for key in self.metakeys ])
-        meta['widgets'] = self.get_list_widgets()
-        meta['widgetsets'] = []
-        meta['related_name'] = self.related_name
-        meta['related_field'] = self.related_field
-        meta['related_model'] = str(self.related_model.opts)
-        meta['is_many_to_many'] = self.is_many_to_many
-        meta['reports'] = self.get_list_reports()
-        meta['filters'] = self.get_filters()
-        meta['filters_dict'] = dict([ (x['field'], x) for x in meta['filters'] ])
-        return meta
-
-    def get(self, request, pk, **kwargs):
-        """ Получает объекты согласно привилегий """
-        return self.get_collection(request, pk, **kwargs)
-
-    def get_collection(self, request, pk, **kwargs):
-        """ Метод получения вложенных объектов """
-        try:
-            object = self.related_model.queryset(request).get(pk=pk)
-        except:
-            return get_http_404(request)
-        qs = getattr(object, self.related_name).select_related().all()
-        qs = self.queryset_from_filters(qs, **kwargs)
-        qs = self.filter_queryset(request, qs, **kwargs)
-        qs = self.page_queryset(request, qs, **kwargs)
-        total = self.get_queryset_total(qs)
-
-        properties = [ x['name'] for x in self.get_list_display()\
-            if not x['name'] in self.get_fields() ]
-        # Задаём использование натуральных ключей для того, чтобы не
-        # ставился автоматически use_split_keys = True
-        data = self.serialize(qs, use_natural_keys=True, properties=properties)
-        if total:
-            data['total'] = total
-        return JSONResponse(data=data)
-
-    def get_compose(self, request, object, **kwargs):
-        """ Data = {
-                'label': 'self.verbose_name',
-                'model': 'self.model_name',
-                'related_model': 'self.related_model name',
-                'related_object': 'object.pk',
-                'html_id': 'object_html_id + related_name',
-                'perms':{'add':True, 'change':True, 'delete':True},
-                'actions':[{<action_1>},{<action_2>}],
-                'cols':[{col1},{col2}],
-                'rows': [{row1}, {row2}]
-            }
-            colX = {
-                'name': 'db_name',
-                'hidden': False,
-                'tag': 'input',
-                'attr': {},
-                'label': 'Название поля',
-            }
-            rowX = (
-                ('real data value', 'frendly value'), # col1
-                ('real data value', 'frendly value'), # col2
-                ('real data value', 'frendly value'), # colX
-            )
-        """
-        model = str(object._meta)
-        compose = self.related_name
-        data = {
-            'model':    model,
-            'pk':       object.pk,
-            'compose':  compose,
-            'label':    capfirst(unicode(self.verbose_name)),
-            'meta':     self.meta,
-        }
-
-        # Permissions
-        permissions = self.get_model_perms(request)
-
-        # Widgets
-        widgets = self.get_list_widgets()
-
-        # Objects
-        if object.pk:
-            qs = getattr(object, self.related_name).select_related().all()
-            qs = self.page_queryset(request, qs)
-            objects = self.serialize(qs)
-        else:
-            objects = []
-
-        data.update({'widgets': widgets, 'objects': objects,
-                    'permissions': permissions })
-        return data
-
-class ManyToManyBWP(ComposeBWP):
-    """ Расширение композиций для отображения полей m2m """
-    is_many_to_many = True
-
-    def add_objects_in_m2m(self, object, objects):
-        m2m = getattr(object, self.related_name)
-        m2m.add(*objects)
-        return True
-
-    def delete_objects_in_m2m(self, object, objects):
-        m2m = getattr(object, self.related_name)
-        m2m.remove(*objects)
-        return True
-
 class ModelBWP(BaseModel):
-    """ Модель для регистрации в BWP.
-        Наследуются атрибуты:
-        __metaclass__ = forms.MediaDefiningClass
-        raw_id_fields = ()
-        fields = None
-        exclude = None
-        fieldsets = None
-        form = forms.ModelForm
-        filter_vertical = ()
-        filter_horizontal = ()
-        radio_fields = {}
-        prepopulated_fields = {}
-        formfield_overrides = {}
-        readonly_fields = ()
-        ordering = None
+    """
+    Модель для регистрации в BWP.
+
+    components = [] # список экземпляров ComponentBWP
     """
 
-    compositions = []
-    
-    def __init__(self, model, bwp_site):
-        self.model = model
-        self.bwp_site = bwp_site
-        super(ModelBWP, self).__init__()
+    def __init__(self, components=None, *args, **kwargs):
+        self.components = components or getattr(self, 'components', [])
+        super(ModelBWP, self).__init__(*args, **kwargs)
 
-    def get_meta(self):
-        """ Возвращает словарь метаданных об этой модели. """
-        meta = dict([ (key, getattr(self, key)) for key in self.metakeys ])
-        meta['compositions'] = [ x.get_meta() for x in self.compose_instances ]
-        meta['widgets'] = self.get_list_widgets()
-        meta['widgetsets'] = self.get_list_widgetsets()
-        meta['reports'] = self.get_list_reports()
-        meta['filters'] = self.get_filters()
-        meta['filters_dict'] = dict([ (x['field'], x) for x in meta['filters'] ])
-        return meta
+def raise_set_field(klass):
+    raise NotImplementedError('Set the "field" in %s.' % klass)
 
-    def prepare_meta(self, request):
-        """ Обновляет информацию о метаданных согласно запроса """
-        meta = deepcopy(self.meta)
-        meta['compositions'] = [ x.get_model_info(request, bwp=False) for x in self.get_composes(request) ]
-        return meta
+class ComponentBWP(BaseModel):
+    """
+    Модель для описания вложенных компонентов объекта ModelBWP.
+
+    field = None # поле внешнего ключа основного объекта
+    """
+
+    def __init__(self, field=None, *args, **kwargs):
+        self.field = field or getattr(self, 'field', None) or raise_set_field(self.__class__.__name__)
+        super(ComponentBWP, self).__init__(*args, **kwargs)
 
     @property
-    def compose_instances(self):
-        """ Регистрирует экземпляры Compose моделей и/или возвращает их.
-            При формировании первыми в композиции попадают поля
-            ManyToMany, если же они переопределены, то заменяются.
-        """
-        if not hasattr(self, '_compose_instances'):
-            L = []
-            D = {}
-            def add(cls, related_name, model=None):
-                instance = cls(related_name=related_name, related_model=self,
-                    bwp_site=self.bwp_site, model=model)
-                D[related_name] = instance
-                L.append(instance)
+    def related_name(self):
+        field = self.opts.get_field_by_name(self.field)[0]
+        if not hasattr(self, '_related_name'):
+            self._related_name = field.related.get_accessor_name()
+        return self._related_name
 
-            for m2m in self.opts.local_many_to_many:
-                related_name = m2m.related.field.get_attname()
-                if related_name in self.exclude:
-                    continue
-                model = m2m.related.parent_model
-                add(ManyToManyBWP, related_name, model)
-            for related_name, compose_class in self.compositions:
-                add(compose_class, related_name)
 
-            self._compose_instances = [ D[x.related_name] for x in L ]
-        return self._compose_instances
-    
-    def get_all_fields(self):
-        m2m = [ x.related_name for x in self.compose_instances if x.is_many_to_many ]
-        m2m.extend(self.fields or [])
-        return m2m
 
-    def get_object_detail(self, request, object, **kwargs):
-        """ Метод возвращает сериализованный объект в JSONResponse """
-        data = self.get_full_object(request, object)
-        return JSONResponse(data=data)
-
-    def get_copy_object_detail(self, request, object, clone, **kwargs):
-        """ Метод возвращает сериализованную копию объекта в JSONResponse """
-        pk = object.pk # save
-        object.pk = None
-        # Клонирование с созданием нового pk и заполнением полей m2m
-        if clone and self.has_clone:
-            object.save()
-            oldobj = self.get_instance(pk=pk)
-            self.log_addition(request, object, oldobj)
-            for m2m in self.opts.local_many_to_many:
-                old = getattr(oldobj, m2m.get_attname())
-                new = getattr(object, m2m.get_attname())
-                new.add(*old.all())
-        data = self.get_full_object(request, object)
-        return JSONResponse(data=data)
-
-    def get_new_object_detail(self, request, **kwargs):
-        """ Метод возвращает сериализованный, новый объект в JSONResponse """
-        data = self.get_full_object(request, None, **kwargs)
-        return JSONResponse(data=data)
-
-    def get_full_object(self, request, object, filler={}, **kwargs):
-        """ Python объект с композициями и виджетами(наборами виджетов). """
-        # Object
-        if isinstance(object, (str, int)):
-            object = self.queryset().select_related().get(pk=object)
-        elif not object:
-            object = self.model()
-            # TODO: made and call autofiller
-            for field, value in filler.items():
-                _field = self.opts.get_field_by_name(field)[0]
-                if _field.rel:
-                    value = _field.rel.to.objects.get(pk=value)
-                setattr(object, field, value)
-        model = str(self.opts)
-        data = self.serialize(object)
-        try:
-            data['label'] = unicode(object)
-        except:
-            data['label'] = ''
-
-        # Widgetsets
-        widgetsets = self.get_list_widgetsets()
-
-        # Widgets
-        widgets = self.get_list_widgets()
-
-        # Permissions
-        permissions = self.get_model_perms(request)
-
-        # Compositions
-        compositions = []
-        for compose in self.get_composes(request):
-            compositions.append(compose.get_compose(request, object, **kwargs))
-
-        data.update({'widgets':widgets, 'widgetsets':widgetsets,
-                    'permissions':permissions, 'compositions':compositions})
-        return data
-
-    def get_composes(self, request=None):
-        """ Получает список разрешённых моделей Compose. """
-        compose_instances = []
-        if self.compositions is None: # запрещены принудительно
-            return compose_instances
-        for compose in self.compose_instances:
-            if request:
-                # Когда все действия недоступны
-                if not (compose.has_create_permission(request) or
-                        compose.has_read_permission(request) or
-                        compose.has_update_permission(request) or
-                        compose.has_delete_permission(request)):
-                    continue
-            compose_instances.append(compose)
-        return compose_instances
-
-    def compose_dict(self, request, **kwargs):
-        """
-        Возвращает словарь, где ключом является имя модели Compose,
-        а значением - сама модель, например:
-            {'group_set': <Model Contacts.UserBWP> }
-        """
-        composes = self.get_composes(request)
-        return dict([ (compose.related_name, compose) for compose in composes ])
-
-class GlobalUserSettings(AbstractUserSettings):
+class UserSettings(AbstractUserSettings):
     """ Глобальные настройки пользователей """
     class Meta:
         ordering = ['user',]
-        verbose_name = _('global settings')
-        verbose_name_plural = _('global settings')
+        verbose_name = _('user settings')
+        verbose_name_plural = _('user settings')
         unique_together = ('user',)

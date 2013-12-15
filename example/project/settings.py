@@ -92,6 +92,10 @@ LANGUAGES = (
     ('en', _('English')),
 )
 
+LOCALE_PATHS = (
+    abspath('locale'),
+)
+
 SITE_ID = 1
 
 # If you set this to False, Django will make some optimizations so as not
@@ -129,8 +133,6 @@ STATICFILES_DIRS = (
     # Put strings here, like "/home/html/static" or "C:/www/django/static".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
-    abspath('static'),
-    abspath('app', 'static'),
 )
 
 # List of finder classes that know how to find static files in

@@ -37,14 +37,19 @@
 ###############################################################################
 """
 from django.conf.urls import patterns, include, url
+from django.conf.urls.i18n import i18n_patterns
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 #~ from django.contrib import admin
 
 #~ admin.autodiscover()
 
-urlpatterns = patterns('',
-    url(r'^', include('bwp.urls')),
+_urlpatterns = patterns('',
+    url(r'^', include('bwp.urls', namespace="bwp"), name='bwp'),
     #~ url(r'^admin/', include(admin.site.urls)),
+)
+
+urlpatterns = i18n_patterns('',
+    url(r'^', include(_urlpatterns)),
 )
 
 # For develop:

@@ -41,6 +41,3 @@ from bwp.sites import site
 from bwp.models import ModelBWP
 from models import *
 
-class TemplateAdmin(ModelBWP):
-    list_display = ('__unicode__', 'id')
-site.register(Template, TemplateAdmin)
