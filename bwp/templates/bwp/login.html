@@ -3,8 +3,8 @@
 
 {% block bodyclass %}login{% endblock %}
 
+
 {% block navbar %}{% endblock %}
-{% block header %}{% endblock %}
 {% block content_title %}{% endblock %}
 {% block breadcrumbs %}{% endblock %}
 {% block sidebar %}{% endblock %}
@@ -22,9 +22,28 @@
     </style>
 {% endblock %}
 
+{% block header %}
+
+{% endblock %}
+
 {% block content %}
 <div id="alert-place"></div>
 <div id="login">
+    <table style="line-height: 15px;">
+        <tbody>
+            <tr>
+                <td rowspan="2"><img height="50" width="50" type="image/svg" alt="logo" src="{{ STATIC_URL }}img/bwp/logo.svg"></td>
+                <td style="color: #ff6600; padding-left: 3px;">
+                    <b>{% filter upper %}{% SETTINGS 'PROJECT_SHORTNAME' %}{% endfilter %}</b>
+                </td>
+            </tr>
+            <tr>
+                <td style="color: #003f7d; padding-left: 3px;">
+                    <small>{% filter lower %}{% SETTINGS 'PROJECT_DESCRIPTION' %}{% endfilter %}</small>
+                </td>
+            </tr>
+        </tbody>
+    </table>
     {% block login_place %}
     {% if form.errors %}
         <div class="alert alert-error">
@@ -34,17 +53,35 @@
         </div>
     {% endif %}
     <form class="form-signin" action="{{ app_path }}" method="post">{% csrf_token %}
-        <fieldset>
-            <input type="hidden" name="this_is_the_login_form" value="1" />
-            <input type="hidden" name="next" value="{{ next|escape }}" />
-            <img alt="" src="{{ STATIC_URL }}img/bwp/header.png">
-            <hr/>
-            {% if not form.this_is_the_login_form.errors %}{{ form.username.errors }}{% endif %}
-            <input type="text" class="input-block-level" placeholder="{% trans "login name" %}" name="username" value="" id="username">
-            {% if not form.this_is_the_login_form.errors %}{{ form.password.errors }}{% endif %}
-            <input type="password" class="input-block-level" placeholder="{% trans "password" %}" name="password" value="" id="password">
-            <button class="btn btn-primary pull-right" type="submit">{% trans "Enter" %}</button>
-        </fieldset>
+        <input type="hidden" name="this_is_the_login_form" value="1" />
+        <input type="hidden" name="next" value="{{ next|escape }}" />
+
+        {% if not form.this_is_the_login_form.errors %}{{ form.username.errors }}{% endif %}
+        <input type="text" class="input-block-level" placeholder="{% trans "Username" %}" name="username" value="" id="username">
+        {% if not form.this_is_the_login_form.errors %}{{ form.password.errors }}{% endif %}
+        <input type="password" class="input-block-level" placeholder="{% trans "Password" %}" name="password" value="" id="password">
+        <button class="btn btn-primary pull-right" type="submit">{% trans "Log in" %}</button>
+    {% if languages %}
+        <span id="menu-language" class="btn-group dropdown">
+            <a class="btn dropdown-toggle" data-toggle="dropdown" href="#menu-language">
+                <img height="15" width="20" type="image/svg" src="{{ STATIC_URL }}img/countries/languages/{{ LANGUAGE_CODE }}.svg" alt="{{ lang.name_local }}">
+                {{ lang.name_local }}
+                <b class="caret"></b>
+            </a>
+            <ul class="dropdown-menu" style="max-height: 322px; overflow: auto; box-shadow:none;">
+            {% for lang_code, lang_name in languages %}
+                {% language lang_code %}
+                <li class="{% if lang_code == LANGUAGE_CODE %}active{% endif %}">
+                    <a href="{% url 'bwp:index' %}" title="{{ lang_name }}">
+                        <img height="15" width="20" type="image/svg" src="{{ STATIC_URL }}img/countries/languages/{{ lang_code }}.svg">
+                        {{ lang_code|language_name_local }}
+                    </a>
+                </li>
+                {% endlanguage %}
+            {% endfor %}
+            </ul>
+        </span>
+    {% endif %}
     </form>
     {% endblock %}
 </div>

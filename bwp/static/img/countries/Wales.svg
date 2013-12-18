@@ -11,11 +11,11 @@
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    height="140mm"
    id="svg548"
-   sodipodi:docname="Flag_of_Wales_2.svg"
+   sodipodi:docname="Wales.svg"
    sodipodi:version="0.33pre"
    width="233.33mm"
    version="1.1"
-   inkscape:version="0.47 r22583">
+   inkscape:version="0.48.3.1 r9886">
   <metadata
      id="metadata2986">
     <rdf:RDF>
@@ -68,27 +68,12 @@
     </rdf:RDF>
   </metadata>
   <defs
-     id="defs550">
-    <inkscape:perspective
-       sodipodi:type="inkscape:persp3d"
-       inkscape:vp_x="0 : 248.03149 : 1"
-       inkscape:vp_y="0 : 1000 : 0"
-       inkscape:vp_z="826.75983 : 248.03149 : 1"
-       inkscape:persp3d-origin="413.37991 : 165.35433 : 1"
-       id="perspective3104" />
-    <inkscape:perspective
-       id="perspective3114"
-       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
-       inkscape:vp_z="1 : 0.5 : 1"
-       inkscape:vp_y="0 : 1000 : 0"
-       inkscape:vp_x="0 : 0.5 : 1"
-       sodipodi:type="inkscape:persp3d" />
-  </defs>
+     id="defs550" />
   <sodipodi:namedview
      id="base"
      showgrid="false"
      inkscape:zoom="0.86810384"
-     inkscape:cx="287.59112"
+     inkscape:cx="94.641853"
      inkscape:cy="208.44485"
      inkscape:window-width="1118"
      inkscape:window-height="908"

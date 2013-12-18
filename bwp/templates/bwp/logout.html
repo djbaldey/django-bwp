@@ -3,9 +3,9 @@
 
 {% block login_place %}
     <div class="align-center">
-        <p class="text-success"><strong>{% trans "Thank You for the work done." %}</strong></p>
+        <legend class="text-danger"><strong>{% trans "Thank You" %}<br><small>{% trans "for the work done" %}</small></strong></legend>
     </div>
     <div class="align-center">
-        <p><a href="{% url 'bwp:login' %}">{% trans 'Log in again' %}</a></p>
+        <p><a href="{% url 'bwp:login' %}"><i class="icon-user"></i> {% trans 'Log in again' %}</a></p>
     </div>
 {% endblock %}

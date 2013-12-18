@@ -1,11 +1,19 @@
-<?xml version="1.0"?>
-<svg version="1.0" width="900" height="600">
- <rect width="900" height="600" style="fill:#f00" />
- <rect x="0" y="0" width="450" height="300" style="fill:#009" />
- <path style="fill:#fff"
-  d="M 225.00002,262.50026 L 168.75002,52.57243 L 322.42789,206.25026 L 112.50002,150.00029 L 322.42789,93.750286 L 168.75002,247.42814 L 225.00002,37.500286 L 281.25001,247.42814 L 127.57216,93.750286 L 337.50001,150.00029 L 127.57216,206.25026 L 281.25001,52.57243 L 225.00002,262.50026 z " />
- <path style="fill:#009"
-  d="M 288.74998,149.99974 C 288.74998,185.20788 260.20812,213.74972 225.00001,213.74972 C 189.79184,213.74972 161.24999,185.20788 161.24999,149.99974 C 161.24999,114.7916 189.79184,86.249758 225.00001,86.249758 C 260.20812,86.249758 288.74998,114.7916 288.74998,149.99974 z " />
- <path style="fill:#fff"
-  d="M 281.25001,150.00006 C 281.25001,181.06606 256.06601,206.25004 225,206.25004 C 193.93395,206.25004 168.74995,181.06606 168.74995,150.00006 C 168.74995,118.93405 193.93395,93.750067 225,93.750067 C 256.06601,93.750067 281.25001,118.93405 281.25001,150.00006 z " />
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg id="svg7259" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns="http://www.w3.org/2000/svg" height="600" width="900" version="1.1" xmlns:cc="http://creativecommons.org/ns#" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="-60 -40 240 160" xmlns:dc="http://purl.org/dc/elements/1.1/">
+ <metadata id="metadata7278">
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:title/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <rect id="rect7261" height="100%" width="100%" y="-40" x="-60" fill="#fe0000"/>
+ <rect id="rect7263" height="50%" width="50%" y="-40" x="-60" fill="#000095"/>
+ <path id="four_rays" fill="#fff" d="M8,0l-8,30-8-30,8-30m0,38l30-8-30-8-30,8"/>
+ <use id="use7266" xlink:href="#four_rays" transform="rotate(30)"/>
+ <use id="use7268" xlink:href="#four_rays" transform="rotate(60)"/>
+ <circle id="circle7270" r="17" fill="#000095"/>
+ <circle id="circle7272" r="15" fill="#fff"/>
 </svg>

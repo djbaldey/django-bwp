@@ -292,8 +292,8 @@ def API_get_objects(request, app, model, pk=None, foreign=None, component=None,
             component_bwp = model.components_dict[component]
             if not component_bwp.has_permission(request):
                 raise PermissionError()
-            object = model.get_object(pk=pk)
-            rel = getattr(object, component)
+            obj = model.get_object(pk=pk)
+            rel = getattr(obj, component)
             options['queryset'] = rel.select_related()
             objects = component_bwp.serialize_queryset(**options)
 
@@ -301,7 +301,7 @@ def API_get_objects(request, app, model, pk=None, foreign=None, component=None,
         elif foreign:
             field, _null, direct, m2m = model.opts.get_field_by_name(foreign)
             rel_app = site.apps.get(field.model._meta.app_label)
-            rel_model = rel_app.models.get(field.model.__class__.__name__.lower())
+            rel_model = rel_app.models.get(field.opts.concrete_model.__name__.lower())
             options['limit_choices_to'] = field.rel.limit_choices_to
             options['columns'] = ['__unicode__']
             objects = rel_model.serialize_queryset(**options)
@@ -363,8 +363,8 @@ def API_get_summary(request, app, model, pk=None, component=None,
             component_bwp = model.components_dict[component]
             if not component_bwp.has_permission(request):
                 raise PermissionError()
-            object = model.get_object(pk=pk)
-            rel = getattr(object, component)
+            obj = model.get_object(pk=pk)
+            rel = getattr(obj, component)
             options['queryset'] = rel.select_related()
             summary = component_bwp.get_summary(**options)
 
@@ -404,9 +404,9 @@ def API_read_object(request, app, model, pk, **kwargs):
     if not model.has_read_permission(request):
         raise PermissionError()
 
-    object = model.get_object(pk=pk)
+    obj = model.get_object(pk=pk)
 
-    return JSONResponse(data=model.serialize(object))
+    return JSONResponse(data=model.serialize(obj)[0])
 
 @api_required
 @login_required
@@ -437,7 +437,7 @@ def API_create_object(request, app, model, fields, **kwargs):
 
     # сразу же должны установиться поля пользователя,
     # если в модели такие есть
-    object = model.model()
+    obj = model.model()
 
     TMP = []    # список временных файлов, подлежащих удалению
                 # после сохранения объекта
@@ -447,18 +447,20 @@ def API_create_object(request, app, model, fields, **kwargs):
     for fname in editable_fields:
         field, _null, direct, m2m = model.opts.get_field_by_name(fname)
         value = fields[fname]
-        attr = getattr(object, fname)
+
+        attr = getattr(obj, fname)
+        rel  = getattr(field, 'rel', None)
 
         # Поля с внешними связями
-        if hasattr(field, 'rel'):
+        if rel:
             using = router.db_for_write(field.model)
-            full_manager = field.rel.to._default_manager.using(using)
+            full_manager = rel.to._default_manager.using(using)
             manager = full_manager.complex_filter(field.rel.limit_choices_to)
             if m2m:
                 objects = manager.filter(pk__in=value)
                 M2M.append((attr, objects))
             elif value:
-                attr = manager.get(pk=value)
+                setattr(obj, fname, manager.get(pk=value))
 
         # Файловые поля с идентификаторами предварительно
         # загруженных файлов
@@ -469,18 +471,18 @@ def API_create_object(request, app, model, fields, **kwargs):
 
         # Обычные поля
         else:
-            attr = v
+            setattr(obj, fname, value)
 
-    object = model.set_user_field(object, request.user)
+    obj = model.set_user_field(obj, request.user)
     try:
-        object.save()
+        obj.save()
     except Exception as e:
         return JSONResponse(status=400, message=unicode(e))
 
     for t in TMP:
         t.delete()
 
-    return JSONResponse(data=model.serialize(object))
+    return JSONResponse(data=model.serialize(obj)[0])
 
 @api_required
 @login_required
@@ -516,7 +518,7 @@ def API_update_object(request, app, model, pk, fields, **kwargs):
 
     # сразу же должны установиться поля пользователя,
     # если в модели такие есть
-    object = model.get_object(pk=pk, user=request.user)
+    obj = model.get_object(pk=pk, user=request.user)
 
     TMP = []    # список временных файлов, подлежащих удалению
                 # после сохранения объекта
@@ -525,12 +527,14 @@ def API_update_object(request, app, model, pk, fields, **kwargs):
     for fname in editable_fields:
         field, _null, direct, m2m = model.opts.get_field_by_name(fname)
         value = fields[fname]
-        attr = getattr(object, fname)
+
+        attr = getattr(obj, fname)
+        rel = getattr(field, 'rel', None)
 
         # Поля с внешними связями
-        if hasattr(field, 'rel'):
+        if rel:
             using = router.db_for_write(field.model)
-            full_manager = field.rel.to._default_manager.using(using)
+            full_manager = rel.to._default_manager.using(using)
             manager = full_manager.complex_filter(field.rel.limit_choices_to)
             if m2m:
                 _value = set(attr.values_list('pk', flat=True))
@@ -541,9 +545,9 @@ def API_update_object(request, app, model, pk, fields, **kwargs):
                 attr.add(*objects)
             else:
                 if value:
-                    attr = manager.get(pk=value)
+                    setattr(obj, fname, manager.get(pk=value))
                 else:
-                    attr = None
+                    setattr(obj, fname, None)
 
         # Файловые поля с идентификаторами предварительно
         # загруженных файлов
@@ -557,17 +561,17 @@ def API_update_object(request, app, model, pk, fields, **kwargs):
 
         # Обычные поля
         else:
-            attr = v
+            setattr(obj, fname, value)
 
     try:
-        object.save()
+        obj.save()
     except Exception as e:
         return JSONResponse(status=400, message=unicode(e))
 
     for t in TMP:
         t.delete()
 
-    return JSONResponse(data=model.serialize(object))
+    return JSONResponse(data=model.serialize(obj)[0])
 
 @api_required
 @login_required
@@ -600,15 +604,15 @@ def API_delete_object(request, app, model, pk, confirm=False, **kwargs):
         raise PermissionError()
 
     using = router.db_for_write(model.model)
-    manager = model.model._default_manager.usung(using)
+    manager = model.model._default_manager.using(using)
 
-    object = manager.get(pk=pk)
+    obj = manager.get(pk=pk)
 
     # TODO: реализовать удаление и возврат списка удаляемых объектов
 
     if confirm:
         try:
-            object.delete()
+            obj.delete()
         except Exception as e:
             return JSONResponse(status=400, message=unicode(e))
         else:
@@ -799,6 +803,7 @@ def API_get_object_report_url(request, model, pk, report, **kwargs):
 dict_methods = {
     'get_scheme':    'bwp.views.API_get_scheme',
     'get_objects':   'bwp.views.API_get_objects',
+    'get_summary':   'bwp.views.API_get_summary',
     'read_object':   'bwp.views.API_read_object',
     'create_object': 'bwp.views.API_create_object',
     'update_object': 'bwp.views.API_update_object',

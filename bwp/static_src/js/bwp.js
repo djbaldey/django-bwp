@@ -211,7 +211,12 @@ function jsonAPI(args, callback, to_console, sync, timeout) {
          * сообщение
          */
         else {
-            if (DEBUG) {console.log($.toJSON(json.message))};
+            if (DEBUG) {
+                o = new Object;
+                $.extend(true, o, json.data);
+                console.log(o);
+                console.log($.toJSON(json.message));
+            };
             return callback(json, status, xhr);
         };
     });

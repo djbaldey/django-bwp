@@ -57,8 +57,8 @@ VERSION_DATE            = getattr(settings, 'VERSION_DATE',
 )
 
 PROJECT_NAME            = getattr(settings, 'PROJECT_NAME',             _(u'Example project'))
-PROJECT_SHORTNAME       = getattr(settings, 'PROJECT_SHORTNAME',        _(u'BWP-Example'))
-PROJECT_DESCRIPTION     = getattr(settings, 'PROJECT_DESCRIPTION',      _(u'Example project on Business Web Platform'))
+PROJECT_SHORTNAME       = getattr(settings, 'PROJECT_SHORTNAME',        _(u'Business Web Platform'))
+PROJECT_DESCRIPTION     = getattr(settings, 'PROJECT_DESCRIPTION',      _(u'Fast development of online business applications'))
 
 BOOTSTRAP_VERSION       = getattr(settings, 'BOOTSTRAP_VERSION',        '2.3.1')
 JQUERY_VERSION          = getattr(settings, 'JQUERY_VERSION',           '1.9.1')

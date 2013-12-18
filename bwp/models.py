@@ -640,9 +640,9 @@ class BaseModel(object):
             for f in sorted(self.opts.fields + self.opts.many_to_many):
                 if not f.editable:
                     continue
-                if self.fields is not None and not f.name in self.fields:
+                if self.fields and not f.name in self.fields:
                     continue
-                if self.exclude and f.name in self.exclude:
+                if self.fields_exclude and f.name in self.fields_exclude:
                     continue
                 if isinstance(f, models.AutoField):
                     continue
@@ -1038,6 +1038,7 @@ class ModelBWP(BaseModel):
 
     def __init__(self, components=None, *args, **kwargs):
         self.components = components or getattr(self, 'components', [])
+        self.components_dict = dict([(x.related_name, x ) for x in self.components])
         super(ModelBWP, self).__init__(*args, **kwargs)
 
 def raise_set_field(klass):

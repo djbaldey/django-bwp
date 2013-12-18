@@ -87,10 +87,95 @@ TIME_ZONE = 'Asia/Vladivostok' #'Europe/Moscow'
 # Language code for this installation. All choices can be found here:
 # http://www.i18nguy.com/unicode/language-identifiers.html
 LANGUAGE_CODE = 'ru-ru'
+
+
 LANGUAGES = (
     ('ru', _('Russian')),
     ('en', _('English')),
 )
+
+"""
+LANGUAGES = (
+    ('af',      _('Afrikaans')),
+    ('ar',      _('Arabic')),
+    ('az',      _('Azerbaijani')),
+    ('bg',      _('Bulgarian')),
+    ('be',      _('Belarusian')),
+    ('bn',      _('Bengali')),
+    ('br',      _('Breton')),
+    ('bs',      _('Bosnian')),
+    ('ca',      _('Catalan')),
+    ('cs',      _('Czech')),
+    ('cy',      _('Welsh')),
+    ('da',      _('Danish')),
+    ('de',      _('German')),
+    ('el',      _('Greek')),
+    ('en',      _('English')),
+    ('en-gb',   _('British English')),
+    ('eo',      _('Esperanto')),
+    ('es',      _('Spanish')),
+    ('es-ar',   _('Argentinian Spanish')),
+    ('es-mx',   _('Mexican Spanish')),
+    ('es-ni',   _('Nicaraguan Spanish')),
+    ('es-ve',   _('Venezuelan Spanish')),
+    ('et',      _('Estonian')),
+    ('eu',      _('Basque')),
+    ('fa',      _('Persian')),
+    ('fi',      _('Finnish')),
+    ('fr',      _('French')),
+    ('fy-nl',   _('Frisian')),
+    ('ga',      _('Irish')),
+    ('gl',      _('Galician')),
+    ('he',      _('Hebrew')),
+    ('hi',      _('Hindi')),
+    ('hr',      _('Croatian')),
+    ('hu',      _('Hungarian')),
+    ('ia',      _('Interlingua')),
+    ('id',      _('Indonesian')),
+    ('is',      _('Icelandic')),
+    ('it',      _('Italian')),
+    ('ja',      _('Japanese')),
+    ('ka',      _('Georgian')),
+    ('kk',      _('Kazakh')),
+    ('km',      _('Khmer')),
+    ('kn',      _('Kannada')),
+    ('ko',      _('Korean')),
+    ('lb',      _('Luxembourgish')),
+    ('lt',      _('Lithuanian')),
+    ('lv',      _('Latvian')),
+    ('mk',      _('Macedonian')),
+    ('ml',      _('Malayalam')),
+    ('mn',      _('Mongolian')),
+    ('nb',      _('Norwegian Bokmal')),
+    ('ne',      _('Nepali')),
+    ('nl',      _('Dutch')),
+    ('nn',      _('Norwegian Nynorsk')),
+    ('pa',      _('Punjabi')),
+    ('pl',      _('Polish')),
+    ('pt',      _('Portuguese')),
+    ('pt-br',   _('Brazilian Portuguese')),
+    ('ro',      _('Romanian')),
+    ('ru',      _('Russian')),
+    ('sk',      _('Slovak')),
+    ('sl',      _('Slovenian')),
+    ('sq',      _('Albanian')),
+    ('sr',      _('Serbian')),
+    ('sr-latn', _('Serbian Latin')),
+    ('sv',      _('Swedish')),
+    ('sw',      _('Swahili')),
+    ('ta',      _('Tamil')),
+    ('te',      _('Telugu')),
+    ('th',      _('Thai')),
+    ('tr',      _('Turkish')),
+    ('tt',      _('Tatar')),
+    ('udm',     _('Udmurt')),
+    ('uk',      _('Ukrainian')),
+    ('ur',      _('Urdu')),
+    ('vi',      _('Vietnamese')),
+    ('zh-cn',   _('Simplified Chinese')),
+    ('zh-tw',   _('Traditional Chinese')),
+)
+"""
 
 LOCALE_PATHS = (
     abspath('locale'),
@@ -221,6 +306,8 @@ AUTHENTICATION_BACKENDS = ('bwp.contrib.users.backends.ModelBackend',)
 LOGIN_URL = '/users/login/'
 LOGOUT_URL = '/users/logout/'
 LOGIN_REDIRECT_URL = '/users/profile/'
+
+QUICKAPI_SWITCH_LANGUAGE = False
 
 ########################################################################
 #                   END SETTINGS FOR APPLICATIONS                      #
