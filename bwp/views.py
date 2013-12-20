@@ -587,7 +587,7 @@ def API_delete_object(request, app, model, pk, confirm=False, **kwargs):
         4. **"confirm"** - флаг подтверждения удаления;
 
         ##### ОТВЕТ
-        Формат ключа **"data"**, если подтверждено:
+        Формат ключа **"data"**, если подтверждено или подтверждение не требуется:
         `Boolean`
 
         Если не подтверждено, то передаётся список зависимых объектов,
@@ -619,6 +619,7 @@ def API_delete_object(request, app, model, pk, confirm=False, **kwargs):
             return JSONResponse(data=True)
     else:
         roots = []
+        print model.opts.get_all_related_objects()
         #~ related_objects = model.opts.get_all_related_objects()
 
         return JSONResponse(data=roots)
@@ -636,7 +637,7 @@ def API_action(request, app, model, action, list_pk, confirm=False, **kwargs):
         5. **"confirm"**  - флаг подтверждения действия, если нужен;
         
         ##### ОТВЕТ
-        Формат ключа **"data"**, если подтверждено:
+        Формат ключа **"data"**, если подтверждено или подтверждение не требуется:
         `Boolean`
 
         Если не подтверждено и если требуется подтверждение,
@@ -673,6 +674,7 @@ def API_action(request, app, model, action, list_pk, confirm=False, **kwargs):
             return JSONResponse(data=True)
     else:
         roots = []
+        
         #~ related_objects = model.opts.get_all_related_objects()
 
         return JSONResponse(data=roots)
