@@ -191,80 +191,36 @@ def _get_model(request, app, model):
 @api_required
 @login_required
 def API_get_scheme(request, **kwargs):
-    """ *Возвращает схему приложения, сформированную для конкретного
-        пользователя.*
-        
-        ##### ЗАПРОС
-        Без параметров.
-        
-        ##### ОТВЕТ
-        Формат ключа **"data"**:
-        `
-        - возвращается словарь схемы сервиса.
-        `
+    """ 
+    Возвращает схему приложения, сформированную для конкретного
+    пользователя.
     """
     if not site.has_permission(request):
         return JSONResponse(message=403)
     data = site.get_scheme(request)
     return JSONResponse(data=data)
 
+API_get_scheme.__doc__ = _("""
+*Returns the application schema formed for a specific user.*
+
+#### Request parameters
+Nothing
+
+#### Returned object
+Object (dict) of scheme
+
+""")
+
+
 @api_required
 @login_required
 def API_get_objects(request, app, model, pk=None, foreign=None, component=None, 
     page=1, per_page=None, query=None, ordering=None, fields_search=None, filters=None, **kwargs):
-    """ *Возвращает список объектов.*
-        Если не указан объект, то возвращает список объектов модели.
-        Иначе возвращает связанные объекты композиции или
-        поля для указанного, конкретного объекта.
-
-        ##### ЗАПРОС
-        Параметры:
-
-        1. **"app"**        - название приложения, например: "users";
-        2. **"model"**      - название модели приложения, например: "user";
-        3. **"pk"**         - ключ объекта модели, по-умолчанию == None;
-        4. **"foreign"**    - поле объекта с внешним ключом (fk, m2m, o2o),
-                            объекты которого должны быть возвращены,
-                            по-умолчанию == None;
-        5. **"component"**  - название отношения к модели ComponentBWP, 
-                            объекты которой должны быть возвращены,
-                            по-умолчанию == None;
-
-        6. **"page"**       - номер страницы, по-умолчанию == 1;
-        7. **"per_page"**   - количество на странице, по-умолчанию определяется моделью;
-        8. **"query"**      - поисковый запрос, если есть;
-        9. **"ordering"**   - сортировка объектов, если отлична от умолчания;
-        10. **"fields_search"** - поля объектов для поиска, если отлично от умолчания;
-        11. **"filters"** - дополнительные фильтры, если есть;
-
-        ##### ОТВЕТ
-        Формат ключа **"data"**:
-        `{
-            'count': 2,
-            'end_index': 2,
-            'has_next': false,
-            'has_other_pages': false,
-            'has_previous': false,
-            'next_page_number': 2,
-            'num_pages': 1,
-            'number': 1,
-            'object_list': [
-                {
-                    'pk': 1,
-                    '__unicode__': 'Первый',
-                    'first_name': u'First',
-                    ...
-                },
-                {
-                    'pk': 2,
-                    '__unicode__': 'Второй',
-                    'first_name': u'Second',
-                    ...
-                }
-            ],
-            'previous_page_number': 0,
-            'start_index': 1
-        }`
+    """ 
+    Возвращает список объектов.
+    Если не указан объект, то возвращает список объектов модели.
+    Иначе возвращает связанные объекты композиции или поля для
+    указанного, конкретного объекта.
     """
 
     model = _get_model(request, app, model)
@@ -315,38 +271,73 @@ def API_get_objects(request, app, model, pk=None, foreign=None, component=None,
 
     return JSONResponse(data=objects)
 
+API_get_objects.__doc__ = _("""
+*Returns a list of objects.*
+
+If the object is not specified, returns a list of model objects.
+Otherwise returns related objects composition or field for a specified,
+a specific object.
+
+#### Request parameters
+
+1. **"app"**        - name of the application, for example: "users";
+2. **"model"**      - model name of the application, for example: "user";
+3. **"pk"**         - the key of the object model, the default == None;
+4. **"foreign"**    - object field with a foreign key (fk, m2m, o2o)
+                      whose objects must be returned, the default == None;
+5. **"component"**  - name relationship to the model ComponentBWP,
+                      objects which must be returned,
+                      by default == None;
+
+6. **"page"**       - page number, the default == 1;
+7. **"per_page"**   - the number on the page, the default determined by
+                      the model;
+8. **"query"**      - search query, if there is;
+9. **"ordering"**   - sorting objects, if different from the default;
+10. **"fields_search"** - field objects to find, if different from the
+                          default;
+11. **"filters"**       - additional filters if there are;
+
+#### Returned object
+`{
+    'count': 2,
+    'end_index': 2,
+    'has_next': false,
+    'has_other_pages': false,
+    'has_previous': false,
+    'next_page_number': 2,
+    'num_pages': 1,
+    'number': 1,
+    'object_list': [
+        {
+            'pk': 1,
+            '__unicode__': 'First object',
+            'first_name': 'First',
+            ...
+        },
+        {
+            'pk': 2,
+            '__unicode__': 'Second object',
+            'first_name': 'Second',
+            ...
+        }
+    ],
+    'previous_page_number': 0,
+    'start_index': 1
+}`
+
+""")
+
+
 @api_required
 @login_required
 def API_get_summary(request, app, model, pk=None, component=None, 
     query=None, ordering=None, fields_search=None, filters=None, **kwargs):
-    """ *Возвращает итоговые данные по набору данных.*
-        Если не указан объект, то возвращает для объектов модели.
-        Иначе возвращает для композиции объекта.
-
-        ##### ЗАПРОС
-        Параметры:
-
-        1. **"app"**        - название приложения, например: "users";
-        2. **"model"**      - название модели приложения, например: "user";
-        3. **"pk"**         - ключ объекта модели, по-умолчанию == None;
-        4. **"component"**  - название отношения к модели ComponentBWP, 
-                            объекты которой должны быть возвращены,
-                            по-умолчанию == None;
-        5. **"query"**      - поисковый запрос, если есть;
-        6. **"ordering"**   - сортировка объектов, если отлична от умолчания;
-        7. **"fields_search"** - поля объектов для поиска, если отлично от умолчания;
-        8. **"filters"** - дополнительные фильтры, если есть;
-
-        ##### ОТВЕТ
-        Формат ключа **"data"**:
-        `{
-            'total_sum': 2000.00,
-            'total_avg': 200.00,
-            'discount_sum': 100.00,
-            'discount_avg': 10.00,
-        }`
     """
-
+    Возвращает итоговые данные по набору данных.
+    Если не указан объект, то возвращает для объектов модели.
+    Иначе возвращает для композиции объекта.
+    """
     model = _get_model(request, app, model)
 
     options = {
@@ -377,23 +368,42 @@ def API_get_summary(request, app, model, pk=None, component=None,
 
     return JSONResponse(data=summary)
 
+API_get_summary.__doc__ = _("""
+*Returns a summary of the data set.*
+
+If the object is not specified, it returns the object model.
+Otherwise returns for the composition of the object.
+
+#### Request parameters
+
+1. **"app"**        - name of the application, for example: "users";
+2. **"model"**      - model name of the application, for example: "user";
+3. **"pk"**         - the key of the object model, the default == None;
+4. **"component"**  - name relationship to the model ComponentBWP,
+                      objects which must be returned,
+                      by default == None;
+5. **"query"**      - search query, if there is;
+6. **"ordering"**   - sorting objects, if different from the default;
+7. **"fields_search"** - field objects to find, if different from the
+                         default;
+8. **"filters"**       - additional filters if there are;
+
+#### Returned object
+`{
+    'total_sum': 2000.00,
+    'total_avg': 200.00,
+    'discount_sum': 100.00,
+    'discount_avg': 10.00,
+}`
+
+""")
+
+
 @api_required
 @login_required
 def API_read_object(request, app, model, pk, **kwargs):
-    """ *Считывает из базы данных и возвращает объект.*
-
-        ##### ЗАПРОС
-        Параметры:
-        
-        1. **"app"**    - название приложения, например: "users";
-        2. **"model"**  - название модели приложения, например: "user";
-        3. **"pk"**     - ключ объекта модели;
-
-        ##### ОТВЕТ
-        Формат ключа **"data"**:
-        `{
-            объект
-        }`
+    """
+    Считывает из базы данных и возвращает объект.
     """
 
     model = _get_model(request, app, model)
@@ -408,23 +418,26 @@ def API_read_object(request, app, model, pk, **kwargs):
 
     return JSONResponse(data=model.serialize(obj)[0])
 
+API_read_object.__doc__ = _("""
+*Reads from the database and returns an object.*
+
+#### Request parameters
+
+1. **"app"**    - name of the application, for example: "users";
+2. **"model"**  - model name of the application, for example: "user";
+3. **"pk"**     - the key of the object model;
+
+#### Returned object
+`{ object }`
+
+""")
+
+
 @api_required
 @login_required
 def API_create_object(request, app, model, fields, **kwargs):
-    """ *Создание объекта.*
-
-        ##### ЗАПРОС
-        Параметры:
-
-        1. **"app"**    - название приложения, например: "users";
-        2. **"model"**  - название модели приложения, например: "user";
-        4. **"fields"** - словарь полей для заполнения;
-
-        ##### ОТВЕТ
-        Формат ключа **"data"**:
-        `{
-            объект
-        }`
+    """
+    Создание объекта
     """
 
     model = _get_model(request, app, model)
@@ -484,24 +497,26 @@ def API_create_object(request, app, model, fields, **kwargs):
 
     return JSONResponse(data=model.serialize(obj)[0])
 
+API_create_object.__doc__ = _("""
+*Object creation.*
+
+#### Request parameters
+
+1. **"app"**    - name of the application, for example: "users";
+2. **"model"**  - model name of the application, for example: "user";
+3. **"fields"** - dictionary fields;
+
+#### Returned object
+`{ object }`
+
+""")
+
+
 @api_required
 @login_required
 def API_update_object(request, app, model, pk, fields, **kwargs):
-    """ *Обновление полей объекта.*
-
-        ##### ЗАПРОС
-        Параметры:
-
-        1. **"app"**    - название приложения, например: "users";
-        2. **"model"**  - название модели приложения, например: "user";
-        3. **"pk"**     - ключ объекта модели;
-        4. **"fields"** - словарь полей для изменения;
-
-        ##### ОТВЕТ
-        Формат ключа **"data"**:
-        `{
-            объект
-        }`
+    """
+    Обновление полей объекта
     """
 
     if not fields:
@@ -573,26 +588,29 @@ def API_update_object(request, app, model, pk, fields, **kwargs):
 
     return JSONResponse(data=model.serialize(obj)[0])
 
+API_update_object.__doc__ = _("""
+*Update the object's fields.*
+
+#### Request parameters
+
+1. **"app"**    - name of the application, for example: "users";
+2. **"model"**  - model name of the application, for example: "user";
+3. **"pk"**     - the key of the object model;
+3. **"fields"** - dictionary fields for update;
+
+#### Returned object
+`{ object }`
+
+""")
+
+
 @api_required
 @login_required
 def API_delete_object(request, app, model, pk, confirm=False, **kwargs):
-    """ *Удаление объекта.*
-
-        ##### ЗАПРОС
-        Параметры:
-
-        1. **"app"**    - название приложения, например: "users";
-        2. **"model"**  - название модели приложения, например: "user";
-        3. **"pk"**     - ключ объекта модели;
-        4. **"confirm"** - флаг подтверждения удаления;
-
-        ##### ОТВЕТ
-        Формат ключа **"data"**, если подтверждено или подтверждение не требуется:
-        `Boolean`
-
-        Если не подтверждено, то передаётся список зависимых объектов,
-        которые будут удалены вместе с этим объектом.
-
+    """
+    Удаление объекта.
+    Если не подтверждено, то передаётся список зависимых объектов,
+    которые будут удалены вместе с этим объектом.
     """
 
     model = _get_model(request, app, model)
@@ -624,36 +642,34 @@ def API_delete_object(request, app, model, pk, confirm=False, **kwargs):
 
         return JSONResponse(data=roots)
 
+API_delete_object.__doc__ = _("""
+*Deleting an object.*
+
+#### Request parameters
+
+1. **"app"**     - name of the application, for example: "users";
+2. **"model"**   - model name of the application, for example: "user";
+3. **"pk"**      - the key of the object model;
+4. **"confirm"** - flag confirm the removal;
+
+#### Returned object
+If confirmed, or the confirmation is not required:
+`Boolean`
+
+If not confirmed, then transferred to the list of dependent objects
+that are removed together with this object.
+
+""")
+
+
 @api_required
 @login_required
 def API_action(request, app, model, action, list_pk, confirm=False, **kwargs):
-    """ *Действие со списком объектов.*
-        
-        ##### ЗАПРОС
-        1. **"app"**     - название приложения, например: "users";
-        2. **"model"**   - название модели приложения, например: "user";
-        3. **"action"**  - действие, например: "delete";
-        4. **"list_pk"** - список ключей объекта модели;
-        5. **"confirm"**  - флаг подтверждения действия, если нужен;
-        
-        ##### ОТВЕТ
-        Формат ключа **"data"**, если подтверждено или подтверждение не требуется:
-        `Boolean`
-
-        Если не подтверждено и если требуется подтверждение,
-        то передаётся иерархический список объектов,
-        и сообщение подтверждения, например:
-        `{
-        'message': 'Все объекты будут удалены. Вы дествительно желаете сделать это?',
-        'objects': [
-            <object1>,
-            [<object2>, [<nested_2.1>, <nested_2.2>]],
-            [<object3>, [
-                [<nested_3.1>, [<nested_3.1.1>, <nested_3.1.2>]],
-                [<nested_3.2>, [<nested_3.2.1>, <nested_3.2.2>]],
-                ...
-            ]],
-        }`
+    """
+    Действие со списком объектов.
+    Если не подтверждено и если требуется подтверждение,
+    то передаётся иерархический список объектов,
+    и сообщение подтверждения
     """
 
     model = _get_model(request, app, model)
@@ -679,6 +695,39 @@ def API_action(request, app, model, action, list_pk, confirm=False, **kwargs):
 
         return JSONResponse(data=roots)
 
+API_action.__doc__ = _("""
+*Action from the list of objects.*
+
+#### Request parameters
+
+1. **"app"**     - name of the application, for example: "users";
+2. **"model"**   - model name of the application, for example: "user";
+3. **"action"**  - action, example: "delete";
+4. **"list_pk"** - list object keys of model;
+5. **"confirm"** - flag confirm the removal, if need;
+
+#### Returned object
+
+If confirmed, or the confirmation is not required:
+`Boolean`
+
+If not confirmed, and if confirmation is required, then transferred to
+the hierarchical list of objects and a confirmation message, example:
+
+`{
+'message': 'All the objects will be deleted. You really want to do this?',
+'objects': [
+    <object1>,
+    [<object2>, [<nested_2.1>, <nested_2.2>]],
+    [<object3>, [
+        [<nested_3.1>, [<nested_3.1.1>, <nested_3.1.2>]],
+        [<nested_3.2>, [<nested_3.2.1>, <nested_3.2.2>]],
+        ...
+    ]],
+}`
+
+""")
+
 
 @api_required
 @login_required
@@ -696,6 +745,11 @@ def API_device_list(request, **kwargs):
     if site.devices:
         data = site.devices.get_list()
     return JSONResponse(data=data)
+
+#~ API_device_list.__doc__ = _(
+#~ 
+#~ )
+
 
 @api_required
 @login_required
@@ -728,6 +782,11 @@ def API_device_command(request, device, command, params={}, **kwargs):
                 message = str(e)
             return JSONResponse(status=400, message=message)
     return JSONResponse(status=400)
+
+#~ API_device_command.__doc__ = _(
+#~ 
+#~ )
+
 
 @api_required
 @login_required
@@ -768,6 +827,11 @@ def API_get_collection_report_url(request, model, report,
     url = report.render_to_media_url(context=ctx, user=request.user)
     return JSONResponse(data=url)
 
+#~ API_get_collection_report_url.__doc__ = _(
+#~ 
+#~ )
+
+
 @api_required
 @login_required
 def API_get_object_report_url(request, model, pk, report, **kwargs):
@@ -801,6 +865,11 @@ def API_get_object_report_url(request, model, pk, report, **kwargs):
     ctx = {'data': obj}
     url = report.render_to_media_url(context=ctx, user=request.user)
     return JSONResponse(data=url)
+
+#~ API_get_object_report_url.__doc__ = _(
+#~ 
+#~ )
+
 
 dict_methods = {
     'get_scheme':    'bwp.views.API_get_scheme',
