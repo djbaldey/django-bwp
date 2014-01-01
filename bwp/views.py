@@ -49,7 +49,7 @@ from django.forms.models import modelform_factory
 from django.utils.encoding import smart_unicode
 
 from quickapi.http import JSONResponse, JSONRedirect, MESSAGES, DjangoJSONEncoder
-from quickapi.views import index as quickapi_index
+from quickapi.views import index as quickapi_index, get_methods
 from quickapi.decorators import login_required, api_required
 
 from bwp.sites import site
@@ -637,23 +637,29 @@ def API_get_object_report_url(request, model, pk, report, **kwargs):
     url = report.render_to_media_url(context=ctx, user=request.user)
     return JSONResponse(data=url)
 
-QUICKAPI_DEFINED_METHODS = {
-    'get_apps':         'bwp.views.API_get_apps',
-    'get_settings':     'bwp.views.API_get_settings',
-    'get_object':       'bwp.views.API_get_object',
-    'get_collection':   'bwp.views.API_get_collection',
-    'm2m_commit':       'bwp.views.API_m2m_commit',
-    'commit':           'bwp.views.API_commit',
-    'get_collection_report_url': 'bwp.views.API_get_collection_report_url',
-    'get_object_report_url': 'bwp.views.API_get_object_report_url',
-}
+_methods = [
+    ('get_apps',         'bwp.views.API_get_apps'),
+    ('get_settings',     'bwp.views.API_get_settings'),
+    ('get_object',       'bwp.views.API_get_object'),
+    ('get_collection',   'bwp.views.API_get_collection'),
+    ('m2m_commit',       'bwp.views.API_m2m_commit'),
+    ('commit',           'bwp.views.API_commit'),
+    ('get_collection_report_url', 'bwp.views.API_get_collection_report_url'),
+    ('get_object_report_url', 'bwp.views.API_get_object_report_url'),
+]
+
+if site.devices:
+    _methods.extend([
+        ('devices_list', 'bwp.views.API_device_list'),
+        ('devices_command', 'bwp.views.API_device_command'),
+    ])
+
+# store prepared methods
+METHODS = get_methods(_methods)
 
 @csrf_exempt
 def api(request):
-    if site.devices:
-        QUICKAPI_DEFINED_METHODS['device_list']    = 'bwp.views.API_device_list'
-        QUICKAPI_DEFINED_METHODS['device_command'] = 'bwp.views.API_device_command'
-    return quickapi_index(request, QUICKAPI_DEFINED_METHODS)
+    return quickapi_index(request, METHODS)
 
 ########################################################################
 #                             END API                                  #
