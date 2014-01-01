@@ -93,6 +93,10 @@ urlpatterns = patterns('bwp.views',
     url(r'^accounts/logout/$', 'logout', name="logout_redirect"),
 )
 
+urlpatterns += patterns('quickapi.views',
+    url(r'^api/test/$', 'test',    name="quickapi_test"),
+)
+
 if 'tinymce' in settings.INSTALLED_APPS:
     urlpatterns += patterns('',
         url(r'^tinymce/', include('tinymce.urls')),

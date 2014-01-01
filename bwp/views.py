@@ -190,7 +190,7 @@ def _get_model(request, app, model):
 
 @api_required
 @login_required
-def API_get_scheme(request, **kwargs):
+def API_bwp_scheme(request, **kwargs):
     """ 
     Возвращает схему приложения, сформированную для конкретного
     пользователя.
@@ -200,7 +200,7 @@ def API_get_scheme(request, **kwargs):
     data = site.get_scheme(request)
     return JSONResponse(data=data)
 
-API_get_scheme.__doc__ = _("""
+API_bwp_scheme.__doc__ = _("""
 *Returns the application schema formed for a specific user.*
 
 #### Request parameters
@@ -214,7 +214,7 @@ Object (dict) of scheme
 
 @api_required
 @login_required
-def API_get_objects(request, app, model, pk=None, foreign=None, component=None, 
+def API_model_objects(request, app, model, pk=None, foreign=None, component=None, 
     page=1, per_page=None, query=None, ordering=None, fields_search=None, filters=None, **kwargs):
     """ 
     Возвращает список объектов.
@@ -271,7 +271,7 @@ def API_get_objects(request, app, model, pk=None, foreign=None, component=None,
 
     return JSONResponse(data=objects)
 
-API_get_objects.__doc__ = _("""
+API_model_objects.__doc__ = _("""
 *Returns a list of objects.*
 
 If the object is not specified, returns a list of model objects.
@@ -331,7 +331,7 @@ a specific object.
 
 @api_required
 @login_required
-def API_get_summary(request, app, model, pk=None, component=None, 
+def API_model_summary(request, app, model, pk=None, component=None, 
     query=None, ordering=None, fields_search=None, filters=None, **kwargs):
     """
     Возвращает итоговые данные по набору данных.
@@ -368,7 +368,7 @@ def API_get_summary(request, app, model, pk=None, component=None,
 
     return JSONResponse(data=summary)
 
-API_get_summary.__doc__ = _("""
+API_model_summary.__doc__ = _("""
 *Returns a summary of the data set.*
 
 If the object is not specified, it returns the object model.
@@ -401,7 +401,74 @@ Otherwise returns for the composition of the object.
 
 @api_required
 @login_required
-def API_read_object(request, app, model, pk, **kwargs):
+def API_model_action(request, app, model, action, list_pk, confirm=False, **kwargs):
+    """
+    Действие со списком объектов.
+    Если не подтверждено и если требуется подтверждение,
+    то передаётся иерархический список объектов,
+    и сообщение подтверждения
+    """
+
+    model = _get_model(request, app, model)
+
+    using = router.db_for_write(model.model)
+    manager = model.model._default_manager.usung(using)
+
+    objects = manager.filter(pk__in=list_pk)
+
+    # TODO: реализовать действия и возврат списка удаляемых объектов
+
+    if confirm:
+        try:
+            model.action(action, objects)
+        except Exception as e:
+            return JSONResponse(status=400, message=unicode(e))
+        else:
+            return JSONResponse(data=True)
+    else:
+        roots = []
+        
+        #~ related_objects = model.opts.get_all_related_objects()
+
+        return JSONResponse(data=roots)
+
+API_model_action.__doc__ = _("""
+*Action for the list of objects.*
+
+#### Request parameters
+
+1. **"app"**     - name of the application, for example: "users";
+2. **"model"**   - model name of the application, for example: "user";
+3. **"action"**  - action, example: "delete";
+4. **"list_pk"** - list object keys of model;
+5. **"confirm"** - flag confirm, if need;
+
+#### Returned object
+
+If confirmed, or the confirmation is not required:
+`Boolean`
+
+If not confirmed, and if confirmation is required, then transferred to
+the hierarchical list of objects and a confirmation message, example:
+
+`{
+'message': 'All the objects will be deleted. You really want to do this?',
+'objects': [
+    <object1>,
+    [<object2>, [<nested_2.1>, <nested_2.2>]],
+    [<object3>, [
+        [<nested_3.1>, [<nested_3.1.1>, <nested_3.1.2>]],
+        [<nested_3.2>, [<nested_3.2.1>, <nested_3.2.2>]],
+        ...
+    ]],
+}`
+
+""")
+
+
+@api_required
+@login_required
+def API_object_read(request, app, model, pk, **kwargs):
     """
     Считывает из базы данных и возвращает объект.
     """
@@ -418,7 +485,7 @@ def API_read_object(request, app, model, pk, **kwargs):
 
     return JSONResponse(data=model.serialize(obj)[0])
 
-API_read_object.__doc__ = _("""
+API_object_read.__doc__ = _("""
 *Reads from the database and returns an object.*
 
 #### Request parameters
@@ -435,7 +502,7 @@ API_read_object.__doc__ = _("""
 
 @api_required
 @login_required
-def API_create_object(request, app, model, fields, **kwargs):
+def API_object_create(request, app, model, fields, **kwargs):
     """
     Создание объекта
     """
@@ -497,7 +564,7 @@ def API_create_object(request, app, model, fields, **kwargs):
 
     return JSONResponse(data=model.serialize(obj)[0])
 
-API_create_object.__doc__ = _("""
+API_object_create.__doc__ = _("""
 *Object creation.*
 
 #### Request parameters
@@ -514,7 +581,7 @@ API_create_object.__doc__ = _("""
 
 @api_required
 @login_required
-def API_update_object(request, app, model, pk, fields, **kwargs):
+def API_object_update(request, app, model, pk, fields, **kwargs):
     """
     Обновление полей объекта
     """
@@ -588,7 +655,7 @@ def API_update_object(request, app, model, pk, fields, **kwargs):
 
     return JSONResponse(data=model.serialize(obj)[0])
 
-API_update_object.__doc__ = _("""
+API_object_update.__doc__ = _("""
 *Update the object's fields.*
 
 #### Request parameters
@@ -606,7 +673,7 @@ API_update_object.__doc__ = _("""
 
 @api_required
 @login_required
-def API_delete_object(request, app, model, pk, confirm=False, **kwargs):
+def API_object_delete(request, app, model, pk, confirm=False, **kwargs):
     """
     Удаление объекта.
     Если не подтверждено, то передаётся список зависимых объектов,
@@ -642,7 +709,7 @@ def API_delete_object(request, app, model, pk, confirm=False, **kwargs):
 
         return JSONResponse(data=roots)
 
-API_delete_object.__doc__ = _("""
+API_object_delete.__doc__ = _("""
 *Deleting an object.*
 
 #### Request parameters
@@ -664,108 +731,32 @@ that are removed together with this object.
 
 @api_required
 @login_required
-def API_action(request, app, model, action, list_pk, confirm=False, **kwargs):
+def API_devices_list(request, **kwargs):
     """
-    Действие со списком объектов.
-    Если не подтверждено и если требуется подтверждение,
-    то передаётся иерархический список объектов,
-    и сообщение подтверждения
-    """
-
-    model = _get_model(request, app, model)
-
-    using = router.db_for_write(model.model)
-    manager = model.model._default_manager.usung(using)
-
-    objects = manager.filter(pk__in=list_pk)
-
-    # TODO: реализовать действия и возврат списка удаляемых объектов
-
-    if confirm:
-        try:
-            model.action(action, objects)
-        except Exception as e:
-            return JSONResponse(status=400, message=unicode(e))
-        else:
-            return JSONResponse(data=True)
-    else:
-        roots = []
-        
-        #~ related_objects = model.opts.get_all_related_objects()
-
-        return JSONResponse(data=roots)
-
-API_action.__doc__ = _("""
-*Action from the list of objects.*
-
-#### Request parameters
-
-1. **"app"**     - name of the application, for example: "users";
-2. **"model"**   - model name of the application, for example: "user";
-3. **"action"**  - action, example: "delete";
-4. **"list_pk"** - list object keys of model;
-5. **"confirm"** - flag confirm the removal, if need;
-
-#### Returned object
-
-If confirmed, or the confirmation is not required:
-`Boolean`
-
-If not confirmed, and if confirmation is required, then transferred to
-the hierarchical list of objects and a confirmation message, example:
-
-`{
-'message': 'All the objects will be deleted. You really want to do this?',
-'objects': [
-    <object1>,
-    [<object2>, [<nested_2.1>, <nested_2.2>]],
-    [<object3>, [
-        [<nested_3.1>, [<nested_3.1.1>, <nested_3.1.2>]],
-        [<nested_3.2>, [<nested_3.2.1>, <nested_3.2.2>]],
-        ...
-    ]],
-}`
-
-""")
-
-
-@api_required
-@login_required
-def API_device_list(request, **kwargs):
-    """ *Получение списка доступных устройств.*
-        
-        ##### ЗАПРОС
-        Без параметров.
-        
-        ##### ОТВЕТ
-        Формат ключа **"data"**:
-        список устройств
+    Получение списка доступных устройств
     """
     data = []
     if site.devices:
         data = site.devices.get_list()
     return JSONResponse(data=data)
 
-#~ API_device_list.__doc__ = _(
-#~ 
-#~ )
+API_devices_list.__doc__ = _("""
+*Getting a list of available devices.*
+
+#### Request parameters
+Nothing
+
+#### Returned object
+list of available devices
+
+""")
 
 
 @api_required
 @login_required
-def API_device_command(request, device, command, params={}, **kwargs):
-    """ *Выполнение команды на устройстве.*
-        
-        ##### ЗАПРОС
-        Параметры:
-        
-        1. **"device"** - идентификатор устройства;
-        2. **"command"** - команда(метод) устройства;
-        3. **"params"** - параметры к команде (по-умолчанию == {});
-        
-        ##### ОТВЕТ
-        Формат ключа **"data"**:
-        результат выполнения команды
+def API_devices_exec(request, device, command, params={}, **kwargs):
+    """
+    Выполнение команды на устройстве
     """
     # Получение устройства согласно привилегий
     device = site.devices.get_devices(request).get(device)
@@ -783,109 +774,43 @@ def API_device_command(request, device, command, params={}, **kwargs):
             return JSONResponse(status=400, message=message)
     return JSONResponse(status=400)
 
-#~ API_device_command.__doc__ = _(
-#~ 
-#~ )
+API_devices_exec.__doc__ = _("""
+*The execution of commands on the device.*
+
+#### Request parameters
+
+1. **"device"**  - device ID;
+2. **"command"** - command(method) of device;
+3. **"params"**  - parameters for command (default == {});
+
+#### Returned object
+the result of the command
+
+""")
 
 
-@api_required
-@login_required
-def API_get_collection_report_url(request, model, report,
-    query=None, order_by=None, fields=None, filters=None, **kwargs):
-    """ *Формирование отчёта для коллекции.*
-
-        ##### ЗАПРОС
-        Параметры:
-
-        1. **"model"** - уникальное название модели, например: "auth.user";
-        2. **"report"** - ключ отчёта;
-        3. **"query"** - поисковый запрос;
-        4. **"order_by"** - сортировка объектов.
-        5. **"fields"** - поля объектов для поиска.
-        6. **"filters"** - дополнительные фильтры.
-
-        ##### ОТВЕТ
-        ссылка на файл сформированного отчёта
-    """
-    # Получаем модель BWP со стандартной проверкой прав
-    model_bwp = site.bwp_dict(request).get(model)
-    report = Report.objects.get(pk=report)
-
-    options = {
-        'request': request,
-        'query': query,
-        'order_by': order_by,
-        'fields': fields,
-        'filters': filters,
-    }
-
-    qs = model_bwp.filter_queryset(**options)
-    
-    filters = filters or []
-
-    ctx = {'data': qs, 'filters': [ x for x in filters if x['active']]}
-    url = report.render_to_media_url(context=ctx, user=request.user)
-    return JSONResponse(data=url)
-
-#~ API_get_collection_report_url.__doc__ = _(
-#~ 
-#~ )
-
-
-@api_required
-@login_required
-def API_get_object_report_url(request, model, pk, report, **kwargs):
-    """ *Формирование отчёта для объекта.*
-
-        ##### ЗАПРОС
-        Параметры:
-
-        1. **"model"** - уникальное название модели, например: "auth.user";
-        2. **"pk"** - ключ объекта;
-        3. **"report"** - ключ отчёта;
-
-        ##### ОТВЕТ
-        ссылка на файл сформированного отчёта
-    """
-    # Получаем модель BWP со стандартной проверкой прав
-    model_bwp = site.bwp_dict(request).get(model)
-    report = Report.objects.get(pk=report)
-
-    if pk is None:
-        return HttpResponseBadRequest()
-
-    options = {
-        'request': request,
-        'pk': pk,
-        'as_lookup': True,
-    }
-
-    obj = model_bwp.queryset(request, **kwargs).get(pk=pk)
-
-    ctx = {'data': obj}
-    url = report.render_to_media_url(context=ctx, user=request.user)
-    return JSONResponse(data=url)
-
-#~ API_get_object_report_url.__doc__ = _(
-#~ 
-#~ )
-
-
-dict_methods = {
-    'get_scheme':    'bwp.views.API_get_scheme',
-    'get_objects':   'bwp.views.API_get_objects',
-    'get_summary':   'bwp.views.API_get_summary',
-    'read_object':   'bwp.views.API_read_object',
-    'create_object': 'bwp.views.API_create_object',
-    'update_object': 'bwp.views.API_update_object',
-    'delete_object': 'bwp.views.API_delete_object',
-}
+_methods = [
+    ('bwp.scheme',    'bwp.views.API_bwp_scheme'),
+    ('model.objects', 'bwp.views.API_model_objects'),
+    ('model.summary', 'bwp.views.API_model_summary'),
+    ('model.action',  'bwp.views.API_model_action'),
+    ('object.create', 'bwp.views.API_object_create'),
+    ('object.read',   'bwp.views.API_object_read'),
+    ('object.update', 'bwp.views.API_object_update'),
+    ('object.delete', 'bwp.views.API_object_delete'),
+    # Test without site.devices:
+    #~ ('devices.list', 'bwp.views.API_devices_list'),
+    #~ ('devices.exec', 'bwp.views.API_devices_exec'),
+]
 
 if hasattr(site, 'devices'):
-    dict_methods['device_list']    = 'bwp.views.API_device_list'
-    dict_methods['device_command'] = 'bwp.views.API_device_command'
+    _methods.extend([
+        ('devices.list', 'bwp.views.API_devices_list'),
+        ('devices.exec', 'bwp.views.API_devices_exec'),
+    ])
 
-METHODS = get_methods(dict_methods)
+# store prepared methods
+METHODS = get_methods(_methods)
 
 @csrf_exempt
 def api(request):
