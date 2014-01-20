@@ -582,7 +582,7 @@ class BaseModel(object):
     def queryset_from_filters(self, queryset, filters, **kwargs):
         qs = queryset
         for f in filters:
-            print f
+            #~ print f
             if f.get('active', False):
                 if f.get('inverse', False):
                     action = qs.exclude
@@ -616,7 +616,7 @@ class BaseModel(object):
                     if bit == '':
                         continue
                 qs = action(models.Q(**{orm_lookup: bit}),)
-        print qs.query
+        #~ print qs.query
         return qs
 
     def queryset(self, request=None, filters=[], **kwargs):
