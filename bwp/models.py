@@ -443,6 +443,10 @@ class BaseModel(object):
     def get_filters(self):
         """ Возвращает словарь фильтров """
         def _get_filter(field):
+            if isinstance(field, (tuple, list)):
+                info = _get_filter(field[0])
+                info['field_title'] = field[1] + ': ' + info['field_title']
+                return info
             if isinstance(field, (str, unicode)):
                 orign = field
                 opts = self.opts
@@ -450,10 +454,14 @@ class BaseModel(object):
                 title = ''
                 for f in fields:
                     field = opts.get_field_by_name(f)[0]
-                    if field.rel:
+                    rel = getattr(field, 'rel', None)
+                    if rel:
                         title += unicode(field.verbose_name) + ': '
-                        field = field.rel.get_related_field()
+                        field = rel.get_related_field()
                         opts = field.model._meta
+                    elif hasattr(field, 'parent_model'):
+                        title += unicode(field)
+                        field = field.field
                     else:
                         title += unicode(field.verbose_name)
             else:
@@ -574,7 +582,7 @@ class BaseModel(object):
     def queryset_from_filters(self, queryset, filters, **kwargs):
         qs = queryset
         for f in filters:
-            #~ print f
+            print f
             if f.get('active', False):
                 if f.get('inverse', False):
                     action = qs.exclude
@@ -585,6 +593,13 @@ class BaseModel(object):
                 if _type == 'blank':
                     orm_lookup = '%s__exact' % _field
                     bit = ''
+                elif _type == 'isnull':
+                    orm_lookup = '%s__isnull' % _field
+                    try:
+                        bit = f.get('values')[0]
+                        bit = True
+                    except:
+                        bit = False
                 elif _type in ('in', 'range'):
                     orm_lookup = '%s__%s' % (_field, _type)
                     bit = f.get('values')
@@ -601,6 +616,7 @@ class BaseModel(object):
                     if bit == '':
                         continue
                 qs = action(models.Q(**{orm_lookup: bit}),)
+        print qs.query
         return qs
 
     def queryset(self, request=None, filters=[], **kwargs):

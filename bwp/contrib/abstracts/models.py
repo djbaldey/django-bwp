@@ -38,7 +38,7 @@
 """
 from django.db import models, transaction
 from django.utils.translation import ugettext_lazy as _
-from django.utils import dateformat
+from django.utils import dateformat, timezone
 from django.contrib.auth.models import User
 from django.conf import settings 
 
@@ -226,7 +226,7 @@ class AbstractDocumentDate(models.Model):
             doc = self._meta.verbose_name.split(' ')
             doc[0] = doc[0].title()
             return _('%(document)s from %(date)s') % {
-                'document': ' '.join(doc), 'date': self.date
+                'document': ' '.join(doc), 'date': timezone.localtime(self.date)
             }
         else:
             return _('New document')
@@ -236,7 +236,7 @@ class AbstractDocumentDate(models.Model):
         abstract = True
 
     def save(self, **kwargs):
-        self.date = self.date or datetime.datetime.now().date()
+        self.date = self.date or timezone.now().date()
         super(AbstractDocumentDate, self).save(**kwargs)
 
 class AbstractDocumentDateTime(models.Model):
@@ -253,7 +253,7 @@ class AbstractDocumentDateTime(models.Model):
             doc[0] = doc[0].title()
             return _('%(document)s from %(date)s') % {
                 'document': ' '.join(doc),
-                'date': dateformat.format(self.date_time,
+                'date': dateformat.format(timezone.localtime(self.date_time),
                     'Y-m-d H:i:s') if self.date_time else 'None'
             }
         else:
@@ -264,7 +264,7 @@ class AbstractDocumentDateTime(models.Model):
         abstract = True
 
     def save(self, **kwargs):
-        self.date_time = self.date_time or datetime.datetime.now()
+        self.date_time = self.date_time or timezone.now()
         super(AbstractDocumentDateTime, self).save(**kwargs)
 
 class AbstractGroup(models.Model):
@@ -685,7 +685,7 @@ class AbstractData(models.Model):
 
     def upload_to(self, filename):
         classname = self.__class__.__name__.lower()
-        date = datetime.date.today()
+        date = timezone.now().date()
         dic = {
             'classname': classname,
             'filename': self.get_default_filename(filename),
