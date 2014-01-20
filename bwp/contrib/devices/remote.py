@@ -113,8 +113,12 @@ class BaseAPI(object):
         status = data.get('status', None)
         if status != 200:
             msg = data.get('message')
+            try:
+                msg = smart_unicode(msg)
+            except:
+                pass
             print 'RemoteCommand:', msg
-            raise BaseAPICleanError(smart_unicode(msg))
+            raise BaseAPICleanError(msg)
         return data['data']
 
     def method(self, method, **kwargs):

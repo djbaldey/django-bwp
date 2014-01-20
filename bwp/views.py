@@ -650,8 +650,8 @@ _methods = [
 
 if site.devices:
     _methods.extend([
-        ('devices_list', 'bwp.views.API_device_list'),
-        ('devices_command', 'bwp.views.API_device_command'),
+        ('device_list', 'bwp.views.API_device_list'),
+        ('device_command', 'bwp.views.API_device_command'),
     ])
 
 # store prepared methods
