@@ -194,7 +194,7 @@ def set_file_fields(bwp_model, instance, data):
             try:
                 upl = TempUploadFile.objects.get(pk=temp_id) 
             except Exception as e:
-                print e
+                print '[ERROR] bwp.views.set_file_fields', e
                 continue
             else:
                 real_field = getattr(instance, field)
@@ -509,7 +509,7 @@ def API_commit(request, objects, **kwargs):
                         return JSONResponse(status=400, message=smart_unicode(form.errors))
 
     except Exception as e:
-        print e
+        print '[ERROR] bwp.views.API_commit', e
         transaction.rollback()
         print_debug('def API_commit.objects ==', objects)
         if settings.DEBUG:
@@ -560,7 +560,7 @@ def API_device_command(request, device, command, params={}, **kwargs):
             data = attr(**params)
             return JSONResponse(data=data)
         except Exception as e:
-            print e
+            print '[ERROR] bwp.views.API_device_command', e
             return JSONResponse(status=400, message=smart_unicode(e))
     return JSONResponse(status=400)
 
