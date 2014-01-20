@@ -560,7 +560,7 @@ def API_device_command(request, device, command, params={}, **kwargs):
             data = attr(**params)
             return JSONResponse(data=data)
         except Exception as e:
-            print '[ERROR] bwp.views.API_device_command', e
+            print '[ERROR] bwp.views.API_device_command', smart_unicode(e)
             return JSONResponse(status=400, message=smart_unicode(e))
     return JSONResponse(status=400)
 
