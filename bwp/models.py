@@ -281,6 +281,7 @@ class BaseModel(object):
     hidden              = False
     allow_copy          = True
     allow_clone         = None
+    manager             = None
     
     # Набор ключей для предоставления метаданных об этой модели.
     metakeys = ('list_display', 'list_display_css', 'list_per_page',
@@ -619,8 +620,13 @@ class BaseModel(object):
         #~ print qs.query
         return qs
 
+    def get_manager(self):
+        if self.manager:
+            return self.manager
+        return self.model._default_manager
+
     def queryset(self, request=None, filters=[], **kwargs):
-        qs = self.model._default_manager.get_query_set()
+        qs = self.get_manager().get_query_set()
         if filters:
             qs = self.queryset_from_filters(qs, filters, **kwargs)
         return qs

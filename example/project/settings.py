@@ -62,12 +62,14 @@ except:
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': abspath('example.sqlite'),                      # Or path to database file if using sqlite3.
-        'USER': '',                      # Not used with sqlite3.
-        'PASSWORD': '',                  # Not used with sqlite3.
-        'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
-        'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+                  # Only 'postgresql_psycopg2' for warehouses, or set
+                  # 'mysql', 'sqlite3' or 'oracle'.
+        'NAME': 'bwp',
+        'USER': 'bwp',
+        'PASSWORD': 'bwp',
+        'HOST': 'localhost', # Or set to empty string for localhost
+        'PORT': '',
     }
 }
 
@@ -95,10 +97,7 @@ USE_I18N = True
 USE_L10N = True
 
 # If you set this to False, Django will not use timezone-aware datetimes.
-if DATABASES['default']['ENGINE'] == 'django.db.backends.sqlite3':
-    USE_TZ = False
-else:
-    USE_TZ = True
+USE_TZ = True
 
 LOCALE_PATHS = (
     # abspath('locale'),
@@ -206,6 +205,7 @@ INSTALLED_APPS = (
     'bwp.contrib.contacts',
     'bwp.contrib.qualifiers',
     'bwp.contrib.devices',
+    'bwp.contrib.warehouses',
     'project.tests',
 )
 

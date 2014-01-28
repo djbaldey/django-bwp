@@ -38,9 +38,103 @@
 """
 from django.utils.translation import ugettext_lazy as _
 from bwp.sites import site
-from bwp.models import ModelBWP
+from bwp.models import ModelBWP, ComposeBWP
 from models import *
 
-class TemplateAdmin(ModelBWP):
-    list_display = ('__unicode__', 'id')
-site.register(Template, TemplateAdmin)
+site.register(NOMENCLATURE_MODEL, ModelBWP)
+
+site.register(Warehouse, ModelBWP)
+
+class PartyCompose(ComposeBWP):
+    verbose_name = _('parties')
+    list_display = (
+        'nomenclature',
+        'doc_count',
+        'doc_price',
+        'doc_summa',
+        'id',
+    )
+
+class StockCompose(PartyCompose):
+    model = Stock
+
+class StockMovingOutCompose(PartyCompose):
+    model = StockMovingOut
+    #~ verbose_name = _('from warehouse')
+
+class StockMovingInCompose(PartyCompose):
+    model = StockMovingIn
+    #~ verbose_name = _('to warehouse')
+
+class StockIncomingCompose(PartyCompose):
+    model = StockIncoming
+
+class StockOutcomingCompose(PartyCompose):
+    model = StockOutcoming
+
+class StockInventoryCompose(PartyCompose):
+    model = StockInventory
+
+class DocumentBWP(ModelBWP):
+    manager = Document.objects
+    list_display = (
+        '__unicode__',
+        ('summa', _('summa')),
+        'id',
+    )
+    compositions = [
+        ('parties',     StockCompose),
+    ]
+
+site.register(Document, DocumentBWP)
+
+class MovingBWP(DocumentBWP):
+    manager = Moving.objects
+    compositions = [
+        ('out_parties', StockMovingOutCompose),
+        #~ ('parties', StockMovingInCompose),
+    ]
+site.register(Moving, MovingBWP)
+
+class IncomingBWP(DocumentBWP):
+    manager = Incoming.objects
+    compositions = [
+        ('parties', StockIncomingCompose),
+    ]
+site.register(Incoming, IncomingBWP)
+
+class OutcomingBWP(DocumentBWP):
+    manager = Outcoming.objects
+    compositions = [
+        ('parties', StockOutcomingCompose),
+    ]
+site.register(Outcoming, OutcomingBWP)
+
+class InventoryBWP(DocumentBWP):
+    manager = Inventory.objects
+    compositions = [
+        ('parties', StockInventoryCompose),
+    ]
+site.register(Inventory, InventoryBWP)
+
+class StockBWP(ModelBWP):
+    list_display = (
+        '__unicode__',
+        'doc_count',
+        'doc_price',
+        'doc_summa',
+        'count',
+        'price',
+        'summa',
+        'kind',
+        ('warehouse_bwp', _('warehouse')),
+        ('document_bwp', _('document')),
+        'id',
+    )
+
+site.register(Stock, StockBWP)
+site.register(StockMovingOut, ModelBWP)
+site.register(StockMovingIn, ModelBWP)
+site.register(StockIncoming, ModelBWP)
+site.register(StockOutcoming, ModelBWP)
+site.register(StockInventory, ModelBWP)
