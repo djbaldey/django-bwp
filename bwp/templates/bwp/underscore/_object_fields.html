@@ -95,6 +95,8 @@
                 {% if (data.fields[widget.name]) { %}checked="checked"{% } %}
             {% } else if (widget.tag == 'textarea') { %}
                 >{{ _val }}</{{ widget.tag }}
+            {% } else if (widget.attr.type == 'datetime-local') { %}
+                value="{{ datetimeLocale(_val) }}"
             {% } else { %}
                 value="{{ _val }}"
             {% } %}>

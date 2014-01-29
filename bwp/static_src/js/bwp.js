@@ -1811,7 +1811,49 @@ function handlerBindinds() {
     return true;
 };
 
+function dateParser(string) {
+    var re = /^(\d{4}|[+\-]\d{6})(?:-(\d{2})(?:-(\d{2}))?)?(?:T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{3}))?)?(?:(Z)|([+\-])(\d{2})(?::(\d{2}))?)?)?$/;
+    var L = re.exec(string);
+    if (!L) return null;
 
+    var date = L[1]+'-'+L[2]+'-'+L[3]; //дата yyyy-mm-dd
+    if (L[4] && L[5]) { date += ' '+L[4]+':'+L[5]; }; //часы-минуты
+    if (L[6]) { date += ':'+L[6]; }; //секунды
+
+    if (L[8]) { date += ' GMT'; } //UTC
+    else if (L[10] && L[11]) { date += ' GMT'+L[9]+L[10]+L[11]; } //TZ
+    else { date += ' GMT' }; //SERVER TIME IN UTC
+
+    date = date.replace(/GMT\+0000$/, 'GMT').replace(/GMT\-0000$/, 'GMT');
+    //~ console.log(date);
+    var d = new Date();
+    d.setTime(Date.parse(date));
+    //~ console.log(d);
+    return d;
+}
+
+function datetimeLocale(string) {
+    // Функция для подстановки локального времени в input
+    var date = dateParser(string);
+    if (date) {
+        addzero = function(n) {
+            if (n<10) { return '0'+n; };
+            return n;
+        };
+        date.setTime(date.valueOf() - date.getTimezoneOffset());
+        //~ console.log(date);
+
+        year    = date.getFullYear();
+        month   = addzero(date.getMonth() + 1);
+        day     = addzero(date.getDate());
+        hours   = addzero(date.getHours());
+        minutes = addzero(date.getMinutes());
+        seconds = addzero(date.getSeconds());
+        return year+'-'+month+'-'+day+'T'+hours+':'+minutes+':'+seconds;
+    }
+    //~ console.log(string);
+    return string;
+}
 
 ////////////////////////////////////////////////////////////////////////
 //                            ИСПОЛНЕНИЕ                              //
