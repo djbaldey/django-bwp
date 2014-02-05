@@ -51,5 +51,6 @@ class DocumentBWP(ModelBWP):
 site.register(Document, DocumentBWP)
 
 class ReportBWP(ModelBWP):
-    list_display = ('label', 'created', 'document', 'user', 'url', 'id')
+    list_display = ('document', 'created', 'user', 'url', 'id')
+    search_fields = ['document__title',]
 site.register(Report, ReportBWP)
