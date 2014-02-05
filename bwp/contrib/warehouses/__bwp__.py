@@ -127,6 +127,7 @@ class StockBWP(ModelBWP):
         'price',
         'summa',
         'kind',
+        'diff',
         ('warehouse_bwp', _('warehouse')),
         ('document_bwp', _('document')),
         'id',

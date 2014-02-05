@@ -38,6 +38,7 @@
 """
 from django.db import models
 from django.db.models import Count, Sum
+from django.db.models.query import insert_query
 from django.utils.translation import ugettext_lazy as _
 from django.utils import timezone
 from django.contrib.auth.models import User
@@ -106,7 +107,7 @@ class AbstractDocument(AbstractDocumentDateTime):
         if change_dt:
             stocks = Stock.objects.filter(document_id=self.pk)
             stocks = stocks.exclude(kind=Stock.MOVING_IN)
-            print stocks
+            #~ print stocks
             stocks.update(date_time=self.date_time)
 
 class DocumentManager(models.Manager):
@@ -242,7 +243,7 @@ class Outcoming(AbstractDocument):
     warehouse           = models.ForeignKey(Warehouse, verbose_name=_('warehouse'),
         related_name='outcoming_set')
     warehouse_other     = models.ForeignKey(Warehouse, verbose_name=_('to warehouse'),
-        null=True, blank=True, related_name='outcoming_other_set')
+        null=True, blank=True, editable=False, related_name='outcoming_other_set')
     partner             = models.ForeignKey(PARTNER_MODEL, verbose_name=_('partner'),
         null=True, blank=True, related_name='warehouses_outcoming_set')
     base_document       = models.CharField(_('base document'),
@@ -270,12 +271,12 @@ class InventoryManager(models.Manager):
     use_for_related_fields = True
     def get_query_set(self):
         return super(InventoryManager, self).get_query_set().filter(
-            kind=Document.INVENTORY).annotate(summa=Sum('parties__doc_summa'))
+            kind=Document.INVENTORY).annotate(summa=Sum('parties__diff_summa'))
 
 class Inventory(AbstractDocument):
     """ Инвентаризация """
-    kind = models.IntegerField(_('kind'), default=Document.INVENTORY, editable=False)
-    warehouse           = models.ForeignKey(Warehouse, verbose_name=_('warehouse'),
+    kind      = models.IntegerField(_('kind'), default=Document.INVENTORY, editable=False)
+    warehouse = models.ForeignKey(Warehouse, verbose_name=_('warehouse'),
         related_name='inventory_set')
 
     default_manager = models.Manager()
@@ -292,6 +293,16 @@ class Inventory(AbstractDocument):
         self.kind = Document.INVENTORY
         super(Inventory, self).save(**kwargs)
 
+
+class BasePartitioningManager(models.Manager):
+    """
+    Обычный менеджер, но не устанавливает self.pk в методе `save`,
+    это требуется, когда таблицы партиционируются в СУБД и база данных
+    не возвращает вставленную строку обратно на клиента.
+    """
+    def _insert(self, objs, fields, return_id=False, **kwargs):
+        return insert_query(self.model, objs, fields, return_id=False, **kwargs)
+
 class AbstractStock(models.Model):
     """
     Движения по складам.
@@ -299,6 +310,8 @@ class AbstractStock(models.Model):
     created   = models.DateTimeField(auto_now_add=True)
     updated   = models.DateTimeField(auto_now=True)
     date_time = models.DateTimeField(_("date and time"), null=True, editable=False)
+
+    _base_manager = BasePartitioningManager()
 
     def __unicode__(self):
         if hasattr(self, 'document'):
@@ -359,16 +372,19 @@ class Stock(AbstractStock):
     price           = models.FloatField(_('price'),             null=True, editable=False)
     summa           = models.FloatField(_('summa'),             null=True, editable=False)
     diff            = models.FloatField(_('diff'),              null=True, editable=False)
+    diff_summa      = models.FloatField(_('diff summa'),        null=True, editable=False)
     parent          = models.OneToOneField('Stock', verbose_name=_('parent'),
         null=True, related_name='child', editable=False)
 
     _trigger_lock = models.NullBooleanField(_('lock update'), null=True, default=False, editable=False)
 
+    objects = models.Manager()
+
     def __unicode__(self):
         return unicode(self.nomenclature)
 
     class Meta:
-        ordering = ['nomenclature', 'document__warehouse', '-document__date_time', '-id']
+        ordering = ['-date_time', '-id', 'nomenclature', 'document__warehouse']
         verbose_name = _('stock')
         verbose_name_plural = _('stocks')
         get_latest_by = 'document__date_time'
@@ -577,6 +593,7 @@ class StockInventory(AbstractStock):
     #~ price           = models.FloatField(_('stock price'), editable=False)
     #~ summa           = models.FloatField(_('stock summa'), editable=False)
     diff            = models.FloatField(_('diff'),  editable=False)
+    diff_summa      = models.FloatField(_('diff summa'), null=True, editable=False)
 
     objects = StockInventoryManager()
 
