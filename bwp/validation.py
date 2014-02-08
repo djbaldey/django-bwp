@@ -3,7 +3,7 @@ from django.db import models
 from django.forms.models import _get_foreign_key
 from django.contrib.admin.options import flatten_fieldsets
 from django.contrib.admin.validation import (check_isseq, check_isdict,
-    get_field, check_formfield, fetch_attr, check_readonly_fields)
+    get_field, fetch_attr)
 
 from bwp.models import BaseModel
 
@@ -64,8 +64,8 @@ def validate(cls, model):
                 continue
             get_field(cls, model, opts, 'ordering[%d]' % idx, field)
 
-    if hasattr(cls, "readonly_fields"):
-        check_readonly_fields(cls, model, opts)
+    #~ if hasattr(cls, "readonly_fields"):
+        #~ check_readonly_fields(cls, model, opts)
 
     # list_select_related = False
     # save_as = False
@@ -136,7 +136,7 @@ def validate_base(cls, model):
     if cls.exclude: # default value is None
         check_isseq(cls, 'exclude', cls.exclude)
         for field in cls.exclude:
-            check_formfield(cls, model, opts, 'exclude', field)
+            #~ check_formfield(cls, model, opts, 'exclude', field)
             try:
                 f = opts.get_field(field)
             except models.FieldDoesNotExist:

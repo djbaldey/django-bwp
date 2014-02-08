@@ -37,6 +37,7 @@
 ###############################################################################
 """
 from django import template
+from django.utils.translation import ugettext_lazy as _
 from django.db.models import Q
 from django.core.urlresolvers import reverse
 from bwp import conf
@@ -123,7 +124,7 @@ def addGET(request, key, val=''):
 @register.simple_tag
 def short_username(user):
     if user.is_anonymous():
-        return u'Аноним'
+        return _('Anonymous')
     if not user.last_name and not user.first_name:
         return user.username
     return u'%s %s.' % (user.last_name, unicode(user.first_name)[0])
@@ -131,7 +132,7 @@ def short_username(user):
 @register.simple_tag
 def full_username(user):
     if user.is_anonymous():
-        return u'Анонимный пользователь'
+        return _('Anonymous')
     if not user.last_name and not user.first_name:
         return user.username
     return u'%s %s' % (user.last_name, user.first_name)
@@ -196,8 +197,6 @@ def pagination(request, paginator):
             link = addGET(request, 'page', num)
         L.append(temp % (css, link, num))
     return u''.join(L)
-
-
 
 @register.filter
 def multiply(obj, digit):

@@ -37,7 +37,7 @@
 ###############################################################################
 """
 from django.db import models
-from django.utils import simplejson
+import json
 from copy import deepcopy
 from quickapi.http import DjangoJSONEncoder
 from bwp.utils import print_debug
@@ -62,7 +62,7 @@ class GeneralWidget(object):
 
     def __str__(self):
         dic = self.get_dict()
-        return simplejson.dumps(dic, ensure_ascii=False,
+        return json.dumps(dic, ensure_ascii=False,
                                 cls=DjangoJSONEncoder,
                                 indent=4,
                             ).encode('utf-8', 'ignore')
