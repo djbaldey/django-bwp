@@ -4,9 +4,9 @@
 <HEAD>
     <META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=utf-8">
     <TITLE>{% block title %}{{ DOCUMENT }}{% endblock %}</TITLE>
-    <META NAME="GENERATOR" CONTENT="Бизон-РЦ {% SETTINGS 'VERSION' %}">
-    <META NAME="AUTHOR" CONTENT="{{ user }}">
-    <META NAME="CREATED" CONTENT="{% now 'Ymd' %};{% now 'His' %}">
+    <META NAME="GENERATOR" CONTENT="{% SETTINGS 'PROJECT_NAME' %} {% SETTINGS 'VERSION' %}">
+    <META NAME="AUTHOR" CONTENT="{% full_username user %}">
+    <META NAME="CREATED" CONTENT="{% now 'Ymd;His00' %}">
 
     <STYLE>
         {% block defaultstyle %}
@@ -58,7 +58,51 @@
 <BODY>
 {% block body %}
 
-{% block header %}{% endblock %}
+{% block header %}
+    <H1>{% block header_title %}{{ DOCUMENT }}{% endblock %}</H1>
+    {% block header_title_after %}{% endblock %}
+    <DIV ALIGN="RIGHT">{% trans "formed" %}: {% now "DATETIME_FORMAT" %}</DIV>
+{% if not filters %}
+    <BR>
+    <HR>
+{% endif %}
+{% endblock %}
+
+{% block filters %}
+{% if filters %}
+    <H4>{% trans 'Filters' %}</H4>
+    <TABLE WIDTH="100%" CELLSPACING="0" BORDER="0">
+        <THEAD>
+            <TR CLASS="bg-gray">
+                <TH CLASS="bordered">{% trans "field" %}</TH>
+                <TH CLASS="bordered">{% trans "condition" %}</TH>
+                <TH CLASS="bordered">{% trans "value" %}</TH>
+                <TH CLASS="bordered">{% trans "inverse" %}</TH>
+            </TR>
+        </THEAD>
+        <TBODY>
+    {% for filter in filters %}
+        <TR>
+            <TD CLASS="bordered">{{ filter.field_title|lower }}</TD>
+            <TD CLASS="bordered">{{ filter.type_title|lower }}</TD>
+        {% if filter.values|join:", " == 'on' %}
+            <TD CLASS="bordered">{% trans 'yes' %}</TD>
+        {% else %}
+            <TD CLASS="bordered">{{ filter.values|join:", " }}</TD>
+        {% endif %}
+        {% if filter.inverse %}
+            <TD CLASS="bordered">{% trans 'yes' %}</TD>
+        {% else %}
+            <TD CLASS="bordered"></TD>
+        {% endif %}
+        </TR>
+    {% endfor %}
+        </TBODY>
+    </TABLE>
+    <BR>
+    <HR>
+{% endif %}
+{% endblock %}
 
 {% block main_table %}
     <TABLE WIDTH="100%" CELLSPACING="0" BORDER="0">

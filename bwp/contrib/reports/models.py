@@ -122,6 +122,7 @@ class Document(AbstractGroup):
         filename = self.title+'.'+self.format_out
         filename = prep_filename(filename)
         context['DOCUMENT'] = self
+        context['user'] = user
         _file = self.render(context)
         report = Report(
             document=self,
