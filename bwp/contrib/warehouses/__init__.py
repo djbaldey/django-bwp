@@ -39,16 +39,3 @@
 from django.utils.translation import ugettext_lazy as _
 __label__ = _('warehouses')
 
-from bwp.conf import settings
-import os
-
-WEBODT_TEMPLATE_PATH = getattr(settings,'WEBODT_TEMPLATE_PATH',
-    os.path.abspath(
-        os.path.join(
-            os.path.abspath(os.path.dirname(__file__)),
-            '..',
-            'templates',
-            'webodt'
-        )
-    )
-)
