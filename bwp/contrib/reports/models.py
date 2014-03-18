@@ -43,6 +43,7 @@ from django.contrib.auth.models import User
 from django.template import Context
 from django.template.loader import get_template
 from django.core.files.base import ContentFile
+from django.utils import timezone
 
 from bwp.contrib.abstracts.models import AbstractGroup, AbstractFile
 from bwp.contrib.qualifiers.models import Document as GeneralDocument
@@ -50,7 +51,7 @@ from bwp import conf
 from bwp.conf import settings
 from bwp.utils import remove_file, remove_dirs
 
-import os, datetime, hashlib
+import os, hashlib
 
 if conf.REPORT_FILES_UNIDECODE:
     from unidecode import unidecode
@@ -161,7 +162,7 @@ class Report(AbstractFile):
         verbose_name_plural = _('generated reports')
 
     def upload_to(self, filename):
-        dt = datetime.datetime.now()
+        dt = timezone.now()
         date = dt.date()
         dic = {
             'filename':filename,

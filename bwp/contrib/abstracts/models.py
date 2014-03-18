@@ -46,7 +46,7 @@ from bwp.utils.classes import upload_to
 from bwp.utils.filters import filterQueryset
 from bwp.utils import remove_file
 from bwp.db import fields
-import datetime, os
+import os
 from unidecode import unidecode
 
 class AbstractOrg(models.Model):

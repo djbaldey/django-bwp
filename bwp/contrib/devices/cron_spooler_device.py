@@ -30,7 +30,8 @@ if __name__ == "__main__":
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "project.settings")
 
     from bwp.contrib.devices.models import SpoolerDevice
-    import datetime
+    from django.utils import timezone
+    from datetime import timedelta
 
     WAITING = SpoolerDevice.STATE_WAITING
     ERROR = SpoolerDevice.STATE_ERROR
@@ -53,9 +54,9 @@ if __name__ == "__main__":
 
     
     spoolers = SpoolerDevice.objects.all().order_by('pk')
-    now = datetime.datetime.now()
+    now = timezone.now()
     # Зависшие более 1минуты по какой либо причине тоже обрабатываем
-    new = now - datetime.timedelta(seconds=60)
+    new = now - timedelta(seconds=60)
     # Если есть моложе 1минуты - где-то уже запущен процесс их обработки
     if spoolers.filter(state=WAITING, created__gt=new).count():
         pass

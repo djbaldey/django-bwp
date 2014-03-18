@@ -221,7 +221,7 @@ class Price(models.Model):
             default=0,
             verbose_name = _('NDS type'))
     start = models.DateField(
-            default=datetime.date.today() + datetime.timedelta(1),
+            default=lambda: datetime.date.today() + datetime.timedelta(1),
             verbose_name = _('start'))
 
     objects = models.Manager()

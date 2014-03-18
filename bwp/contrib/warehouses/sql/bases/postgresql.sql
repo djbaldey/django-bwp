@@ -2,7 +2,7 @@
 -- Триггерная процедура заполнения и партиционирования при вставке
 
 CREATE OR REPLACE FUNCTION warehouses_stock_tfunc_before_insert()
-  RETURNS trigger AS
+    RETURNS trigger AS
 $BODY$
 DECLARE
     INCOMING   CONSTANT char := '+';
@@ -225,15 +225,15 @@ LANGUAGE 'plpgsql';
 
 -- DROP TRIGGER warehouses_stock_before_insert ON warehouses_stock;
 CREATE TRIGGER warehouses_stock_before_insert
-  BEFORE INSERT
-  ON warehouses_stock
-  FOR EACH ROW
-  EXECUTE PROCEDURE warehouses_stock_tfunc_before_insert();
+    BEFORE INSERT
+    ON warehouses_stock
+    FOR EACH ROW
+    EXECUTE PROCEDURE warehouses_stock_tfunc_before_insert();
 
 -- Триггерная процедура партиционирования при обновлении
 
 CREATE OR REPLACE FUNCTION warehouses_stock_tfunc_before_update()
-  RETURNS trigger AS
+    RETURNS trigger AS
 $BODY$
 DECLARE
     INCOMING   CONSTANT char := '+';

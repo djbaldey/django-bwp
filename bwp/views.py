@@ -47,6 +47,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.db import transaction, models
 from django.forms.models import modelform_factory
 from django.utils.encoding import smart_unicode
+from django.utils import timezone
 
 from quickapi.http import JSONResponse, JSONRedirect, MESSAGES, DjangoJSONEncoder
 from quickapi.views import index as quickapi_index, get_methods
@@ -62,7 +63,7 @@ from bwp.utils.http import get_http_400, get_http_403, get_http_404
 
 from bwp.contrib.reports.models import Document as Report
 
-import datetime, os
+import os
 
 ########################################################################
 #                               PAGES                                  #

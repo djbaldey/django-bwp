@@ -36,7 +36,7 @@
 #   <http://www.gnu.org/licenses/>.
 ###############################################################################
 """
-import datetime
+from django.utils import timezone
 
 def dt_rounded(dt=None, minute=True, hour=False, day=False):
     """ Округление времени до секунды, минуты, часа или дня.
@@ -50,15 +50,19 @@ def dt_rounded(dt=None, minute=True, hour=False, day=False):
         Если нужно округлить заданное время,то оно передаётся в
         параметре `dt`
     """
-    if not isinstance(dt, datetime.datetime):
-        dt = datetime.datetime.now()
+    if not isinstance(dt, timezone.datetime):
+        dt = timezone.now()
+    elif not timezone.is_aware(dt):
+        dt = dt.replace(tzinfo=timezone.get_default_timezone())
+
+    dt = dt.replace(microsecond=0)
 
     if day:
-        dt = datetime.datetime(dt.year, dt.month, dt.day)
+        dt = dt.replace(hour=0, minute=0, second=0)
     elif hour:
-        dt = datetime.datetime(dt.year, dt.month, dt.day, dt.hour)
+        dt = dt.replace(minute=0, second=0)
     elif minute:
-        dt = datetime.datetime(dt.year, dt.month, dt.day, dt.hour, dt.minute)
-    else:
-        dt = datetime.datetime(dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second)
+        dt = dt.replace(second=0)
+
     return dt
+

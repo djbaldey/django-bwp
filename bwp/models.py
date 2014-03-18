@@ -44,6 +44,7 @@ from django.contrib.auth.models import User, Group
 from django.contrib.admin.util import quote
 from django.utils.encoding import smart_unicode, force_unicode
 from django.utils.safestring import mark_safe
+from django.utils import timezone
 from django.utils.text import capfirst
 from django.utils.crypto import get_random_string
 from django.core.paginator import Paginator, Page, PageNotAnInteger, EmptyPage
@@ -54,7 +55,8 @@ from django.http import (HttpResponseNotFound, HttpResponseBadRequest,
 from quickapi.http import JSONResponse
 
 from copy import deepcopy
-import os, datetime
+from datetime import timedelta
+import os
 
 from bwp.utils.convertors import serialize
 from bwp.utils.http import get_http_400, get_http_403, get_http_404
@@ -195,8 +197,8 @@ class TempUploadFile(models.Model):
         return u'%(tmp)s/%(hash)s/%(filename)s' % dic
     
     def save(self, **kwargs):
-        now = datetime.datetime.now()
-        expires = now - datetime.timedelta(seconds=conf.BWP_TEMP_UPLOAD_FILE_EXPIRES)
+        now = timezone.now()
+        expires = now - timedelta(seconds=conf.BWP_TEMP_UPLOAD_FILE_EXPIRES)
         with transaction.commit_on_success():
             for x in TempUploadFile.objects.filter(created__lt=expires):
                 x.delete()
