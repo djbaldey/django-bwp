@@ -25,6 +25,7 @@
         {% } %}
             {% _.each(data.meta.list_display, function(column, index) { %}
                 {% _value = (column.name in obj.fields) ? obj.fields[column.name] : obj.properties[column.name] %}
+                {% _value = $.dateParser(_value) || _value %}
                 <td class="{{ column.css }}">
                 {% if ((index == 0) && (_rowactions) && (!($.type(_value) === 'object'))) { %}
                     {% if ((data.perms.change) || (!_multiselect)) { %}
@@ -44,6 +45,10 @@
                                 {{ _value[1] }}
                             {% } else if ($.type(_value) === 'object'){ %}
                                 {{ _value.label }}
+                            {% } else if ($.type(_value) === 'date'){ %}
+                                {{ moment(_value).format('L LT') }}
+                            {% } else if ($.type(_value) === 'number'){ %}
+                                {{ _value.toLocaleString() }}
                             {% } else { %}
                                 {{ _value }}
                             {% } %}
@@ -117,6 +122,10 @@
                                         data-pk="{{ _value.pk }}">
                                     {{ _value.label }}
                                 </a>
+                        {% } else if ($.type(_value) === 'date'){ %}
+                            {{ moment(_value).format('L LT') }}
+                        {% } else if ($.type(_value) === 'number'){ %}
+                                {{ _value.toLocaleString() }}
                         {% } else { %}
                             {{ _value }}
                         {% } %}

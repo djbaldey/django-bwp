@@ -182,6 +182,7 @@
         window.USER_FIRST_NAME = "{{ user.first_name }}";
         window.USER = "{{ user }}";
         window.DEBUG = {% filter lower %}{% SETTINGS 'DEBUG' %}{% endfilter %};
+        window.SERVER_TZ_OFFSET = {% SERVER_TZ_OFFSET_JS %};
     </script>
 {% endblock %}
 <!-- END: block jsglobalvars -->
@@ -189,9 +190,11 @@
 <!-- START: block libjs -->
 {% block libjs %}
     <script src="{{ STATIC_URL }}js/jquery/{% SETTINGS 'JQUERY_VERSION' %}/jquery{% mini_library %}.js"></script>
-    <script src="{{ STATIC_URL }}js/jquery-json/{% SETTINGS 'JQUERY_JSON_VERSION' %}/jquery.json{% mini_library %}.js"></script>
-    <script src="{{ STATIC_URL }}js/underscore/{% SETTINGS 'UNDERSCORE_VERSION' %}/underscore{% mini_library %}.js"></script>
-    <script src="{{ STATIC_URL }}js/underscore-string/{% SETTINGS 'UNDERSCORE_STRING_VERSION' %}/underscore.string{% mini_library %}.js"></script>
+    <script src="{{ STATIC_URL }}js/jquery/json/2.4/jquery.json{% mini_library %}.js"></script>
+    <script src="{{ STATIC_URL }}js/jquery/dateparser/0.2/jquery.dateparser{% mini_library %}.js"></script>
+    <script src="{{ STATIC_URL }}js/moment/2.5.1/moment-with-langs{% mini_library %}.js"></script>
+    <script src="{{ STATIC_URL }}js/underscore/1.6.0/underscore{% mini_library %}.js"></script>
+    <script src="{{ STATIC_URL }}js/underscore/string/2.3.2/underscore.string{% mini_library %}.js"></script>
     <script src="{{ STATIC_URL }}js/bootstrap/{% SETTINGS 'BOOTSTRAP_VERSION' %}/bootstrap{% mini_library %}.js"></script>
     <script src="{{ STATIC_URL }}js/django/{% SETTINGS 'DJANGO_VERSION' %}/django-ajax-csrf{% mini_library %}.js"></script>
 {% endblock %}

@@ -40,8 +40,9 @@ from django import template
 from django.utils.translation import ugettext_lazy as _
 from django.db.models import Q
 from django.core.urlresolvers import reverse
+from django.utils import timezone
 from bwp import conf
-from datetime import date
+from bwp.utils.datetimes import timezone, datetime_server_naive
 
 register = template.Library()
 
@@ -71,7 +72,7 @@ def AUTHORS():
 
 @register.simple_tag
 def COPYRIGHT_YEARS():
-    end = date.today().year
+    end = timezone.now().date().year
     try:
         start =  conf.COPYRIGHT_YEAR
     except:
@@ -80,6 +81,18 @@ def COPYRIGHT_YEARS():
         return "%s-%s" % (start, end)
     else:
         return "%s" % end
+
+@register.simple_tag
+def SERVER_TZ_OFFSET_JS():
+    """
+    Offset from UTC as JavaScript style
+    """
+    offset = SETTINGS('SERVER_TZ_OFFSET_JS') or None
+    if offset:
+        return offset
+    tz = timezone.get_current_timezone()
+    sec = tz.utcoffset(datetime_server_naive()).total_seconds()
+    return int(sec/60) * -1
 
 @register.simple_tag
 def navactive(request, urls):

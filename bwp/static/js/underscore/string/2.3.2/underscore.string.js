@@ -324,7 +324,7 @@
     },
 
     camelize: function(str){
-      return _s.trim(str).replace(/[-_\s]+(.)?/g, function(match, c){ return c.toUpperCase(); });
+      return _s.trim(str).replace(/[-_\s]+(.)?/g, function(match, c){ return c ? c.toUpperCase() : ""; });
     },
 
     underscored: function(str){
@@ -492,8 +492,8 @@
     },
 
     toSentence: function(array, separator, lastSeparator, serial) {
-      separator = separator || ', '
-      lastSeparator = lastSeparator || ' and '
+      separator = separator || ', ';
+      lastSeparator = lastSeparator || ' and ';
       var a = array.slice(), lastMember = a.pop();
 
       if (array.length > 2 && serial) lastSeparator = _s.rtrim(separator) + lastSeparator;
@@ -510,8 +510,8 @@
     slugify: function(str) {
       if (str == null) return '';
 
-      var from  = "ąàáäâãåæćęèéëêìíïîłńòóöôõøśùúüûñçżź",
-          to    = "aaaaaaaaceeeeeiiiilnoooooosuuuunczz",
+      var from  = "ąàáäâãåæăćęèéëêìíïîłńòóöôõøśșțùúüûñçżź",
+          to    = "aaaaaaaaaceeeeeiiiilnoooooosstuuuunczz",
           regex = new RegExp(defaultToWhiteSpace(from), 'g');
 
       str = String(str).toLowerCase().replace(regex, function(c){
