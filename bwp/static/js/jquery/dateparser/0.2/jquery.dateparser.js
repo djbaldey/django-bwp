@@ -67,7 +67,7 @@
         if (!pre) return null;
 
         var localoffset = (new Date()).getTimezoneOffset(),
-            tzoffset = 0, minute=pre.minute;
+            tzoffset = 0, minute=pre.minute, date = null;
 
         if (minute != null) {
             if (custom_tz_offset === undefined) {
@@ -83,8 +83,14 @@
             }
         }
 
-        return new Date(pre.year, (pre.month ? (pre.month - 1) : 0), pre.day,
+        date = new Date(pre.year, (pre.month ? (pre.month - 1) : 0), pre.day,
                         pre.hour, minute, pre.second, pre.millisecond);
+
+        if (minute == null) {
+            date.without_time = true;
+        }
+
+        return date
     };
 
     /* Первичный парсер. */
