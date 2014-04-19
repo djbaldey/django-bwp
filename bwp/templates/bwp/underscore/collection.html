@@ -125,11 +125,11 @@
                                     {{ _value.label }}
                                 </a>
                         {% } else if ($.type(_value) === 'date' && _value.without_time){ %}
-                                {{ moment(_value).format('L') }}
+                            {{ moment(_value).format('L') }}
                         {% } else if ($.type(_value) === 'date'){ %}
                             {{ moment(_value).format('L LT') }}
                         {% } else if ($.type(_value) === 'number'){ %}
-                                {{ _value.toLocaleString() }}
+                            {{ _value.toLocaleString() }}
                         {% } else { %}
                             {{ _value }}
                         {% } %}
