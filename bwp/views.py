@@ -47,7 +47,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.db import transaction, models
 from django.forms.models import modelform_factory
 from django.utils.encoding import smart_unicode
-from django.utils import timezone
+from django.utils import timezone, dateparse
 
 from quickapi.http import JSONResponse, JSONRedirect, MESSAGES, DjangoJSONEncoder
 from quickapi.views import index as quickapi_index, get_methods
@@ -473,7 +473,7 @@ def API_commit(request, objects, **kwargs):
                 if field.rel and isinstance(val, list) and len(val) == 2:
                     item['fields'][name] = val[0]
                 elif isinstance(field, models.DateTimeField) and val:
-                    item['fields'][name] = val.replace('T', ' ')
+                    item['fields'][name] = dateparse.parse_datetime(val)
             data = item['fields']
             # Новый объект
             if not item.get('pk', False):

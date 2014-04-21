@@ -24,9 +24,7 @@
                 class="{{ widget.attr['class'] }}"
                 data-action="object_change"
                 data-id="{{ data.id }}">
-                    {% if ((!widget.attr) && (!widget.attr.required)) { %}
                         <option value=""></option>
-                    {% } %}
                 {% _.each(widget.choices, function(item) { %}
                     {% _val0 = _.escape(item[0]) %}
                     {% _val1 = _.escape(item[1]) %}

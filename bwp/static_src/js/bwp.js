@@ -882,6 +882,8 @@ function handlerObjectChange(object, $field) {
     if (type) { type = type.toLowerCase(); };
     if (type in {'file':0, 'image':0}) {
         handlerTempUploadFile(object, $field[0]);
+    } else if (type === 'datetime-local') {
+        value = $.dateParser(value, true) || value;
     } else if ($.type(object.fields[name]) === 'array') {
         value = [value, $field.text()];
     } else if ($.type(object.fields[name]) === 'boolean') {
