@@ -288,7 +288,7 @@ class BaseModel(object):
     # Набор ключей для предоставления метаданных об этой модели.
     metakeys = ('list_display', 'list_display_css', 'list_per_page',
                 'list_max_show_all', 'show_column_pk', 'fields',
-                'search_fields', 'search_key', 'ordering', 'has_copy',
+                'search_fields', 'search_key', 'has_copy',
                 'has_clone', 'hidden', 'file_fields')
 
     @property
@@ -320,6 +320,7 @@ class BaseModel(object):
         self.get_filters()       # инициализация фильтров
         if not hasattr(self, '_meta'):
             self._meta = self.get_meta()
+        self._meta['ordering'] = None # чтобы на клиенте переопределить сортировку
         return self._meta
 
     @property
@@ -643,7 +644,6 @@ class BaseModel(object):
         """
         Сортировка определённого, либо общего набора данных.
         """
-        
         if queryset is None:
             queryset = self.queryset()
         if ordering is None:
@@ -656,7 +656,7 @@ class BaseModel(object):
         """
         Возвращает объект страницы паджинатора для набора объектов
         """
-        queryset = self.order_queryset(request=request, queryset=queryset)
+        queryset = self.order_queryset(request=request, queryset=queryset, **kwargs)
         paginator = self.get_paginator(queryset=queryset, **kwargs)
 
         # request может быть пустым

@@ -74,6 +74,41 @@
         }
       }
 
+      @media (min-width: 768px) {
+        #modal {
+          width: 768px;
+          margin-left: -384px;
+        }
+      }
+
+      @media (min-width: 800px) {
+        #modal {
+          width: 800px;
+          margin-left: -400px;
+        }
+      }
+
+      @media (min-width: 900px) {
+        #modal {
+          width: 900px;
+          margin-left: -450px;
+        }
+      }
+
+      @media (min-width: 1000px) {
+        #modal {
+          width: 1000px;
+          margin-left: -500px;
+        }
+      }
+
+      @media (min-width: 1200px) {
+        #modal {
+          width: 1200px;
+          margin-left: -600px;
+        }
+      }
+
     /* TABLES */
     .table-hover tbody tr:hover td,
     .table-hover tbody tr:hover th {
@@ -335,4 +370,40 @@ table .headerSortUp:after {
 #quickapi-docs code {
     display: block;
     white-space: pre-wrap;
+}
+
+/*
+ * Sorting
+ */
+th.sorted {
+    cursor: pointer;
+    background: url('./img/tables/sort_both.png') no-repeat center right;
+}
+
+th.sorted-asc {
+    background: url('./img/tables/sort_asc.png') no-repeat center right;
+}
+
+th.sorted-desc {
+    background: url('./img/tables/sort_desc.png') no-repeat center right;
+}
+
+th.sorted-n0 {
+    background-color: #FFE6E6;
+}
+
+th.sorted-n1 {
+    background-color: #FFF9E6;
+}
+
+th.sorted-n2 {
+    background-color: #F3FFE6;
+}
+
+th.sorted-n3 {
+    background-color: #E6FFED;
+}
+
+th.sorted-n4 {
+    background-color: #E6FFFF;
 }

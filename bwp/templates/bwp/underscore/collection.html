@@ -13,7 +13,15 @@
         {% } %}
         {% _.each(data.meta.list_display, function(column) { %}
             {% var _label = column.label; if (_.strip(column.css) == 'input-mini') { _label = _.truncate(column.label, 8) } %}
-            <th data-toggle="tooltip" class="{{ column.css }}" title="{{ column.label }}">{{ _label }}</th>
+            {% var col_class = column.css; %}
+            {% if (column.sorted) { col_class += ' sorted' } %}
+            {% if ($.inArray(column.name, data.meta.ordering) > -1) { col_class += ' sorted-asc sorted-n'+$.inArray(column.name, data.meta.ordering); %}
+            {% } else if ($.inArray('-'+column.name, data.meta.ordering) > -1) { col_class += ' sorted-desc sorted-n'+$.inArray('-'+column.name, data.meta.ordering) } %}
+            <th data-toggle="tooltip"
+                data-id="{{ data.id }}"
+                class="{{ col_class }}"
+                data-column="{{ column.name }}"
+                title="{{ column.label }}">{{ _label }}</th>
         {% }); %}
         </tr>
     </thead>

@@ -473,7 +473,7 @@ function classSelector(model, multiple) {
     // Запрещаем все действия.
     this.perms = { 'delete': false, 'add': false, 'change': false };
     this.actions = null;
-    this.meta.list_display = this.meta.list_display.slice(0,1);
+    this.meta.list_display = this.meta.list_display;
     this.meta.list_per_page = 5;
     this.multiple = multiple ? true : false;
     selector = this;
@@ -736,7 +736,7 @@ function handlerCollectionGet(instance) {
         "method"  : "get_collection",
         "model"   : instance.model,
         "compose" : instance.compose       || null,
-        "order_by": instance.meta.ordering || null,
+        "ordering": instance.meta.ordering || null,
         "fields":   instance.meta.search_fields || null,
         "filters":  _filters,
     };
@@ -806,6 +806,39 @@ function eventCollectionPage() {
     if (instance.paginator) {
         instance.paginator.page = $(this).val() || $(this).data()['page'] || 1;
     };
+    jqxhr = handlerCollectionGet(instance);
+    return jqxhr;
+};
+
+/* Обработчик события сортировки коллекции
+ * При первом клике сортировка ASC,
+ * при втором - DESC,
+ * при третьем - поле исключается из сортировки.
+ */
+function eventCollectionSorted(event) {
+    if (DEBUG) {console.log('function:'+'eventCollectionSorted')};
+    var data = $(this).data(),
+        instance = REGISTER[data['id']],
+        L = instance.meta.ordering || [],
+        i = $.inArray(data['column'], L);
+
+    
+    if (i > -1) {
+        console.log(1, i, data['column']);
+        L[i] = '-'+data['column'];
+    } else {
+        console.log(2, i, data['column']);
+        i = $.inArray('-'+data['column'], L);
+        if (i > -1) {
+            console.log(3, i, '-'+data['column']);
+            L = L.slice(0,i).concat(L.slice(i+1));
+        }
+    }
+    if (i == -1){
+        console.log(4, i, data['column']);
+        L.push(data['column']);
+    }
+    instance.meta.ordering = L;
     jqxhr = handlerCollectionGet(instance);
     return jqxhr;
 };
@@ -1766,6 +1799,7 @@ function handlerBindinds() {
     $('body').on('click',  '[data-action=collection_count]',  eventCollectionCount);
     $('body').on('change', '[data-action=collection_page]',   eventCollectionPage);
     $('body').on('click',  '[data-action=collection_page]',   eventCollectionPage);
+    $('body').on('click',  'th.sorted', eventCollectionSorted);
 
     // Биндинги на кнопки и ссылки
     $('body').on('click', '[data-action=object_open]',     eventObjectOpen);

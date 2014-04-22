@@ -341,7 +341,7 @@ def API_get_object(request, model, pk=None, copy=None, clone=None, filler={}, **
 @api_required
 @login_required
 def API_get_collection(request, model, pk=None, compose=None, page=1,
-    per_page=None, query=None, order_by=None, fields=None, filters=None, **kwargs):
+    per_page=None, query=None, ordering=None, fields=None, filters=None, **kwargs):
     """ *Возвращает коллекцию экземпляров указанной модели.*
         
         ##### ЗАПРОС
@@ -395,7 +395,7 @@ def API_get_collection(request, model, pk=None, compose=None, page=1,
         'page': page,
         'query': query,
         'per_page': per_page,
-        'order_by': order_by,
+        'ordering': ordering,
         'fields': fields,
         'filters': filters,
         'pk':pk, 
