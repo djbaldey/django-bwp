@@ -79,6 +79,7 @@ class GeneralWidget(object):
             'attr': self.attr,
             'model': unicode(self.field.model._meta),
             'choices': None,
+            'djangofield': self.field.get_internal_type()
         }
         if self.field.rel:
             d['model'] = str(self.field.rel.to._meta)

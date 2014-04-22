@@ -23,6 +23,7 @@
                 {% }); %}
                 class="{{ widget.attr['class'] }}"
                 data-action="object_change"
+                data-djangofield="{{ widget.djangofield }}"
                 data-id="{{ data.id }}">
                         <option value=""></option>
                 {% _.each(widget.choices, function(item) { %}
@@ -64,6 +65,7 @@
                         {% } %}
                     {% }); %}
                     data-action="object_change"
+                    data-djangofield="{{ widget.djangofield }}"
                     style="display:none;">
                 </input>
                 {%/* Кнопка сброса */%}
@@ -86,6 +88,7 @@
                 name="{{ widget.name }}"
                 data-id="{{ data.id }}"
                 data-action="object_change"
+                data-djangofield="{{ widget.djangofield }}"
             {% _.each(widget.attr, function(val, key) { %}
                 {{ key }}="{{ val }}"
             {% }); %}
@@ -115,6 +118,7 @@
                     {% }); %}
                     class="btn {{ widget.attr['class'] || 'input-medium' }}"
                     data-action="object_change"
+                    data-djangofield="{{ widget.djangofield }}"
                     data-id="{{ data.id }}"
                     title="{{ _val1 }} (ID:{{ _val0 }})">{{ _val1 || '&lt; - &gt;' }}
                 </button>
@@ -143,6 +147,7 @@
                 {% }); %}
                 class="{{ widget.attr['class'] }}"
                 data-action="object_change"
+                data-djangofield="{{ widget.djangofield }}"
                 data-id="{{ data.id }}">{{ data.fields[widget.name] }}
                 </select>
         {% } %}

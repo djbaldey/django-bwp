@@ -213,11 +213,8 @@ INSTALLED_APPS = (
 #                     SETTINGS FOR APPLICATIONS                        #
 ########################################################################
 
-# webodt
-WEBODT_TMP_DIR = abspath('..', 'tmp-webodt')
-if not os.path.exists(WEBODT_TMP_DIR):
-    os.makedirs(WEBODT_TMP_DIR)
-WEBODT_TEMPLATE_PATH = abspath('..', 'media', 'reports')
+QUICKAPI_DECIMAL_LOCALE = True
+QUICKAPI_ENSURE_ASCII = False
 
 ########################################################################
 #                   END SETTINGS FOR APPLICATIONS                      #

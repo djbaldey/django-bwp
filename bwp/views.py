@@ -63,7 +63,7 @@ from bwp.utils.http import get_http_400, get_http_403, get_http_404
 
 from bwp.contrib.reports.models import Document as Report
 
-import os
+import os, decimal
 
 ########################################################################
 #                               PAGES                                  #
@@ -210,6 +210,19 @@ def set_user_field(model_bwp, instance, user, save=False):
     if save:
         instance.save()
     return instance
+
+def numberparse(val):
+    if isinstance(val, (str, unicode)):
+        val = val.replace(' ', '').split('.')
+        if len(val) == 1 and not ',' in val[0]:
+            val = val[0].replace(',', '')
+            return int(val)
+        elif len(val) == 2 and not ',' in val[1]:
+            val = '%s.%s' % (val[0].replace(',', ''), val[1])
+        elif ',' in val[-1]:
+            val = val[0].replace(',', '.')
+        return float(val)
+    return val
 
 ########################################################################
 #                               API                                    #
@@ -474,6 +487,8 @@ def API_commit(request, objects, **kwargs):
                     item['fields'][name] = val[0]
                 elif isinstance(field, models.DateTimeField) and val:
                     item['fields'][name] = dateparse.parse_datetime(val)
+                elif isinstance(field, (models.DecimalField, models.FloatField, models.IntegerField)) and val:
+                    item['fields'][name] = numberparse(val)
             data = item['fields']
             # Новый объект
             if not item.get('pk', False):
