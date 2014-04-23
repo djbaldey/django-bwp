@@ -75,35 +75,35 @@
       }
 
       @media (min-width: 768px) {
-        #modal {
+        .modal {
           width: 768px;
           margin-left: -384px;
         }
       }
 
       @media (min-width: 800px) {
-        #modal {
+        .modal {
           width: 800px;
           margin-left: -400px;
         }
       }
 
       @media (min-width: 900px) {
-        #modal {
+        .modal {
           width: 900px;
           margin-left: -450px;
         }
       }
 
       @media (min-width: 1000px) {
-        #modal {
+        .modal {
           width: 1000px;
           margin-left: -500px;
         }
       }
 
       @media (min-width: 1200px) {
-        #modal {
+        .modal {
           width: 1200px;
           margin-left: -600px;
         }
