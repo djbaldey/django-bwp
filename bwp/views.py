@@ -213,7 +213,8 @@ def set_user_field(model_bwp, instance, user, save=False):
 
 def numberparse(val):
     if isinstance(val, (str, unicode)):
-        val = val.replace(' ', '').replace('\xa0', '').split('.')
+        val = u''+val
+        val = val.replace(' ', '').replace(u'\xa0', '').split('.')
         if len(val) == 1 and not ',' in val[0]:
             val = val[0].replace(',', '')
             return int(val)
