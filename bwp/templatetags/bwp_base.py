@@ -88,7 +88,7 @@ def SERVER_TZ_OFFSET_JS():
     Offset from UTC as JavaScript style
     """
     offset = SETTINGS('SERVER_TZ_OFFSET_JS') or None
-    if offset:
+    if not offset is None:
         return offset
     tz = timezone.get_current_timezone()
     sec = tz.utcoffset(datetime_server_naive()).total_seconds()

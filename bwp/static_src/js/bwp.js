@@ -891,7 +891,7 @@ function handlerTempUploadFile(object, field) {
         formData.append('file', file);
 
         xhr.open('POST',
-            '/upload/'+ object.model.name +'/',
+            'upload/'+ object.model.name +'/',
             true
         );
         xhr.onload = function(e) {

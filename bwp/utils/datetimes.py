@@ -106,10 +106,10 @@ def datetime_server(value=None):
 
     if tz_curr != tz_serv:
         timezone.activate(tz_serv)
-        value = timezone.localtime(value, True)
+        value = timezone.localtime(value, tz_serv)
         timezone.activate(tz_curr)
     else:
-        value = timezone.localtime(value, True)
+        value = timezone.localtime(value, tz_curr)
 
     return value
 
