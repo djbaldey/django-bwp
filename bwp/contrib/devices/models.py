@@ -1,49 +1,39 @@
 # -*- coding: utf-8 -*-
-"""
-###############################################################################
-# Copyright 2013 Grigoriy Kramarenko.
-###############################################################################
-# This file is part of BWP.
 #
-#    BWP is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation, either version 3 of the License, or
-#    (at your option) any later version.
-#
-#    BWP is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
-#
-#    You should have received a copy of the GNU General Public License
-#    along with BWP.  If not, see <http://www.gnu.org/licenses/>.
-#
-# Этот файл — часть BWP.
-#
-#   BWP - свободная программа: вы можете перераспространять ее и/или
-#   изменять ее на условиях Стандартной общественной лицензии GNU в том виде,
-#   в каком она была опубликована Фондом свободного программного обеспечения;
-#   либо версии 3 лицензии, либо (по вашему выбору) любой более поздней
-#   версии.
-#
-#   BWP распространяется в надежде, что она будет полезной,
-#   но БЕЗО ВСЯКИХ ГАРАНТИЙ; даже без неявной гарантии ТОВАРНОГО ВИДА
-#   или ПРИГОДНОСТИ ДЛЯ ОПРЕДЕЛЕННЫХ ЦЕЛЕЙ. Подробнее см. в Стандартной
-#   общественной лицензии GNU.
-#
-#   Вы должны были получить копию Стандартной общественной лицензии GNU
-#   вместе с этой программой. Если это не так, см.
-#   <http://www.gnu.org/licenses/>.
-###############################################################################
-"""
+#  bwp/contrib/devices/models.py
+#  
+#  Copyright 2013 Grigoriy Kramarenko <root@rosix.ru>
+#  
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 3 of the License, or
+#  (at your option) any later version.
+#  
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#  
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+#  MA 02110-1301, USA.
+#  
+#  
+from __future__ import unicode_literals
+
 from django.db import models
 from django.contrib.auth.models import User, Group
 from django.utils.translation import ugettext_lazy as _
+from django.utils import six
+from django.utils.encoding import force_text, python_2_unicode_compatible
+from django.http import SimpleCookie
 from bwp.contrib.abstracts.models import AbstractGroup
 from bwp.db import fields
 import hashlib, datetime
 
 from drivers import DRIVER_CLASSES
+
 
 class Register(object):
     """ Класс-регистратор локальных устройств """
@@ -179,6 +169,8 @@ class BaseDevice(AbstractGroup):
                 D['remote_url'] = self.remote_url
             if hasattr(self, 'remote_id') and self.remote_id:
                 D['remote_id'] = self.remote_id
+            if hasattr(self, 'cookies'):
+                D['model_device'] = self
             if hasattr(self, 'config') and self.config:
                 config = self.config or {}
                 D.update(config)
@@ -222,11 +214,9 @@ class RemoteDevice(BaseDevice):
     """ Удалённое устройство """
     remote = True
 
-    remote_url = models.CharField(
-            max_length=200,
-            verbose_name = _('url'))
-    remote_id = models.IntegerField(
-            verbose_name = _('identifier'))
+    remote_url = models.CharField(_('url'), max_length=200)
+    remote_id = models.IntegerField(_('identifier'))
+    cookies = models.TextField(_('cookies'), blank=True)
 
     class Meta:
         ordering = ['title']
@@ -234,6 +224,13 @@ class RemoteDevice(BaseDevice):
         verbose_name_plural = _('remote devices')
         unique_together = ('remote_url', 'remote_id')
 
+    @property
+    def cookies_string(self):
+        c = SimpleCookie()
+        c.load(self.cookies)
+        return c.output(header='', sep='; ').strip()
+
+@python_2_unicode_compatible
 class SpoolerDevice(models.Model):
     """ Диспетчер очереди команд для устройств """
     created = models.DateTimeField(
@@ -269,7 +266,7 @@ class SpoolerDevice(models.Model):
             verbose_name = _('method'))
 
     def __unicode__(self):
-        return unicode(self.local_device)
+        return force_text(self.local_device)
 
     class Meta:
         ordering = ['pk']

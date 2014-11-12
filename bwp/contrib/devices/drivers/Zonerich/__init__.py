@@ -1,50 +1,39 @@
 # -*- coding: utf-8 -*-
-"""
-###############################################################################
-# Copyright 2013 Grigoriy Kramarenko.
-###############################################################################
-# This file is part of BWP.
 #
-#    BWP is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation, either version 3 of the License, or
-#    (at your option) any later version.
-#
-#    BWP is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
-#
-#    You should have received a copy of the GNU General Public License
-#    along with BWP.  If not, see <http://www.gnu.org/licenses/>.
-#
-# Этот файл — часть BWP.
-#
-#   BWP - свободная программа: вы можете перераспространять ее и/или
-#   изменять ее на условиях Стандартной общественной лицензии GNU в том виде,
-#   в каком она была опубликована Фондом свободного программного обеспечения;
-#   либо версии 3 лицензии, либо (по вашему выбору) любой более поздней
-#   версии.
-#
-#   BWP распространяется в надежде, что она будет полезной,
-#   но БЕЗО ВСЯКИХ ГАРАНТИЙ; даже без неявной гарантии ТОВАРНОГО ВИДА
-#   или ПРИГОДНОСТИ ДЛЯ ОПРЕДЕЛЕННЫХ ЦЕЛЕЙ. Подробнее см. в Стандартной
-#   общественной лицензии GNU.
-#
-#   Вы должны были получить копию Стандартной общественной лицензии GNU
-#   вместе с этой программой. Если это не так, см.
-#   <http://www.gnu.org/licenses/>.
-###############################################################################
-"""
-from django.utils.translation import ugettext_lazy as _
+#  bwp/contrib/devices/drivers/Zonerich/__init__.py
+#  
+#  Copyright 2013 Grigoriy Kramarenko <root@rosix.ru>
+#  
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 3 of the License, or
+#  (at your option) any later version.
+#  
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#  
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+#  MA 02110-1301, USA.
+#  
+#  
+from __future__ import unicode_literals
 import subprocess
 
-from bwp.contrib.devices.remote import RemoteCommand
+from django.utils.translation import ugettext_lazy as _
+
+from bwp.contrib.devices.remote import RemoteCommand, APIUrlOpenError
 
 DEFAULT_PORT = '192.168.1.10 9100'
 CODE_PAGE = 'cp866'
 GS  = 0x1D
 ESC = 0x1B
+
+class ZonerichError(APIUrlOpenError):
+    pass
 
 class ZonerichIP(object):
     is_remote = False
@@ -62,13 +51,13 @@ class ZonerichIP(object):
         else:
             self.port = kwargs.get('port', DEFAULT_PORT)
 
-    def _send(self, doc=u'Текст документа не передан'):
+    def _send(self, doc='Текст документа не передан'):
         """ Отправка на печать, ответа не существует. """
         if self.is_remote:
             return self.remote("status", short=short)
 
         # Юникодим "ласково", но принудительно:
-        doc = u'' + doc
+        doc = '' + doc
         text = doc.encode(CODE_PAGE)
         byte_list = [ord(x) for x in text]
 
@@ -93,7 +82,7 @@ class ZonerichIP(object):
         if self.is_remote:
             return self.remote("cut_tape", fullcut=fullcut)
         
-        doc = u'' + self.COMMAND_CUT
+        doc = '' + self.COMMAND_CUT
 
         if self.status():
             self._send(doc)
@@ -106,10 +95,15 @@ class ZonerichIP(object):
         if self.is_remote:
             return self.remote("status",)
 
-        answer = subprocess.check_output([
-            "ping", "-c", "1",
-            self.port.split(' ')[0]
-        ])
+        try:
+            answer = subprocess.check_output([
+                "ping", "-c", "1",
+                self.port.split(' ')[0]
+            ])
+        except subprocess.CalledProcessError as e:
+            raise ZonerichError(value=self.port)
+        except Exception as e:
+            raise e
 
         if answer.count('1 received'):
             return True
@@ -123,13 +117,13 @@ class ZonerichIP(object):
         text = '\n'.join(L).replace('\n\n', '\n')
         return text + '\n'
 
-    def print_document(self, text=u'Текст документа не передан', header=u''):
+    def print_document(self, text='Текст документа не передан', header=''):
         """ Печать предварительного чека или чего-либо другого. """
         if self.is_remote:
             return self.remote("print_document",
                 header=header, text=text)
 
-        doc = u''
+        doc = ''
 
         if header:
             doc += self.COMMAND_HEADER + header + '\n'
@@ -141,4 +135,4 @@ class ZonerichIP(object):
             self._send(doc)
             return True#self.cut_tape()
 
-        raise RuntimeError(unicode(_('Printer is not responding')))
+        raise ZonerichError(value=self.port)

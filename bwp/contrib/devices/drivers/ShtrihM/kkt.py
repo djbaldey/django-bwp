@@ -1,47 +1,35 @@
 # -*- coding: utf-8 -*-
-"""
-###############################################################################
-# Copyright 2013 Grigoriy Kramarenko.
-###############################################################################
-# This file is part of BWP.
 #
-#    BWP is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation, either version 3 of the License, or
-#    (at your option) any later version.
-#
-#    BWP is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
-#
-#    You should have received a copy of the GNU General Public License
-#    along with BWP.  If not, see <http://www.gnu.org/licenses/>.
-#
-# Этот файл — часть BWP.
-#
-#   BWP - свободная программа: вы можете перераспространять ее и/или
-#   изменять ее на условиях Стандартной общественной лицензии GNU в том виде,
-#   в каком она была опубликована Фондом свободного программного обеспечения;
-#   либо версии 3 лицензии, либо (по вашему выбору) любой более поздней
-#   версии.
-#
-#   BWP распространяется в надежде, что она будет полезной,
-#   но БЕЗО ВСЯКИХ ГАРАНТИЙ; даже без неявной гарантии ТОВАРНОГО ВИДА
-#   или ПРИГОДНОСТИ ДЛЯ ОПРЕДЕЛЕННЫХ ЦЕЛЕЙ. Подробнее см. в Стандартной
-#   общественной лицензии GNU.
-#
-#   Вы должны были получить копию Стандартной общественной лицензии GNU
-#   вместе с этой программой. Если это не так, см.
-#   <http://www.gnu.org/licenses/>.
-###############################################################################
-"""
-from django.utils.translation import ugettext_lazy as _
-from django.conf import settings
+#  bwp/contrib/devices/drivers/ShtrihM/kkt.py
+#  
+#  Copyright 2013 Grigoriy Kramarenko <root@rosix.ru>
+#  
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 3 of the License, or
+#  (at your option) any later version.
+#  
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#  
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+#  MA 02110-1301, USA.
+#  
+#  
+from __future__ import unicode_literals
 import serial, time, datetime
 
-import conf, protocol
-from helpers import money2integer, integer2money, count2integer, \
+from django.utils import six
+from django.utils.encoding import smart_text, force_text
+from django.utils.translation import ugettext_lazy as _
+from django.conf import settings
+
+from . import conf, protocol
+from .helpers import money2integer, integer2money, count2integer, \
                     string2bits, bits2string, digits2string, \
                     get_control_summ, \
                     int2, int4, int5, int6
@@ -66,36 +54,66 @@ KKT_MODES = protocol.KKT_MODES
 KKT_FLAGS = protocol.KKT_FLAGS
 FP_FLAGS  = protocol.FP_FLAGS
 
-class KKTException(Exception):
+class KKTError(Exception):
 
     def __init__(self, value):
-        self.value = value
-        self.source, self.message = protocol.BUGS[value]
+        self.args = protocol.BUGS[value]
 
     def __str__(self):
-        return str(unicode(self).encode('utf-8'))
+        return ('%s: %s' % self.args).encode('utf-8')
 
-    def __unicode__(self):
-        return u'%s: %s' % (self.source, self.message)
+    def __repr__(self):
+        return repr(self.__str__())
+
+
+class AbstractError(Exception):
+    message = ''
+    def __init__(self, message=None, value=None):
+        self.value   = value
+        self.message = message or self.message
+
+    def message_to_str(self):
+        return force_text(self.message).encode('utf-8')
+
+    def __str__(self):
+        return self.message_to_str()
+
+    def __repr__(self):
+        if self.value is None:
+            return repr(self.message_to_str())
+        return repr(self.message_to_str(), self.value)
+
+class KKTConnectionError(AbstractError):
+    message = _('Connection error')
+
+class KKTValueError(AbstractError):
+    message = _('Wrong value')
+
+class KKTTypeError(AbstractError):
+    message = _('Wrong type of value')
+
+class PasswordTypeError(AbstractError):
+    message = _('Wrong value type in the password')
+
 
 def password_prapare(password):
     if isinstance(password, (list, tuple)):
         try:
             password = digits2string(password[:4])
         except:
-            raise TypeError(u'Password type not identify')
+            raise PasswordTypeError(_('Password type not identify'), password)
     elif isinstance(password, int):
         if password > 9999:
-            raise TypeError(u'Password must be 0..9999 or string from 4 chars')
+            raise PasswordTypeError(_('Password must be 0..9999 or string from 4 chars'), password)
         password = int4.pack(password)
-    elif isinstance(password, str):
+    elif isinstance(password, six.string_types):
         try: # если это число в строке
             password = int4.pack(int(password))
         except:
             pass
         password = password[:4]
     else:
-        raise TypeError(u'Password type not identify')
+        raise PasswordTypeError(_('Password type not identify'), password)
     return password
 
 class BaseKKT(object):
@@ -157,7 +175,7 @@ class BaseKKT(object):
         ENQ, ACK и NAK – коды WIN1251.
 
     """
-    error = u''
+    error = ''
 
     def __init__(self, port=DEFAULT_PORT,
                 password=DEFAULT_PASSWORD,
@@ -201,10 +219,10 @@ class BaseKKT(object):
                 timeout=self.timeout,
                 writeTimeout=self.writeTimeout
             )
+        except serial.SerialException as e:
+            raise KKTConnectionError(_('Port %s is busy or the device is not connected to it') % self.port)
         except Exception as e:
-            self._conn = None
-            self.error = unicode(e)
-            return False
+            raise e
 
         return self.check_port()
 
@@ -218,7 +236,7 @@ class BaseKKT(object):
     def check_port(self):
         """ Проверка на готовность порта """
         if not self.conn.isOpen():
-            raise RuntimeError(unicode(_(u'Serial port closed unexpectedly')))
+            raise KKTConnectionError(_('Serial port closed unexpectedly'), self)
         return True
 
     def check_state(self):
@@ -232,7 +250,7 @@ class BaseKKT(object):
         if answer in (NAK, ACK):
             return answer
         elif not answer:
-            raise RuntimeError(unicode(_(u'No communication with the device')))
+            raise KKTConnectionError(_('No communication with the device'))
 
     def check_STX(self):
         """ Проверка на данные """
@@ -250,7 +268,7 @@ class BaseKKT(object):
         if answer == STX:
             return True
         else:
-            raise RuntimeError(unicode(_(u'No communication with the device')))
+            raise KKTConnectionError(_('No communication with the device'))
 
     def check_NAK(self):
         """ Проверка на ожидание команды """
@@ -304,16 +322,16 @@ class BaseKKT(object):
                 i += 1
             if i >= MAX_ATTEMPT:
                 self.disconnect()
-                raise RuntimeError(unicode(_(u'No communication with the device')))
+                raise KKTConnectionError(_('No communication with the device'))
         elif not answer:
             self.disconnect()
-            raise RuntimeError(unicode(_(u'No communication with the device')))
+            raise KKTConnectionError(_('No communication with the device'))
         j = 0
         while j < MAX_ATTEMPT and not self.check_STX():
             j += 1
         if j >= MAX_ATTEMPT:
             self.disconnect()
-            raise RuntimeError(unicode(_(u'No communication with the device')))
+            raise KKTConnectionError(_('No communication with the device'))
         
         length  = ord(self._read(1))
         command = self._read(1)
@@ -322,10 +340,9 @@ class BaseKKT(object):
         if length-2 != len(data):
             self._write(NAK)
             self.disconnect()
-            raise RuntimeError(
-                unicode(_('Length (%(lehgth)i) not equal length of data (%(data)i)') % \
+            raise KKTConnectionError(
+                _('Length (%(lehgth)i) not equal length of data (%(data)i)') % \
                 {'length': length, 'data': len(data)}
-                )
             )
         control_read = self._read(1)
         control_summ = get_control_summ(chr(length) + command \
@@ -333,8 +350,8 @@ class BaseKKT(object):
         if control_read != control_summ:
             self._write(NAK)
             self.disconnect()
-            raise RuntimeError("Wrong crc %i must be %i " % (
-                            ord(control_summ), ord(control_read)))
+            raise KKTConnectionError(_("Wrong crc %(summ)i must be %(read)i") % {
+                    'summ': ord(control_summ), 'read': ord(control_read)})
         self._write(ACK)
         self._flush()
         #~ time.sleep(MIN_TIMEOUT*2)
@@ -389,7 +406,7 @@ class BaseKKT(object):
         if disconnect:
             self.disconnect()
         if error:
-            raise KKTException(error)
+            raise KKTError(error)
         return answer, error, command
 
 class KKT(BaseKKT):
@@ -632,10 +649,10 @@ class KKT(BaseKKT):
         return result
 
 ## Implemented multistring for x12
-    def x12_loop(self, text=u'', control_tape=False):
+    def x12_loop(self, text='', control_tape=False):
         """ Печать жирной строки без ограничения на 20 символов """
         # Юникодим "ласково", но принудительно:
-        t = u'' + text
+        t = '' + text
         last_result = None
         while len(t) > 0:
             last_result = self.x12(text=t[:20], control_tape=control_tape)
@@ -643,7 +660,7 @@ class KKT(BaseKKT):
         return last_result
 
 ## Implemented
-    def x12(self, text=u'', control_tape=False):
+    def x12(self, text='', control_tape=False):
         """ Печать жирной строки
             Команда: 12H. Длина сообщения: 26 байт.
                 Пароль оператора (4 байта)
@@ -661,9 +678,9 @@ class KKT(BaseKKT):
             flags = 1 # bin(1) == '0b00000001'
 
         # Юникодим "ласково", но принудительно:
-        text = u'' + text
+        text = '' + text
         if len(text) > 20:
-            raise RuntimeError("Length of string must be less or equal 20 chars")
+            raise KKTValueError(_("Length of string must be less or equal %s chars") % 20)
         text = text.encode(CODE_PAGE).ljust(20, chr(0x0))
 
         params = self.password + chr(flags) + text
@@ -749,13 +766,13 @@ class KKT(BaseKKT):
         raise NotImplemented
 
 ## Implemented multistring for x17
-    def x17_loop(self, text=u'', control_tape=False):
+    def x17_loop(self, text='', control_tape=False):
         """ Печать строки без ограничения на 36 символов
             В документации указано 40, но 4 символа выходят за область
             печати на ФРК. 
         """
         # Юникодим "ласково", но принудительно:
-        t = u'' + text
+        t = '' + text
         last_result = None
         while len(t) > 0:
             last_result = self.x17(text=t[:36], control_tape=control_tape)
@@ -763,7 +780,7 @@ class KKT(BaseKKT):
         return last_result
 
 ## Implemented
-    def x17(self, text=u'', control_tape=False):
+    def x17(self, text='', control_tape=False):
         """ Печать строки
             Команда: 17H. Длина сообщения: 46 байт.
                 Пароль оператора (4 байта)
@@ -785,9 +802,9 @@ class KKT(BaseKKT):
             flags = 1 # bin(1) == '0b00000001'
 
         # Юникодим "ласково", но принудительно:
-        text = u'' + text
+        text = '' + text
         if len(text) > 40:
-            raise RuntimeError("Length of string must be less or equal 40 chars")
+            raise KKTValueError(_("Length of string must be less or equal %s chars") % 40)
         text = text.encode(CODE_PAGE).ljust(40, chr(0x0))
 
         params = self.password + chr(flags) + text
@@ -815,9 +832,9 @@ class KKT(BaseKKT):
         command = 0x18
 
         # Юникодим "ласково", но принудительно:
-        text = u'' + text
+        text = '' + text
         if len(text) > 30:
-            raise RuntimeError("Length of string must be less or equal 30 chars")
+            raise KKTValueError(_("Length of string must be less or equal %s chars"), 30)
         text = text.encode(CODE_PAGE).ljust(30, chr(0x0))
 
         params = self.password + text + chr(flags) 
@@ -1073,7 +1090,7 @@ class KKT(BaseKKT):
             tape = 1 # bin(1) == '0b00000001'
 
         if row_count < 1 or row_count > 255:
-            raise RuntimeError("Line count must be in 1..255 range")
+            raise KKTValueError(_("Line count must be in 1..255 range"))
 
         params  = self.password + chr(flags) + chr(row_count)
         data, error, command = self.ask(command, params)
@@ -1769,7 +1786,7 @@ class KKT(BaseKKT):
 
 ## Implemented
     def x77(self, cash=0, payment2=0, payment3=0, payment4=0, discount=0,
-    text=u'',  taxes=[0,0,0,0]):
+    text='',  taxes=[0,0,0,0]):
         """ Формирование стандартного закрытия чека на подкладном
                 документе
             Команда: 77H. Длина сообщения: 72 байта.
@@ -1799,24 +1816,24 @@ class KKT(BaseKKT):
         discount = money2integer(discount)
 
         if cash < 0 or cash > 9999999999:
-            raise ValueError("Cash must be in range 0..9999999999")
+            raise KKTValueError(_("Cash must be in range 0..9999999999"), cash)
         if payment2 < 0 or payment2 > 9999999999:
-            raise ValueError("Payment 2 must be in range 0..9999999999")
+            raise KKTValueError(_("Payment 2 must be in range 0..9999999999"), payment2)
         if payment3 < 0 or payment3 > 9999999999:
-            raise ValueError("Payment 3 must be in range 0..9999999999")
+            raise KKTValueError(_("Payment 3 must be in range 0..9999999999"), payment3)
         if payment4 < 0 or payment4 > 9999999999:
-            raise ValueError("Payment 4 must be in range 0..9999999999")
+            raise KKTValueError(_("Payment 4 must be in range 0..9999999999"), payment4)
         if discount < -9999 or discount > 9999:
-            raise ValueError("Discount must be in range -9999..9999")
+            raise KKTValueError(_("Discount must be in range -9999..9999"), discount)
         if len(text) > 40:
-            raise ValueError("Text must be less than 40 chars")
+            raise KKTValueError(_("Text must be less than 40 chars"), text)
         if len(taxes) != 4:
-            raise ValueError("Count of taxes must be 4")
+            raise KKTValueError(_("Count of taxes must be 4"), taxes)
         if not isinstance(taxes, (list, tuple)):
-            raise TypeError("Taxes must be list or tuple")
+            raise KKTTypeError(_("Taxes must be list or tuple"), taxes)
         for t in taxes:
             if t not in range(0, 5):
-               raise RuntimeError("taxes must be only 0,1,2,3,4")
+               raise KKTValueError(_("taxes must be only 0,1,2,3,4"), t)
 
         cash       = int5.pack(cash)
         payment2   = int5.pack(payment2)
@@ -1950,7 +1967,7 @@ class KKT(BaseKKT):
         raise NotImplemented
 
 ## Implemented
-    def _x8count(self, command, count, price, text=u"", department=0, taxes=[0,0,0,0]):
+    def _x8count(self, command, count, price, text='', department=0, taxes=[0,0,0,0]):
         """ Общий метод для продаж, покупок, возвратов и сторно
             Команда: 80H. Длина сообщения: 60 байт.
                 Пароль оператора (4 байта)
@@ -1972,20 +1989,20 @@ class KKT(BaseKKT):
         price = money2integer(price)
 
         if count < 0 or count > 9999999999:
-            raise ValueError("Count must be in range 0..9999999999")
+            raise KKTValueError(_("Count must be in range 0..9999999999"), count)
         if price < 0 or price > 9999999999:
-            raise ValueError("Price must be in range 0..9999999999")
+            raise KKTValueError(_("Price must be in range 0..9999999999"), price)
         if not department in range(17):
-            raise ValueError("Department must be in range 0..16")
+            raise KKTValueError(_("Department must be in range 0..16"), department)
         if len(text) > 40:
-            raise ValueError("Text must be less than 40 chars")
+            raise KKTValueError(_("Text must be less than 40 chars"), text)
         if len(taxes) != 4:
-            raise ValueError("Count of taxes must be 4")
+            raise KKTValueError(_("Count of taxes must be 4"), taxes)
         if not isinstance(taxes, (list, tuple)):
-            raise TypeError("Taxes must be list or tuple")
+            raise KKTTypeError(_("Taxes must be list or tuple"), taxes)
         for t in taxes:
             if t not in range(0, 5):
-               raise RuntimeError("taxes must be only 0,1,2,3,4")
+               raise KKTValueError(_("taxes must be only 0,1,2,3,4"), taxes)
 
         count      = int5.pack(count)
         price      = int5.pack(price)
@@ -1999,7 +2016,7 @@ class KKT(BaseKKT):
         return operator
 
 ## Implemented
-    def x80(self, count, price, text=u"", department=0, taxes=[0,0,0,0]):
+    def x80(self, count, price, text='', department=0, taxes=[0,0,0,0]):
         """ Продажа
             Команда: 80H. Длина сообщения: 60 байт.
                 Пароль оператора (4 байта)
@@ -2020,7 +2037,7 @@ class KKT(BaseKKT):
                         text=text, department=department, taxes=taxes)
 
 ## Implemented
-    def x81(self, count, price, text=u"", department=0, taxes=[0,0,0,0]):
+    def x81(self, count, price, text='', department=0, taxes=[0,0,0,0]):
         """ Покупка
             Команда: 81H. Длина сообщения: 60 байт.
                 Пароль оператора (4 байта)
@@ -2041,7 +2058,7 @@ class KKT(BaseKKT):
                         text=text, department=department, taxes=taxes)
 
 ## Implemented
-    def x82(self, count, price, text=u"", department=0, taxes=[0,0,0,0]):
+    def x82(self, count, price, text='', department=0, taxes=[0,0,0,0]):
         """ Возврат продажи
             Команда: 82H. Длина сообщения: 60 байт.
                 Пароль оператора (4 байта)
@@ -2062,7 +2079,7 @@ class KKT(BaseKKT):
                         text=text, department=department, taxes=taxes)
 
 ## Implemented
-    def x83(self, count, price, text=u"", department=0, taxes=[0,0,0,0]):
+    def x83(self, count, price, text='', department=0, taxes=[0,0,0,0]):
         """ Возврат покупки
             Команда: 83H. Длина сообщения: 60 байт.
                 Пароль оператора (4 байта)
@@ -2083,7 +2100,7 @@ class KKT(BaseKKT):
                         text=text, department=department, taxes=taxes)
 
 ## Implemented
-    def x84(self, count, price, text=u"", department=0, taxes=[0,0,0,0]):
+    def x84(self, count, price, text='', department=0, taxes=[0,0,0,0]):
         """ Сторно
             Команда: 84H. Длина сообщения: 60 байт.
                 Пароль оператора (4 байта)
@@ -2104,7 +2121,7 @@ class KKT(BaseKKT):
                         text=text, department=department, taxes=taxes)
 
 ## Implemented
-    def x85(self, cash=0, summs=[0,0,0,0], discount=0, taxes=[0,0,0,0], text=u''):
+    def x85(self, cash=0, summs=[0,0,0,0], discount=0, taxes=[0,0,0,0], text=''):
         """ Закрытие чека
             Команда: 85H. Длина сообщения: 71 байт.
                 Пароль оператора (4 байта)
@@ -2134,18 +2151,18 @@ class KKT(BaseKKT):
         
         for i,s in enumerate([summa1, summa2, summa3, summa4]):
             if s < 0 or s > 9999999999:
-                raise ValueError("Variable `summa%d` must be in range 0..9999999999" % i+1)
+                raise KKTValueError(_("Variable `summa%d` must be in range 0..9999999999") % i+1, s)
         if discount < -9999 or discount > 9999:
-            raise ValueError("Discount must be in range -9999..9999")
+            raise KKTValueError(_("Discount must be in range -9999..9999"), discount)
         if len(text) > 40:
-            raise ValueError("Text must be less than 40 chars")
+            raise KKTValueError(_("Text must be less than 40 chars"), text)
         if len(taxes) != 4:
-            raise ValueError("Count of taxes must be 4")
+            raise KKTValueError(_("Count of taxes must be 4"), taxes)
         if not isinstance(taxes, (list, tuple)):
-            raise TypeError("Taxes must be list or tuple")
+            raise KKTTypeError(_("Taxes must be list or tuple"), taxes)
         for t in taxes:
             if t not in range(0, 5):
-               raise RuntimeError("taxes must be only 0,1,2,3,4")
+               raise KKTValueError(_("taxes must be only 0,1,2,3,4"), taxes)
 
         summa1 = int5.pack(summa1)
         summa2 = int5.pack(summa2)
@@ -2167,7 +2184,7 @@ class KKT(BaseKKT):
         return result
 
 ## Implemented
-    def _x8summa(self, command, summa, text=u"", taxes=[0,0,0,0]):
+    def _x8summa(self, command, summa, text='', taxes=[0,0,0,0]):
         """ Общий метод для скидок, 
             Команда: 86H. Длина сообщения: 54 байт.
                 Пароль оператора (4 байта)
@@ -2186,16 +2203,16 @@ class KKT(BaseKKT):
         summa = money2integer(summa)
 
         if summa < 0 or summa > 9999999999:
-            raise ValueError("Summa must be in range 0..9999999999")
+            raise KKTValueError(_("Summa must be in range 0..9999999999"), summa)
         if len(text) > 40:
-            raise ValueError("Text must be less than 40 chars")
+            raise KKTValueError(_("Text must be less than 40 chars"), text)
         if len(taxes) != 4:
-            raise ValueError("Count of taxes must be 4")
+            raise KKTValueError(_("Count of taxes must be 4"), taxes)
         if not isinstance(taxes, (list, tuple)):
-            raise TypeError("Taxes must be list or tuple")
+            raise KKTTypeError(_("Taxes must be list or tuple"), taxes)
         for t in taxes:
             if t not in range(0, 5):
-               raise RuntimeError("taxes must be only 0,1,2,3,4")
+               raise KKTValueError(_("taxes must be only 0,1,2,3,4"), t)
 
         summa      = int5.pack(summa)
         taxes      = digits2string(taxes)
@@ -2207,7 +2224,7 @@ class KKT(BaseKKT):
         return operator
 
 ## Implemented
-    def x86(self, summa, text=u"", taxes=[0,0,0,0]):
+    def x86(self, summa, text='', taxes=[0,0,0,0]):
         """ Скидка
             Команда: 86H. Длина сообщения: 54 байт.
                 Пароль оператора (4 байта)
@@ -2226,7 +2243,7 @@ class KKT(BaseKKT):
                         text=text, taxes=taxes)
 
 ## Implemented
-    def x87(self, summa, text=u"", taxes=[0,0,0,0]):
+    def x87(self, summa, text='', taxes=[0,0,0,0]):
         """ Надбавка
             Команда: 87H. Длина сообщения: 54 байт.
                 Пароль оператора (4 байта)
@@ -2275,7 +2292,7 @@ class KKT(BaseKKT):
         return operator
 
 ## Implemented
-    def x8A(self, summa, text=u"", taxes=[0,0,0,0]):
+    def x8A(self, summa, text='', taxes=[0,0,0,0]):
         """ Сторно скидки
             Команда: 8AH. Длина сообщения: 54 байта.
                 Пароль оператора (4 байта)
@@ -2294,7 +2311,7 @@ class KKT(BaseKKT):
                         text=text, taxes=taxes)
 
 ## Implemented
-    def x8B(self, summa, text=u"", taxes=[0,0,0,0]):
+    def x8B(self, summa, text='', taxes=[0,0,0,0]):
         """ Сторно надбавки
             Команда: 8BH. Длина сообщения: 54 байта.
                 Пароль оператора (4 байта)
@@ -2348,7 +2365,7 @@ class KKT(BaseKKT):
         command = 0x8D
 
         if not document_type in range(4):
-            raise RuntimeError("Check type may be only 0,1,2,3 value")
+            raise KKTValueError(_("Check type may be only 0,1,2,3 value"), document_type)
 
         params  = self.password + chr(document_type)
         data, error, command = self.ask(command, params)
