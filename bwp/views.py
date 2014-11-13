@@ -65,6 +65,11 @@ from bwp.contrib.reports.models import Document as Report
 
 import os, decimal
 
+
+def print_memory():
+    import resource
+    print 'Memory usage: %s (kb)' % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+
 ########################################################################
 #                               PAGES                                  #
 ########################################################################
