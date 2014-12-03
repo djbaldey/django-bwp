@@ -227,7 +227,7 @@ class RemoteDevice(BaseDevice):
     @property
     def cookies_string(self):
         c = SimpleCookie()
-        c.load(self.cookies)
+        c.load(str(self.cookies))
         return c.output(header='', sep='; ').strip()
 
 @python_2_unicode_compatible
