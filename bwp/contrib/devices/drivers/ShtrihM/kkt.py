@@ -1,50 +1,34 @@
 # -*- coding: utf-8 -*-
-"""
-###############################################################################
-# Copyright 2013 Grigoriy Kramarenko.
-###############################################################################
-# This file is part of BWP.
 #
-#    BWP is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation, either version 3 of the License, or
-#    (at your option) any later version.
-#
-#    BWP is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
-#
-#    You should have received a copy of the GNU General Public License
-#    along with BWP.  If not, see <http://www.gnu.org/licenses/>.
-#
-# Этот файл — часть BWP.
-#
-#   BWP - свободная программа: вы можете перераспространять ее и/или
-#   изменять ее на условиях Стандартной общественной лицензии GNU в том виде,
-#   в каком она была опубликована Фондом свободного программного обеспечения;
-#   либо версии 3 лицензии, либо (по вашему выбору) любой более поздней
-#   версии.
-#
-#   BWP распространяется в надежде, что она будет полезной,
-#   но БЕЗО ВСЯКИХ ГАРАНТИЙ; даже без неявной гарантии ТОВАРНОГО ВИДА
-#   или ПРИГОДНОСТИ ДЛЯ ОПРЕДЕЛЕННЫХ ЦЕЛЕЙ. Подробнее см. в Стандартной
-#   общественной лицензии GNU.
-#
-#   Вы должны были получить копию Стандартной общественной лицензии GNU
-#   вместе с этой программой. Если это не так, см.
-#   <http://www.gnu.org/licenses/>.
-###############################################################################
-"""
+#  bwp/contrib/devices/drivers/ShtrihM/kkt.py
+#  
+#  Copyright 2013 Grigoriy Kramarenko <root@rosix.ru>
+#  
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 3 of the License, or
+#  (at your option) any later version.
+#  
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#  
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+#  MA 02110-1301, USA.
+#  
+#  
 from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
 import serial, time, datetime
 
-import conf, protocol
-from helpers import money2integer, integer2money, count2integer, \
-                    string2bits, bits2string, digits2string, \
-                    get_control_summ, \
-                    int2, int4, int5, int6
+from . import conf, protocol
+from .helpers import (money2integer, integer2money, count2integer,
+                    string2bits, bits2string, digits2string,
+                    get_control_summ,
+                    int2, int4, int5, int6, int7, int8)
 
 DEFAULT_ADMIN_PASSWORD = conf.DEFAULT_ADMIN_PASSWORD
 DEFAULT_PASSWORD       = conf.DEFAULT_PASSWORD
@@ -1324,7 +1308,8 @@ class KKT(BaseKKT):
         """
         raise NotImplemented
 
-    def x62(self):
+## Implemented
+    def x62(self, after=False):
         """ Запрос суммы записей в ФП
             Команда: 62H. Длина сообщения: 6 байт.
                 Пароль администратора или системного администратора
@@ -1334,15 +1319,33 @@ class KKT(BaseKKT):
             Ответ: 62H. Длина сообщения: 29 байт.
                 Код ошибки (1 байт)
                 Порядковый номер оператора (1 байт) 29, 30
-                Сумма сменных итогов продаж (8 байт)
-                Сумма сменных итог покупок (6 байт) При отсутствии ФП 2:
+                Сумма всех сменных итогов продаж (8 байт)
+                Сумма всех сменных итогов покупок (6 байт) При отсутствии ФП 2:
                     FFh FFh FFh FFh FFh FFh
-                Сумма сменных возвратов продаж (6 байт) При отсутствии
-                    ФП 2: FFh FFh FFh FFh FFh FFh
-                Сумма сменных возвратов покупок (6 байт) При отсутствии
-                    ФП 2: FFh FFh FFh FFh FFh FFh
+                Сумма всех сменных возвратов продаж (6 байт) При отсутствии ФП 2:
+                    FFh FFh FFh FFh FFh FFh
+                Сумма всех сменных возвратов покупок (6 байт) При отсутствии ФП 2:
+                    FFh FFh FFh FFh FFh FFh
         """
-        raise NotImplemented
+        command = 0x62
+        params  = self.admin_password + chr(1 if after else 0)
+        data, error, command = self.ask(command, params)
+
+        result = {
+            'operator': ord(data[0]),
+            'sale': integer2money(int8.unpack(data[1:9])),
+            'purchase': integer2money(int6.unpack(data[9:15])),
+            'refuse_sale': integer2money(int6.unpack(data[15:21])),
+            'refuse_purchase': integer2money(int6.unpack(data[21:])),
+        }
+
+        # Если ФП 2 установлена, то почемуто вовращает предельное число.
+        # Поэтому мы его сбрасываем.
+        for key in ('purchase', 'refuse_sale', 'refuse_purchase'):
+            if result[key] == 2814749767106.55:
+                result[key] = 0
+
+        return result
 
     def x63(self):
         """ Запрос даты последней записи в ФП
