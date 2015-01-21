@@ -85,15 +85,15 @@ urlpatterns = patterns('bwp.views',
     url(r'^accounts/logout/$', 'logout', name="bwp_logout_redirect"),
 )
 
-if 'tinymce' in settings.INSTALLED_APPS:
-    urlpatterns += patterns('',
-        url(r'^tinymce/', include('tinymce.urls')),
-    )
-
-if 'filebrowser' in settings.INSTALLED_APPS:
-    urlpatterns += patterns('',
-        url(r'^tinymce/filebrowser/', include('filebrowser.urls')),
-    )
+#~ if 'tinymce' in settings.INSTALLED_APPS:
+    #~ urlpatterns += patterns('',
+        #~ url(r'^tinymce/', include('tinymce.urls')),
+    #~ )
+#~ 
+#~ if 'filebrowser' in settings.INSTALLED_APPS:
+    #~ urlpatterns += patterns('',
+        #~ url(r'^tinymce/filebrowser/', include('filebrowser.urls')),
+    #~ )
 
 # For develop:
 urlpatterns += staticfiles_urlpatterns()
