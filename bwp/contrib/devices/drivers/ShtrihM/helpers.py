@@ -22,8 +22,8 @@
 #  
 from __future__ import unicode_literals
 
-from bwp.contrib.devices.drivers.helpers import int2, int4, int5, int6,\
-    string2bits, bits2string
+from bwp.contrib.devices.drivers.helpers import (string2bits, bits2string,
+    int2, int4, int5, int6, int7, int8)
 
 def money2integer(money, digits=2):
     """ Преобразует decimal или float значения в целое число, согласно
