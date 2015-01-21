@@ -821,6 +821,7 @@ class KKT(BaseKKT):
         """
         raise NotImplemented
 
+## Implemented
     def x1A(self):
         """ Запрос денежного регистра
             Команда: 1AH. Длина сообщения: 6 байт.
@@ -830,9 +831,20 @@ class KKT(BaseKKT):
                 Код ошибки (1 байт)
                 Порядковый номер оператора (1 байт) 1...30
                 Содержимое регистра (6 байт)
+        
+        Пример запроса:
+            integer2money(int6.unpack(kkt.ask(0x1A, kkt.password + chr(121))[0][1:]))
         """
-        raise NotImplemented
+        
+        command = 0x1A
 
+        params = self.password + chr(number) 
+
+        data, error, command = self.ask(command, params)
+
+        return integer2money(int6.unpack(data[1:]))
+
+## Implemented
     def x1B(self):
         """ Запрос операционного регистра
             Команда: 1BH. Длина сообщения: 6 байт.
@@ -843,7 +855,13 @@ class KKT(BaseKKT):
                 Порядковый номер оператора (1 байт) 1...30
                 Содержимое регистра (2 байта)
         """
-        raise NotImplemented
+        command = 0x1B
+
+        params = self.password + chr(number) 
+
+        data, error, command = self.ask(command, params)
+
+        return int2.unpack(data[1:])
 
     def x1C(self):
         """ Запись лицензии
