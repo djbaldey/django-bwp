@@ -39,7 +39,7 @@
 from django.db import models
 import json
 from copy import deepcopy
-from quickapi.http import DjangoJSONEncoder
+from quickapi.http import JSONEncoder
 from bwp.utils import print_debug
 from bwp.db import fields as bwp_fields
 
@@ -63,7 +63,7 @@ class GeneralWidget(object):
     def __str__(self):
         dic = self.get_dict()
         return json.dumps(dic, ensure_ascii=False,
-                                cls=DjangoJSONEncoder,
+                                cls=JSONEncoder,
                                 indent=4,
                             ).encode('utf-8', 'ignore')
 

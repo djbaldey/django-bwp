@@ -43,7 +43,7 @@ from django.template.defaultfilters import slugify
 
 import json as simplejson
 
-from quickapi.http import DjangoJSONEncoder
+from quickapi.http import JSONEncoder
 
 from bwp.conf import settings  
 
@@ -89,7 +89,7 @@ class JSONField(TextField):
             return None
 
         if isinstance(value, (list, dict)):
-            value = simplejson.dumps(value, cls=DjangoJSONEncoder,
+            value = simplejson.dumps(value, cls=JSONEncoder,
                     ensure_ascii=False,
                     indent=4)
             try:
