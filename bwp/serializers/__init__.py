@@ -53,8 +53,9 @@ To add your own serializers, use the SERIALIZATION_MODULES setting::
 
 """
 
+from importlib import import_module
+
 from django.conf import settings
-from django.utils import importlib
 from django.core.serializers.base import SerializerDoesNotExist
 
 # Built-in serializers
@@ -80,7 +81,7 @@ def register_serializer(format, serializer_module, serializers=None):
     """
     if serializers is None and not _serializers:
         _load_serializers()
-    module = importlib.import_module(serializer_module)
+    module = import_module(serializer_module)
     if serializers is None:
         _serializers[format] = module
     else:

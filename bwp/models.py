@@ -41,7 +41,7 @@ from django.db.models.fields.files import FileField, ImageField
 from django.utils.translation import ugettext, ugettext_lazy as _ 
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import User, Group
-from django.contrib.admin.util import quote
+from django.contrib.admin.utils import quote
 from django.utils.encoding import smart_unicode, force_unicode
 from django.utils.safestring import mark_safe
 from django.utils import timezone
@@ -139,11 +139,11 @@ class PermissionRead(models.Model):
             verbose_name=_('content type'))
     users = models.ManyToManyField(
             User,
-            blank=True, null=True,
+            blank=True,
             verbose_name=_('users'))
     groups = models.ManyToManyField(
             Group,
-            blank=True, null=True,
+            blank=True,
             verbose_name=_('groups'))
 
     class Meta:
@@ -629,7 +629,7 @@ class BaseModel(object):
         return self.model._default_manager
 
     def queryset(self, request=None, filters=[], **kwargs):
-        qs = self.get_manager().get_query_set()
+        qs = self.get_manager().get_queryset()
         if filters:
             qs = self.queryset_from_filters(qs, filters, **kwargs)
         return qs
@@ -793,7 +793,8 @@ class BaseModel(object):
         Can be overriden by the user in subclasses.
         """
         opts = self.opts
-        return request.user.has_perm(opts.app_label + '.' + opts.get_add_permission())
+        perm = '%s.%s_add' % (opts.app_label, opts.model_name)
+        return request.user.has_perm(perm)
 
     def has_change_permission(self, request, object=None):
         """
@@ -807,7 +808,8 @@ class BaseModel(object):
         request has permission to change *any* object of the given type.
         """
         opts = self.opts
-        return request.user.has_perm(opts.app_label + '.' + opts.get_change_permission())
+        perm = '%s.%s_change' % (opts.app_label, opts.model_name)
+        return request.user.has_perm(perm)
 
     def has_delete_permission(self, request, object=None):
         """
@@ -821,7 +823,8 @@ class BaseModel(object):
         request has permission to delete *any* object of the given type.
         """
         opts = self.opts
-        return request.user.has_perm(opts.app_label + '.' + opts.get_delete_permission())
+        perm = '%s.%s_delete' % (opts.app_label, opts.model_name)
+        return request.user.has_perm(perm)
 
     def get_model_perms(self, request):
         """
@@ -1083,7 +1086,7 @@ class ModelBWP(BaseModel):
                 related_name = m2m.related.field.get_attname()
                 if related_name in self.exclude:
                     continue
-                model = m2m.related.parent_model
+                model = m2m.related.model
                 add(ManyToManyBWP, related_name, model)
             for related_name, compose_class in self.compositions:
                 add(compose_class, related_name)

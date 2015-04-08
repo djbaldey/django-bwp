@@ -38,7 +38,6 @@
 """
 from django.db import models
 from django.db.models import Count, Sum
-from django.db.models.query import insert_query
 from django.utils.translation import ugettext_lazy as _
 from django.utils import timezone
 from django.contrib.auth.models import User
@@ -301,7 +300,7 @@ class BasePartitioningManager(models.Manager):
     не возвращает вставленную строку обратно на клиента.
     """
     def _insert(self, objs, fields, return_id=False, **kwargs):
-        return insert_query(self.model, objs, fields, return_id=False, **kwargs)
+        return super(BasePartitioningManager, self)._insert(objs, fields, return_id=False, **kwargs)
 
 class AbstractStock(models.Model):
     """

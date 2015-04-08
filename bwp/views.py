@@ -49,7 +49,7 @@ from django.forms.models import modelform_factory
 from django.utils.encoding import smart_unicode
 from django.utils import timezone, dateparse
 
-from quickapi.http import JSONResponse, JSONRedirect, MESSAGES, DjangoJSONEncoder
+from quickapi.http import JSONResponse, JSONRedirect, MESSAGES, JSONEncoder
 from quickapi.views import index as quickapi_index, get_methods
 from quickapi.decorators import login_required, api_required
 
@@ -461,7 +461,7 @@ def API_m2m_commit(request, model, pk, compose, action, objects, **kwargs):
 
 @api_required
 @login_required
-@transaction.commit_manually
+@transaction.atomic
 def API_commit(request, objects, **kwargs):
     """ *Сохрание и/или удаление переданных объектов.*
         

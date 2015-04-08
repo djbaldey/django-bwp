@@ -82,26 +82,26 @@ class BaseDevice(AbstractGroup):
 
     users = models.ManyToManyField(
             User,
-            null=True, blank=True,
-            related_name='user_%s_set',
+            blank=True,
+            related_name='user_%(class)s_set',
             verbose_name=_('users'))
 
     groups = models.ManyToManyField(
             Group,
-            null=True, blank=True,
-            related_name='group_%s_set',
+            blank=True,
+            related_name='group_%(class)s_set',
             verbose_name=_('groups'))
 
     admin_users = models.ManyToManyField(
             User,
-            null=True, blank=True,
-            related_name='admin_user_%s_set',
+            blank=True,
+            related_name='admin_user_%(class)s_set',
             verbose_name=_('admin users'))
 
     admin_groups = models.ManyToManyField(
             Group,
-            null=True, blank=True,
-            related_name='admin_group_%s_set',
+            blank=True,
+            related_name='admin_group_%(class)s_set',
             verbose_name=_('admin groups'))
 
     username = models.CharField(
@@ -265,7 +265,7 @@ class SpoolerDevice(models.Model):
             blank=True,
             verbose_name = _('method'))
 
-    def __unicode__(self):
+    def __str__(self):
         return force_text(self.local_device)
 
     class Meta:

@@ -89,7 +89,7 @@ class Person(AbstractPerson):
             verbose_name = _('unique group'))
     orgs = models.ManyToManyField(
             Org,
-            blank=True, null=True,
+            blank=True,
             verbose_name = _('orgs'))
     class Meta:
         ordering = ['last_name', 'first_name', 'middle_name']
