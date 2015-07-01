@@ -36,14 +36,16 @@
 #   <http://www.gnu.org/licenses/>.
 ###############################################################################
 """
+import copy
+from importlib import import_module
+
 from django.conf.urls import *
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+from django.utils.module_loading import module_has_submodule
 
-import copy
 from bwp.conf import settings
 from bwp.sites import site
-from django.utils.importlib import import_module
-from django.utils.module_loading import module_has_submodule
+
 
 def autodiscover():
     """

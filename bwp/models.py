@@ -658,10 +658,14 @@ class BaseModel(object):
         """
         queryset = self.order_queryset(request=request, queryset=queryset, **kwargs)
         paginator = self.get_paginator(queryset=queryset, **kwargs)
+        if request.method == 'GET':
+            REQUEST = request.GET
+        else:
+            REQUEST = request.POST
 
         # request может быть пустым
         try:
-            page = int(request.REQUEST.get('page', page))
+            page = int(REQUEST.get('page', page))
         except:
             pass
         try:
@@ -676,10 +680,14 @@ class BaseModel(object):
 
     def get_search_query(self, request, search_key=None, **kwargs):
         """ Возвращает значение поискового запроса. """
-        if search_key is None:
-            return request.REQUEST.get(self.search_key, None)
+        if request.method == 'GET':
+            REQUEST = request.GET
         else:
-            return request.REQUEST.get(search_key, None)
+            REQUEST = request.POST
+        if search_key is None:
+            return REQUEST.get(self.search_key, None)
+        else:
+            return REQUEST.get(search_key, None)
 
     def filter_queryset(self, request, queryset=None, query=None, fields=None, **kwargs):
         """ Возвращает отфильтрованный QuerySet для всех экземпляров модели. """
