@@ -3,7 +3,7 @@ import os
 import sys
 
 # Set name directory of environ
-ENV = '.virtualenvs/django1.8'
+ENV = '' #'.virtualenvs/django1.8'
 
 def getenv():
     path = os.path.abspath(os.path.dirname(__file__))
