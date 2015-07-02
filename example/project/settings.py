@@ -65,7 +65,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
                   # Only 'postgresql_psycopg2' for warehouses, or set
                   # 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': 'bwp',
+        'NAME': 'bwp_dev',
         'USER': 'bwp',
         'PASSWORD': 'bwp',
         'HOST': 'localhost', # Or set to empty string for localhost

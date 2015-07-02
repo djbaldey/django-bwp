@@ -1,26 +1,29 @@
 #!/usr/bin/env python
-import os, sys
+import os
 
 # Set name directory of environ
-ENV = 'env-django1.8'
+ENV = '.virtualenvs/django1.8'
 
 def getenv():
-    if ENV:
-        thispath = os.path.abspath(os.path.dirname(__file__))
-        while thispath:
-            if thispath == '/' and not os.path.exists(os.path.join(thispath, ENV)):
-                raise Exception(u'Environ not found')
-            if os.path.exists(os.path.join(thispath, ENV)):
-                return os.path.join(thispath, ENV)
-            else:
-                thispath = os.path.dirname(thispath)
-    else:
-        return None
+    path = os.path.abspath(os.path.dirname(__file__))
+    while path:
+        env = os.path.join(path, ENV)
+        found = os.path.exists(env)
+        if path == '/' and not found:
+            raise EnvironmentError('Path `%s` not found' % ENV)
+        elif found:
+            return env
+        else:
+            path = os.path.dirname(path)
+
 
 if __name__ == "__main__":
-    env = getenv()
-    if env:
-        python = 'python%s.%s' % ( str(sys.version_info[0]),  str(sys.version_info[1]) )
+
+    if ENV:
+        import sys
+
+        env = getenv()
+        python = 'python%s.%s' % sys.version_info[:2]
         packages = os.path.join(env, 'lib', python, 'site-packages')
         sys.path.insert(0, packages)
 
