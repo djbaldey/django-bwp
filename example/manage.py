@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import os
+import sys
 
 # Set name directory of environ
 ENV = '.virtualenvs/django1.8'
@@ -20,8 +21,6 @@ def getenv():
 if __name__ == "__main__":
 
     if ENV:
-        import sys
-
         env = getenv()
         python = 'python%s.%s' % sys.version_info[:2]
         packages = os.path.join(env, 'lib', python, 'site-packages')
