@@ -359,7 +359,6 @@ class BaseKKT(object):
             Возвращает позиционные параметры: (data, error, command)
         """
 
-        raise KKTException(1)
 
         if quick:
             pre_clear  = False
