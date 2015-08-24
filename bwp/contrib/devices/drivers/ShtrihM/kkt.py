@@ -57,7 +57,7 @@ class KKTException(Exception):
         self.value = value
         self.source, self.message = protocol.BUGS[value]
         msg = self.to_str()
-        super().__init__(msg)
+        super(KKTException, self).__init__(msg)
 
     def to_str(self):
         return smart_str(self.to_unicode())
@@ -358,6 +358,8 @@ class BaseKKT(object):
             
             Возвращает позиционные параметры: (data, error, command)
         """
+
+        raise KKTException(1)
 
         if quick:
             pre_clear  = False
