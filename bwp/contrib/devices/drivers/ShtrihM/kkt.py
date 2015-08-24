@@ -22,6 +22,7 @@
 #  
 from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
+from django.utils.encoding import smart_str, force_text
 import serial, time, datetime
 
 from . import conf, protocol
@@ -55,12 +56,14 @@ class KKTException(Exception):
     def __init__(self, value):
         self.value = value
         self.source, self.message = protocol.BUGS[value]
+        msg = self.to_str()
+        super().__init__(msg)
 
-    def __str__(self):
-        return str(unicode(self).encode('utf-8'))
+    def to_str(self):
+        return smart_str(self.to_unicode())
 
-    def __unicode__(self):
-        return u'%s: %s' % (self.source, self.message)
+    def to_unicode(self):
+        return '%s: %s' % (force_text(self.source), force_text(self.message))
 
 def password_prapare(password):
     if isinstance(password, (list, tuple)):
