@@ -550,7 +550,7 @@ def API_device_list(request, **kwargs):
     """
     data = []
     if site.devices:
-        data = site.devices.get_list()
+        data = site.devices.get_list(request)
     return JSONResponse(data=data)
 
 @api_required

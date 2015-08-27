@@ -77,7 +77,7 @@ class Register(object):
     def get_list(self, request):
         data = []
         for x in self.get_devices(request).values():
-            data.append(x.values('pk', 'title', 'driver'))
+            data.append({'pk': x.pk, 'title': x.title, 'driver': x.driver})
         return data
 
 register = Register()
