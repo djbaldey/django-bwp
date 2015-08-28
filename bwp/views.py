@@ -45,8 +45,13 @@ from django.contrib.auth.views import login as _login, logout as _logout
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
 from django.db import transaction, models
+try:
+    from django.db.transaction import atomic as transaction_atomic
+except:
+    from django.db.transaction import commit_manually as transaction_atomic
+
 from django.forms.models import modelform_factory
-from django.utils.encoding import smart_unicode
+from django.utils.encoding import force_text
 from django.utils import timezone, dateparse
 
 from quickapi.http import JSONResponse, JSONRedirect, MESSAGES, JSONEncoder
@@ -64,11 +69,6 @@ from bwp.utils.http import get_http_400, get_http_403, get_http_404
 from bwp.contrib.reports.models import Document as Report
 
 import os, decimal
-
-
-def print_memory():
-    import resource
-    print 'Memory usage: %s (kb)' % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
 
 ########################################################################
 #                               PAGES                                  #
@@ -200,7 +200,7 @@ def set_file_fields(bwp_model, instance, data):
             try:
                 upl = TempUploadFile.objects.get(pk=temp_id) 
             except Exception as e:
-                print '[ERROR] bwp.views.set_file_fields', e
+                #print '[ERROR] bwp.views.set_file_fields', e
                 continue
             else:
                 real_field = getattr(instance, field)
@@ -461,7 +461,7 @@ def API_m2m_commit(request, model, pk, compose, action, objects, **kwargs):
 
 @api_required
 @login_required
-@transaction.atomic
+@transaction_atomic
 def API_commit(request, objects, **kwargs):
     """ *Сохрание и/или удаление переданных объектов.*
         
@@ -508,7 +508,7 @@ def API_commit(request, objects, **kwargs):
                         model_bwp.log_addition(request, object)
                     else:
                         transaction.rollback()
-                        return JSONResponse(status=400, message=smart_unicode(form.errors))
+                        return JSONResponse(status=400, message=force_text(form.errors))
             # Удаляемый объект
             elif action == 'delete':
                 instance = get_instance(request, item['pk'], item['model'])
@@ -528,14 +528,14 @@ def API_commit(request, objects, **kwargs):
                         model_bwp.log_change(request, object, ', '.join(fix.keys()))
                     else:
                         transaction.rollback()
-                        return JSONResponse(status=400, message=smart_unicode(form.errors))
+                        return JSONResponse(status=400, message=force_text(form.errors))
 
     except Exception as e:
-        print '[ERROR] bwp.views.API_commit', e
+        #print '[ERROR] bwp.views.API_commit', e
         transaction.rollback()
         print_debug('def API_commit.objects ==', objects)
         if settings.DEBUG:
-            return JSONResponse(status=500, message=smart_unicode(e))
+            return JSONResponse(status=500, message=force_text(e))
         raise e
     else:
         transaction.commit()
@@ -555,7 +555,7 @@ def API_device_list(request, **kwargs):
     """
     data = []
     if site.devices:
-        data = site.devices.get_list()
+        data = site.devices.get_list(request)
     return JSONResponse(data=data)
 
 @api_required
@@ -582,8 +582,7 @@ def API_device_command(request, device, command, params={}, **kwargs):
             data = attr(**params)
             return JSONResponse(data=data)
         except Exception as e:
-            print '[ERROR] bwp.views.API_device_command', smart_unicode(e)
-            return JSONResponse(status=400, message=smart_unicode(e))
+            return JSONResponse(status=400, message=force_text(e))
     return JSONResponse(status=400)
 
 @api_required

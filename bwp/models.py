@@ -41,7 +41,6 @@ from django.db.models.fields.files import FileField, ImageField
 from django.utils.translation import ugettext, ugettext_lazy as _ 
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import User, Group
-from django.contrib.admin.utils import quote
 from django.utils.encoding import smart_unicode, force_unicode
 from django.utils.safestring import mark_safe
 from django.utils import timezone

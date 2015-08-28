@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 #
-#  bwp/contrib/devices/drivers/ShtrihM/__init__.py
-#  
 #  Copyright 2013 Grigoriy Kramarenko <root@rosix.ru>
 #  
 #  This program is free software; you can redistribute it and/or modify
@@ -20,26 +18,24 @@
 #  MA 02110-1301, USA.
 #  
 #  
-
 from __future__ import unicode_literals
 
-from django.utils.translation import ugettext_lazy as _
-import datetime, time
+from django.utils.translation import ugettext as _
+import datetime
+import time
 
-from bwp.contrib.devices.remote import RemoteCommand, AbstractError
+from shtrihmfr.kkt import KKT, KktError, int2
+from shtrihmfr.protocol import *
 
-from .kkt import KKT, int2
-from .protocol import *
+from bwp.contrib.devices.remote import RemoteCommand
+
 
 SPOOLER_TIMEOUT = 1
 SPOOLER_MAX_ATTEMPT = 30
 
-class DeviceError(AbstractError):
-    pass
-
 class ShtrihFRK(object):
     SpoolerDevice = None
-    local_device  = None
+    local_device = None
     kkt       = None
     is_remote = False
 
@@ -50,13 +46,17 @@ class ShtrihFRK(object):
         else:
             self.kkt = KKT(*args, **kwargs)
 
+    def get_method_name(self, method):
+        if method.im_self == self:
+            return method.im_func.func_name
+        else:
+            return 'kkt.'+ method.im_func.func_name
+
     def make_spooler(self, method, **kwargs):
         if not self.SpoolerDevice:
             return method(**kwargs)
-        if method.im_self == self:
-            method = method.im_func.func_name
-        else:
-            method = 'kkt.'+ method.im_func.func_name
+
+        method = self.get_method_name(method)
 
         spooler = self.SpoolerDevice(
             local_device=self.local_device,
@@ -70,10 +70,8 @@ class ShtrihFRK(object):
     def append_spooler(self, group_hash, method, **kwargs):
         if not self.SpoolerDevice:
             return method(**kwargs)
-        if method.im_self == self:
-            method = method.im_func.func_name
-        else:
-            method = 'kkt.'+ method.im_func.func_name
+
+        method = self.get_method_name(method)
 
         spooler = self.SpoolerDevice(
             local_device=self.local_device,
@@ -87,10 +85,8 @@ class ShtrihFRK(object):
     def result_spooler(self, group_hash, method, strict=True, **kwargs):
         if not self.SpoolerDevice:
             return method(**kwargs)
-        if method.im_self == self:
-            method = method.im_func.func_name
-        else:
-            method = 'kkt.'+ method.im_func.func_name
+
+        method = self.get_method_name(method)
 
         spooler = self.SpoolerDevice(
             local_device=self.local_device,
@@ -123,7 +119,7 @@ class ShtrihFRK(object):
         if c and o:
             if strict:
                 self_sps.all().delete()
-                raise DeviceError(_('The device is busy large queue'))
+                raise KktError(_('The device is busy large queue'))
             else:
                 self_sps.update(state=STATE_ERROR)
                 return 'Queued'
@@ -172,7 +168,7 @@ class ShtrihFRK(object):
                 pass
         return True
 
-    def print_document(self, text=u'Текст документа не передан', header=u''):
+    def print_document(self, text='Текст документа не передан', header=''):
         """ Печать предварительного чека или чего-либо другого. """
         if self.is_remote:
             return self.remote("print_document",
@@ -191,13 +187,13 @@ class ShtrihFRK(object):
 
     def print_receipt(self, specs, cash=0, credit=0, packaging=0, card=0,
     discount_summa=0, discount_percent=0, document_type=0, nds=0,
-    header=u'', comment=u'', buyer=u''):
+    header='', comment='', buyer=''):
         """ Печать чека.
             specs - Это список словарей проданных позиций:
-                [{'title':u'Хлеб',
-                 'price':'10.00', 'count':u'3', 'summa':'30.00'},
-                 {'title':u'',
-                 'price':'10.00', 'count':u'3', 'summa':'30.00'},
+                [{'title':'Хлеб',
+                 'price':'10.00', 'count':'3', 'summa':'30.00'},
+                 {'title':'',
+                 'price':'10.00', 'count':'3', 'summa':'30.00'},
                 ]
             Типы оплат:
                 cash      - наличными
@@ -241,23 +237,23 @@ class ShtrihFRK(object):
             self.append_spooler(group_hash, self.kkt.x17_loop, text=line)
 
         if document_type == 0:
-            text_buyer = "Принято от %s"
+            text_buyer = 'Принято от %s'
             method = self.kkt.x80
         elif document_type == 1:
-            text_buyer = "Принято от %s"
+            text_buyer = 'Принято от %s'
             method = self.kkt.x81
 
         elif document_type == 2:
-            text_buyer = "Возвращено %s"
+            text_buyer = 'Возвращено %s'
             method = self.kkt.x82
 
         elif document_type == 3:
-            text_buyer = "Возвращено %s"
+            text_buyer = 'Возвращено %s'
             method = self.kkt.x83
         else:
-            raise DeviceError(_('Type of document must be 0..3'))
+            raise KktError(_('Type of document must be 0..3'))
 
-        text_buyer = text_buyer % buyer if buyer else u''
+        text_buyer = text_buyer % buyer if buyer else ''
 
         for spec in specs:
             title = ''+spec['title']
@@ -277,13 +273,13 @@ class ShtrihFRK(object):
         for line in comment.split('\n'):
             self.append_spooler(group_hash, self.kkt.x17_loop, text=line)
         
-        self.append_spooler(group_hash, self.kkt.x17_loop, text=u'='*36)
+        self.append_spooler(group_hash, self.kkt.x17_loop, text='='*36)
         
         if discount_summa:
             self.append_spooler(group_hash,
                 self.kkt.x86, summa=discount_summa, taxes=taxes)
 
-        _text = "-" * 18
+        _text = '-' * 18
         summs = [cash,credit,packaging,card]
         return self.result_spooler(group_hash,
             self.kkt.x85, summs=summs, taxes=taxes, discount=discount_percent)

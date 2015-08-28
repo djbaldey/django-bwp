@@ -27,7 +27,6 @@ from django.contrib.auth.models import User, Group
 from django.utils.translation import ugettext_lazy as _
 from django.utils import six
 from django.utils.encoding import force_text, python_2_unicode_compatible
-from django.http import SimpleCookie
 from bwp.contrib.abstracts.models import AbstractGroup
 from bwp.db import fields
 import hashlib, datetime
@@ -67,7 +66,7 @@ class Register(object):
     def get_list(self, request):
         data = []
         for x in self.get_devices(request).values():
-            data.append(x.values('pk', 'title', 'driver'))
+            data.append({'pk': x.pk, 'title': x.title, 'driver': x.driver})
         return data
 
 register = Register()
@@ -170,7 +169,7 @@ class BaseDevice(AbstractGroup):
             if hasattr(self, 'remote_id') and self.remote_id:
                 D['remote_id'] = self.remote_id
             if hasattr(self, 'cookies'):
-                D['model_device'] = self
+                D['device'] = self
             if hasattr(self, 'config') and self.config:
                 config = self.config or {}
                 D.update(config)
@@ -224,11 +223,6 @@ class RemoteDevice(BaseDevice):
         verbose_name_plural = _('remote devices')
         unique_together = ('remote_url', 'remote_id')
 
-    @property
-    def cookies_string(self):
-        c = SimpleCookie()
-        c.load(str(self.cookies))
-        return c.output(header='', sep='; ').strip()
 
 @python_2_unicode_compatible
 class SpoolerDevice(models.Model):

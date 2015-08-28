@@ -23,16 +23,16 @@
 from __future__ import unicode_literals
 import subprocess
 
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 
-from bwp.contrib.devices.remote import RemoteCommand, APIUrlOpenError
+from bwp.contrib.devices.remote import RemoteCommand, RemoteAPIError
 
 DEFAULT_PORT = '192.168.1.10 9100'
 CODE_PAGE = 'cp866'
 GS  = 0x1D
 ESC = 0x1B
 
-class ZonerichError(APIUrlOpenError):
+class ZonerichError(RemoteAPIError):
     pass
 
 class ZonerichIP(object):
@@ -56,8 +56,6 @@ class ZonerichIP(object):
         if self.is_remote:
             return self.remote("status", short=short)
 
-        # Юникодим "ласково", но принудительно:
-        doc = '' + doc
         text = doc.encode(CODE_PAGE)
         byte_list = [ord(x) for x in text]
 
@@ -102,8 +100,6 @@ class ZonerichIP(object):
             ])
         except subprocess.CalledProcessError as e:
             raise ZonerichError(value=self.port)
-        except Exception as e:
-            raise e
 
         if answer.count('1 received'):
             return True
