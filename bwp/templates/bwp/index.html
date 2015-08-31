@@ -3,35 +3,163 @@
 
 {% block bodyclass %}index{% endblock %}
 
-{% block header %}
-<table style="width: 100%; margin: 5px 0; clear: both;">
-    <tr>
-        <td class="span6">
-            <div class="pull-left">
-                <span id="menu-app" class="dropdown">
-                    <a href="#" data-toggle="dropdown" data-target="#" class="label label-info">Приложения</a>
-                    <ul class="dropdown-menu" role="menu"></ul>
-                </span>
-                <span id="menu-func" class="dropdown">
-                    <a href="#" data-toggle="dropdown" data-target="#" class="label label-important">Функции</a>
-                    <ul class="dropdown-menu" role="menu"></ul>
-                </span>
-            </div>
-        </td>
-        <td class="span6">
-            <div class="pull-right">
-                <span class="label label-success">{% full_username user %}</span>
-                <a href="{% url "bwp_logout" %}" title="Выход" class="label"><i class="icon-off"></i></a>
-            </div>
-        </td>
-    </tr>
-    <tr>
-        <td id="alert-place" colspan="2"></td>
-    </tr>
-</table>
+{% block navbar %}
+<nav class="navbar navbar-default navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapse" aria-expanded="false">
+                <span class="sr-only">{% trans 'Toggle navigation' %}</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="#">{% SETTINGS 'PROJECT_SHORTNAME' %}</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav">
+                <li id="menu-app" class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Приложения <span class="caret"></span></a>
+                    <ul class="dropdown-menu" role="menu">
+                    </ul>
+                </li>
+                <li id="menu-func" class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Функции <span class="caret"></span></a>
+                    <ul class="dropdown-menu" role="menu">
+                    </ul>
+                </li>
+            </ul>
+
+            <p class="navbar-text">{% DEMO %}</p>
+
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <a href="{% url "bwp_logout" %}" title="{% trans 'Logout' %}">
+                        <i class="fa fa-sign-out"></i>
+                    </a>
+                </li>
+            </ul>
+
+            <p class="navbar-text navbar-right">{% full_username user %}</p>
+
+        </div><!-- /.navbar-collapse -->
+
+    </div><!-- /.container-fluid -->
+
+</nav>
 {% endblock %}
 
+
 {% block content %}
-    <ul id="main-tab" class="nav nav-tabs"></ul>
-    <div id="main-tab-content" class="tab-content"></div>
+{% include "bwp/for_IE.html" %}
+<div id="alert-place"></div>
+<ul id="main-tab" class="nav nav-tabs"></ul>
+<div id="main-tab-content" class="tab-content"></div>
 {% endblock %}
+
+
+{% block footer %}
+<footer>
+    <div class="mono align-center" >
+    {% filter force_escape %}
+        {% SETTINGS 'COPYRIGHT' %}
+    {% endfilter %} © {% COPYRIGHT_YEARS %}
+    </div>
+    <div class="mono align-center" >
+    {% block footer_links %}
+        <a href="/">{% SETTINGS 'PROJECT_SHORTNAME' %}:<span title="{% SETTINGS 'VERSION_DATE' %}">{% SETTINGS 'VERSION' %}</span></a>
+        <a href="http://rosix.ru/project/9/">BWP:<span title="{% SETTINGS 'BWP_VERSION_DATE' %}">{% SETTINGS 'BWP_VERSION' %}</span></a>
+        <a href="{% url "bwp_api" %}">API:{% SETTINGS 'QUICKAPI_VERSION' %}</a>
+    {% endblock %}
+    </div>
+</footer>
+{% endblock %}
+
+
+{% block modal %}<div id="modal" class="modal hide fade"></div>{% endblock %}
+
+
+
+{% block jstemplates %}
+    <!-- underscore -->
+    <script type="text/x-underscore" id="underscore-alert">
+        {% include "bwp/underscore/alert.html" %}
+    </script>
+    <script type="text/x-underscore" id="underscore-menu-app">
+        {% include "bwp/underscore/menu_app.html" %}
+    </script>
+    <script type="text/x-underscore" id="underscore-collection">
+        {% include "bwp/underscore/collection.html" %}
+    </script>
+    <script type="text/x-underscore" id="underscore-layout-model">
+        {% include "bwp/underscore/layout_model.html" %}
+    </script>
+    <script type="text/x-underscore" id="underscore-layout-selector">
+        {% include "bwp/underscore/layout_selector.html" %}
+    </script>
+    <script type="text/x-underscore" id="underscore-layout-compose">
+        {% include "bwp/underscore/layout_compose.html" %}
+    </script>
+    <script type="text/x-underscore" id="underscore-layout-object">
+        {% include "bwp/underscore/layout_object.html" %}
+    </script>
+    <script type="text/x-underscore" id="underscore-layout-default">
+        {% include "bwp/underscore/layout_default.html" %}
+    </script>
+    <script type="text/x-underscore" id="underscore-tab">
+        {% include "bwp/underscore/tab.html" %}
+    </script>
+    <script type="text/x-underscore" id="underscore-modal">
+        {% include "bwp/underscore/modal.html" %}
+    </script>
+    <script type="text/x-underscore" id="underscore-modal-footer">
+        {% include "bwp/underscore/modal_footer.html" %}
+    </script>
+    <script type="text/x-underscore" id="underscore-filters">
+        {% include "bwp/underscore/filters.html" %}
+    </script>
+    <script type="text/x-underscore" id="underscore-filter">
+        {% include "bwp/underscore/filter.html" %}
+    </script>
+    <script type="text/x-underscore" id="underscore-filter-values">
+        {% include "bwp/underscore/filter_values.html" %}
+    </script>
+{% endblock %}
+
+
+
+{% block jsvars %}
+    <script type="text/javascript">
+        /* GLOBAL VARS */
+        window.__bwp_media_prefix__ = "{% filter escapejs %}{% static "bwp/" %}{% endfilter %}";
+        window.AJAX_TIMEOUT = 10000;
+        window.BWP_API_URL = "{% filter escapejs %}{% url "bwp_api" %}{% endfilter %}";
+        window.SETTINGS_UNIQUE_KEY = "{% filter escapejs %}{% SETTINGS 'PROJECT_SHORTNAME' %}__user_{{ user.id|default:0 }}{% endfilter %}";
+        window.USER_ID = "{{ user.id|default:0 }}";
+        window.USER_NAME = "{{ user.username }}";
+        window.USER_LAST_NAME = "{{ user.last_name }}";
+        window.USER_FIRST_NAME = "{{ user.first_name }}";
+        window.USER = "{{ user }}";
+        window.DEBUG = {% filter lower %}{% SETTINGS 'DEBUG' %}{% endfilter %};
+        window.SERVER_TZ_OFFSET = {% SERVER_TZ_OFFSET_JS %};
+    </script>
+{% endblock %}
+
+
+<!-- START: block appjs -->
+{% block appjs %}
+    <script src="{% get_static_prefix %}jquery/json/2.5.1/jquery.json.min.js"></script>
+    <script src="{% get_static_prefix %}jquery/dateParser/0.2/jquery.dateParser.min.js"></script>
+    <script src="{% get_static_prefix %}jquery/django/django-ajax-csrf.min.js"></script>
+    <script src="{% get_static_prefix %}moment/2.9.0/moment-with-locales.min.js"></script>
+    <script src="{% get_static_prefix %}underscore/1.7.0/underscore-min.js"></script>
+    <script src="{% get_static_prefix %}underscore/string/2.3.2/underscore.string.min.js"></script>
+    <script src="{% get_static_prefix %}quickapi/{% SETTINGS 'QUICKAPI_VERSION' %}/js/jquery.quickapi.min.js"></script>
+
+    {% if user.is_authenticated %}
+        <script src="{% get_static_prefix %}bwp/{% SETTINGS 'BWP_VERSION' %}/js/bwp{% mini_library %}.js"></script>
+    {% endif %}
+{% endblock %}
+

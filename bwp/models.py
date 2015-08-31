@@ -36,14 +36,16 @@
 #   <http://www.gnu.org/licenses/>.
 ###############################################################################
 """
+from __future__ import unicode_literals
+
 from django.db import models, transaction
 from django.db.models.fields.files import FileField, ImageField
 from django.utils.translation import ugettext, ugettext_lazy as _ 
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import User, Group
-from django.utils.encoding import smart_unicode, force_unicode
+from django.utils.encoding import force_text, python_2_unicode_compatible
 from django.utils.safestring import mark_safe
-from django.utils import timezone
+from django.utils import six, timezone
 from django.utils.text import capfirst
 from django.utils.crypto import get_random_string
 from django.core.paginator import Paginator, Page, PageNotAnInteger, EmptyPage
@@ -75,10 +77,12 @@ class LogEntryManager(models.Manager):
     def log_action(self, user_id, content_type_id, object_id,
     object_repr, action_flag, change_message=''):
         e = self.model(None, None, user_id, content_type_id,
-            smart_unicode(object_id), object_repr[:200],
+            force_text(object_id), object_repr[:200],
             action_flag, change_message)
         e.save()
 
+
+@python_2_unicode_compatible
 class LogEntry(models.Model):
     action_time = models.DateTimeField(_('action time'), auto_now=True)
     user = models.ForeignKey(User, related_name='bwp_log_set')
@@ -97,9 +101,9 @@ class LogEntry(models.Model):
         ordering = ('-action_time',)
 
     def __repr__(self):
-        return smart_unicode(self.action_time)
+        return force_text(self.action_time)
 
-    def __unicode__(self):
+    def __str__(self):
         D = {'object': self.object_repr, 'changes': self.change_message}
         if self.action_flag == ADDING:
             D['action'] = _('added').title()
@@ -109,9 +113,9 @@ class LogEntry(models.Model):
             D['action'] = _('deleted').title()
         if self.action_flag in [ADDING, CHANGE, DELETE]:
             if self.change_message:
-                return u'%(action)s «%(object)s» - %(changes)s' % D
+                return '%(action)s «%(object)s» - %(changes)s' % D
             else:
-                return u'%(action)s «%(object)s»' % D
+                return '%(action)s «%(object)s»' % D
 
         return _('LogEntry Object')
 
@@ -128,6 +132,8 @@ class LogEntry(models.Model):
         "Returns the edited object represented by this log entry"
         return self.content_type.get_object_for_this_type(pk=self.object_id)
 
+
+@python_2_unicode_compatible
 class PermissionRead(models.Model):
     hidden = models.BooleanField(
             default=False,
@@ -150,8 +156,8 @@ class PermissionRead(models.Model):
         verbose_name = _('permission read')
         verbose_name_plural = _('permissions read')
 
-    def __unicode__(self):
-        return unicode(self.content_type)
+    def __str__(self):
+        return force_text(self.content_type)
 
     @classmethod
     def has_hidden_perm(cls, user, opts):
@@ -167,6 +173,8 @@ class PermissionRead(models.Model):
         #objects.filter(has_perm(user, opts.app_label)
         return False
 
+
+@python_2_unicode_compatible
 class TempUploadFile(models.Model):
     """ Временно загружаемые файлы для последующей
         передачи в нужную модель и требуемое поле
@@ -179,7 +187,7 @@ class TempUploadFile(models.Model):
             null=True, blank=True,
             verbose_name=_('user'))
     
-    def __unicode__(self):
+    def __str__(self):
         return self.file.name.split('/')[-1]
 
     class Meta:
@@ -193,12 +201,12 @@ class TempUploadFile(models.Model):
             'filename': filename,
             'hash': get_random_string(conf.BWP_TEMP_UPLOAD_FILE_HASH_LENGTH),
         }
-        return u'%(tmp)s/%(hash)s/%(filename)s' % dic
+        return '%(tmp)s/%(hash)s/%(filename)s' % dic
     
     def save(self, **kwargs):
         now = timezone.now()
         expires = now - timedelta(seconds=conf.BWP_TEMP_UPLOAD_FILE_EXPIRES)
-        with transaction.commit_on_success():
+        with transaction.atomic():
             for x in TempUploadFile.objects.filter(created__lt=expires):
                 x.delete()
             
@@ -213,6 +221,7 @@ class TempUploadFile(models.Model):
         except:
             pass
         super(TempUploadFile, self).delete(**kwargs)
+
 
 class BaseModel(object):
     """ Functionality common to both ModelBWP and ComposeBWP.
@@ -351,8 +360,8 @@ class BaseModel(object):
         """ Информация о модели """
         label = getattr(self, 'verbose_name', self.opts.verbose_name_plural)
         dic = {
-            'name':  unicode(self.opts),
-            'label': capfirst(unicode(label)),
+            'name':  force_text(self.opts),
+            'label': capfirst(force_text(label)),
             'perms': self.get_model_perms(request),
             'meta':  self.prepare_meta(request),
         }
@@ -375,7 +384,7 @@ class BaseModel(object):
                 elif isinstance(obj, (tuple, list)):
                     d = dict(zip(['name', 'label', 'css', 'sorted'], obj))
                     col.update(d)
-                elif isinstance(obj, (str, unicode)):
+                elif isinstance(obj, six.string_types):
                     name, label = obj, None
                     if label is None:
                         if name == '__unicode__':
@@ -450,28 +459,30 @@ class BaseModel(object):
                 info = _get_filter(field[0])
                 info['field_title'] = field[1] + ': ' + info['field_title']
                 return info
-            if isinstance(field, (str, unicode)):
+            if isinstance(field, six.string_types):
                 orign = field
                 opts = self.opts
                 fields = field.split('__')
                 title = ''
                 for f in fields:
                     field = opts.get_field_by_name(f)[0]
-                    rel = getattr(field, 'rel', None)
+                    rel = getattr(field, 'related_model', None)
                     if rel:
-                        title += unicode(field.verbose_name) + ': '
-                        field = rel.get_related_field()
-                        opts = field.model._meta
+                        opts = field.related_model._meta
+                        #~ print field, dir(field)
+                        title += force_text(opts.verbose_name) + ': '
+                        #~ field = field.field
                     elif hasattr(field, 'parent_model'):
-                        title += unicode(field)
+                        title += force_text(field.verbose_name)
                         field = field.field
                     else:
-                        title += unicode(field.verbose_name)
+                        #~ print field, dir(field)
+                        title += force_text(field.verbose_name)
             else:
                 orign = field.name
-                title = unicode(field.verbose_name)
+                title = force_text(field.verbose_name)
             return {
-                'model': unicode(field.model._meta),
+                'model': force_text(field.model._meta),
                 'field': orign,
                 'field_title': title,
                 'widget': get_widget_from_field(field, True).get_dict(),
@@ -862,7 +873,7 @@ class BaseModel(object):
             user_id         = request.user.pk,
             content_type_id = ContentType.objects.get_for_model(object).pk,
             object_id       = object.pk,
-            object_repr     = force_unicode(object),
+            object_repr     = force_text(object),
             action_flag     = ADDING,
             change_message  = message
         )
@@ -878,7 +889,7 @@ class BaseModel(object):
             user_id         = request.user.pk,
             content_type_id = ContentType.objects.get_for_model(object).pk,
             object_id       = object.pk,
-            object_repr     = force_unicode(object),
+            object_repr     = force_text(object),
             action_flag     = CHANGE,
             change_message  = message
         )
@@ -997,7 +1008,7 @@ class ComposeBWP(BaseModel):
             'model':    model,
             'pk':       object.pk,
             'compose':  compose,
-            'label':    capfirst(unicode(self.verbose_name)),
+            'label':    capfirst(force_text(self.verbose_name)),
             'meta':     self.meta,
         }
 
@@ -1148,7 +1159,7 @@ class ModelBWP(BaseModel):
         model = str(self.opts)
         data = self.serialize(object)
         try:
-            data['label'] = unicode(object)
+            data['label'] = force_text(object)
         except:
             data['label'] = ''
 

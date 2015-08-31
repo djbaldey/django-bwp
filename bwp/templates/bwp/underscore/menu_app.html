@@ -1,17 +1,17 @@
-{# Шаблон Underscore #}{% verbatim %}
-{% _.each(data, function(app) { %}
-    {% var _models = []; _.each(app.models, function(model) { if ((!model.meta.hidden) && (!model.perms.hidden)) { _models.push(model) } }); %}
-    {% if (_models.length > 0) { %}
+{# Шаблон Underscore #}
+<% _.each(data, function(app) { %>
+    <% var _models = []; _.each(app.models, function(model) { if ((!model.meta.hidden) && (!model.perms.hidden)) { _models.push(model) } }); %>
+    <% if (_models.length > 0) { %>
     <li class="dropdown-submenu">
-        <a tabindex="-1" href="#">{{ app.label }}</a>
+        <a tabindex="-1" href="#"><%= app.label %></a>
         <ul class="dropdown-menu max-height-medium">
-            {% _.each(_models, function(model) { %}
+            <% _.each(_models, function(model) { %>
                 <li>
-                    <a href="javascript:void(0)" data-id="{{ model.id }}">{{ model.label }}</a>
+                    <a href="javascript:void(0)" data-id="<%= model.id %>"><%= model.label %></a>
                 </li>
-            {% }); %}
+            <% }); %>
             </ul>
         </li>
-    {% } %}
-{% }); %}
-{% endverbatim %}
+    <% } %>
+<% }); %>
+

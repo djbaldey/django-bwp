@@ -1,113 +1,120 @@
-{# Шаблон Underscore #}{% verbatim %}
-{% var _obj_add = 'object_add'; var _obj_delete = 'object_delete'; %}
-{% if (data.is_m2m) { _obj_add += '_m2m'; _obj_delete += '_m2m'; } %}
+{# Шаблон Underscore #}
+<% var _obj_add = 'object_add'; var _obj_delete = 'object_delete'; %>
+<% if (data.is_m2m) { _obj_add += '_m2m'; _obj_delete += '_m2m'; } %>
 
-<div class="subnav pull-right">
-    <div class="pull-left form-search">
-        <div class="input-prepend input-append">
-            <button class="btn btn-mini" data-id="{{ data.id }}" title="Обновить" data-action="collection_search_refresh">
-                <i class="icon-refresh"></i>
-            </button>
-            <input data-action="collection_search"
-                    data-id="{{ data.id }}"
-                {% if (data.meta.search_fields.length) { %}
-                    type="search"
-                {% } else {%}
-                    type="hidden"
-                {% } %}
-                    class="search input-large"
-                    placeholder="Поиск"
-                    value="{{ data.query }}">
-        {% if (data.meta.search_fields.length) { %}
-            <button class="btn btn-mini" data-id="{{ data.id }}" data-action="collection_searchsettings">
-                <i class="icon-wrench"></i>
-            </button>
-        {% } %}
-        </div>
-    </div>
-</div>
+<div class="subnav row">
+<% if (data.paginator) { var _per_page = data.paginator.per_page || data.meta.list_per_page; %>
+<% } else { var _per_page = data.meta.list_per_page;} %>
 
-{% if (data.paginator) { var _per_page = data.paginator.per_page || data.meta.list_per_page; %}
-{% } else { var _per_page = data.meta.list_per_page;} %}
-<div class="subnav">
-    <div>
+    <div class="col-lg-6">
         <div class="btn-toolbar">
-        {% if (data.perms.add) { %}
+        <% if (data.perms.add) { %>
             <div class="btn-group">
-                <button class="btn btn-mini" data-id="{{ data.id }}" data-action="{{ _obj_add }}">
-                {% if (data.is_m2m) { %}
-                    <i class="icon-plus-sign"></i>
-                {% } else { %}
-                    <i class="icon-plus"></i>
-                {% } %}
+                <button class="btn btn-default btn-sm" data-id="<%= data.id %>" data-action="<%= _obj_add %>">
+                <% if (data.is_m2m) { %>
+                    <i class="fa fa-plus-sign"></i>
+                <% } else { %>
+                    <i class="fa fa-plus"></i>
+                <% } %>
                     Добавить
                 </button>
             </div>
-        {% } %}
-        {% if (data.actions) { %}
+        <% } %>
+        <% if (data.actions) { %>
             <div class="btn-group">
-                <a  class="btn btn-mini dropdown-toggle"
+                <a  class="btn btn-default btn-sm dropdown-toggle"
                     data-toggle="dropdown"
                     href="#">
-                    <i class="icon-list"></i>
+                    <i class="fa fa-list"></i>
                     Действия
                     <span class="caret"></span>
                 </a>
                 <ul class="dropdown-menu">
-                    {% _.each(data.actions, function(action) { %}
-                        <li><a href="#" data-action="{{ action.name }}" data-id={{ data.id }}>{{ action.label }}</a></li>
-                    {% }); %}
+                    <% _.each(data.actions, function(action) { %>
+                        <li><a href="#" data-action="<%= action.name %>" data-id=<%= data.id %>><%= action.label %></a></li>
+                    <% }); %>
                 </ul>
             </div>
-        {% } %}
-        {% if (data.collection_reports) { %}
+        <% } %>
+        <% if (data.collection_reports) { %>
             <div class="btn-group">
-                <a  class="btn btn-mini dropdown-toggle"
+                <a  class="btn btn-default btn-sm dropdown-toggle"
                     data-toggle="dropdown"
                     href="#">
-                    <i class="icon-print"></i>
+                    <i class="fa fa-print"></i>
                     Отчёты
                     <span class="caret"></span>
                 </a>
                 <ul class="dropdown-menu">
-                    {% _.each(data.collection_reports, function(report) { %}
-                        <li><a href="#" data-action="collection_print" data-id={{ data.id }}
-                            data-report={{ report.pk }}>
-                                {{ report.title }}
+                    <% _.each(data.collection_reports, function(report) { %>
+                        <li><a href="#" data-action="collection_print" data-id=<%= data.id %>
+                            data-report=<%= report.pk %>>
+                                <%= report.title %>
                             </a>
                         </li>
-                    {% }); %}
+                    <% }); %>
                 </ul>
             </div>
-        {% } %}
+        <% } %>
             <div class="btn-group">
-            {% if (!isEmpty(data.meta.filters) || DEBUG) { %}
-                <button class="btn btn-mini" data-id="{{ data.id }}"
+            <% if (!isEmpty(data.meta.filters) || DEBUG) { %>
+                <button class="btn btn-default btn-sm" data-id="<%= data.id %>"
                     data-action="collection_filters"
                     data-toggle="button">
-                    <i class="icon-filter"></i>
+                    <i class="fa fa-filter"></i>
                     Фильтры
                 </button>
-            {% } %}
-                <a  class="btn btn-mini dropdown-toggle"
+            <% } %>
+                <a  class="btn btn-default btn-sm dropdown-toggle"
                     data-toggle="dropdown"
                     title="Количество на странице"
                     href="#">
-                    <i class="icon-resize-vertical"></i>
-                    <span data-placeholder="collection_count" data-id="{{ data.id }}">{{ _per_page }}</span>
+                    <i class="fa fa-resize-vertical"></i>
+                    <span data-placeholder="collection_count" data-id="<%= data.id %>"><%= _per_page %></span>
                     <span class="caret"></span>
                 </a>
                 <ul class="dropdown-menu">
-                    {% _.each([5,10,15,25,50,100,200], function(digit) { %}
-                        <li><a href="#" data-action="collection_count" data-id={{ data.id }} data-count="{{ digit }}">{{ digit }}</a></li>
-                    {% }); %}
+                    <% _.each([5,10,15,25,50,100,200], function(digit) { %>
+                        <li><a href="#" data-action="collection_count" data-id=<%= data.id %> data-count="<%= digit %>"><%= digit %></a></li>
+                    <% }); %>
                 </ul>
             </div>
         </div>
     </div>
+
+    <div class="col-lg-6 form-search">
+        <div class="input-group">
+            <span class="input-group-btn">
+                <button class="btn btn-default btn-sm" data-id="<%= data.id %>" title="Обновить" data-action="collection_search_refresh">
+                    <i class="fa fa-refresh"></i>
+                </button>
+            </span>
+            
+            <input data-action="collection_search"
+                    data-id="<%= data.id %>"
+                <% if (data.meta.search_fields.length) { %>
+                    type="text"
+                <% } else { %>
+                    type="hidden"
+                <% } %>
+                    class="form-control search input-sm"
+                    placeholder="Поиск"
+                    value="<%= data.query %>">
+        <% if (data.meta.search_fields.length) { %>
+            <span class="input-group-btn">
+                <button class="btn btn-default btn-sm" data-id="<%= data.id %>" data-action="collection_searchsettings">
+                    <i class="fa fa-wrench"></i>
+                </button>
+            </span>
+        <% } %>
+        </div>
+    </div>
+
+
+
 </div>
 
-<div id="collection_filters_{{ data.id }}"></div>
+<div id="collection_filters_<%= data.id %>"></div>
 
-<div id="collection_{{ data.id }}"></div>
-{% endverbatim %}
+<div id="collection_<%= data.id %>"></div>
+

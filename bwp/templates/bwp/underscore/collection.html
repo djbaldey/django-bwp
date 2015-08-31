@@ -1,167 +1,166 @@
-{# Шаблон Underscore #}{% verbatim %}
-{% var _obj_add = 'object_add', _obj_delete = 'object_delete', _multiselect = true, _rowactions = true; %}
-{% if (data.is_m2m) { _obj_add += '_m2m'; _obj_delete += '_m2m'; } %}
-{% if (data instanceof classSelector) { %}
-    {% if (!data.multiple) { _multiselect = false; } else { _rowactions = false; } %}
-{% } %}
-<table data-id="{{ data.id }}"
+{# Шаблон Underscore #}
+<% var _obj_add = 'object_add', _obj_delete = 'object_delete', _multiselect = true, _rowactions = true; %>
+<% if (data.is_m2m) { _obj_add += '_m2m'; _obj_delete += '_m2m'; } %>
+<% if (data instanceof classSelector) { %>
+    <% if (!data.multiple) { _multiselect = false; } else { _rowactions = false; } %>
+<% } %>
+<table data-id="<%= data.id %>"
     class="table table-condensed table-striped table-bordered table-hover">
     <thead>
         <tr>
-        {% if (_multiselect) { %}
+        <% if (_multiselect) { %>
             <th class="input-micro"><input type="checkbox" data-toggle="checkboxes"></th>
-        {% } %}
-        {% _.each(data.meta.list_display, function(column) { %}
-            {% var _label = column.label; if (_.strip(column.css) == 'input-mini') { _label = _.truncate(column.label, 8) } %}
-            {% var col_class = column.css; %}
-            {% if (column.sorted) { col_class += ' sorted' } %}
-            {% if ($.inArray(column.name, data.meta.ordering) > -1) { col_class += ' sorted-asc sorted-n'+$.inArray(column.name, data.meta.ordering); %}
-            {% } else if ($.inArray('-'+column.name, data.meta.ordering) > -1) { col_class += ' sorted-desc sorted-n'+$.inArray('-'+column.name, data.meta.ordering) } %}
+        <% } %>
+        <% _.each(data.meta.list_display, function(column) { %>
+            <% var _label = column.label; if (_.strip(column.css) == 'input-mini') { _label = _.truncate(column.label, 8) } %>
+            <% var col_class = column.css; %>
+            <% if (column.sorted) { col_class += ' sorted' } %>
+            <% if ($.inArray(column.name, data.meta.ordering) > -1) { col_class += ' sorted-asc sorted-n'+$.inArray(column.name, data.meta.ordering); %>
+            <% } else if ($.inArray('-'+column.name, data.meta.ordering) > -1) { col_class += ' sorted-desc sorted-n'+$.inArray('-'+column.name, data.meta.ordering) } %>
             <th data-toggle="tooltip"
-                data-id="{{ data.id }}"
-                class="{{ col_class }}"
-                data-column="{{ column.name }}"
-                title="{{ column.label }}">{{ _label }}</th>
-        {% }); %}
+                data-id="<%= data.id %>"
+                class="<%= col_class %>"
+                data-column="<%= column.name %>"
+                title="<%= column.label %>"><%= _label %></th>
+        <% }); %>
         </tr>
     </thead>
     <tbody>
-    {% _.each(data.paginator.object_list, function(obj) { %}
-        <tr data-model="{{ obj.model }}" data-pk="{{ obj.pk }}">
-        {% if (_multiselect) { %}
-            <td><input type="checkbox" data-model="{{ obj.model }}" data-pk="{{ obj.pk }}"></td>
-        {% } %}
-            {% _.each(data.meta.list_display, function(column, index) { %}
-                {% _value = (column.name in obj.fields) ? obj.fields[column.name] : obj.properties[column.name] %}
-                {% _value = $.dateParser(_value) || _value %}
-                <td class="{{ column.css }}">
-                {% if ((index == 0) && (_rowactions) && (!($.type(_value) === 'object'))) { %}
-                    {% if ((data.perms.change) || (!_multiselect)) { %}
+    <% _.each(data.paginator.object_list, function(obj) { %>
+        <tr data-model="<%= obj.model %>" data-pk="<%= obj.pk %>">
+        <% if (_multiselect) { %>
+            <td><input type="checkbox" data-model="<%= obj.model %>" data-pk="<%= obj.pk %>"></td>
+        <% } %>
+            <% _.each(data.meta.list_display, function(column, index) { %>
+                <% _value = (column.name in obj.fields) ? obj.fields[column.name] : obj.properties[column.name] %>
+                <% _value = $.dateParser(_value) || _value %>
+                <td class="<%= column.css %>">
+                <% if ((index == 0) && (_rowactions) && (!($.type(_value) === 'object'))) { %>
+                    <% if ((data.perms.change) || (!_multiselect)) { %>
                         <a   href="#"
-                            {% if (!_multiselect) { %}
+                            <% if (!_multiselect) { %>
                                 data-action="object_select"
-                            {% } else { %}
+                            <% } else { %>
                                 data-action="object_open"
-                            {% } %}
-                                data-model="{{ obj.model }}"
-                                data-unicode="{{ obj.__unicode__ }}"
-                                data-pk="{{ obj.pk }}">
-                    {% } %}
-                            {% if ((column.name == '__unicode__') && (!(column.name in obj.properties))) { %}
-                                {{ obj.__unicode__ }}
-                            {% } else if ($.type(_value) === 'array'){ %}
-                                {{ _value[1] }}
-                            {% } else if ($.type(_value) === 'object'){ %}
-                                {{ _value.label }}
-                            {% } else if ($.type(_value) === 'date' && _value.without_time){ %}
-                                {{ moment(_value).format('L') }}
-                            {% } else if ($.type(_value) === 'date'){ %}
-                                {{ moment(_value).format('L LT') }}
-                            {% } else if ($.type(_value) === 'number'){ %}
-                                {{ _value.toLocaleString() }}
-                            {% } else { %}
-                                {{ _value }}
-                            {% } %}
-                    {% if ((data.perms.change) || (!_multiselect)) { %}
+                            <% } %>
+                                data-model="<%= obj.model %>"
+                                data-unicode="<%= obj.__unicode__ %>"
+                                data-pk="<%= obj.pk %>">
+                    <% } %>
+                            <% if ((column.name == '__unicode__') && (!(column.name in obj.properties))) { %>
+                                <%= obj.__unicode__ %>
+                            <% } else if ($.type(_value) === 'array'){ %>
+                                <%= _value[1] %>
+                            <% } else if ($.type(_value) === 'object'){ %>
+                                <%= _value.label %>
+                            <% } else if ($.type(_value) === 'date' && _value.without_time){ %>
+                                <%= moment(_value).format('L') %>
+                            <% } else if ($.type(_value) === 'date'){ %>
+                                <%= moment(_value).format('L LT') %>
+                            <% } else if ($.type(_value) === 'number'){ %>
+                                <%= _value.toLocaleString() %>
+                            <% } else { %>
+                                <%= _value %>
+                            <% } %>
+                    <% if ((data.perms.change) || (!_multiselect)) { %>
                         </a>
-                    {% } %}
+                    <% } %>
 
                     <div class="pull-right">
                         <div class="btn-group">
 <!--
-                        {% if (data.perms.add) { %}
+                        <% if (data.perms.add) { %>
                             <button class="btn btn-mini"
                                 data-action="object_copy"
-                                data-model="{{ obj.model }}"
-                                data-pk="{{ obj.pk }}"
+                                data-model="<%= obj.model %>"
+                                data-pk="<%= obj.pk %>"
                                 title="Копировать">
-                                <i class="icon-plus"> </i>
+                                <i class="fa fa-plus"> </i>
                             </button>
-                        {% } %}
+                        <% } %>
 
-                        {% if ((data.perms.add) && (data.meta.has_clone)) { %}
+                        <% if ((data.perms.add) && (data.meta.has_clone)) { %>
                             <button class="btn btn-mini"
                                 data-action="object_clone"
-                                data-model="{{ obj.model }}"
-                                data-pk="{{ obj.pk }}"
+                                data-model="<%= obj.model %>"
+                                data-pk="<%= obj.pk %>"
                                 title="Клонировать">
-                                <i class="icon-pause"> </i>
+                                <i class="fa fa-pause"> </i>
                             </button>
-                        {% } %}
+                        <% } %>
 -->
-                        {% if (data.perms.delete && data.is_m2m) { %}
+                        <% if (data.perms.delete && data.is_m2m) { %>
                             <button class="btn btn-mini"
-                                    data-action="{{ _obj_delete }}"
-                                    data-model="{{ obj.model }}"
-                                    data-pk="{{ obj.pk }}"
-                                    data-id="{{ data.id }}"
+                                    data-action="<%= _obj_delete %>"
+                                    data-model="<%= obj.model %>"
+                                    data-pk="<%= obj.pk %>"
+                                    data-id="<%= data.id %>"
                                     title="Удалить">
-                                    <i class="icon-minus-sign"></i>
+                                    <i class="fa fa-minus-sign"></i>
                             </button>
-                        {% } %}
+                        <% } %>
 <!--
-                        {% if (!_multiselect) { %}
+                        <% if (!_multiselect) { %>
                             <button class="btn btn-mini"
                                 data-action="object_select"
-                                data-model="{{ obj.model }}"
-                                data-unicode="{{ obj.__unicode__ }}"
-                                data-pk="{{ obj.pk }}"
+                                data-model="<%= obj.model %>"
+                                data-unicode="<%= obj.__unicode__ %>"
+                                data-pk="<%= obj.pk %>"
                                 title="Выбрать">
-                                <i class="icon-ok"></i>
+                                <i class="fa fa-ok"></i>
                             </button>
-                        {% } %}
+                        <% } %>
 
 -->
                         </div>
                     </div>
-                {% } else { %}
-                    {% if ((column.name == '__unicode__') && (!(column.name in obj.properties))) { %}
-                        {{ obj.__unicode__ }}
-                    {% } else { %}
-                        {% if ($.type(_value) === 'boolean') { %}
-                            {% if (_value) { %}
-                                <i class="icon-ok"></i>
-                            {% } else { %}
-                                <i class="icon-ban-circle"></i>
-                            {% } %}
-                        {% } else if ($.type(_value) === 'array'){ %}
-                            {{ _value[1] }}
-                        {% } else if ($.type(_value) === 'object'){ %}
+                <% } else { %>
+                    <% if ((column.name == '__unicode__') && (!(column.name in obj.properties))) { %>
+                        <%= obj.__unicode__ %>
+                    <% } else { %>
+                        <% if ($.type(_value) === 'boolean') { %>
+                            <% if (_value) { %>
+                                <i class="fa fa-check"></i>
+                            <% } else { %>
+                                <i class="fa fa-ban"></i>
+                            <% } %>
+                        <% } else if ($.type(_value) === 'array'){ %>
+                            <%= _value[1] %>
+                        <% } else if ($.type(_value) === 'object'){ %>
                             <a href="#" data-action="object_open"
-                                        data-model="{{ _value.model }}"
-                                        data-pk="{{ _value.pk }}">
-                                    {{ _value.label }}
+                                        data-model="<%= _value.model %>"
+                                        data-pk="<%= _value.pk %>">
+                                    <%= _value.label %>
                                 </a>
-                        {% } else if ($.type(_value) === 'date' && _value.without_time){ %}
-                            {{ moment(_value).format('L') }}
-                        {% } else if ($.type(_value) === 'date'){ %}
-                            {{ moment(_value).format('L LT') }}
-                        {% } else if ($.type(_value) === 'number'){ %}
-                            {{ _value.toLocaleString() }}
-                        {% } else { %}
-                            {{ _value }}
-                        {% } %}
-                    {% } %}
-                {% } %}
+                        <% } else if ($.type(_value) === 'date' && _value.without_time){ %>
+                            <%= moment(_value).format('L') %>
+                        <% } else if ($.type(_value) === 'date'){ %>
+                            <%= moment(_value).format('L LT') %>
+                        <% } else if ($.type(_value) === 'number'){ %>
+                            <%= _value.toLocaleString() %>
+                        <% } else { %>
+                            <%= _value %>
+                        <% } %>
+                    <% } %>
+                <% } %>
                 </td>
-            {% }); %}
+            <% }); %>
         </tr>
-    {% }); %}
+    <% }); %>
     </tbody>
 </table>
-<div id="pagination_{{ data.id }}">
-    <div class="pagination pagination-right pagination-mini">
-        <ul>
-            {% _.each(data.paginator.page_range, function(page) { %}
-                {% if (page == data.paginator.number) { %}
-                <li class="active"><a href="#" data-action="collection_page" data-page="{{ page }}" data-id="{{ data.id }}">{{ page }}</a></li>
-                {% } else if (isNaN(page)) { %}
-                <li class="disabled"><a href="#">...</a></li>
-                {% } else { %}
-                <li><a href="#" data-action="collection_page" data-page="{{ page }}" data-id="{{ data.id }}">{{ page }}</a></li>
-                {% } %}
-            {% }); %}
-        </ul>
-    </div>
+
+<div id="pagination_<%= data.id %>" class="align-right">
+    <ul class="pagination pagination-sm">
+        <% _.each(data.paginator.page_range, function(page) { %>
+            <% if (page == data.paginator.number) { %>
+            <li class="active"><a href="#" data-action="collection_page" data-page="<%= page %>" data-id="<%= data.id %>"><%= page %></a></li>
+            <% } else if (isNaN(page)) { %>
+            <li class="disabled"><a href="#">...</a></li>
+            <% } else { %>
+            <li><a href="#" data-action="collection_page" data-page="<%= page %>" data-id="<%= data.id %>"><%= page %></a></li>
+            <% } %>
+        <% }); %>
+    </ul>
 </div>
-{% endverbatim %}
+

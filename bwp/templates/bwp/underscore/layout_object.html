@@ -1,63 +1,62 @@
-{# Шаблон Underscore #}{% verbatim %}
+{% load static bwp_base %}
+{# Шаблон Underscore #}
 <div class="row-fluid">
-{% if (data.composes.length >0) { %}
-    <div class="btn-group subtabs" data-toggle="buttons-radio" data-id="{{ data.id }}">
+<% if (data.composes.length >0) { %>
+    <div class="btn-group subtabs" data-toggle="buttons-radio" data-id="<%= data.id %>">
         <button class="btn btn-mini btn-primary active"
             data-toggle="tab"
-            data-target="#objectpane_{{ data.id }}">
+            data-target="#objectpane_<%= data.id %>">
             Объект
         </button>
-    {% _.each(data.composes, function(compose) { %}
-        {%/* Если объект не сохранён в DB, то запрещаем операции с вложениями */%}
-        {% var _compose_btn_class = ''; if (compose.is_m2m) { _compose_btn_class = 'btn-info'} %}
-        <button class="btn btn-mini {{ _compose_btn_class }}"
-        {% if (!data.pk) { %}
+    <% _.each(data.composes, function(compose) { %>
+        <% /* Если объект не сохранён в DB, то запрещаем операции с вложениями */ %>
+        <% var _compose_btn_class = ''; if (compose.is_m2m) { _compose_btn_class = 'btn-info'} %>
+        <button class="btn btn-mini <%= _compose_btn_class %>"
+        <% if (!data.pk) { %>
             disabled="disabled"
-        {% } else { %}
+        <% } else { %>
             data-toggle="tab"
             data-loading="true"
-        {% } %}
-            data-target="#layout_{{ compose.id }}"
-            data-id="{{ compose.id }}">
-            {{ compose.label }}
+        <% } %>
+            data-target="#layout_<%= compose.id %>"
+            data-id="<%= compose.id %>">
+            <%= compose.label %>
         </button>
-    {% }); %}
+    <% }); %>
     </div>
     <div class="btn-group subtabs">
-    {% if ((data.model.object_reports) && (data.pk)) { %}
+    <% if ((data.model.object_reports) && (data.pk)) { %>
         <button class="btn btn-mini dropdown-toggle"
             data-toggle="dropdown">            
-            <i class="icon-print"></i> Отчёты
+            <i class="fa fa-print"></i> Отчёты
             <span class="caret"></span>
         </button>
         <ul class="dropdown-menu">
-            {% _.each(data.model.object_reports, function(report) { %}
+            <% _.each(data.model.object_reports, function(report) { %>
                 <li><a href="#" data-action="object_print"
-                    data-id={{ data.id }}
-                    data-model={{ data.model.name }}
-                    data-pk={{ data.pk }}
-                    data-report={{ report.pk }}>
-                        {{ report.title }}
+                    data-id=<%= data.id %>
+                    data-model=<%= data.model.name %>
+                    data-pk=<%= data.pk %>
+                    data-report=<%= report.pk %>>
+                        <%= report.title %>
                     </a>
                 </li>
-            {% }); %}
+            <% }); %>
         </ul>
-    {% }; %}
+    <% }; %>
     </div>
-{% } %}
+<% } %>
     <div class="tab-content">
-    {% _.each(data.composes, function(compose) { %}
-        <div class="tab-pane" id="layout_{{ compose.id }}">
-            {% endverbatim %}
-            <div align="center"><img src="{{ STATIC_URL }}img/bwp/ajax-loader.gif" /> загрузка данных...</div>
-            {% verbatim %}
+    <% _.each(data.composes, function(compose) { %>
+        <div class="tab-pane" id="layout_<%= compose.id %>">
+            <div align="center"><img src="{% get_static_prefix %}bwp/{% SETTINGS 'BWP_VERSION' %}/img/ajax-loader.gif" /> загрузка данных...</div>
         </div>
-    {% }); %}
-        <div class="tab-pane active" id="objectpane_{{ data.id }}">
-            <h3>{{ data.label }} <span class="pull-right">{{ data.pk }}</span></h3>
-            <table class="table table-condensed" data-id="{{ data.id }}">
+    <% }); %>
+        <div class="tab-pane active" id="objectpane_<%= data.id %>">
+            <h3><%= data.label %> <span class="pull-right"><%= data.pk %></span></h3>
+            <table class="table table-condensed" data-id="<%= data.id %>">
                 <tbody>
-        {% endverbatim %}
+
                 {% include "bwp/underscore/_object_fields.html" %}
                 </tbody>
                 <tfoot>
