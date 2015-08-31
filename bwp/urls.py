@@ -1,108 +1,49 @@
 # -*- coding: utf-8 -*-
-"""
-###############################################################################
-# Copyright 2013 Grigoriy Kramarenko.
-###############################################################################
-# This file is part of BWP.
 #
-#    BWP is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation, either version 3 of the License, or
-#    (at your option) any later version.
-#
-#    BWP is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
-#
-#    You should have received a copy of the GNU General Public License
-#    along with BWP.  If not, see <http://www.gnu.org/licenses/>.
-#
-# Этот файл — часть BWP.
-#
-#   BWP - свободная программа: вы можете перераспространять ее и/или
-#   изменять ее на условиях Стандартной общественной лицензии GNU в том виде,
-#   в каком она была опубликована Фондом свободного программного обеспечения;
-#   либо версии 3 лицензии, либо (по вашему выбору) любой более поздней
-#   версии.
-#
-#   BWP распространяется в надежде, что она будет полезной,
-#   но БЕЗО ВСЯКИХ ГАРАНТИЙ; даже без неявной гарантии ТОВАРНОГО ВИДА
-#   или ПРИГОДНОСТИ ДЛЯ ОПРЕДЕЛЕННЫХ ЦЕЛЕЙ. Подробнее см. в Стандартной
-#   общественной лицензии GNU.
-#
-#   Вы должны были получить копию Стандартной общественной лицензии GNU
-#   вместе с этой программой. Если это не так, см.
-#   <http://www.gnu.org/licenses/>.
-###############################################################################
-"""
-import copy
-from importlib import import_module
+#  Copyright 2013 Grigoriy Kramarenko <root@rosix.ru>
+#  
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 3 of the License, or
+#  (at your option) any later version.
+#  
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#  
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+#  MA 02110-1301, USA.
+#  
+#  
+from django.conf import settings
+from django.conf.urls import include, url
 
-from django.conf.urls import *
-from django.contrib.staticfiles.urls import staticfiles_urlpatterns
-from django.utils.module_loading import module_has_submodule
+from bwp.sites import autodiscover
+from bwp.views import index, login, logout, upload, api
 
-from bwp.conf import settings
-from bwp.sites import site
-
-
-def autodiscover():
-    """
-    Auto-discover INSTALLED_APPS __bwp__.py modules and fail silently when
-    not present. This forces an import on them to register any bwp bits they
-    may want.
-    """
-
-    for app in settings.INSTALLED_APPS:
-        mod = import_module(app)
-        # Attempt to import the app's bwp module.
-        try:
-            before_import_registry = copy.copy(site._registry)
-            import_module('%s.__bwp__' % app)
-        except:
-            # Reset the model registry to the state before the last import as
-            # this import will have to reoccur on the next request and this
-            # could raise NotRegistered and AlreadyRegistered exceptions
-            # (see #8245).
-            site._registry = before_import_registry
-
-            # Decide whether to bubble up this error. If the app just
-            # doesn't have an bwp module, we can ignore the error
-            # attempting to import it, otherwise we want it to bubble up.
-            if module_has_submodule(mod, '__bwp__'):
-                raise
 
 autodiscover()
 
-urlpatterns = patterns('bwp.views',
-    url(r'^$',        'index',  name='bwp_index'),
-    url(r'^login/$',  'login',  name="bwp_login"),
-    url(r'^logout/$', 'logout', name="bwp_logout"),
-    url(r'^api/$',    'api',    name="bwp_api"),
+urlpatterns = [
+    url(r'^$',        index,  name='bwp_index'),
+    url(r'^login/$',  login,  name="bwp_login"),
+    url(r'^logout/$', logout, name="bwp_logout"),
+    url(r'^api/$',    api,    name="bwp_api"),
 
-    url(r'^upload/(?P<model>[-\.\w]+)/$', 'upload', name="bwp_upload"),
+    url(r'^upload/(?P<model>[-\.\w]+)/$', upload, name="bwp_upload"),
     
-    url(r'^accounts/login/$',  'login',  name="bwp_login_redirect"),
-    url(r'^accounts/logout/$', 'logout', name="bwp_logout_redirect"),
-)
+    url(r'^accounts/login/$',  login,  name="bwp_login_redirect"),
+    url(r'^accounts/logout/$', logout, name="bwp_logout_redirect"),
+]
 
-#~ if 'tinymce' in settings.INSTALLED_APPS:
-    #~ urlpatterns += patterns('',
-        #~ url(r'^tinymce/', include('tinymce.urls')),
-    #~ )
-#~ 
-#~ if 'filebrowser' in settings.INSTALLED_APPS:
-    #~ urlpatterns += patterns('',
-        #~ url(r'^tinymce/filebrowser/', include('filebrowser.urls')),
-    #~ )
 
 # For develop:
-urlpatterns += staticfiles_urlpatterns()
 if settings.DEBUG:
-    urlpatterns += patterns('',
-        url(r'^media/(?P<path>.*)$', 'django.views.static.serve', {
-            'document_root': settings.MEDIA_ROOT,
-            }),
-    )
+    from django.conf.urls.static import static
+
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

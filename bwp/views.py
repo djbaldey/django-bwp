@@ -1,41 +1,25 @@
 # -*- coding: utf-8 -*-
-"""
-###############################################################################
-# Copyright 2013 Grigoriy Kramarenko.
-###############################################################################
-# This file is part of BWP.
 #
-#    BWP is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation, either version 3 of the License, or
-#    (at your option) any later version.
-#
-#    BWP is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
-#
-#    You should have received a copy of the GNU General Public License
-#    along with BWP.  If not, see <http://www.gnu.org/licenses/>.
-#
-# Этот файл — часть BWP.
-#
-#   BWP - свободная программа: вы можете перераспространять ее и/или
-#   изменять ее на условиях Стандартной общественной лицензии GNU в том виде,
-#   в каком она была опубликована Фондом свободного программного обеспечения;
-#   либо версии 3 лицензии, либо (по вашему выбору) любой более поздней
-#   версии.
-#
-#   BWP распространяется в надежде, что она будет полезной,
-#   но БЕЗО ВСЯКИХ ГАРАНТИЙ; даже без неявной гарантии ТОВАРНОГО ВИДА
-#   или ПРИГОДНОСТИ ДЛЯ ОПРЕДЕЛЕННЫХ ЦЕЛЕЙ. Подробнее см. в Стандартной
-#   общественной лицензии GNU.
-#
-#   Вы должны были получить копию Стандартной общественной лицензии GNU
-#   вместе с этой программой. Если это не так, см.
-#   <http://www.gnu.org/licenses/>.
-###############################################################################
-"""
+#  Copyright 2013 Grigoriy Kramarenko <root@rosix.ru>
+#  
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 3 of the License, or
+#  (at your option) any later version.
+#  
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#  
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+#  MA 02110-1301, USA.
+#  
+#  
+from __future__ import unicode_literals
+
 from django.http import HttpResponseBadRequest, HttpResponseForbidden
 from django.utils.translation import ugettext_lazy as _
 from django.template import RequestContext
@@ -45,14 +29,10 @@ from django.contrib.auth.views import login as _login, logout as _logout
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
 from django.db import transaction, models
-try:
-    from django.db.transaction import atomic as transaction_atomic
-except:
-    from django.db.transaction import commit_manually as transaction_atomic
 
 from django.forms.models import modelform_factory
 from django.utils.encoding import force_text
-from django.utils import timezone, dateparse
+from django.utils import six, timezone, dateparse
 
 from quickapi.http import JSONResponse, JSONRedirect, MESSAGES, JSONEncoder
 from quickapi.views import index as quickapi_index, get_methods
@@ -218,8 +198,8 @@ def set_user_field(model_bwp, instance, user, save=False):
 
 def numberparse(val):
     if isinstance(val, (str, unicode)):
-        val = u''+val
-        val = val.replace(' ', '').replace(u'\xa0', '').split('.')
+        val = force_text(val)
+        val = val.replace(' ', '').replace('\xa0', '').split('.')
         if len(val) == 1 and not ',' in val[0]:
             val = val[0].replace(',', '')
             return int(val)
@@ -378,13 +358,13 @@ def API_get_collection(request, model, pk=None, compose=None, page=1,
             'number': 1,
             'object_list': [
                 {
-                    'fields': {'first_name': u'First'},
-                    'model': u'auth.user',
+                    'fields': {'first_name': 'First'},
+                    'model': 'auth.user',
                     'pk': 1
                 },
                 {
-                    'fields': {'first_name': u'Second'},
-                    'model': u'auth.user',
+                    'fields': {'first_name': 'Second'},
+                    'model': 'auth.user',
                     'pk': 2
                 }
             ],
@@ -459,9 +439,9 @@ def API_m2m_commit(request, model, pk, compose, action, objects, **kwargs):
 
     return JSONResponse(data=True, message=_("Commited!"))
 
+
 @api_required
 @login_required
-@transaction_atomic
 def API_commit(request, objects, **kwargs):
     """ *Сохрание и/или удаление переданных объектов.*
         
@@ -474,71 +454,81 @@ def API_commit(request, objects, **kwargs):
         Формат ключа **"data"**:
         `Boolean`
     """
-    transaction.commit()
+
     if not objects:
-        transaction.rollback()
         return JSONResponse(data=False, status=400, message=_("List objects is blank!"))
+
+    error = None
+
     model_name = model_bwp = None
     try:
-        for item in objects:
-            # Уменьшение ссылок на объекты, если они существуют
-            # в прошлой ротации
-            if model_name != item['model']:
-                model_name = item['model']
-                model_bwp = site.bwp_dict(request).get(model_name)
-            action = item['action'] # raise AttributeError()
-            for name, val in item['fields'].items():
-                field = model_bwp.opts.get_field_by_name(name)[0]
-                if field.rel and isinstance(val, list) and len(val) == 2:
-                    item['fields'][name] = val[0]
-                elif isinstance(field, models.DateTimeField) and val:
-                    item['fields'][name] = dateparse.parse_datetime(val)
-                elif isinstance(field, (models.DecimalField, models.FloatField, models.IntegerField)) and val:
-                    item['fields'][name] = numberparse(val)
-            data = item['fields']
-            # Новый объект
-            if not item.get('pk', False):
-                if model_bwp.has_add_permission(request):
-                    instance = model_bwp.model()
-                    instance = set_file_fields(model_bwp, instance, data)
+        with transaction.atomic():
+            for item in objects:
+                # Уменьшение ссылок на объекты, если они существуют
+                # в прошлой ротации
+                if model_name != item['model']:
+                    model_name = item['model']
+                    model_bwp = site.bwp_dict(request).get(model_name)
+                action = item['action'] # raise AttributeError()
+                for name, val in item['fields'].items():
+                    field = model_bwp.opts.get_field_by_name(name)[0]
+                    if field.rel and isinstance(val, list) and len(val) == 2:
+                        item['fields'][name] = val[0]
+                    elif isinstance(field, models.DateTimeField) and val:
+                        item['fields'][name] = dateparse.parse_datetime(val)
+                    elif isinstance(field, (models.DecimalField, models.FloatField, models.IntegerField)) and val:
+                        item['fields'][name] = numberparse(val)
+                data = item['fields']
+                # Новый объект
+                if not item.get('pk', False):
+                    if model_bwp.has_add_permission(request):
+                        instance = model_bwp.model()
+                        instance = set_file_fields(model_bwp, instance, data)
+                        instance = set_user_field(model_bwp, instance, request.user)
+                        form = get_form_instance(request, model_bwp, data=data, instance=instance)
+                        if form.is_valid():
+                            object = form.save()
+                            model_bwp.log_addition(request, object)
+                        else:
+                            error = force_text(form.errors)
+                            if not six.PY3:
+                                error = error.encode('utf-8')
+                            raise ValueError(error)
+
+                # Удаляемый объект
+                elif action == 'delete':
+                    instance = get_instance(request, item['pk'], item['model'])
+                    if model_bwp.has_delete_permission(request, instance):
+                        model_bwp.log_deletion(request, instance, unicode(instance))
+                        instance.delete()
+                # Обновляемый объект
+                elif action == 'change': # raise AttributeError()
+                    instance = get_instance(request, item['pk'], item['model'])
                     instance = set_user_field(model_bwp, instance, request.user)
-                    form = get_form_instance(request, model_bwp, data=data, instance=instance)
-                    if form.is_valid():
-                        object = form.save()
-                        model_bwp.log_addition(request, object)
-                    else:
-                        transaction.rollback()
-                        return JSONResponse(status=400, message=force_text(form.errors))
-            # Удаляемый объект
-            elif action == 'delete':
-                instance = get_instance(request, item['pk'], item['model'])
-                if model_bwp.has_delete_permission(request, instance):
-                    model_bwp.log_deletion(request, instance, unicode(instance))
-                    instance.delete()
-            # Обновляемый объект
-            elif action == 'change': # raise AttributeError()
-                instance = get_instance(request, item['pk'], item['model'])
-                instance = set_user_field(model_bwp, instance, request.user)
-                if model_bwp.has_change_permission(request, instance):
-                    instance = set_file_fields(model_bwp, instance, data)
-                    form = get_form_instance(request, model_bwp, data=data, instance=instance)
-                    if form.is_valid():
-                        object = form.save()
-                        fix = item.get('fix', {})
-                        model_bwp.log_change(request, object, ', '.join(fix.keys()))
-                    else:
-                        transaction.rollback()
-                        return JSONResponse(status=400, message=force_text(form.errors))
+                    if model_bwp.has_change_permission(request, instance):
+                        instance = set_file_fields(model_bwp, instance, data)
+                        form = get_form_instance(request, model_bwp, data=data, instance=instance)
+                        if form.is_valid():
+                            object = form.save()
+                            fix = item.get('fix', {})
+                            model_bwp.log_change(request, object, ', '.join(fix.keys()))
+                        else:
+                            error = force_text(form.errors)
+                            if not six.PY3:
+                                error = error.encode('utf-8')
+                            raise ValueError(error)
 
     except Exception as e:
         #print '[ERROR] bwp.views.API_commit', e
-        transaction.rollback()
-        print_debug('def API_commit.objects ==', objects)
-        if settings.DEBUG:
-            return JSONResponse(status=500, message=force_text(e))
-        raise e
-    else:
-        transaction.commit()
+        #~ print_debug('def API_commit.objects ==', objects)
+        #~ if settings.DEBUG:
+            #~ return JSONResponse(status=500, message=force_text(e))
+        #~ raise e
+        return JSONResponse(status=400, message=error)
+
+    #~ if error:
+        #~ return JSONResponse(status=400, message=error)
+
     return JSONResponse(data=True, message=_("Commited!"))
 
 @api_required

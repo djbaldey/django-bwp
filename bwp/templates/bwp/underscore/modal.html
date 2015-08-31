@@ -1,16 +1,16 @@
-{# Шаблон Underscore #}{% verbatim %}
+{# Шаблон Underscore #}
 <div class="modal-header">
     <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-    <h3>{{ modal.mhead }}</h3>
+    <h3><%= modal.mhead %></h3>
 </div>
 <div class="modal-body">
-    {{ modal.mbody }}
+    <%= modal.mbody %>
 </div>
 <div class="modal-footer">
-{% if (modal.mfoot) { %}
-    {{ modal.mfoot }}
-{% } else { %}
+<% if (modal.mfoot) { %>
+    <%= modal.mfoot %>
+<% } else { %>
     <a href="#" data-dismiss="modal" aria-hidden="true" class="btn">Закрыть</a>
-{% } %}
+<% } %>
 </div>
-{% endverbatim %}
+

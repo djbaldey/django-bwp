@@ -118,7 +118,7 @@
 
 #alert-place {
     position: absolute;
-    left: 50%; top: 50%;
+    left: 50%; top: 100px;
     height: 100px; margin-top: -50px;
     width: 600px; margin-left: -300px;
     z-index: -1000;

@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 #
-#  bwp/contrib/devices/remote.py
-#  
 #  Copyright 2013 Grigoriy Kramarenko <root@rosix.ru>
 #  
 #  This program is free software; you can redistribute it and/or modify
@@ -21,19 +19,13 @@
 #  
 #  
 from __future__ import unicode_literals
-import json, base64, traceback
 
-from django.utils.translation import ugettext_lazy as _
 from django.utils.encoding import force_text
 from django.utils import six
 from django.http import SimpleCookie
 
-from quickapi.client import BaseClient
+from quickapi.client import BaseClient, RemoteAPIError
 
-#~ if six.PY3:
-    #~ from http.cookies import SimpleCookie
-#~ else:
-    #~ from Cookie import SimpleCookie
 
 class DeviceCookie(SimpleCookie):
     """

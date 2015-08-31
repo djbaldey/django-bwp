@@ -70,10 +70,10 @@ window.REGISTER  = {}; // Регистр приложений, моделей, �
 ////////////////////////////////////////////////////////////////////////
 
 /* Настройки шаблонизатора underscore.js в стиле Django */
-_.templateSettings = {
-    interpolate: /\{\{(.+?)\}\}/g,
-    evaluate: /\{\%(.+?)\%\}/g, 
-};
+//~ _.templateSettings = {
+    //~ interpolate: /\{\{(.+?)\}\}/g,
+    //~ evaluate: /\{\%(.+?)\%\}/g, 
+//~ };
 
 /* Включение Underscore.string методов в пространство имён Underscore */
 _.mixin(_.str.exports());
@@ -142,79 +142,61 @@ function handlerHideAlert() {
     $('.alert').alert('close');
     $('#alert-place').css('z-index', '-1000');
 };
-function handlerShowAlert(msg, type, callback, timeout) {
+function handlerShowAlert(head, msg, cls, cb) {
+    //msg, type, callback, timeout) {
     if (DEBUG) {console.log('function:'+'handlerShowAlert')};
-    timeout = timeout || 5000;
-    console.log(msg);
-    if (!type) { type = 'alert-error'; };
-    html = TEMPLATES.alert({ msg: msg, type: type });
+
+    if (!cls) { cls = 'alert-error'; };
+    
+    var match,
+        timeout = 60000;
+
+    if ($.type(msg) == 'object') {
+        msg = $.toJSON(msg)
+                    .replace(/\,\"/g, ', "')
+                    .replace(/\"\:/g, '": ')
+    }
+    else if (msg.match(/<\!DOCTYPE/)) {
+        match = msg.match(/<[title,TITLE]+>(.*)<\/[title,TITLE]+>/);
+        if (match) head = match[1];
+
+        match = msg.match(/<[body,BODY]+>([^+]*)<\/[body,BODY]+>/);
+        if (match) msg = match[1]
+                        .replace(/<\/?[^>]+>/g, '')
+                        .replace(/ [ ]+/g, ' ')
+                        .replace(/\n[\n]+/g, '\n')
+    }
+
+    if (msg.length > 1024) {
+        msg = msg.substring(0, 1024) + ' ...'
+    };
+
+    html = TEMPLATES.alert({ head:head, msg: msg, cls: cls });
     $('#alert-place').css('z-index', '1000').html(html);
     $(window).scrollTop(0);
     $('.alert').alert();
-    if (callback) { delay(callback, timeout); }
+
+    if (cb) { delay(cb, timeout); }
     else { delay(handlerHideAlert, timeout); };
     return false;
 };
 
 /* Общая функция для работы с django-quickapi */
 function jsonAPI(args, callback, to_console, sync, timeout) {
-    if (DEBUG) {console.log('function:'+'jsonAPI')};
+    
+    if (DEBUG) { console.log('function:'+'jsonAPI') };
     if (!args) { args = { method: "get_settings" } };
-    if (!callback) { callback = function(json, status, xhr) {} };
-    var jqxhr = $.ajax({
-        type: "POST",
+
+    var jqxhr = $.quickAPI({
+        url: BWP_API_URL,
+        data: args,
         async: !sync,
         timeout: timeout || AJAX_TIMEOUT,
-        url: BWP_API_URL,
-        data: {'jsonData': $.toJSON(args)},
-        dataType: 'json'
+        callback: callback,
+        log: undefined, // аргумент для console.log(...)
+
     })
-    // Обработка ошибок протокола HTTP
-    .fail(function(xhr, status, err) {
-        // Если есть переадресация, то выполняем её
-        if (xhr.getResponseHeader('Location')) {
-            location = xhr.getResponseHeader('Location')
-            .replace(/\?.*$/, "?next=" + window.location.pathname);
-            window.location.replace(location);
-            console.log("1:" + xhr.getResponseHeader('Location'));
-        } else {
-            // Иначе извещаем пользователя ответом и в консоль
-            console.log("ERROR:" + xhr.responseText);
-            if (xhr.responseText) {
-                handlerShowAlert(_(xhr.responseText).truncate(255), 'alert-error');
-            };
-        };
-    })
-    // Обработка полученных данных
-    .done(function(json, status, xhr) {
-        if (to_console) { if (DEBUG) {console.log(to_console)}; };
-        /* При переадресации нужно отобразить сообщение на некоторое время,
-         * а затем выполнить переход по ссылке, добавив GET-параметр для
-         * возврата на текущую страницу
-         */
-        if ((json.status >=300) && (json.status <400) && (json.data.Location != undefined)) {
-            redirect = function() {
-                location = json.data.Location
-                .replace(/\?.*$/, "?next=" + window.location.pathname);
-                window.location.replace(location);
-            }
-            if (json.message) {
-                handlerShowAlert(json.message, 'alert-error', redirect);
-            }
-            else { redirect() }
-        }
-        /* При ошибках извещаем пользователя полученным сообщением */
-        else if (json.status >=400) {
-            handlerShowAlert(json.message, 'alert-error');
-        }
-        /* При нормальном возврате в debug-режиме выводим в консоль
-         * сообщение
-         */
-        else {
-            if (DEBUG) {console.log($.toJSON(json.message))};
-            return callback(json, status, xhr);
-        };
-    });
+
     return jqxhr
 };
 
@@ -354,7 +336,7 @@ function classSettings(default_callback) {
         _responseServer = null;
         args = { method: "set_settings", settings: self.server };
         cb = function(json, status, xhr) {
-            if (!json.data) { handlerShowAlert(json.message) }
+            if (!json.data) { handlerShowAlert('Ошибка', json.message) }
             else {
                 _last_set_server = new Date();
                 _responseServer = json;
@@ -1430,7 +1412,7 @@ function handlerFilterAppend(instance) {
     firstfield = instance.meta.filters[0] ? instance.meta.filters[0].field
                                           : null;
     if (!firstfield) {
-        handlerShowAlert('Не установлены поля для фильтров.');
+        handlerShowAlert('Ошибка', 'Не установлены поля для фильтров.');
         return false;
     };
     newfilter = {

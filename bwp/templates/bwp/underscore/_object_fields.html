@@ -1,160 +1,164 @@
-{# Шаблон Underscore #}{% verbatim %}
-    {% _.each(data.widgets, function(widget) { %}
-        {% if (!widget.hidden) { %}
+{# Шаблон Underscore #}
+    <% _.each(data.widgets, function(widget) { %>
+        <% if (!widget.hidden) { %>
             <tr>
                 <td class="span2">
-                    <label class="control-label" for="field_{{ data.id }}_{{ widget.name }}">
-                        {% if (widget.attr.required) {%}<b>{{ widget.label }}</b>
-                        {% } else { %}{{ widget.label }}{%}%}
+                    <label class="control-label" for="field_<%= data.id %>_<%= widget.name %>">
+                        <% if (widget.attr.required) { %><b><%= widget.label %></b>
+                        <% } else { %><%= widget.label %><% } %>
                     </label>
                 </td>
                 <td>
                     <div class="controls">
-        {% } %}
+        <% } %>
 
-        {% if (widget.choices) { %}
-            {% var _val = _.escape(data.fields[widget.name]) || '' %}
-            <select name="{{ widget.name }}"
-                data-model="{{ widget.model }}"
-                {% _.each(widget.attr, function(val, key) { %}
-                    {% if (! key in {'type':0, 'name':0}) { %}
-                        {{ key }}="{{ val }}"
-                    {% } %}
-                {% }); %}
-                class="{{ widget.attr['class'] }}"
+        <% if (widget.choices) { %>
+            <!-- widget.choices --> 
+            <% var _val = _.escape(data.fields[widget.name]) || '' %>
+            <select name="<%= widget.name %>"
+                data-model="<%= widget.model %>"
+                <% _.each(widget.attr, function(val, key) { %>
+                    <% if (! key in {'type':0, 'name':0}) { %>
+                        <%= key %>="<%= val %>"
+                    <% } %>
+                <% }); %>
+                class="<%= widget.attr['class'] %>"
                 data-action="object_change"
-                data-djangofield="{{ widget.djangofield }}"
-                data-id="{{ data.id }}">
+                data-djangofield="<%= widget.djangofield %>"
+                data-id="<%= data.id %>">
                         <option value=""></option>
-                {% _.each(widget.choices, function(item) { %}
-                    {% _val0 = _.escape(item[0]) %}
-                    {% _val1 = _.escape(item[1]) %}
-                    {% if (_val0 == _val) { %}
-                        <option value="{{ _val0 }}" selected>{{ _val1 }}</option>
-                    {% } else { %}
-                        <option value="{{ _val0 }}">{{ _val1 }}</option>
-                    {% } %}
-                {% }); %}
+                <% _.each(widget.choices, function(item) { %>
+                    <% _val0 = _.escape(item[0]) %>
+                    <% _val1 = _.escape(item[1]) %>
+                    <% if (_val0 == _val) { %>
+                        <option value="<%= _val0 %>" selected><%= _val1 %></option>
+                    <% } else { %>
+                        <option value="<%= _val0 %>"><%= _val1 %></option>
+                    <% } %>
+                <% }); %>
             </select>
 
-        {% } else if ((widget.tag == 'input') && (widget.attr['type'] in {'file':0, 'image':0})) { %}
-            {% var _val = _.escape(data.fields[widget.name].split('/').pop()) || '' %}
+        <% } else if ((widget.tag == 'input') && (widget.attr['type'] in {'file':0, 'image':0})) { %>
+            <!-- файл или картинка -->
+            <% var _val = _.escape(data.fields[widget.name].split('/').pop()) || '' %>
             <div class="input-prepend input-append">
-                {%/* Кнопка названия файла */%}
-                <button name="{{ widget.name }}"
-                    data-model="{{ widget.model }}"
+                <% /* Кнопка названия файла */ %>
+                <button name="<%= widget.name %>"
+                    data-model="<%= widget.model %>"
                     disabled="disabled"
-                    {% _.each(widget.attr, function(val, key) { %}
-                        {% if (! key in {'type':0, 'name':0}) { %}
-                            {{ key }}="{{ val }}"
-                        {% } %}
-                    {% }); %}
-                    class="btn {{ widget.attr['class'] || 'input-medium' }}"
-                    data-id="{{ data.id }}"
-                    title="{{ _val }}">
-                    {{ _val }}
+                    <% _.each(widget.attr, function(val, key) { %>
+                        <% if (! key in {'type':0, 'name':0}) { %>
+                            <%= key %>="<%= val %>"
+                        <% } %>
+                    <% }); %>
+                    class="btn <%= widget.attr['class'] || 'input-medium' %>"
+                    data-id="<%= data.id %>"
+                    title="<%= _val %>">
+                    <%= _val %>
                 </button>
-                {%/* Скрытое поле значения */%}
+                <% /* Скрытое поле значения */ %>
                 <input
-                    name="{{ widget.name }}"
-                    data-id="{{ data.id }}"
+                    name="<%= widget.name %>"
+                    data-id="<%= data.id %>"
                     type="file"
-                    {% _.each(widget.attr, function(val, key) { %}
-                        {% if (! key in {'type':0, 'name':0}) { %}
-                            {{ key }}="{{ val }}"
-                        {% } %}
-                    {% }); %}
+                    <% _.each(widget.attr, function(val, key) { %>
+                        <% if (! key in {'type':0, 'name':0}) { %>
+                            <%= key %>="<%= val %>"
+                        <% } %>
+                    <% }); %>
                     data-action="object_change"
-                    data-djangofield="{{ widget.djangofield }}"
+                    data-djangofield="<%= widget.djangofield %>"
                     style="display:none;">
                 </input>
-                {%/* Кнопка сброса */%}
+                <% /* Кнопка сброса */ %>
                 <button class="btn"
-                {% if (!_val) { %}
+                <% if (!_val) { %>
                     disabled="disabled"
-                {% } %}
+                <% } %>
                     data-action="file_field_clear">
                     <i class="icon-remove"></i>
                 </button>
-                {%/* Кнопка поиска */%}
+                <% /* Кнопка поиска */ %>
                 <button class="btn" data-action="file_field_select">
                     <i class="icon-search"></i>
                 </button>
             </div>
 
-        {% } else if ((widget.tag == 'input') || (widget.tag == 'textarea')) { %}
-            {% var _val = _.escape(data.fields[widget.name]) || '' %}
-            <{{ widget.tag }} id="field_{{ data.id }}_{{ widget.name }}"
-                name="{{ widget.name }}"
-                data-id="{{ data.id }}"
+        <% } else if ((widget.tag == 'input') || (widget.tag == 'textarea')) { %>
+            <!-- input || textarea -->
+            <% var _val = _.escape(data.fields[widget.name]) || '' %>
+            <<%= widget.tag %> id="field_<%= data.id %>_<%= widget.name %>"
+                name="<%= widget.name %>"
+                data-id="<%= data.id %>"
                 data-action="object_change"
-                data-djangofield="{{ widget.djangofield }}"
-            {% _.each(widget.attr, function(val, key) { %}
-                {{ key }}="{{ val }}"
-            {% }); %}
-            {% if (widget.attr.type && (widget.attr.type == 'checkbox')) { %}
-                {% if (data.fields[widget.name]) { %}checked="checked"{% } %}
-            {% } else if (widget.tag == 'textarea') { %}
-                >{{ _val }}</{{ widget.tag }}
-            {% } else if (widget.attr.type == 'datetime-local') { %}
-                value="{{ datetimeLocale(_val) }}"
-            {% } else { %}
-                value="{{ _val }}"
-            {% } %}>
+                data-djangofield="<%= widget.djangofield %>"
+            <% _.each(widget.attr, function(val, key) { %>
+                <%= key %>="<%= val %>"
+            <% }); %>
+            <% if (widget.attr.type && (widget.attr.type == 'checkbox')) { %>
+                <% if (data.fields[widget.name]) { %>checked="checked"<% } %>
+            <% } else if (widget.tag == 'textarea') { %>
+                ><%= _val %></<%= widget.tag %>
+            <% } else if (widget.attr.type == 'datetime-local') { %>
+                value="<%= datetimeLocale(_val) %>"
+            <% } else { %>
+                value="<%= _val %>"
+            <% } %>>
 
-        {% } else if ((widget.tag == 'select') && (!widget.attr.multiple)) { %}
-            {% var _val = data.fields[widget.name] || ['',''] %}
-            {% var _val0 = _.escape(_val[0]) %}
-            {% var _val1 = _.escape(_val[1]) %}
+        <% } else if ((widget.tag == 'select') && (!widget.attr.multiple)) { %>
+            <!-- select не multiple -->
+            <% var _val = data.fields[widget.name] || ['',''] %>
+            <% var _val0 = _.escape(_val[0]) %>
+            <% var _val1 = _.escape(_val[1]) %>
             <div class="input-prepend input-append">
-                {%/* Кнопка значения и названия */%}
-                <button name="{{ widget.name }}" value="{{ _val0 }}"
-                    data-model="{{ widget.model }}"
+                <% /* Кнопка значения и названия */ %>
+                <button name="<%= widget.name %>" value="<%= _val0 %>"
+                    data-model="<%= widget.model %>"
                     disabled="disabled"
-                    {% _.each(widget.attr, function(val, key) { %}
-                        {% if (! key in {'type':0, 'name':0}) { %}
-                            {{ key }}="{{ val }}"
-                        {% } %}
-                    {% }); %}
-                    class="btn {{ widget.attr['class'] || 'input-medium' }}"
+                    <% _.each(widget.attr, function(val, key) { %>
+                        <% if (! key in {'type':0, 'name':0}) { %>
+                            <%= key %>="<%= val %>"
+                        <% } %>
+                    <% }); %>
+                    class="btn <%= widget.attr['class'] || 'input-medium' %>"
                     data-action="object_change"
-                    data-djangofield="{{ widget.djangofield }}"
-                    data-id="{{ data.id }}"
-                    title="{{ _val1 }} (ID:{{ _val0 }})">{{ _val1 || '&lt; - &gt;' }}
+                    data-djangofield="<%= widget.djangofield %>"
+                    data-id="<%= data.id %>"
+                    title="<%= _val1 %> (ID:<%= _val0 %>)"><%= _val1 || '&lt; - &gt;' %>
                 </button>
-                {%/* Кнопка сброса */%}
+                <% /* Кнопка сброса */ %>
                 <button class="btn"
-                {% if (!_val1) { %}
+                <% if (!_val1) { %>
                     disabled="disabled"
-                {% } %}
+                <% } %>
                     data-action="field_clear">
                     <i class="icon-remove"></i>
                 </button>
-                {%/* Кнопка поиска */%}
+                <% /* Кнопка поиска */ %>
                 <button class="btn" data-action="field_select">
                     <i class="icon-search"></i>
                 </button>
             </div>
 
-        {% } else if ((widget.tag == 'select') && (widget.attr.multiple)) { %}
-            <select name="{{ widget.name }}"
-                data-model="{{ widget.model }}"
+        <% } else if ((widget.tag == 'select') && (widget.attr.multiple)) { %>
+            <!-- select multiple -->
+            <select name="<%= widget.name %>"
+                data-model="<%= widget.model %>"
                 disabled="disabled"
-                {% _.each(widget.attr, function(val, key) { %}
-                    {% if (! key in {'type':0, 'name':0}) { %}
-                        {{ key }}="{{ val }}"
-                    {% } %}
-                {% }); %}
-                class="{{ widget.attr['class'] }}"
+                <% _.each(widget.attr, function(val, key) { %>
+                    <% if (! key in {'type':0, 'name':0}) { %>
+                        <%= key %>="<%= val %>"
+                    <% } %>
+                <% }); %>
+                class="<%= widget.attr['class'] %>"
                 data-action="object_change"
-                data-djangofield="{{ widget.djangofield }}"
-                data-id="{{ data.id }}">{{ data.fields[widget.name] }}
+                data-djangofield="<%= widget.djangofield %>"
+                data-id="<%= data.id %>"><%= data.fields[widget.name] %>
                 </select>
-        {% } %}
-        {% if (!widget.hidden) { %}
+        <% } %>
+        <% if (!widget.hidden) { %>
                     </div>
                 </td>
             </tr>
-        {% } %}
-    {% }); %}
-{% endverbatim %}
+        <% } %>
+    <% }); %>
