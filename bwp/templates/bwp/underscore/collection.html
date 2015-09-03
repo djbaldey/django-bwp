@@ -70,7 +70,7 @@
                         <div class="btn-group">
 <!--
                         <% if (data.perms.add) { %>
-                            <button class="btn btn-mini"
+                            <button class="btn btn-sm"
                                 data-action="object_copy"
                                 data-model="<%= obj.model %>"
                                 data-pk="<%= obj.pk %>"
@@ -80,7 +80,7 @@
                         <% } %>
 
                         <% if ((data.perms.add) && (data.meta.has_clone)) { %>
-                            <button class="btn btn-mini"
+                            <button class="btn btn-sm"
                                 data-action="object_clone"
                                 data-model="<%= obj.model %>"
                                 data-pk="<%= obj.pk %>"
@@ -90,7 +90,7 @@
                         <% } %>
 -->
                         <% if (data.perms.delete && data.is_m2m) { %>
-                            <button class="btn btn-mini"
+                            <button class="btn btn-sm"
                                     data-action="<%= _obj_delete %>"
                                     data-model="<%= obj.model %>"
                                     data-pk="<%= obj.pk %>"
@@ -101,7 +101,7 @@
                         <% } %>
 <!--
                         <% if (!_multiselect) { %>
-                            <button class="btn btn-mini"
+                            <button class="btn btn-sm"
                                 data-action="object_select"
                                 data-model="<%= obj.model %>"
                                 data-unicode="<%= obj.__unicode__ %>"
