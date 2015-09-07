@@ -2,43 +2,19 @@
 <% var _obj_add = 'object_add'; var _obj_delete = 'object_delete'; %>
 <% if (data.is_m2m) { _obj_add += '_m2m'; _obj_delete += '_m2m'; } %>
 
-<div class="subnav pull-right">
-    <div class="pull-left form-search">
-        <div class="input-prepend input-append">
-            <button class="btn btn-mini" data-id="<%= data.id %>" title="Обновить" data-action="collection_search_refresh">
-                <i class="icon-refresh"></i>
-            </button>
-            <input data-action="collection_search"
-                    data-id="<%= data.id %>"
-                <% if (data.meta.search_fields.length) { %>
-                    type="search"
-                <% } else { %>
-                    type="hidden"
-                <% } %>
-                    class="search input-large"
-                    placeholder="Поиск"
-                    value="<%= data.query %>">
-        <% if (data.meta.search_fields.length) { %>
-            <button class="btn btn-mini" data-id="<%= data.id %>" data-action="collection_searchsettings">
-                <i class="icon-wrench"></i>
-            </button>
-        <% } %>
-        </div>
-    </div>
-</div>
-
+<div class="subnav row">
 <% if (data.paginator) { var _per_page = data.paginator.per_page || data.meta.list_per_page; %>
 <% } else { var _per_page = data.meta.list_per_page;} %>
-<div class="subnav">
-    <div>
+
+    <div class="col-lg-6">
         <div class="btn-toolbar">
         <% if (data.perms.add) { %>
             <div class="btn-group">
-                <button class="btn btn-mini" data-id="<%= data.id %>" data-action="<%= _obj_add %>">
+                <button class="btn btn-default btn-sm" data-id="<%= data.id %>" data-action="<%= _obj_add %>">
                 <% if (data.is_m2m) { %>
-                    <i class="icon-plus-sign"></i>
+                    <i class="fa fa-plus-sign"></i>
                 <% } else { %>
-                    <i class="icon-plus"></i>
+                    <i class="fa fa-plus"></i>
                 <% } %>
                     Добавить
                 </button>
@@ -46,10 +22,10 @@
         <% } %>
         <% if (data.actions) { %>
             <div class="btn-group">
-                <a  class="btn btn-mini dropdown-toggle"
+                <a  class="btn btn-default btn-sm dropdown-toggle"
                     data-toggle="dropdown"
                     href="#">
-                    <i class="icon-list"></i>
+                    <i class="fa fa-list"></i>
                     Действия
                     <span class="caret"></span>
                 </a>
@@ -62,10 +38,10 @@
         <% } %>
         <% if (data.collection_reports) { %>
             <div class="btn-group">
-                <a  class="btn btn-mini dropdown-toggle"
+                <a  class="btn btn-default btn-sm dropdown-toggle"
                     data-toggle="dropdown"
                     href="#">
-                    <i class="icon-print"></i>
+                    <i class="fa fa-print"></i>
                     Отчёты
                     <span class="caret"></span>
                 </a>
@@ -82,18 +58,18 @@
         <% } %>
             <div class="btn-group">
             <% if (!isEmpty(data.meta.filters) || DEBUG) { %>
-                <button class="btn btn-mini" data-id="<%= data.id %>"
+                <button class="btn btn-default btn-sm" data-id="<%= data.id %>"
                     data-action="collection_filters"
                     data-toggle="button">
-                    <i class="icon-filter"></i>
+                    <i class="fa fa-filter"></i>
                     Фильтры
                 </button>
             <% } %>
-                <a  class="btn btn-mini dropdown-toggle"
+                <a  class="btn btn-default btn-sm dropdown-toggle"
                     data-toggle="dropdown"
                     title="Количество на странице"
                     href="#">
-                    <i class="icon-resize-vertical"></i>
+                    <i class="fa fa-resize-vertical"></i>
                     <span data-placeholder="collection_count" data-id="<%= data.id %>"><%= _per_page %></span>
                     <span class="caret"></span>
                 </a>
@@ -105,6 +81,37 @@
             </div>
         </div>
     </div>
+
+    <div class="col-lg-6 form-search">
+        <div class="input-group">
+            <span class="input-group-btn">
+                <button class="btn btn-default btn-sm" data-id="<%= data.id %>" title="Обновить" data-action="collection_search_refresh">
+                    <i class="fa fa-refresh"></i>
+                </button>
+            </span>
+            
+            <input data-action="collection_search"
+                    data-id="<%= data.id %>"
+                <% if (data.meta.search_fields.length) { %>
+                    type="text"
+                <% } else { %>
+                    type="hidden"
+                <% } %>
+                    class="form-control search input-sm"
+                    placeholder="Поиск"
+                    value="<%= data.query %>">
+        <% if (data.meta.search_fields.length) { %>
+            <span class="input-group-btn">
+                <button class="btn btn-default btn-sm" data-id="<%= data.id %>" data-action="collection_searchsettings">
+                    <i class="fa fa-wrench"></i>
+                </button>
+            </span>
+        <% } %>
+        </div>
+    </div>
+
+
+
 </div>
 
 <div id="collection_filters_<%= data.id %>"></div>

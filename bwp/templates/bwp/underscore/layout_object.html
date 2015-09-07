@@ -1,8 +1,9 @@
+{% load static bwp_base %}
 {# Шаблон Underscore #}
 <div class="row-fluid">
 <% if (data.composes.length >0) { %>
     <div class="btn-group subtabs" data-toggle="buttons-radio" data-id="<%= data.id %>">
-        <button class="btn btn-mini btn-primary active"
+        <button class="btn btn-sm btn-primary active"
             data-toggle="tab"
             data-target="#objectpane_<%= data.id %>">
             Объект
@@ -10,7 +11,7 @@
     <% _.each(data.composes, function(compose) { %>
         <% /* Если объект не сохранён в DB, то запрещаем операции с вложениями */ %>
         <% var _compose_btn_class = ''; if (compose.is_m2m) { _compose_btn_class = 'btn-info'} %>
-        <button class="btn btn-mini <%= _compose_btn_class %>"
+        <button class="btn btn-sm <%= _compose_btn_class %>"
         <% if (!data.pk) { %>
             disabled="disabled"
         <% } else { %>
@@ -25,9 +26,9 @@
     </div>
     <div class="btn-group subtabs">
     <% if ((data.model.object_reports) && (data.pk)) { %>
-        <button class="btn btn-mini dropdown-toggle"
+        <button class="btn btn-sm dropdown-toggle"
             data-toggle="dropdown">            
-            <i class="icon-print"></i> Отчёты
+            <i class="fa fa-print"></i> Отчёты
             <span class="caret"></span>
         </button>
         <ul class="dropdown-menu">
@@ -48,11 +49,11 @@
     <div class="tab-content">
     <% _.each(data.composes, function(compose) { %>
         <div class="tab-pane" id="layout_<%= compose.id %>">
-            <div align="center"><img src="{{ STATIC_URL }}img/bwp/ajax-loader.gif" /> загрузка данных...</div>
+            <div align="center"><img src="{% get_static_prefix %}bwp/{% SETTINGS 'BWP_VERSION' %}/img/ajax-loader.gif" /> загрузка данных...</div>
         </div>
     <% }); %>
         <div class="tab-pane active" id="objectpane_<%= data.id %>">
-            <h3><%= data.label %> <span class="pull-right"><%= data.pk %></span></h3>
+            <h3><%= data.label %> <small class="pull-right"><%= data.pk ? 'ID='+data.pk : '' %></small></h3>
             <table class="table table-condensed" data-id="<%= data.id %>">
                 <tbody>
 

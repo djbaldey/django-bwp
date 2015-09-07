@@ -1,216 +1,210 @@
-{% comment %}<!--
-###############################################################################
-# Copyright 2013 Grigoriy Kramarenko.
-###############################################################################
-# This file is part of BWP.
-#
-#    BWP is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation, either version 3 of the License, or
-#    (at your option) any later version.
-#
-#    BWP is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
-#
-#    You should have received a copy of the GNU General Public License
-#    along with BWP.  If not, see <http://www.gnu.org/licenses/>.
-#
-# Этот файл — часть BWP.
-#
-#   BWP - свободная программа: вы можете перераспространять ее и/или
-#   изменять ее на условиях Стандартной общественной лицензии GNU в том виде,
-#   в каком она была опубликована Фондом свободного программного обеспечения;
-#   либо версии 3 лицензии, либо (по вашему выбору) любой более поздней
-#   версии.
-#
-#   BWP распространяется в надежде, что она будет полезной,
-#   но БЕЗО ВСЯКИХ ГАРАНТИЙ; даже без неявной гарантии ТОВАРНОГО ВИДА
-#   или ПРИГОДНОСТИ ДЛЯ ОПРЕДЕЛЕННЫХ ЦЕЛЕЙ. Подробнее см. в Стандартной
-#   общественной лицензии GNU.
-#
-#   Вы должны были получить копию Стандартной общественной лицензии GNU
-#   вместе с этой программой. Если это не так, см.
-#   <http://www.gnu.org/licenses/>.
-###############################################################################
--->{% endcomment %}
-{% load i18n l10n bwp_base bwp_static bwp_locale %}<!DOCTYPE html>
-<html lang="{{ LANGUAGE_CODE|default:"en-us" }}" {% if LANGUAGE_BIDI %}dir="rtl"{% endif %}>
+{% load i18n l10n static bwp_base bwp_static bwp_locale %}
+
+{% get_language_info for LANGUAGE_CODE as lang %}
+{% get_available_languages as languages %}
+
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE|default:"ru" }}" {% if LANGUAGE_BIDI %}dir="rtl"{% endif %}>
 <head>
-    <title>{% SETTINGS 'PROJECT_SHORTNAME' %}: {% block title %}{% filter force_escape %}{% SETTINGS 'PROJECT_DESCRIPTION' %}{% endfilter %}{% endblock %}</title>
-    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
     <meta charset="utf-8">
-{% block shortcut_icons %}
-    <link rel="icon" href="{{ STATIC_URL }}img/bwp/minilogo.svg" type="image/svg">
-    <link rel="icon" href="{{ STATIC_URL }}img/bwp/favicon.png" type="image/png">
-{% endblock %}
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="{% filter force_escape %}{% SETTINGS 'PROJECT_DESCRIPTION' %}{% endfilter %}">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="{% SETTINGS 'PROJECT_DESCRIPTION' %}">
     <meta name="author" content="{% filter force_escape %}{% AUTHORS %}{% endfilter %}">
-    <meta name="version" content="{% SETTINGS 'BWP_VERSION' %}">
+    <meta name="version" content="{% SETTINGS 'VERSION' %}">
+    <meta name="generator" content="Django {% SETTINGS 'DJANGO_VERSION' %}">
+
+    <title>{% SETTINGS 'PROJECT_SHORTNAME' %}: {% block title %}{% filter force_escape %}{% SETTINGS 'PROJECT_DESCRIPTION' %}{% endfilter %}{% endblock %}</title>
+    
+<!-- START: block shortcut_icons -->{% block shortcut_icons %}
+    <link href="{% get_static_prefix %}bwp/img/minilogo.svg" rel="icon" type="image/svg">
+    <link href="{% get_static_prefix %}bwp/img/favicon.png" rel="icon" type="image/png">
+{% endblock %}<!-- END: block shortcut_icons -->
+
 
 <!-- START: styles -->
-    <link rel="stylesheet" href="{{ STATIC_URL }}css/bootstrap/{% SETTINGS 'BOOTSTRAP_VERSION' %}/bootstrap{% mini_library %}.css">
-    {% block responsive_style %}<link rel="stylesheet" href="{{ STATIC_URL }}css/bootstrap/{% SETTINGS 'BOOTSTRAP_VERSION' %}/bootstrap-responsive{% mini_library %}.css">{% endblock %}
-    <link rel="stylesheet" href="{{ STATIC_URL }}css/bwp/{% SETTINGS 'BWP_VERSION' %}/bwp{% mini_library %}.css">
-    
-    <!-- for IE6-8 support of HTML5 elements -->
-    <!--[if lte IE 9]>
-      <script src="{{ STATIC_URL }}js/html5/3.6/html5.js"></script>
-    <![endif]-->
 
-<!-- START: block extrastyle -->
+    <!-- bootstrap & fontawesome & text fonts -->
+    <link rel="stylesheet" href="{% get_static_prefix %}opensans/opensans.min.css" />
+    <link rel="stylesheet" href="{% get_static_prefix %}font-awesome/4.3.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" href="{% get_static_prefix %}bootstrap/3.3.4.bwp/css/bootstrap.min.css" />
+
+    <style type="text/css">
+        html {
+            position: relative;
+            min-height: 100%;
+        }
+        body {
+            margin-bottom: 90px;
+            padding-top: 50px;
+        }
+        @media (min-width: 768px) {
+            body {
+                margin-bottom: 160px;
+            }
+        }
+        .footer {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            min-height: 50px;
+            background-color: #f5f5f5;
+            padding-top: 15px;
+            padding-bottom: 15px;
+        }
+        .footer>div {
+            background-color: #f5f5f5;
+        }
+
+        /* fixed bootstrap 3.3.2 */
+
+        .modal-fix-bs332 {
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+        
+        .table>thead>tr>td.active,
+        .table>tbody>tr>td.active,
+        .table>tfoot>tr>td.active,
+        .table>thead>tr>th.active,
+        .table>tbody>tr>th.active,
+        .table>tfoot>tr>th.active,
+        .table>thead>tr.active>td,
+        .table>tbody>tr.active>td,
+        .table>tfoot>tr.active>td,
+        .table>thead>tr.active>th,
+        .table>tbody>tr.active>th,
+        .table>tfoot>tr.active>th {
+            background-color: #7BBEFF;
+        }
+
+        .navbar-form.navbar-left {
+            float: left!important;
+        }
+        .navbar-header .navbar-form {
+            width: auto;
+            padding-top: 0;
+            padding-bottom: 0;
+            margin-right: 0;
+            margin-left: 0;
+            border: 0;
+            -webkit-box-shadow: none;
+                    box-shadow: none;
+        }
+        @media (min-width: 768px) {
+            .navbar-form input { min-width: 260px;}
+        }
+        @media (max-width: 768px) {
+            .navbar-form { min-width: 340px;}
+        }
+        .search-timer {
+            position: relative;
+            width: 50px;
+            left: -68px;
+            margin-right: -50px;
+            top: 9px;
+            font-size: xx-small;
+            text-align: right;
+        }
+        .dropdown-menu > li > div {
+            display: block;
+            padding: 3px 20px;
+            clear: both;
+            font-weight: normal;
+            line-height: 1.42857143;
+            color: #333;
+        }
+
+        
+        div.navbar-collapse.navbar-left {margin-left: -15px;}
+        form.navbar-form.navbar-left {padding-right: 0px;}
+
+        .modal .modal-body tab-content {padding-top: 10px;}
+
+        .modal .modal-body tab-content div.checkbox label,
+        .modal .modal-body tab-content div.radio label
+        {font-size: medium;}
+
+        label input:checked+span {font-weight: 600;}
+        label input:disabled+span {color: #777; cursor: no-drop;}
+
+        .onprint { display: none }
+        @media print {
+            .noprint { display: none }
+            .onprint { display: initial }
+            body {
+                margin: 0px;
+                padding: 0px;
+            }
+        }
+
+    </style>
+
+
+    <!-- bwp styles -->
+    <link rel="stylesheet" href="{% get_static_prefix %}bwp/{% SETTINGS 'BWP_VERSION' %}/css/bwp{% mini_library %}.css" />
+
+    <!-- START: block extrastyle -->
     {% block extrastyle %}{% endblock %}
-<!-- END: block extrastyle -->
+    <!-- END: block extrastyle -->
 
 <!-- END: styles -->
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
 </head>
 
-<body class="{% block bodyclass %}home{% endblock %}">
-<!-- START: block body -->
-{% block body %}
-<div id="wrap">
-    {% include "bwp/for_IE.html" %}
-    <!-- START: block modal -->
-    {% block modal %}<div id="modal" class="modal hide fade"></div>{% endblock %}
-    <!-- END: block modal -->
+<body class="{% block bodyclass %}{% endblock %}" {% block bodyspy %}{% endblock %}>
+<!-- START: block body -->{% block body %}
 
-    <div class="container-fluid">
-        <div class="row-fluid">
-    <!-- START: block header -->
-        {% block header %}{% endblock %}
-    <!-- END: block header -->
-        </div>
+    <!-- START: block navbar -->{% block navbar %}{% endblock %}<!-- END: block navbar -->
+
+    <!-- START: block container -->{% block container %}
+    <div class="container" id="main-container">
+
+        <!-- START: block sidebar -->{% block sidebar %}{% endblock %}<!-- END: block sidebar -->
+
+        <!-- START: block content -->{% block content %}{% endblock %}<!-- END: block content -->
+
     </div>
+    {% endblock %}<!-- END: block container -->
 
-    <div class="container-fluid">
-        <div class="row-fluid">
-    <!-- START: block content -->
-            {% block content %}{% endblock %}
-    <!-- END: block content -->
-        </div>
-    </div>
-</div>
-<div id="footer">
-    <div class="container-fluid">
-        <div class="row-fluid">
-    <!-- START: block footer -->
-            {% block footer %}
-            <footer>
-                <div class="mono align-center" >
-                {% filter force_escape %}
-                    {% SETTINGS 'COPYRIGHT' %}
-                {% endfilter %} © {% COPYRIGHT_YEARS %}
-                </div>
-                <div class="mono align-center" >
-                {% block footer_links %}
-                    <a href="/">{% SETTINGS 'PROJECT_SHORTNAME' %}:<span title="{% SETTINGS 'VERSION_DATE' %}">{% SETTINGS 'VERSION' %}</span></a>
-                    <a href="http://rosix.ru/project/9/">BWP:<span title="{% SETTINGS 'BWP_VERSION_DATE' %}">{% SETTINGS 'BWP_VERSION' %}</span></a>
-                    <a href="{% url "bwp_api" %}">API:{% SETTINGS 'QUICKAPI_VERSION' %}</a>
-                {% endblock %}
-                </div>
-            </footer>
-            {% endblock %}
-    <!-- END: block footer -->
-        </div>
-    </div>
-</div>
-{% endblock %}
-<!-- END: block body -->
+    <!-- START: block footer -->{% block footer %}{% endblock %}<!-- END: block footer -->
 
-<!-- START: block jstemplates -->
-    {% block jstemplates %}
-    <!-- underscore -->
-    <script type="text/x-underscore" id="underscore-alert">
-        {% include "bwp/underscore/alert.html" %}
-    </script>
-    <script type="text/x-underscore" id="underscore-menu-app">
-        {% include "bwp/underscore/menu_app.html" %}
-    </script>
-    <script type="text/x-underscore" id="underscore-collection">
-        {% include "bwp/underscore/collection.html" %}
-    </script>
-    <script type="text/x-underscore" id="underscore-layout-model">
-        {% include "bwp/underscore/layout_model.html" %}
-    </script>
-    <script type="text/x-underscore" id="underscore-layout-selector">
-        {% include "bwp/underscore/layout_selector.html" %}
-    </script>
-    <script type="text/x-underscore" id="underscore-layout-compose">
-        {% include "bwp/underscore/layout_compose.html" %}
-    </script>
-    <script type="text/x-underscore" id="underscore-layout-object">
-        {% include "bwp/underscore/layout_object.html" %}
-    </script>
-    <script type="text/x-underscore" id="underscore-layout-default">
-        {% include "bwp/underscore/layout_default.html" %}
-    </script>
-    <script type="text/x-underscore" id="underscore-tab">
-        {% include "bwp/underscore/tab.html" %}
-    </script>
-    <script type="text/x-underscore" id="underscore-modal">
-        {% include "bwp/underscore/modal.html" %}
-    </script>
-    <script type="text/x-underscore" id="underscore-modal-footer">
-        {% include "bwp/underscore/modal_footer.html" %}
-    </script>
-    <script type="text/x-underscore" id="underscore-filters">
-        {% include "bwp/underscore/filters.html" %}
-    </script>
-    <script type="text/x-underscore" id="underscore-filter">
-        {% include "bwp/underscore/filter.html" %}
-    </script>
-    <script type="text/x-underscore" id="underscore-filter-values">
-        {% include "bwp/underscore/filter_values.html" %}
-    </script>
-    {% endblock %}
-<!-- END: block jstemplates -->
+    <!-- START: block modal_error -->{% block modal_error %}{% endblock %}<!-- END: block modal_error -->
+
+    <!-- START: block modal -->{% block modal %}{% endblock %}<!-- END: block modal -->
+
+{% endblock %}<!-- END: block body -->
 
 
-<!-- START: block jsglobalvars -->
-{% block jsglobalvars %}
+<!-- START: block jstemplates -->{% block jstemplates %}{% endblock %}<!-- END: block jstemplates -->
+
+    <!--[if !IE]> -->
     <script type="text/javascript">
-        /* GLOBAL VARS */
-        window.__bwp_media_prefix__ = "{% filter escapejs %}{% static "bwp/" %}{% endfilter %}";
-        window.AJAX_TIMEOUT = 10000;
-        window.BWP_API_URL = "{% filter escapejs %}{% url "bwp_api" %}{% endfilter %}";
-        window.SETTINGS_UNIQUE_KEY = "{% filter escapejs %}{% SETTINGS 'PROJECT_SHORTNAME' %}__user_{{ user.id|default:0 }}{% endfilter %}";
-        window.USER_ID = "{{ user.id|default:0 }}";
-        window.USER_NAME = "{{ user.username }}";
-        window.USER_LAST_NAME = "{{ user.last_name }}";
-        window.USER_FIRST_NAME = "{{ user.first_name }}";
-        window.USER = "{{ user }}";
-        window.DEBUG = {% filter lower %}{% SETTINGS 'DEBUG' %}{% endfilter %};
-        window.SERVER_TZ_OFFSET = {% SERVER_TZ_OFFSET_JS %};
+        document.write("<script src='{% get_static_prefix %}jquery/jquery/jquery-2.1.4.min.js'>"+"<"+"/script>");
     </script>
-{% endblock %}
-<!-- END: block jsglobalvars -->
+    <!-- <![endif]-->
 
-<!-- START: block libjs -->
-{% block libjs %}
-    <script src="{{ STATIC_URL }}js/jquery/{% SETTINGS 'JQUERY_VERSION' %}/jquery{% mini_library %}.js"></script>
-    <script src="{{ STATIC_URL }}js/jquery/json/2.4/jquery.json{% mini_library %}.js"></script>
-    <script src="{{ STATIC_URL }}js/jquery/dateParser/0.2/jquery.dateParser{% mini_library %}.js"></script>
-    <script src="{{ STATIC_URL }}js/jquery/quickapi/3.4/jquery.quickapi{% mini_library %}.js"></script>
-    <script src="{{ STATIC_URL }}js/moment/2.5.1/moment-with-langs{% mini_library %}.js"></script>
-    <script src="{{ STATIC_URL }}js/underscore/1.6.0/underscore{% mini_library %}.js"></script>
-    <script src="{{ STATIC_URL }}js/underscore/string/2.3.2/underscore.string{% mini_library %}.js"></script>
-    <script src="{{ STATIC_URL }}js/bootstrap/{% SETTINGS 'BOOTSTRAP_VERSION' %}/bootstrap{% mini_library %}.js"></script>
-    <script src="{{ STATIC_URL }}js/django/{% SETTINGS 'DJANGO_VERSION' %}/django-ajax-csrf{% mini_library %}.js"></script>
-{% endblock %}
-<!-- END: block libjs -->
+    <!--[if IE]>
+    <script type="text/javascript">
+        document.write("<script src='{% get_static_prefix %}jquery/jquery/jquery-1.11.3.min.js'>"+"<"+"/script>");
+    </script>
+    <![endif]-->
 
-<!-- START: block userjs -->
-{% block userjs %}
-{# Этот блок не должен исполняться на шаблонах авторизации #}
-    {% if user.is_authenticated %}
-        <script src="{{ STATIC_URL }}js/bwp/{% SETTINGS 'BWP_VERSION' %}/bwp{% mini_library %}.js"></script>
-    {% endif %}
-{% endblock %}
-<!-- END: block userjs -->
+    <script src="{% get_static_prefix %}bootstrap/3.3.4.bwp/js/bootstrap.min.js"></script>
 
-<!-- START: block extrajs -->
-    {% block extrajs %}{% endblock %}
-<!-- END: block extrajs -->
-</body></html>
+
+<!-- START: block jsvars -->{% block jsvars %}{% endblock %}<!-- END: block jsvars -->
+
+<!-- START: block appjs -->{% block appjs %}{% endblock %}<!-- END: block appjs -->
+
+<!-- START: block extrajs -->{% block extrajs %}{% endblock %}<!-- END: block extrajs -->
+
+
+</body>
+</html>

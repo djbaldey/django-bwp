@@ -22,8 +22,9 @@ from __future__ import unicode_literals
 import os
 import datetime
 
-from django.utils.translation import ugettext_lazy as _
+from django import __version__ as DJANGO_VERSION
 from django.conf import settings
+from django.utils.translation import ugettext_lazy as _
 
 from quickapi import __version__ as QUICKAPI_VERSION
 from bwp import __version__ as BWP_VERSION
@@ -45,14 +46,7 @@ PROJECT_NAME            = getattr(settings, 'PROJECT_NAME',             _('Examp
 PROJECT_SHORTNAME       = getattr(settings, 'PROJECT_SHORTNAME',        _('BWP-Example'))
 PROJECT_DESCRIPTION     = getattr(settings, 'PROJECT_DESCRIPTION',      _('Example project on Business Web Platform'))
 
-DJANGO_VERSION          = getattr(settings, 'DJANGO_VERSION',           '1.8')
-BOOTSTRAP_VERSION       = getattr(settings, 'BOOTSTRAP_VERSION',        '2.3.1')
-JQUERY_VERSION          = getattr(settings, 'JQUERY_VERSION',           '1.9.1')
-JQUERY_JSON_VERSION     = getattr(settings, 'JQUERY_JSON_VERSION',      '2.4')
-UNDERSCORE_VERSION      = getattr(settings, 'UNDERSCORE_VERSION',       '1.4.4')
-UNDERSCORE_STRING_VERSION = getattr(settings, 'UNDERSCORE_STRING_VERSION', '2.3.0')
-
-REPORT_FILES_UNIDECODE = getattr(settings, 'REPORT_FILES_UNIDECODE', True)
+REPORT_FILES_UNIDECODE  = getattr(settings, 'REPORT_FILES_UNIDECODE', True)
 
 AUTHORS                 = getattr(settings, 'AUTHORS',                  [])
 COPYRIGHT               = getattr(settings, 'COPYRIGHT',                _('Name of company'))

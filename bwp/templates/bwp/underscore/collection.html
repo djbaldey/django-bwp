@@ -70,44 +70,44 @@
                         <div class="btn-group">
 <!--
                         <% if (data.perms.add) { %>
-                            <button class="btn btn-mini"
+                            <button class="btn btn-sm"
                                 data-action="object_copy"
                                 data-model="<%= obj.model %>"
                                 data-pk="<%= obj.pk %>"
                                 title="Копировать">
-                                <i class="icon-plus"> </i>
+                                <i class="fa fa-plus"> </i>
                             </button>
                         <% } %>
 
                         <% if ((data.perms.add) && (data.meta.has_clone)) { %>
-                            <button class="btn btn-mini"
+                            <button class="btn btn-sm"
                                 data-action="object_clone"
                                 data-model="<%= obj.model %>"
                                 data-pk="<%= obj.pk %>"
                                 title="Клонировать">
-                                <i class="icon-pause"> </i>
+                                <i class="fa fa-pause"> </i>
                             </button>
                         <% } %>
 -->
                         <% if (data.perms.delete && data.is_m2m) { %>
-                            <button class="btn btn-mini"
+                            <button class="btn btn-sm"
                                     data-action="<%= _obj_delete %>"
                                     data-model="<%= obj.model %>"
                                     data-pk="<%= obj.pk %>"
                                     data-id="<%= data.id %>"
                                     title="Удалить">
-                                    <i class="icon-minus-sign"></i>
+                                    <i class="fa fa-minus-sign"></i>
                             </button>
                         <% } %>
 <!--
                         <% if (!_multiselect) { %>
-                            <button class="btn btn-mini"
+                            <button class="btn btn-sm"
                                 data-action="object_select"
                                 data-model="<%= obj.model %>"
                                 data-unicode="<%= obj.__unicode__ %>"
                                 data-pk="<%= obj.pk %>"
                                 title="Выбрать">
-                                <i class="icon-ok"></i>
+                                <i class="fa fa-ok"></i>
                             </button>
                         <% } %>
 
@@ -120,9 +120,9 @@
                     <% } else { %>
                         <% if ($.type(_value) === 'boolean') { %>
                             <% if (_value) { %>
-                                <i class="icon-ok"></i>
+                                <i class="fa fa-check"></i>
                             <% } else { %>
-                                <i class="icon-ban-circle"></i>
+                                <i class="fa fa-ban"></i>
                             <% } %>
                         <% } else if ($.type(_value) === 'array'){ %>
                             <%= _value[1] %>
@@ -149,19 +149,18 @@
     <% }); %>
     </tbody>
 </table>
-<div id="pagination_<%= data.id %>">
-    <div class="pagination pagination-right pagination-mini">
-        <ul>
-            <% _.each(data.paginator.page_range, function(page) { %>
-                <% if (page == data.paginator.number) { %>
-                <li class="active"><a href="#" data-action="collection_page" data-page="<%= page %>" data-id="<%= data.id %>"><%= page %></a></li>
-                <% } else if (isNaN(page)) { %>
-                <li class="disabled"><a href="#">...</a></li>
-                <% } else { %>
-                <li><a href="#" data-action="collection_page" data-page="<%= page %>" data-id="<%= data.id %>"><%= page %></a></li>
-                <% } %>
-            <% }); %>
-        </ul>
-    </div>
+
+<div id="pagination_<%= data.id %>" class="align-right">
+    <ul class="pagination pagination-sm">
+        <% _.each(data.paginator.page_range, function(page) { %>
+            <% if (page == data.paginator.number) { %>
+            <li class="active"><a href="#" data-action="collection_page" data-page="<%= page %>" data-id="<%= data.id %>"><%= page %></a></li>
+            <% } else if (isNaN(page)) { %>
+            <li class="disabled"><a href="#">...</a></li>
+            <% } else { %>
+            <li><a href="#" data-action="collection_page" data-page="<%= page %>" data-id="<%= data.id %>"><%= page %></a></li>
+            <% } %>
+        <% }); %>
+    </ul>
 </div>
 

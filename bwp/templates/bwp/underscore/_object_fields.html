@@ -2,13 +2,13 @@
     <% _.each(data.widgets, function(widget) { %>
         <% if (!widget.hidden) { %>
             <tr>
-                <td class="span2">
+                <td class="col-xs-12 col-sm-6 col-lg-3">
                     <label class="control-label" for="field_<%= data.id %>_<%= widget.name %>">
                         <% if (widget.attr.required) { %><b><%= widget.label %></b>
                         <% } else { %><%= widget.label %><% } %>
                     </label>
                 </td>
-                <td>
+                <td class="col-xs-12 col-sm-6 col-lg-9">
                     <div class="controls">
         <% } %>
 
@@ -76,11 +76,11 @@
                     disabled="disabled"
                 <% } %>
                     data-action="file_field_clear">
-                    <i class="icon-remove"></i>
+                    <i class="fa fa-remove"></i>
                 </button>
                 <% /* Кнопка поиска */ %>
                 <button class="btn" data-action="file_field_select">
-                    <i class="icon-search"></i>
+                    <i class="fa fa-search"></i>
                 </button>
             </div>
 
@@ -132,11 +132,11 @@
                     disabled="disabled"
                 <% } %>
                     data-action="field_clear">
-                    <i class="icon-remove"></i>
+                    <i class="fa fa-remove"></i>
                 </button>
                 <% /* Кнопка поиска */ %>
                 <button class="btn" data-action="field_select">
-                    <i class="icon-search"></i>
+                    <i class="fa fa-search"></i>
                 </button>
             </div>
 
