@@ -51,7 +51,11 @@ from django.utils import timezone, dateparse
 
 from quickapi.http import JSONResponse, JSONRedirect, MESSAGES, JSONEncoder
 from quickapi.views import index as quickapi_index, get_methods
-from quickapi.decorators import login_required, api_required
+from quickapi.decorators import api_required
+try:
+    from quickapi.decorators import auth_required as login_required
+except:
+    from quickapi.decorators import login_required
 
 from bwp.sites import site
 from bwp.models import TempUploadFile
