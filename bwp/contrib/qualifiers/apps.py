@@ -24,6 +24,6 @@ from django.utils.translation import ugettext_lazy as _
 
 
 class AppConfig(BaseAppConfig):
-    name = 'bwp'
-    verbose_name = _('Platform')
+    name = 'bwp.contrib.qualifiers'
+    verbose_name = _('Qualifiers')
 

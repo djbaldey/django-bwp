@@ -7,129 +7,35 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 0.1.7\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-11-13 02:23+1000\n"
-"PO-Revision-Date: 2013-04-16 01:00+1100\n"
-"Last-Translator: Grigoriy Kramarenko <root@rosix.ru>\n"
-"Language: RU\n"
+"POT-Creation-Date: 2015-09-07 22:54+1000\n"
+"PO-Revision-Date: 2015-09-07 22:54+1000\n"
+"Last-Translator: Григорий Крамаренко <root@rosix.ru>\n"
+"Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
-"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Language-Team: \n"
+"X-Generator: Poedit 1.6.10\n"
 
-#: __bwp__.py:51 models.py:99
+#: __bwp__.py:51 models.py:98
 msgid "admin users"
 msgstr "администраторы"
 
-#: __bwp__.py:58 models.py:105
+#: __bwp__.py:58 models.py:104
 msgid "admin groups"
 msgstr "группы администраторов"
 
-#: __init__.py:40
-msgid "devices"
-msgstr "устройства"
-
-#: models.py:81
-msgid "driver"
-msgstr "драйвер"
-
-#: models.py:87
-msgid "users"
-msgstr "пользователи"
-
-#: models.py:93
-msgid "groups"
-msgstr "группы"
-
-#: models.py:110
-msgid "username"
-msgstr "имя пользователя"
-
-#: models.py:114
-msgid "password"
-msgstr "пароль"
-
-#: models.py:189
-msgid "port"
-msgstr "порт"
-
-#: models.py:193 models.py:262
-msgid "config"
-msgstr "конфигурация"
-
-#: models.py:198
-msgid "admin password"
-msgstr "пароль администратора"
-
-#: models.py:202 models.py:256
-msgid "local device"
-msgstr "локальное устройство"
-
-#: models.py:203
-msgid "local devices"
-msgstr "локальные устройства"
-
-#: models.py:217
-msgid "url"
-msgstr ""
-
-#: models.py:218
-msgid "identifier"
-msgstr "идентификатор"
-
-#: models.py:219
-msgid "cookies"
-msgstr "куки"
-
-#: models.py:223
-msgid "remote device"
-msgstr "удалённое устройство"
-
-#: models.py:224
-msgid "remote devices"
-msgstr "удалённые устройства"
-
-#: models.py:238
-msgid "created"
-msgstr "создано"
-
-#: models.py:241
-msgid "updated"
-msgstr "обновлено"
-
-#: models.py:246
-msgid "waiting"
-msgstr "ожидание"
-
-#: models.py:247
-msgid "error"
-msgstr "ошибка"
-
-#: models.py:253
-msgid "state"
-msgstr "статус"
-
-#: models.py:259 models.py:266
-msgid "method"
-msgstr "метод"
-
-#: models.py:273 models.py:274
-msgid "spooler device"
-msgstr "очередь устройства"
-
-#: remote.py:55
-msgid "Error in receiving data"
-msgstr "Ошибка в получении данных"
-
-#: remote.py:58
-msgid "The device does not respond, check the network connection."
-msgstr "Устройство не отвечает, проверьте сетевое подключение."
+#: apps.py:28
+msgid "Devices"
+msgstr "Устройства"
 
 #: drivers/ICPDAS/__init__.py:71 drivers/ICPDAS/__init__.py:82
 msgid "Device is not responding."
 msgstr "Устройство не отвечает"
 
-#: drivers/ICPDAS/dcon.py:89 drivers/ShtrihM/kkt.py:239
+#: drivers/ICPDAS/dcon.py:89
 msgid "Serial port closed unexpectedly"
 msgstr "Последовательный порт закрыт неожиданно"
 
@@ -145,1796 +51,188 @@ msgstr "Канал должен быть 0..7"
 msgid "Unknown error"
 msgstr "Неизвестная ошибка"
 
-#: drivers/ShtrihM/__init__.py:126
+#: drivers/ShtrihM/__init__.py:122
 msgid "The device is busy large queue"
 msgstr "Устройство занято большой очередью"
 
-#: drivers/ShtrihM/__init__.py:258
+#: drivers/ShtrihM/__init__.py:254
 msgid "Type of document must be 0..3"
 msgstr "Тип документа должен быть 0..3"
 
-#: drivers/ShtrihM/kkt.py:87
-msgid "Connection error"
-msgstr "Ошибка соединения"
-
-#: drivers/ShtrihM/kkt.py:90
-msgid "Wrong value"
-msgstr "Неверное значение"
-
-#: drivers/ShtrihM/kkt.py:93
-msgid "Wrong type of value"
-msgstr "Неверный тип значения"
-
-#: drivers/ShtrihM/kkt.py:96
-msgid "Wrong value type in the password"
-msgstr "Неверный тип значения пароля"
-
-#: drivers/ShtrihM/kkt.py:104 drivers/ShtrihM/kkt.py:116
-msgid "Password type not identify"
-msgstr "Тип пароля не определён"
-
-#: drivers/ShtrihM/kkt.py:107
-msgid "Password must be 0..9999 or string from 4 chars"
-msgstr "Пароль должен быть 0..9999 или строкой из 4 символов"
-
-#: drivers/ShtrihM/kkt.py:223
-#, python-format
-msgid "Port %s is busy or the device is not connected to it"
-msgstr "Порт %s занят или устройство не подключено к нему"
-
-#: drivers/ShtrihM/kkt.py:253 drivers/ShtrihM/kkt.py:271
-#: drivers/ShtrihM/kkt.py:325 drivers/ShtrihM/kkt.py:328
-#: drivers/ShtrihM/kkt.py:334
-msgid "No communication with the device"
-msgstr "Нет связи с устройством"
-
-#: drivers/ShtrihM/kkt.py:344
-#, python-format
-msgid "Length (%(lehgth)i) not equal length of data (%(data)i)"
-msgstr "Длина (%(lehgth)i) не равна днине данных (%(data)i)"
-
-#: drivers/ShtrihM/kkt.py:353
-#, python-format
-msgid "Wrong crc %(summ)i must be %(read)i"
-msgstr "Неправильная crc %(summ)i, a должна быть %(read)i"
-
-#: drivers/ShtrihM/kkt.py:683 drivers/ShtrihM/kkt.py:807
-#: drivers/ShtrihM/kkt.py:837
-#, python-format
-msgid "Length of string must be less or equal %s chars"
-msgstr "Длина строки должна быть меньше или равна %s символов"
-
-#: drivers/ShtrihM/kkt.py:1093
-msgid "Line count must be in 1..255 range"
-msgstr "Длина строки должна быть в диапазоне 1..255"
-
-#: drivers/ShtrihM/kkt.py:1819
-msgid "Cash must be in range 0..9999999999"
-msgstr "Наличные должны быть в диапазоне 0..9999999999"
-
-#: drivers/ShtrihM/kkt.py:1821
-msgid "Payment 2 must be in range 0..9999999999"
-msgstr "Оплата 2 должна быть в диапазоне 0..9999999999"
-
-#: drivers/ShtrihM/kkt.py:1823
-msgid "Payment 3 must be in range 0..9999999999"
-msgstr "Оплата 3 должна быть в диапазоне 0..9999999999"
-
-#: drivers/ShtrihM/kkt.py:1825
-msgid "Payment 4 must be in range 0..9999999999"
-msgstr "Оплата 4 должна быть в диапазоне 0..9999999999"
-
-#: drivers/ShtrihM/kkt.py:1827 drivers/ShtrihM/kkt.py:2156
-msgid "Discount must be in range -9999..9999"
-msgstr "Скидка должна быть в диапазоне от -9999..9999"
-
-#: drivers/ShtrihM/kkt.py:1829 drivers/ShtrihM/kkt.py:1998
-#: drivers/ShtrihM/kkt.py:2158 drivers/ShtrihM/kkt.py:2208
-msgid "Text must be less than 40 chars"
-msgstr "Текст должен быть меньше, чем 40 символов"
-
-#: drivers/ShtrihM/kkt.py:1831 drivers/ShtrihM/kkt.py:2000
-#: drivers/ShtrihM/kkt.py:2160 drivers/ShtrihM/kkt.py:2210
-msgid "Count of taxes must be 4"
-msgstr "Количество налогов должно быть 4"
-
-#: drivers/ShtrihM/kkt.py:1833 drivers/ShtrihM/kkt.py:2002
-#: drivers/ShtrihM/kkt.py:2162 drivers/ShtrihM/kkt.py:2212
-msgid "Taxes must be list or tuple"
-msgstr "Налоги должны быть списком или кортежем"
-
-#: drivers/ShtrihM/kkt.py:1836 drivers/ShtrihM/kkt.py:2005
-#: drivers/ShtrihM/kkt.py:2165 drivers/ShtrihM/kkt.py:2215
-msgid "taxes must be only 0,1,2,3,4"
-msgstr "налоги должы быть только 0,1,2,3,4"
-
-#: drivers/ShtrihM/kkt.py:1992
-msgid "Count must be in range 0..9999999999"
-msgstr "Количество должно быть в диапазоне 0..9999999999"
-
-#: drivers/ShtrihM/kkt.py:1994
-msgid "Price must be in range 0..9999999999"
-msgstr "Цена должна быть в диапазоне 0..9999999999"
-
-#: drivers/ShtrihM/kkt.py:1996
-msgid "Department must be in range 0..16"
-msgstr "Отдел должен быть в диапазоне 0..16"
-
-#: drivers/ShtrihM/kkt.py:2154
-#, python-format
-msgid "Variable `summa%d` must be in range 0..9999999999"
-msgstr "Переменная `summa%d` должна быть в диапазоне 0..9999999999"
-
-#: drivers/ShtrihM/kkt.py:2206
-msgid "Summa must be in range 0..9999999999"
-msgstr "Сумма должна быть в диапазоне 0..9999999999"
-
-#: drivers/ShtrihM/kkt.py:2368
-msgid "Check type may be only 0,1,2,3 value"
-msgstr "Проверочный тип может быть только значениями: 0,1,2,3"
-
-#: drivers/ShtrihM/protocol.py:54
-msgid "Запрос дампа"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:55
-msgid "Запрос данных"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:56
-msgid "Прерывание выдачи данных"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:57
-msgid "Фискализация (перерегистрация) с длинным РНМ"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:58
-msgid "Ввод длинного заводского номера"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:59
-msgid "Запрос длинного заводского номера и длинного РНМ"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:61
-msgid "Короткий запрос состояния ФР"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:62
-msgid "Запрос состояния ФР"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:63
-msgid "Печать жирной строки"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:64
-msgid "Гудок"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:65
-msgid "Установка параметров обмена"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:66
-msgid "Чтение параметров обмена"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:67
-msgid "Технологическое обнуление"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:68
-msgid "Печать строки"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:69
-msgid "Печать заголовка документа"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:70
-msgid "Тестовый прогон"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:71
-msgid "Запрос денежного регистра"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:72
-msgid "Запрос операционного регистра"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:73
-msgid "Запись лицензии"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:74
-msgid "Чтение лицензии"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:75
-msgid "Запись таблицы"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:76
-msgid "Чтение таблицы"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:78
-msgid "Запись положения десятичной точки"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:79
-msgid "Программирование времени"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:80
-msgid "Программирование даты"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:81
-msgid "Подтверждение программирования даты"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:82
-msgid "Инициализация таблиц начальными значениями"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:83
-msgid "Отрезка чека"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:84
-msgid "Прочитать параметры шрифта"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:85
-msgid "Общее гашение"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:86
-msgid "Открыть денежный ящик"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:87
-msgid "Протяжка"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:88
-msgid "Выброс подкладного документа"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:89
-msgid "Прерывание тестового прогона"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:90
-msgid "Снятие показаний операционных регистров"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:91
-msgid "Запрос структуры таблицы"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:92
-msgid "Запрос структуры поля"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:93
-msgid "Печать строки данным шрифтом"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:95
-msgid "Суточный отчет без гашения"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:96
-msgid "Суточный отчет с гашением"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:97
-msgid "Отчёт по секциям"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:98
-msgid "Отчёт по налогам"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:100
-msgid "Внесение"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:101
-msgid "Выплата"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:102
-msgid "Печать клише"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:103
-msgid "Конец документа"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:104
-msgid "Печать рекламного текста"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:106
-msgid "Ввод заводского номера"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:107
-msgid "Инициализация ФП"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:108
-msgid "Запрос суммы записей в ФП"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:109
-msgid "Запрос даты последней записи в ФП"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:110
-msgid "Запрос диапазона дат и смен"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:111
-msgid "Фискализация (перерегистрация)"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:112
-msgid "Фискальный отчет по диапазону дат"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:113
-msgid "Фискальный отчет по диапазону смен"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:114
-msgid "Прерывание полного отчета"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:115
-msgid "Чтение параметров фискализации (перерегистрации)"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:117
-msgid "Открыть фискальный подкладной документ"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:118
-msgid "Открыть стандартный фискальный подкладной документ"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:119
-msgid "Формирование операции на подкладном документе"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:120
-msgid "Формирование стандартной операции на подкладном документе"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:121
-msgid "Формирование скидки/надбавки на подкладном документе"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:122
-msgid "Формирование стандартной скидки/надбавки на подкладном документе"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:123
-msgid "Формирование закрытия чека на подкладном документе"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:124
-msgid "Формирование стандартного закрытия чека на подкладном документе"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:125
-msgid "Конфигурация подкладного документа"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:126
-msgid "Установка стандартной конфигурации подкладного документа"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:127
-msgid "Заполнение буфера подкладного документа нефискальной информацией"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:128
-msgid "Очистка строки буфера подкладного документа от нефискальной информации"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:129
-msgid "Очистка всего буфера подкладного документа от нефискальной информации"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:130
-msgid "Печать подкладного документа"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:131
-msgid "Общая конфигурация подкладного документа"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:133
-msgid "Продажа"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:134
-msgid "Покупка"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:135
-msgid "Возврат продажи"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:136
-msgid "Возврат покупки"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:137
-msgid "Сторно"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:138
-msgid "Закрытие чека"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:139
-msgid "Скидка"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:140
-msgid "Надбавка"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:141
-msgid "Аннулирование чека"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:142
-msgid "Подытог чека"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:143
-msgid "Сторно скидки"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:144
-msgid "Сторно надбавки"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:145
-msgid "Повтор документа"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:146
-msgid "Открыть чек"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:148
-msgid ""
-"Формирование чека отпуска нефтепродуктов в режиме предоплаты заданной дозы"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:149
-msgid ""
-"Формирование чека отпуска нефтепродуктов в режиме предоплаты на заданную "
-"сумму"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:150
-msgid "Формирование чека коррекции при неполном отпуске нефтепродуктов"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:151
-msgid "Задание дозы РК в миллилитрах"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:152
-msgid "Задание дозы РК в денежных единицах"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:153
-msgid "Продажа нефтепродуктов"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:154
-msgid "Останов РК"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:155
-msgid "Пуск РК"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:156
-msgid "Сброс РК"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:157
-msgid "Сброс всех ТРК"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:158
-msgid "Задание параметров РК"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:159
-msgid "Считать литровый суммарный счетчик"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:161
-msgid "Запрос текущей дозы РК"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:162
-msgid "Запрос состояния РК"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:164
-msgid "Отчет ЭКЛЗ по отделам в заданном диапазоне дат"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:165
-msgid "Отчет ЭКЛЗ по отделам в заданном диапазоне номеров смен"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:166
-msgid "Отчет ЭКЛЗ по закрытиям смен в заданном диапазоне дат"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:167
-msgid "Отчет ЭКЛЗ по закрытиям смен в заданном диапазоне номеров смен"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:168
-msgid "Итоги смены по номеру смены ЭКЛЗ"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:169
-msgid "Платежный документ из ЭКЛЗ по номеру КПК"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:170
-msgid "Контрольная лента из ЭКЛЗ по номеру смены"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:171
-msgid ""
-"Прерывание полного отчета ЭКЛЗ или контрольной ленты ЭКЛЗ или печати "
-"платежного документа ЭКЛЗ"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:172
-msgid "Итог активизации ЭКЛЗ"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:173
-msgid "Активизация ЭКЛЗ"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:174
-msgid "Закрытие архива ЭКЛЗ"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:175
-msgid "Запрос регистрационного номера ЭКЛЗ"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:176
-msgid "Прекращение ЭКЛЗ"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:177
-msgid "Запрос состояния по коду 1 ЭКЛЗ"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:178
-msgid "Запрос состояния по коду 2 ЭКЛЗ"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:179
-msgid "Тест целостности архива ЭКЛЗ"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:181
-msgid "Продолжение печати"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:182
-msgid "Запрос версии ЭКЛЗ"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:183
-msgid "Инициализация архива ЭКЛЗ"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:184
-msgid "Запрос данных отчёта ЭКЛЗ"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:185
-msgid "Запрос контрольной ленты ЭКЛЗ"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:186
-msgid "Запрос документа ЭКЛЗ"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:187
-msgid "Запрос отчёта ЭКЛЗ по отделам в заданном диапазоне дат"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:188
-msgid "Запрос отчёта ЭКЛЗ по отделам в заданном диапазоне номеров смен"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:189
-msgid "Запрос отчёта ЭКЛЗ по закрытиям смен в заданном диапазоне дат"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:190
-msgid "Запрос отчёта ЭКЛЗ по закрытиям смен в заданном диапазоне номеров смен"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:191
-msgid "Запрос в ЭКЛЗ итогов смены по номеру смены"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:192
-msgid "Запрос итога активизации ЭКЛЗ"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:193
-msgid "Вернуть ошибку ЭКЛЗ"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:195
-msgid "Загрузка графики"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:196
-msgid "Печать графики"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:197
-msgid "Печать штрих-кода"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:198
-msgid "Загрузка расширенной графики"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:199
-msgid "Печать расширенной графики"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:200
-msgid "Печать линии"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:201
-msgid "Суточный отчет с гашением в буфер"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:202
-msgid "Распечатать отчет из буфера"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:203
-msgid "Запрос количества строк в буфере печати"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:204
-msgid "Получить строку буфера печати "
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:205
-msgid "Очистить буфер печати "
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:207
-msgid "Запрос состояния ФР IBM длинный"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:208
-msgid "Коды ошибок"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:210
-msgid "Загрузка данных"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:211
-msgid "Печать многомерного штрих-кода"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:213
-msgid "Открыть смену"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:214
-msgid "Допечатать ПД"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:215
-msgid "Открыть нефискальный документ"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:216
-msgid "Закрыть нефискальный документ"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:217
-msgid "Печать Реквизита"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:218
-msgid "Запрос состояния купюроприемника"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:219
-msgid "Запрос регистров купюроприемника"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:220
-msgid "Отчет по купюроприемнику"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:221
-msgid "Оперативный отчет НИ"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:223
-msgid "Управление заслонкой"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:224
-msgid "Выдать чек"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:226
-msgid "Установить пароль ЦТО"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:228
-msgid "Получить тип устройства"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:229
-msgid "Управление портом дополнительного внешнего устройства"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:238 drivers/ShtrihM/protocol.py:239
-#: drivers/ShtrihM/protocol.py:240 drivers/ShtrihM/protocol.py:241
-#: drivers/ShtrihM/protocol.py:242 drivers/ShtrihM/protocol.py:243
-#: drivers/ShtrihM/protocol.py:244 drivers/ShtrihM/protocol.py:245
-#: drivers/ShtrihM/protocol.py:246 drivers/ShtrihM/protocol.py:247
-#: drivers/ShtrihM/protocol.py:248 drivers/ShtrihM/protocol.py:249
-#: drivers/ShtrihM/protocol.py:251 drivers/ShtrihM/protocol.py:252
-#: drivers/ShtrihM/protocol.py:253 drivers/ShtrihM/protocol.py:254
-#: drivers/ShtrihM/protocol.py:255 drivers/ShtrihM/protocol.py:256
-#: drivers/ShtrihM/protocol.py:257 drivers/ShtrihM/protocol.py:258
-#: drivers/ShtrihM/protocol.py:259 drivers/ShtrihM/protocol.py:260
-#: drivers/ShtrihM/protocol.py:261 drivers/ShtrihM/protocol.py:262
-#: drivers/ShtrihM/protocol.py:263 drivers/ShtrihM/protocol.py:264
-#: drivers/ShtrihM/protocol.py:265 drivers/ShtrihM/protocol.py:267
-#: drivers/ShtrihM/protocol.py:268 drivers/ShtrihM/protocol.py:269
-#: drivers/ShtrihM/protocol.py:270 drivers/ShtrihM/protocol.py:271
-#: drivers/ShtrihM/protocol.py:272 drivers/ShtrihM/protocol.py:273
-#: drivers/ShtrihM/protocol.py:274
-msgid "ФП"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:238
-msgid "Ошибок нет"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:239
-msgid "Неисправен накопитель ФП 1, ФП 2 или часы"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:240
-msgid "Отсутствует ФП 1"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:241
-msgid "Отсутствует ФП 2"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:242
-msgid "Некорректные параметры в команде обращения к ФП"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:243
-msgid "Нет запрошенных данных"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:244
-msgid "ФП в режиме вывода данных"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:245
-msgid "Некорректные параметры в команде для данной реализации ФП"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:246
-msgid "Команда не поддерживается в данной реализации ФП"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:247
-msgid "Некорректная длина команды"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:248
-msgid "Формат данных не BCD"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:249
-msgid "Неисправна ячейка памяти ФП при записи итога"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:251
-msgid "Не введена лицензия"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:252
-msgid "Заводской номер уже введен"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:253
-msgid "Текущая дата меньше даты последней записи в ФП"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:254
-msgid "Область сменных итогов ФП переполнена"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:255
-msgid "Смена уже открыта"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:256
-msgid "Смена не открыта"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:257
-msgid "Номер первой смены больше номера последней смены"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:258
-msgid "Дата первой смены больше даты последней смены"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:259
-msgid "Нет данных в ФП"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:260
-msgid "Область перерегистраций в ФП переполнена"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:261
-msgid "Заводской номер не введен"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:262
-msgid "В заданном диапазоне есть поврежденная запись"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:263
-msgid "Повреждена последняя запись сменных итогов"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:264
-msgid "Область перерегистраций ФП переполнена"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:265
-msgid "Отсутствует память регистров"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:267
-msgid "Переполнение денежного регистра при добавлении"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:268
-msgid "Вычитаемая сумма больше содержимого денежного регистра"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:269
-msgid "Неверная дата"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:270
-msgid "Нет записи активизации"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:271
-msgid "Область активизаций переполнена"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:272
-msgid "Нет активизации с запрашиваемым номером"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:273
-msgid "В ФП присутствует 3 или более битых записей сменных итогов"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:274
-msgid "Признак несовпадения КС, з/н, перерегистраций или активизаций"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:276 drivers/ShtrihM/protocol.py:277
-#: drivers/ShtrihM/protocol.py:278 drivers/ShtrihM/protocol.py:279
-#: drivers/ShtrihM/protocol.py:281 drivers/ShtrihM/protocol.py:283
-#: drivers/ShtrihM/protocol.py:284 drivers/ShtrihM/protocol.py:285
-#: drivers/ShtrihM/protocol.py:286 drivers/ShtrihM/protocol.py:287
-#: drivers/ShtrihM/protocol.py:288 drivers/ShtrihM/protocol.py:289
-#: drivers/ShtrihM/protocol.py:290 drivers/ShtrihM/protocol.py:291
-#: drivers/ShtrihM/protocol.py:292 drivers/ShtrihM/protocol.py:293
-#: drivers/ShtrihM/protocol.py:294 drivers/ShtrihM/protocol.py:295
-#: drivers/ShtrihM/protocol.py:296 drivers/ShtrihM/protocol.py:298
-#: drivers/ShtrihM/protocol.py:299 drivers/ShtrihM/protocol.py:300
-#: drivers/ShtrihM/protocol.py:301 drivers/ShtrihM/protocol.py:302
-#: drivers/ShtrihM/protocol.py:303 drivers/ShtrihM/protocol.py:304
-#: drivers/ShtrihM/protocol.py:305 drivers/ShtrihM/protocol.py:306
-#: drivers/ShtrihM/protocol.py:307 drivers/ShtrihM/protocol.py:308
-#: drivers/ShtrihM/protocol.py:309 drivers/ShtrihM/protocol.py:310
-#: drivers/ShtrihM/protocol.py:311 drivers/ShtrihM/protocol.py:312
-#: drivers/ShtrihM/protocol.py:313 drivers/ShtrihM/protocol.py:315
-#: drivers/ShtrihM/protocol.py:316 drivers/ShtrihM/protocol.py:317
-#: drivers/ShtrihM/protocol.py:318 drivers/ShtrihM/protocol.py:319
-#: drivers/ShtrihM/protocol.py:320 drivers/ShtrihM/protocol.py:321
-#: drivers/ShtrihM/protocol.py:322 drivers/ShtrihM/protocol.py:323
-#: drivers/ShtrihM/protocol.py:324 drivers/ShtrihM/protocol.py:325
-#: drivers/ShtrihM/protocol.py:326 drivers/ShtrihM/protocol.py:327
-#: drivers/ShtrihM/protocol.py:328 drivers/ShtrihM/protocol.py:329
-#: drivers/ShtrihM/protocol.py:330 drivers/ShtrihM/protocol.py:332
-#: drivers/ShtrihM/protocol.py:333 drivers/ShtrihM/protocol.py:334
-#: drivers/ShtrihM/protocol.py:335 drivers/ShtrihM/protocol.py:336
-#: drivers/ShtrihM/protocol.py:337 drivers/ShtrihM/protocol.py:338
-#: drivers/ShtrihM/protocol.py:339 drivers/ShtrihM/protocol.py:340
-#: drivers/ShtrihM/protocol.py:341 drivers/ShtrihM/protocol.py:342
-#: drivers/ShtrihM/protocol.py:343 drivers/ShtrihM/protocol.py:344
-#: drivers/ShtrihM/protocol.py:345 drivers/ShtrihM/protocol.py:346
-#: drivers/ShtrihM/protocol.py:347 drivers/ShtrihM/protocol.py:349
-#: drivers/ShtrihM/protocol.py:350 drivers/ShtrihM/protocol.py:351
-#: drivers/ShtrihM/protocol.py:352 drivers/ShtrihM/protocol.py:353
-#: drivers/ShtrihM/protocol.py:354 drivers/ShtrihM/protocol.py:355
-#: drivers/ShtrihM/protocol.py:356 drivers/ShtrihM/protocol.py:357
-#: drivers/ShtrihM/protocol.py:358 drivers/ShtrihM/protocol.py:359
-#: drivers/ShtrihM/protocol.py:360 drivers/ShtrihM/protocol.py:361
-#: drivers/ShtrihM/protocol.py:362 drivers/ShtrihM/protocol.py:363
-#: drivers/ShtrihM/protocol.py:364 drivers/ShtrihM/protocol.py:366
-#: drivers/ShtrihM/protocol.py:367 drivers/ShtrihM/protocol.py:368
-#: drivers/ShtrihM/protocol.py:369 drivers/ShtrihM/protocol.py:370
-#: drivers/ShtrihM/protocol.py:371 drivers/ShtrihM/protocol.py:372
-#: drivers/ShtrihM/protocol.py:373 drivers/ShtrihM/protocol.py:374
-#: drivers/ShtrihM/protocol.py:375 drivers/ShtrihM/protocol.py:376
-#: drivers/ShtrihM/protocol.py:377 drivers/ShtrihM/protocol.py:378
-#: drivers/ShtrihM/protocol.py:379 drivers/ShtrihM/protocol.py:380
-#: drivers/ShtrihM/protocol.py:381 drivers/ShtrihM/protocol.py:383
-#: drivers/ShtrihM/protocol.py:384 drivers/ShtrihM/protocol.py:385
-#: drivers/ShtrihM/protocol.py:386 drivers/ShtrihM/protocol.py:387
-#: drivers/ShtrihM/protocol.py:390 drivers/ShtrihM/protocol.py:391
-#: drivers/ShtrihM/protocol.py:402 drivers/ShtrihM/protocol.py:403
-#: drivers/ShtrihM/protocol.py:404 drivers/ShtrihM/protocol.py:406
-#: drivers/ShtrihM/protocol.py:407 drivers/ShtrihM/protocol.py:408
-#: drivers/ShtrihM/protocol.py:409 drivers/ShtrihM/protocol.py:410
-#: drivers/ShtrihM/protocol.py:411 drivers/ShtrihM/protocol.py:412
-#: drivers/ShtrihM/protocol.py:413 drivers/ShtrihM/protocol.py:414
-#: drivers/ShtrihM/protocol.py:415 drivers/ShtrihM/protocol.py:416
-msgid "ККТ"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:276
-msgid "Невозможно отменить предыдущую команду"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:277
-msgid "Обнулѐнная касса (повторное гашение невозможно)"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:278
-msgid "Сумма чека по секции меньше суммы сторно"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:279
-msgid "В ККТ нет денег для выплаты"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:281
-msgid "ККТ заблокирован, ждет ввода пароля налогового инспектора"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:283
-msgid "Требуется выполнение общего гашения"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:284
-msgid "Некорректные параметры в команде"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:285
-msgid "Нет данных"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:286
-msgid "Некорректный параметр при данных настройках"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:287
-msgid "Некорректные параметры в команде для данной реализации ККТ"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:288
-msgid "Команда не поддерживается в данной реализации ККТ"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:289
-msgid "Ошибка в ПЗУ"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:290
-msgid "Внутренняя ошибка ПО ККТ"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:291
-msgid "Переполнение накопления по надбавкам в смене"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:292
-msgid "Переполнение накопления в смене"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:293
-msgid "ЭКЛЗ: неверный регистрационный номер"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:294
-msgid "Смена не открыта – операция невозможна"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:295
-msgid "Переполнение накопления по секциям в смене"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:296
-msgid "Переполнение накопления по скидкам в смене"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:298
-msgid "Переполнение диапазона скидок"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:299
-msgid "Переполнение диапазона оплаты наличными"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:300
-msgid "Переполнение диапазона оплаты типом 2"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:301
-msgid "Переполнение диапазона оплаты типом 3"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:302
-msgid "Переполнение диапазона оплаты типом 4"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:303
-msgid "Cумма всех типов оплаты меньше итога чека"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:304
-msgid "Не хватает наличности в кассе"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:305
-msgid "Переполнение накопления по налогам в смене"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:306
-msgid "Переполнение итога чека"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:307
-msgid "Операция невозможна в открытом чеке данного типа"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:308
-msgid "Открыт чек – операция невозможна"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:309
-msgid "Буфер чека переполнен"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:310
-msgid "Переполнение накопления по обороту налогов в смене"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:311
-msgid "Вносимая безналичной оплатой сумма больше суммы чека"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:312
-msgid "Смена превысила 24 часа"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:313
-msgid "Неверный пароль"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:315
-msgid "Идет печать предыдущей команды"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:316
-msgid "Переполнение накоплений наличными в смене"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:317
-msgid "Переполнение накоплений по типу оплаты 2 в смене"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:318
-msgid "Переполнение накоплений по типу оплаты 3 в смене"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:319
-msgid "Переполнение накоплений по типу оплаты 4 в смене"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:320
-msgid "Чек закрыт – операция невозможна"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:321
-msgid "Нет документа для повтора"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:322
-msgid "ЭКЛЗ: количество закрытых смен не совпадает с ФП"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:323
-msgid "Ожидание команды продолжения печати"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:324
-msgid "Документ открыт другим оператором"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:325
-msgid "Скидка превышает накопления в чеке"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:326
-msgid "Переполнение диапазона надбавок"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:327
-msgid "Понижено напряжение 24В"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:328
-msgid "Таблица не определена"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:329
-msgid "Некорректная операция"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:330
-msgid "Отрицательный итог чека"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:332
-msgid "Переполнение при умножении"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:333
-msgid "Переполнение диапазона цены"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:334
-msgid "Переполнение диапазона количества"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:335
-msgid "Переполнение диапазона отдела"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:336
-msgid "ФП отсутствует"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:337
-msgid "Не хватает денег в секции"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:338
-msgid "Переполнение денег в секции"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:339 drivers/ShtrihM/protocol.py:366
-#: drivers/ShtrihM/protocol.py:367 drivers/ShtrihM/protocol.py:368
-#: drivers/ShtrihM/protocol.py:369
-msgid "Ошибка связи с ФП"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:340
-msgid "Не хватает денег по обороту налогов"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:341
-msgid "Переполнение денег по обороту налогов"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:342
-msgid "Ошибка питания в момент ответа по I2C"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:343
-msgid "Нет чековой ленты"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:344
-msgid "Нет контрольной ленты"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:345
-msgid "Не хватает денег по налогу"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:346
-msgid "Переполнение денег по налогу"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:347
-msgid "Переполнение по выплате в смене"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:349
-msgid "Переполнение ФП"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:350
-msgid "Ошибка отрезчика"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:351
-msgid "Команда не поддерживается в данном подрежиме"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:352
-msgid "Команда не поддерживается в данном режиме"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:353
-msgid "Ошибка ОЗУ"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:354
-msgid "Ошибка питания"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:355
-msgid "Ошибка принтера: нет импульсов с тахогенератора"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:356
-msgid "Ошибка принтера: нет сигнала с датчиков"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:357
-msgid "Замена ПО"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:358
-msgid "Замена ФП"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:359
-msgid "Поле не редактируется"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:360
-msgid "Ошибка оборудования"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:361
-msgid "Не совпадает дата"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:362
-msgid "Неверный формат даты"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:363
-msgid "Неверное значение в поле длины"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:364
-msgid "Переполнение диапазона итога чека"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:370
-msgid "Переполнение наличности"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:371
-msgid "Переполнение по продажам в смене"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:372
-msgid "Переполнение по покупкам в смене"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:373
-msgid "Переполнение по возвратам продаж в смене"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:374
-msgid "Переполнение по возвратам покупок в смене"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:375
-msgid "Переполнение по внесению в смене"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:376
-msgid "Переполнение по надбавкам в чеке"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:377
-msgid "Переполнение по скидкам в чеке"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:378
-msgid "Отрицательный итог надбавки в чеке"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:379 drivers/ShtrihM/protocol.py:380
-msgid "Отрицательный итог скидки в чеке"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:381
-msgid "Касса не фискализирована"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:383
-msgid "Поле превышает размер, установленный в настройках"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:384
-msgid "Выход за границу поля печати при данных настройках шрифта"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:385
-msgid "Наложение полей"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:386
-msgid "Восстановление ОЗУ прошло успешно"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:387
-msgid "Исчерпан лимит операций в чеке"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:388 drivers/ShtrihM/protocol.py:392
-#: drivers/ShtrihM/protocol.py:393 drivers/ShtrihM/protocol.py:394
-#: drivers/ShtrihM/protocol.py:395 drivers/ShtrihM/protocol.py:396
-#: drivers/ShtrihM/protocol.py:397 drivers/ShtrihM/protocol.py:398
-#: drivers/ShtrihM/protocol.py:399 drivers/ShtrihM/protocol.py:400
-#: drivers/ShtrihM/protocol.py:495
-msgid "ЭКЛЗ"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:388
-msgid "Неизвестная ошибка ЭКЛЗ"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:390
-msgid "Ошибка связи с ЭКЛЗ"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:391
-msgid "ЭКЛЗ отсутствует"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:392
-msgid "ЭКЛЗ: Некорректный формат или параметр команды"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:393
-msgid "Некорректное состояние ЭКЛЗ"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:394
-msgid "Авария ЭКЛЗ"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:395
-msgid "Авария КС в составе ЭКЛЗ"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:396
-msgid "Исчерпан временной ресурс ЭКЛЗ"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:397
-msgid "ЭКЛЗ переполнена"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:398
-msgid "ЭКЛЗ: Неверные дата и время"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:399
-msgid "ЭКЛЗ: Нет запрошенных данных"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:400
-msgid "Переполнение ЭКЛЗ (отрицательный итог документа)"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:402
-msgid "ЭКЛЗ: Переполнение в параметре количество"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:403
-msgid "ЭКЛЗ: Переполнение в параметре сумма"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:404
-msgid "ЭКЛЗ: Уже активизирована"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:406
-msgid "Контроль даты и времени (подтвердите дату и время)"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:407
-msgid "ЭКЛЗ: суточный отчѐт с гашением прервать нельзя"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:408
-msgid "Превышение напряжения в блоке питания"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:409
-msgid "Несовпадение итогов чека и ЭКЛЗ"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:410
-msgid "Несовпадение номеров смен"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:411
-msgid "Буфер подкладного документа пуст"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:412
-msgid "Подкладной документ отсутствует"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:413
-msgid "Поле не редактируется в данном режиме"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:414
-msgid "Отсутствуют импульсы от таходатчика"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:415
-msgid "Перегрев печатающей головки"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:416
-msgid "Температура вне условий эксплуатации"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:426
-msgid "Принтер в рабочем режиме."
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:427
-msgid "Выдача данных."
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:428
-msgid "Открытая смена, 24 часа не кончились."
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:429
-msgid "Открытая смена, 24 часа кончились."
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:430
-msgid "Закрытая смена."
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:431
-msgid "Блокировка по неправильному паролю налогового инспектора."
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:432
-msgid "Ожидание подтверждения ввода даты."
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:433
-msgid "Разрешение изменения положения десятичной точки."
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:434
-msgid "Открытый документ:"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:435
-msgid "Продажа."
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:436
-msgid "Покупка."
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:437
-msgid "Возврат продажи."
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:438
-msgid "Возврат покупки."
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:440
-msgid ""
-"Режим разрешения технологического обнуления. В этот режим ККМ переходит по "
-"включению питания, если некорректна информация в энергонезависимом ОЗУ ККМ."
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:443
-msgid "Тестовый прогон."
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:444
-msgid "Печать полного фис. отчета."
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:445
-msgid "Печать отчёта ЭКЛЗ."
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:446
-msgid "Работа с фискальным подкладным документом:"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:447
-msgid "Продажа (открыт)."
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:448
-msgid "Покупка (открыт)."
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:449
-msgid "Возврат продажи (открыт)."
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:450
-msgid "Возврат покупки (открыт)."
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:452
-msgid "Печать подкладного документа."
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:453
-msgid "Ожидание загрузки."
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:454
-msgid "Загрузка и позиционирование."
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:455
-msgid "Позиционирование."
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:456
-msgid "Печать."
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:457
-msgid "Печать закончена."
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:458
-msgid "Выброс документа."
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:459
-msgid "Ожидание извлечения."
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:461
-msgid "Фискальный подкладной документ сформирован."
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:469
-msgid ""
-"Бумага есть – ККТ не в фазе печати операции – может принимать от хоста "
-"команды, связанные с печатью на том документе, датчик которого сообщает о "
-"наличии бумаги."
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:472
-msgid ""
-"Пассивное отсутствие бумаги – ККТ не в фазе печати операции – не принимает "
-"от хоста команды, связанные с печатью на том документе, датчик которого "
-"сообщает об отсутствии бумаги."
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:475
-msgid ""
-"Активное отсутствие бумаги – ККТ в фазе печати операции – принимает только "
-"команды, не связанные с печатью. Переход из этого подрежима только в "
-"подрежим 3."
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:478
-msgid ""
-"После активного отсутствия бумаги – ККТ ждет команду продолжения печати. "
-"Кроме этого принимает команды, не связанные с печатью."
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:481
-msgid ""
-"Фаза печати операции полных фискальных отчетов – ККТ не принимает от хоста "
-"команды, связанные с печатью, кроме команды прерывания печати."
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:484
-msgid ""
-"Фаза печати операции – ККТ не принимает от хоста команды, связанные с "
-"печатью."
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:490
-msgid "Рулон операционного журнала"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:491
-msgid "Рулон чековой ленты"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:492
-msgid "Верхний датчик подкладного документа"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:493
-msgid "Нижний датчик подкладного документа"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:494
-msgid "Положение десятичной точки"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:496
-msgid "Оптический датчик операционного журнала"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:497
-msgid "Оптический датчик чековой ленты"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:498
-msgid "Рычаг термоголовки операционного журнала"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:499
-msgid "Рычаг термоголовки чековой ленты"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:500
-msgid "Крышка корпуса ФР"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:501
-msgid "Денежный ящик"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:502
-msgid ""
-"Отказ правого датчика принтера | Бумага на входе в презентер | Модель "
-"принтера"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:503
-msgid "Отказ левого датчика принтера | Бумага на выходе из презентера"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:504
-msgid "ЭКЛЗ почти заполнена"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:505
-msgid "Увеличенная точность количества | Буфер принтера непуст"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:510
-msgid "ФП 1 нет"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:510
-msgid "ФП 1 есть"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:511
-msgid "ФП 2 нет"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:511
-msgid "ФП 2 есть"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:512
-msgid "Лицензия не введена"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:512
-msgid "Лицензия введена"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:513
-msgid "Переполнения ФП нет"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:513
-msgid "Есть переполнение ФП"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:514
-msgid "Батарея ФП >80%"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:514
-msgid "Батарея ФП <80%"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:515
-msgid "Последняя запись ФП испорчена"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:515
-msgid "Последняя запись ФП корректна"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:516
-msgid "Смена в ФП закрыта"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:516
-msgid "Смена в ФП открыта"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:517
-msgid "24 часа в ФП не кончились"
-msgstr ""
-
-#: drivers/ShtrihM/protocol.py:517
-msgid "24 часа в ФП кончились"
-msgstr ""
+#: models.py:80
+msgid "driver"
+msgstr "драйвер"
+
+#: models.py:86
+msgid "users"
+msgstr "пользователи"
+
+#: models.py:92
+msgid "groups"
+msgstr "группы"
+
+#: models.py:109
+msgid "username"
+msgstr "имя пользователя"
+
+#: models.py:113
+msgid "password"
+msgstr "пароль"
+
+#: models.py:188
+msgid "port"
+msgstr "порт"
+
+#: models.py:192 models.py:256
+msgid "config"
+msgstr "конфигурация"
+
+#: models.py:197
+msgid "admin password"
+msgstr "пароль администратора"
+
+#: models.py:201 models.py:250
+msgid "local device"
+msgstr "локальное устройство"
+
+#: models.py:202
+msgid "local devices"
+msgstr "локальные устройства"
+
+#: models.py:216
+msgid "url"
+msgstr "url"
+
+#: models.py:217
+msgid "identifier"
+msgstr "идентификатор"
+
+#: models.py:218
+msgid "cookies"
+msgstr "куки"
+
+#: models.py:222
+msgid "remote device"
+msgstr "удалённое устройство"
+
+#: models.py:223
+msgid "remote devices"
+msgstr "удалённые устройства"
+
+#: models.py:232
+msgid "created"
+msgstr "создано"
+
+#: models.py:235
+msgid "updated"
+msgstr "обновлено"
+
+#: models.py:240
+msgid "waiting"
+msgstr "ожидание"
+
+#: models.py:241
+msgid "error"
+msgstr "ошибка"
+
+#: models.py:247
+msgid "state"
+msgstr "статус"
+
+#: models.py:253 models.py:260
+msgid "method"
+msgstr "метод"
+
+#: models.py:267 models.py:268
+msgid "spooler device"
+msgstr "очередь устройства"
+
+#~ msgid "Error in receiving data"
+#~ msgstr "Ошибка в получении данных"
+
+#~ msgid "The device does not respond, check the network connection."
+#~ msgstr "Устройство не отвечает, проверьте сетевое подключение."
+
+#~ msgid "Connection error"
+#~ msgstr "Ошибка соединения"
+
+#~ msgid "Wrong value"
+#~ msgstr "Неверное значение"
+
+#~ msgid "Wrong type of value"
+#~ msgstr "Неверный тип значения"
+
+#~ msgid "Wrong value type in the password"
+#~ msgstr "Неверный тип значения пароля"
+
+#~ msgid "Password type not identify"
+#~ msgstr "Тип пароля не определён"
+
+#~ msgid "Password must be 0..9999 or string from 4 chars"
+#~ msgstr "Пароль должен быть 0..9999 или строкой из 4 символов"
+
+#~ msgid "Port %s is busy or the device is not connected to it"
+#~ msgstr "Порт %s занят или устройство не подключено к нему"
+
+#~ msgid "No communication with the device"
+#~ msgstr "Нет связи с устройством"
+
+#~ msgid "Length (%(lehgth)i) not equal length of data (%(data)i)"
+#~ msgstr "Длина (%(lehgth)i) не равна днине данных (%(data)i)"
+
+#~ msgid "Wrong crc %(summ)i must be %(read)i"
+#~ msgstr "Неправильная crc %(summ)i, a должна быть %(read)i"
+
+#~ msgid "Length of string must be less or equal %s chars"
+#~ msgstr "Длина строки должна быть меньше или равна %s символов"
+
+#~ msgid "Line count must be in 1..255 range"
+#~ msgstr "Длина строки должна быть в диапазоне 1..255"
+
+#~ msgid "Cash must be in range 0..9999999999"
+#~ msgstr "Наличные должны быть в диапазоне 0..9999999999"
+
+#~ msgid "Payment 2 must be in range 0..9999999999"
+#~ msgstr "Оплата 2 должна быть в диапазоне 0..9999999999"
+
+#~ msgid "Payment 3 must be in range 0..9999999999"
+#~ msgstr "Оплата 3 должна быть в диапазоне 0..9999999999"
+
+#~ msgid "Payment 4 must be in range 0..9999999999"
+#~ msgstr "Оплата 4 должна быть в диапазоне 0..9999999999"
+
+#~ msgid "Discount must be in range -9999..9999"
+#~ msgstr "Скидка должна быть в диапазоне от -9999..9999"
+
+#~ msgid "Text must be less than 40 chars"
+#~ msgstr "Текст должен быть меньше, чем 40 символов"
+
+#~ msgid "Count of taxes must be 4"
+#~ msgstr "Количество налогов должно быть 4"
+
+#~ msgid "Taxes must be list or tuple"
+#~ msgstr "Налоги должны быть списком или кортежем"
+
+#~ msgid "taxes must be only 0,1,2,3,4"
+#~ msgstr "налоги должы быть только 0,1,2,3,4"
+
+#~ msgid "Count must be in range 0..9999999999"
+#~ msgstr "Количество должно быть в диапазоне 0..9999999999"
+
+#~ msgid "Price must be in range 0..9999999999"
+#~ msgstr "Цена должна быть в диапазоне 0..9999999999"
+
+#~ msgid "Department must be in range 0..16"
+#~ msgstr "Отдел должен быть в диапазоне 0..16"
+
+#~ msgid "Variable `summa%d` must be in range 0..9999999999"
+#~ msgstr "Переменная `summa%d` должна быть в диапазоне 0..9999999999"
+
+#~ msgid "Summa must be in range 0..9999999999"
+#~ msgstr "Сумма должна быть в диапазоне 0..9999999999"
+
+#~ msgid "Check type may be only 0,1,2,3 value"
+#~ msgstr "Проверочный тип может быть только значениями: 0,1,2,3"
 
 #~ msgid "Abstract error"
 #~ msgstr "Абстрактная ошибка"
