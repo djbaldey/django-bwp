@@ -54,11 +54,7 @@
     <link rel="stylesheet" href="{{ STATIC_URL }}css/bootstrap/{% SETTINGS 'BOOTSTRAP_VERSION' %}/bootstrap{% mini_library %}.css">
     {% block responsive_style %}<link rel="stylesheet" href="{{ STATIC_URL }}css/bootstrap/{% SETTINGS 'BOOTSTRAP_VERSION' %}/bootstrap-responsive{% mini_library %}.css">{% endblock %}
     <link rel="stylesheet" href="{{ STATIC_URL }}css/bwp/{% SETTINGS 'BWP_VERSION' %}/bwp{% mini_library %}.css">
-    
-    <!-- for IE6-8 support of HTML5 elements -->
-    <!--[if lte IE 9]>
-      <script src="{{ STATIC_URL }}js/html5/3.6/html5.js"></script>
-    <![endif]-->
+
 
 <!-- START: block extrastyle -->
     {% block extrastyle %}{% endblock %}
@@ -189,14 +185,14 @@
 
 <!-- START: block libjs -->
 {% block libjs %}
-    <script src="{{ STATIC_URL }}js/jquery/{% SETTINGS 'JQUERY_VERSION' %}/jquery{% mini_library %}.js"></script>
-    <script src="{{ STATIC_URL }}js/jquery/json/2.4/jquery.json{% mini_library %}.js"></script>
-    <script src="{{ STATIC_URL }}js/jquery/dateParser/0.2/jquery.dateParser{% mini_library %}.js"></script>
-    <script src="{{ STATIC_URL }}js/moment/2.5.1/moment-with-langs{% mini_library %}.js"></script>
-    <script src="{{ STATIC_URL }}js/underscore/1.6.0/underscore{% mini_library %}.js"></script>
-    <script src="{{ STATIC_URL }}js/underscore/string/2.3.2/underscore.string{% mini_library %}.js"></script>
-    <script src="{{ STATIC_URL }}js/bootstrap/{% SETTINGS 'BOOTSTRAP_VERSION' %}/bootstrap{% mini_library %}.js"></script>
-    <script src="{{ STATIC_URL }}js/django/{% SETTINGS 'DJANGO_VERSION' %}/django-ajax-csrf{% mini_library %}.js"></script>
+    <script src="{{ STATIC_URL }}js/jquery/jquery-2.1.4.min.js"></script>
+    <script src="{{ STATIC_URL }}js/jquery/json/2.4/jquery.json.min.js"></script>
+    <script src="{{ STATIC_URL }}js/jquery/dateParser/0.2/jquery.dateParser.min.js"></script>
+    <script src="{{ STATIC_URL }}js/moment/2.5.1/moment-with-langs.min.js"></script>
+    <script src="{{ STATIC_URL }}js/underscore/1.8.3/underscore-min.js"></script>
+    <script src="{{ STATIC_URL }}js/underscore/string/2.3.2/underscore.string.min.js"></script>
+    <script src="{{ STATIC_URL }}js/bootstrap/{% SETTINGS 'BOOTSTRAP_VERSION' %}/bootstrap.min.js"></script>
+    <script src="{{ STATIC_URL }}js/django/{% SETTINGS 'DJANGO_VERSION' %}/django-ajax-csrf.min.js"></script>
 {% endblock %}
 <!-- END: block libjs -->
 
