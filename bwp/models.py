@@ -44,6 +44,7 @@ from django.contrib.auth.models import User, Group
 from django.contrib.admin.util import quote
 from django.utils.encoding import smart_unicode, force_unicode
 from django.utils.safestring import mark_safe
+from django.utils.html import escape
 from django.utils import timezone
 from django.utils.text import capfirst
 from django.utils.crypto import get_random_string
@@ -101,7 +102,7 @@ class LogEntry(models.Model):
         return smart_unicode(self.action_time)
 
     def __unicode__(self):
-        D = {'object': self.object_repr, 'changes': self.change_message}
+        D = {'object': self.object_repr, 'changes': escape(self.change_message)}
         if self.action_flag == ADDING:
             D['action'] = _('added').title()
         elif self.action_flag == CHANGE:

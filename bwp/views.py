@@ -438,6 +438,7 @@ def API_m2m_commit(request, model, pk, compose, action, objects, **kwargs):
 
     # Получаем модель BWP и композиции со стандартной проверкой прав
     model_bwp = site.bwp_dict(request).get(model)
+    compose_name = compose
     compose = model_bwp.compose_dict(request).get(compose)
     objects = compose.queryset().filter(pk__in=objects)
     try:
@@ -447,8 +448,12 @@ def API_m2m_commit(request, model, pk, compose, action, objects, **kwargs):
     else:
         if action == 'add' and compose.has_add_permission(request):
             result = compose.add_objects_in_m2m(object, objects)
+            msg = 'add to `%s`: %s' %(compose_name, force_text(objects))
+            model_bwp.log_change(request, object, message=msg)
         elif action == 'delete' and compose.has_delete_permission(request):
             result = compose.delete_objects_in_m2m(object, objects)
+            msg = 'delete from `%s`: %s' %(compose_name, force_text(objects))
+            model_bwp.log_change(request, object, message=msg)
         else:
             result = False
         if not result:
