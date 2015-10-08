@@ -45,6 +45,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import User, Group
 from django.utils.encoding import force_text, python_2_unicode_compatible
 from django.utils.safestring import mark_safe
+from django.utils.html import escape
 from django.utils import six, timezone
 from django.utils.text import capfirst
 from django.utils.crypto import get_random_string
@@ -104,7 +105,7 @@ class LogEntry(models.Model):
         return force_text(self.action_time)
 
     def __str__(self):
-        D = {'object': self.object_repr, 'changes': self.change_message}
+        D = {'object': self.object_repr, 'changes': escape(self.change_message)}
         if self.action_flag == ADDING:
             D['action'] = _('added').title()
         elif self.action_flag == CHANGE:
