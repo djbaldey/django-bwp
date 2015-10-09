@@ -130,6 +130,9 @@ class LogEntry(models.Model):
         "Returns the edited object represented by this log entry"
         return self.content_type.get_object_for_this_type(pk=self.object_id)
 
+    def delete(self, **kwargs):
+        raise RuntimeError('You cannot delete this object.')
+
 class PermissionRead(models.Model):
     hidden = models.BooleanField(
             default=False,
