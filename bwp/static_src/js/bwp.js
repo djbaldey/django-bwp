@@ -186,7 +186,7 @@ function jsonAPI(args, callback, to_console, sync, timeout) {
     
     if (DEBUG) { console.log('function:'+'jsonAPI') };
     if (!args) { args = { method: "get_settings" } };
-    if (sync) console.log('SYNCRONIOUS REQUEST!!!', args, to_console);
+    if (sync) console.log('SYNCRONOUS REQUEST!!!', args, to_console);
 
     var jqxhr = $.quickAPI({
         url: BWP_API_URL,
@@ -1373,7 +1373,7 @@ function handlerFiltersRender(instance) {
     if (instance instanceof classObject) {  
         return false;
     };
-    var html = TEMPLATES.filters({data:instance});
+    var html = TEMPLATES.filters({data:instance, is_new: false});
     $('#collection_filters_'+instance.id).html(html);
     return html;
 };
@@ -1383,7 +1383,7 @@ function eventFilters(e) {
     if (DEBUG) {console.log('function:'+'eventFilters')};
     var data = $(this).data(),
         instance = REGISTER[data.id];
-    if ($('#collection_filters_'+data.id+' table').size() >0) {
+    if ($('#list-filters_'+data.id).size() >0) {
         $('#collection_filters_'+data.id).html('');
         var _filters = [];
         $.each(instance.filters, function(index, item) {
@@ -1421,8 +1421,8 @@ function handlerFilterAppend(instance) {
     };
     if (!instance.filters) { instance.filters = []; };
     instance.filters.push(newfilter);
-    var html = TEMPLATES.filter({data:instance, item:newfilter});
-    $('#collection_filters_'+instance.id+' table tbody').append(html);
+    var html = TEMPLATES.filter({data:instance, item:newfilter, index:instance.filters.length -1, is_new: true});
+    $('#list-filters_'+instance.id).append(html);
     return html;
 };
 
@@ -1441,7 +1441,7 @@ function eventFilterRemove(e) {
         instance = REGISTER[data.id],
         index = data.filter_index;
     instance.filters.splice(index, index+1);
-    $('#collection_filters_'+instance.id+' tr[data-filter_index='+index+']')
+    $('#list-filters_'+instance.id+' [data-filter_index='+index+']')
         .remove();
     handlerCollectionGet(instance);
 
@@ -1463,26 +1463,26 @@ function eventFilterChangeField(e) {
     instance.filters[index].field = val;
     instance.filters[index].field_title = text;
     handlerFilterChangeActive(instance, index, false);
-    $('#collection_filters_'+instance.id+
+    $('#list-filters_'+instance.id+
         ' [data-place=filter_values][data-filter_index='+index+']')
         .html('');
 
     if (!val) {
         // блокировка всех прочих
-        $('#collection_filters_'+instance.id+
+        $('#list-filters_'+instance.id+
             ' [data-action=filter_change_active][data-filter_index='+index+']')
             .attr('disabled', 'disabled');
-        $('#collection_filters_'+instance.id+
+        $('#list-filters_'+instance.id+
             ' [data-action=filter_change_type][data-filter_index='+index+']')
             .attr('disabled', 'disabled');
-        $('#collection_filters_'+instance.id+
+        $('#list-filters_'+instance.id+
             ' [data-action=filter_change_inverse][data-filter_index='+index+']')
             .attr('disabled', 'disabled');
-        $('#collection_filters_'+instance.id+
+        $('#list-filters_'+instance.id+
             ' [data-place=filter_values][data-filter_index='+index+']')
             .html('');
     } else {
-        $('#collection_filters_'+instance.id+
+        $('#list-filters_'+instance.id+
             ' [data-action=filter_change_type][data-filter_index='+index+']')
             .removeAttr('disabled');
     }
@@ -1518,16 +1518,16 @@ function eventFilterChangeType(e) {
         return true;
     };
 
-    $('#collection_filters_'+instance.id+
+    $('#list-filters_'+instance.id+
         ' [data-action=filter_change_active][data-filter_index='+index+']')
         .removeAttr('disabled');
-    $('#collection_filters_'+instance.id+
+    $('#list-filters_'+instance.id+
         ' [data-action=filter_change_inverse][data-filter_index='+index+']')
         .removeAttr('disabled');
 
     //~ console.log(instance);
     var html = TEMPLATES.filter_values({data:instance, index:index }),
-        $values = $('#collection_filters_'+instance.id+
+        $values = $('#list-filters_'+instance.id+
             ' [data-place=filter_values][data-filter_index='+index+']');
 
     if (instance.filters[index].type != 'blank') {
@@ -1559,17 +1559,17 @@ function eventFilterChangeActive(e) {
     handlerFilterChangeValues(instance, index);
     handlerFilterChangeActive(instance, index, checked);
     if (checked) {
-        $('#collection_filters_'+instance.id+
+        $('#list-filters_'+instance.id+
             ' [data-action=filter_change_field][data-filter_index='+index+']')
             .attr('disabled', 'disabled');
-        $('#collection_filters_'+instance.id+
+        $('#list-filters_'+instance.id+
             ' [data-action=filter_change_type][data-filter_index='+index+']')
             .attr('disabled', 'disabled');
     } else {
-        $('#collection_filters_'+instance.id+
+        $('#list-filters_'+instance.id+
             ' [data-action=filter_change_field][data-filter_index='+index+']')
             .removeAttr('disabled');
-        $('#collection_filters_'+instance.id+
+        $('#list-filters_'+instance.id+
             ' [data-action=filter_change_type][data-filter_index='+index+']')
             .removeAttr('disabled');
     };
@@ -1604,7 +1604,7 @@ function eventFilterChangeInverse(e) {
 function handlerFilterChangeValues(instance, index) {
     if (DEBUG) {console.log('function:'+'handlerFilterChangeValues')};
 
-    var $place = $('#collection_filters_'+instance.id+
+    var $place = $('#list-filters_'+instance.id+
         ' [data-place=filter_values][data-filter_index='+index+']'),
         $values = $place.find('[data-action=filter_change_values]');
     instance.filters[index].values = [];
@@ -1651,7 +1651,7 @@ function eventFilterChangeValues(e) {
 function handlerFilterAppendValue(instance, index) {
     if (DEBUG) {console.log('function:'+'handlerFilterAppendValue')};
     var html = TEMPLATES.filter_values({data:instance, index:index }),
-        $values = $('#collection_filters_'+instance.id+
+        $values = $('#list-filters_'+instance.id+
             ' [data-place=filter_values][data-filter_index='+index+']');
     $values.append(html);
     return true;

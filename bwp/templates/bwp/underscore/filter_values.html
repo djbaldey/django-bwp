@@ -31,7 +31,7 @@
                 <%= key %>="<%= val %>"
             <% } %>
         <% }); %>
-        class="<%= widget.attr['class'] %>"
+        class="form-control <%= widget.attr['class'] %>"
         data-action="filter_change_values"
         data-filter_index="<%= index %>"
         data-id="<%= data.id %>">
@@ -49,15 +49,16 @@
             <%= key %>="<%= val %>"
         <% } %>
     <% }); %>
+        class="form-control"
         data-action="filter_change_values"
         data-filter_index="<%= index %>"
         data-id="<%= data.id %>">
         </<%= widget.tag %>>
 
 <% } else if ((widget.tag == 'select') || ((widget.tag == 'input') && (widget.name == 'id'))) { %>
-    <div class="input-prepend input-append">
+    <div class="btn-group">
         <% /* Кнопка значения и названия */ %>
-        <button name="<%= widget.name %>" value=""
+        <button class="btn btn-default" name="<%= widget.name %>" value=""
             data-model="<%= widget.model %>"
             disabled="disabled"
             <% _.each(widget.attr, function(val, key) { %>

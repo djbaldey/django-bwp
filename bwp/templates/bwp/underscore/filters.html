@@ -1,99 +1,16 @@
 {# Шаблон Underscore #}
 
-<table data-id="<%= data.id %>"
-    class="well well-small table table-condensed table-bordered">
-    <thead>
-        <tr>
-            <th colspan="6">
-                Фильтры
-                <button data-action="filter_append" data-id="<%= data.id %>" class="btn btn-default btn-xs">
-                        <i class="fa fa-plus"></i>
-                </button>
-            </th>
-        </tr>
-    </thead>
-    <tbody>
-    <% _.each(data.filters, function(item, index) { %>
-        <tr data-filter_index="<%= index %>">
+<div class="panel panel-default">
 
-            <% /* Поле фильтра */ %>
-            <td class="input-micro">
-                <select data-action="filter_change_field" class="form-control"
-                    <% if (item.active) { %> disabled<% } %>
-                    data-id="<%= data.id %>"
-                    data-filter_index="<%= index %>">
-            <% _.each(data.meta.filters, function(filter) { %>
-                <% if (item.field == filter.field) { %>
-                    <option selected value="<%= filter.field %>"><%= filter.field_title %></option>
-                <% } else { %>
-                    <option value="<%= filter.field %>"><%= filter.field_title %></option>
-                <% } %> 
-            <% }); %>
-                </select>
-            </td>
+    <div id="list-filters_<%= data.id %>" class="panel-body">
+        <% _.each(data.filters, function(item, index) { %>
+            {% include "bwp/underscore/filter.html" %}
+        <% }); %>
+    </div><!-- /.panel-body#list-filters_<%= data.id %> -->
 
-            <% /* Тип фильтра */ %>
-            <td class="input-micro">
-                <select data-action="filter_change_type" class="form-control"
-                    <% if (item.active) { %> disabled<% } %>
-                    data-id="<%= data.id %>"
-                    data-filter_index="<%= index %>">
-            <% _.each(FILTER_TYPES, function(type, i) { %>
-                    <option
-                        <% if (item.type == type) { %> selected<% } %>
-                        value="<%= type[0] %>">
-                        <%= type[1] %>
-                    </option>
-            <% }); %>
-                </select>
-            </td>
-
-            <% /* Значения фильтра */ %>
-            <td data-place="filter_values" data-filter_index="<%= index %>">
-                <%= item.values_html %>
-            </td>
-
-            <% /* Активность фильтра */ %>
-            <td class="input-micro">
-                <button
-                    class="btn btn-default <% if (item.active) { %>active<% } %>"
-                    data-toggle="button"
-                    data-action="filter_change_active"
-                    data-filter_index="<%= index %>"
-                    data-id="<%= data.id %>"
-                    title="Активный">
-                    <i class="fa fa-check"></i>
-                </button>
-            </td>
-
-            <% /* Инверсия фильтра */ %>
-            <td class="input-micro">
-                <button
-                    class="btn btn-default <% if (item.inverse) { %>active<% } %>"
-                    data-toggle="button"
-                    data-action="filter_change_inverse"
-                    data-filter_index="<%= index %>"
-                    data-id="<%= data.id %>"
-                    title="Инверсия">
-                    <i class="fa fa-random"></i>
-                </button>
-            </td>
-
-            <% /* Удаление фильтра */ %>
-            <td class="input-micro">
-                <button
-                    class="btn btn-default"
-                    data-action="filter_remove" 
-                    data-id="<%= data.id %>"
-                    data-filter_index="<%= index %>"
-                    title="Удалить фильтр">
-                    <i class="fa fa-remove"></i>
-                </button>
-            </td>
-
-        </tr>
-    <% }); %>
-        
-    </tbody>
-</table>
-
+    <div class="panel-footer">
+        <button data-action="filter_append" data-id="<%= data.id %>" class="btn btn-default btn-block">
+            <i class="fa fa-plus"></i> Добавить фильтр
+        </button>
+    </div><!-- /.panel-footer -->
+</div>

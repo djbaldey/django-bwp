@@ -1,76 +1,78 @@
 {# Шаблон Underscore #}
 
-<% var index = data.filters.length -1 %>
+<form class="form-inline" data-filter_index="<%= index %>">
 
-<tr data-filter_index="<%= index %>">
-
-    <% /* Поле фильтра */ %>
-    <td class="input-micro">
+     <% /* Поле фильтра */ %>
+    <div class="form-group">
         <select data-action="filter_change_field" data-id="<%= data.id %>"
+            <% if (item.active) { %>disabled<% } %>
             data-filter_index="<%= index %>" class="form-control">
-            <option selected value="">-</option>
+            <option <% if (is_new) { %>selected<% } %> value="">&lt;Выберите поле&gt;</option>
         <% _.each(data.meta.filters, function(filter) { %>
-            <option value="<%= filter.field %>" title="<%= filter.field %>"><%= filter.field_title %></option>
+            <option <% if (item.field == filter.field) { %>selected<% } %> value="<%= filter.field %>"><%= filter.field_title %></option>
         <% }); %>
         </select>
-    </td>
+    </div>
 
     <% /* Тип фильтра */ %>
-    <td class="input-micro">
+    <div class="form-group">
         <select data-action="filter_change_type" data-id="<%= data.id %>"
+            <% if (item.active) { %> disabled<% } %>
             data-filter_index="<%= index %>"
-            class="form-control"
-            disabled>
-            <option selected value="">-</option>
-        <% _.each(FILTER_TYPES, function(type, i) { %>
-            <option value="<%= type[0] %>">
+            class="form-control">
+            <option <% if (is_new) { %>selected<% } %> value="">&lt;Выберите условие&gt;</option>
+    <% _.each(FILTER_TYPES, function(type, i) { %>
+            <option <% if (item.type == type[0]) { %> selected<% } %> value="<%= type[0] %>">
                 <%= type[1] %>
             </option>
-        <% }); %>
+    <% }); %>
         </select>
-    </td>
+    </div>
 
     <% /* Значения фильтра */ %>
-    <td data-place="filter_values" data-filter_index="<%= index %>">
-    </td>
+    <div class="form-group" data-place="filter_values" data-filter_index="<%= index %>">
+        <%= item.values_html || '' %>
+    </div>
 
-    <% /* Активность фильтра */ %>
-    <td class="input-micro">
-        <button
-            class="btn btn-default <% if (item.active) { %>active<% } %>"
-            data-toggle="button"
-            data-action="filter_change_active"
-            data-filter_index="<%= index %>"
-            data-id="<%= data.id %>"
-            title="Активный">
-            <i class="fa fa-check"></i>
-        </button>
-    </td>
-    <% /* Инверсия фильтра */ %>
-    <td class="input-micro">
-        <button
-            class="btn btn-default <% if (item.inverse) { %>active<% } %>"
-            data-toggle="button"
-            data-action="filter_change_inverse"
-            data-id="<%= data.id %>"
-            data-filter_index="<%= index %>"
-            disabled
-            title="Инверсия">
-            <i class="fa fa-random"></i>
-        </button>
-    </td>
+    <% /* Кнопки фильтра */ %>
+    <div class="form-group pull-right">
+        <div class="btn-group">
+            <% /* Активность фильтра */ %>
+            <button
+                class="btn btn-default <% if (item.active) { %>active<% } %>"
+                data-toggle="button"
+                data-action="filter_change_active"
+                data-filter_index="<%= index %>"
+                data-id="<%= data.id %>"
+                <% if (item.not_selected) { %>disabled<% } %>
+                title="Активный">
+                <i class="fa fa-check"></i>
+            </button>
 
-    <% /* Удаление фильтра */ %>
-    <td class="input-micro">
-        <button
-            class="btn btn-default"
-            data-action="filter_remove"
-            data-id="<%= data.id %>"
-            data-filter_index="<%= index %>"
-            title="Удалить фильтр">
-            <i class="fa fa-remove"></i>
-        </button>
-    </td>
+            <% /* Инверсия фильтра */ %>
+            <button
+                class="btn btn-default <% if (item.inverse) { %>active<% } %>"
+                data-toggle="button"
+                data-action="filter_change_inverse"
+                data-filter_index="<%= index %>"
+                data-id="<%= data.id %>"
+                <% if (item.not_selected) { %>disabled<% } %>
+                title="Инверсия">
+                <i class="fa fa-random"></i>
+            </button>
 
-</tr>
+            <% /* Удаление фильтра */ %>
+            <button
+                class="btn btn-default"
+                data-action="filter_remove" 
+                data-id="<%= data.id %>"
+                data-filter_index="<%= index %>"
+                title="Удалить фильтр">
+                <i class="fa fa-remove"></i>
+            </button>
+        </div><!-- /.btn-group -->
+    </div><!-- /.form-group -->
+
+
+</form>
 
