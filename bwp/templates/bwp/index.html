@@ -1,5 +1,5 @@
 {% extends "bwp/base.html" %}
-{% load i18n bwp_base bwp_static bwp_locale %}
+{% load i18n static bwp_base bwp_static bwp_locale %}
 
 {% block bodyclass %}index{% endblock %}
 
@@ -151,7 +151,7 @@
 <!-- START: block appjs -->
 {% block appjs %}
     <script src="{% get_static_prefix %}jquery/json/2.5.1/jquery.json.min.js"></script>
-    <script src="{% get_static_prefix %}jquery/dateParser/0.2/jquery.dateParser.min.js"></script>
+    <script src="{% get_static_prefix %}jquery/dateparser/0.2/jquery.dateparser.min.js"></script>
     <script src="{% get_static_prefix %}jquery/django/django-ajax-csrf.min.js"></script>
     <script src="{% get_static_prefix %}moment/2.9.0/moment-with-locales.min.js"></script>
     <script src="{% get_static_prefix %}underscore/1.7.0/underscore-min.js"></script>

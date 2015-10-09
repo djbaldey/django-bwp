@@ -1,44 +1,33 @@
 {% load static bwp_base %}
 {# Шаблон Underscore #}
 <div class="row-fluid">
-<% if (data.composes.length >0) { %>
-    <div class="btn-group subtabs" data-toggle="buttons-radio" data-id="<%= data.id %>">
-        <button class="btn btn-sm btn-primary active"
-            data-toggle="tab"
-            data-target="#objectpane_<%= data.id %>">
-            Объект
+<% if (data.composes.length > 0) { %>
+    <div class="btn-group" data-toggle="buttons-radio" data-id="<%= data.id %>">
+        <button class="btn btn-sm btn-primary active" data-toggle="tab" data-target="#objectpane_<%= data.id %>">
+            <span>Объект</span>
         </button>
     <% _.each(data.composes, function(compose) { %>
         <% /* Если объект не сохранён в DB, то запрещаем операции с вложениями */ %>
-        <% var _compose_btn_class = ''; if (compose.is_m2m) { _compose_btn_class = 'btn-info'} %>
+        <% var _compose_btn_class = 'btn-default'; if (compose.is_m2m) { _compose_btn_class = 'btn-info'} %>
         <button class="btn btn-sm <%= _compose_btn_class %>"
-        <% if (!data.pk) { %>
-            disabled="disabled"
-        <% } else { %>
-            data-toggle="tab"
-            data-loading="true"
-        <% } %>
-            data-target="#layout_<%= compose.id %>"
-            data-id="<%= compose.id %>">
-            <%= compose.label %>
+        <% if (!data.pk) { %> disabled
+        <% } else { %>data-toggle="tab" data-loading="true"
+        <% } %> data-target="#layout_<%= compose.id %>" data-id="<%= compose.id %>">
+            <span><%= compose.label %></span>
         </button>
     <% }); %>
     </div>
-    <div class="btn-group subtabs">
+    <div class="btn-group">
     <% if ((data.model.object_reports) && (data.pk)) { %>
-        <button class="btn btn-sm dropdown-toggle"
-            data-toggle="dropdown">            
-            <i class="fa fa-print"></i> Отчёты
+        <button class="btn btn-sm btn-warning dropdown-toggle" data-toggle="dropdown">
+            <span><i class="fa fa-print"></i> Отчёты</span>
             <span class="caret"></span>
         </button>
         <ul class="dropdown-menu">
             <% _.each(data.model.object_reports, function(report) { %>
                 <li><a href="#" data-action="object_print"
-                    data-id=<%= data.id %>
-                    data-model=<%= data.model.name %>
-                    data-pk=<%= data.pk %>
-                    data-report=<%= report.pk %>>
-                        <%= report.title %>
+                    data-id="<%= data.id %>" data-model="<%= data.model.name %>" data-pk="<%= data.pk %>" data-report="<%= report.pk %>">
+                        <span><%= report.title %></span>
                     </a>
                 </li>
             <% }); %>
@@ -49,34 +38,27 @@
     <div class="tab-content">
     <% _.each(data.composes, function(compose) { %>
         <div class="tab-pane" id="layout_<%= compose.id %>">
-            <div align="center"><img src="{% get_static_prefix %}bwp/{% SETTINGS 'BWP_VERSION' %}/img/ajax-loader.gif" /> загрузка данных...</div>
+            <div align="center"><i class="fa fa-spinner fa-pulse fa-5x"></i></div>
         </div>
     <% }); %>
         <div class="tab-pane active" id="objectpane_<%= data.id %>">
             <h3><%= data.label %> <small class="pull-right"><%= data.pk ? 'ID='+data.pk : '' %></small></h3>
-            <table class="table table-condensed" data-id="<%= data.id %>">
-                <tbody>
-
+            
+            <form data-id="<%= data.id %>">
                 {% include "bwp/underscore/_object_fields.html" %}
-                </tbody>
-                <tfoot>
-                    <tr>
-                        <th colspan="2" class="align-center">
-                            <div class="control-group">
-                                <div class="controls">
-                                    <div class="btn-group">
-                                        {% include "bwp/underscore/_button_delete.html" %}
-                                        {% include "bwp/underscore/_button_reset.html" %}
-                                        {% include "bwp/underscore/_button_copy.html" %}
-                                        {% include "bwp/underscore/_button_apply.html" %}
-                                        {% include "bwp/underscore/_button_save.html" %}
-                                    </div>
-                                </div>
-                            </div>
-                        </th>
-                    </tr>
-                </tfoot>
-            </table>
+            </form>
+
+            <div class="control-group">
+                <div class="controls">
+                    <div class="btn-group">
+                        {% include "bwp/underscore/_button_delete.html" %}
+                        {% include "bwp/underscore/_button_reset.html" %}
+                        {% include "bwp/underscore/_button_copy.html" %}
+                        {% include "bwp/underscore/_button_apply.html" %}
+                        {% include "bwp/underscore/_button_save.html" %}
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>

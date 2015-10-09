@@ -1883,5 +1883,5 @@ $(document).ready(function($) {
     }
 
     // Поиск и включение локали в momentjs
-    moment.lang($('html').attr('lang'));
+    moment.locale($('html').attr('lang'));
 });

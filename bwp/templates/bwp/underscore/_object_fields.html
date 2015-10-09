@@ -1,21 +1,43 @@
 {# Шаблон Underscore #}
     <% _.each(data.widgets, function(widget) { %>
-        <% if (!widget.hidden) { %>
-            <tr>
-                <td class="col-xs-12 col-sm-6 col-lg-3">
-                    <label class="control-label" for="field_<%= data.id %>_<%= widget.name %>">
-                        <% if (widget.attr.required) { %><b><%= widget.label %></b>
-                        <% } else { %><%= widget.label %><% } %>
-                    </label>
-                </td>
-                <td class="col-xs-12 col-sm-6 col-lg-9">
-                    <div class="controls">
+        <% var is_visible = !widget.hidden; %>
+        <% var is_required = widget.attr.required; %>
+        <% var is_checkbox = widget.attr.type && (widget.attr.type == 'checkbox'); %>
+        <% var is_file = (!is_checkbox) && (widget.attr.type == 'file' || widget.attr.type == 'image'); %>
+        <% console.log(widget.attr.type); %>
+
+        <% if (is_visible && !is_checkbox) { %>
+            <div class="form-group">
+                <label class="control-label" for="field_<%= data.id %>_<%= widget.name %>">
+                    <% if (is_required) { %><strong><%= widget.label %></strong>
+                    <% } else { %><%= widget.label %><% } %>
+                </label>
         <% } %>
 
-        <% if (widget.choices) { %>
+        <% if (is_checkbox) { %>
+            <!-- input as checkbox -->
+            <% var _val = _.escape(data.fields[widget.name]) || '' %>
+            <div class="checkbox">
+                <label for="field_<%= data.id %>_<%= widget.name %>">
+                    <input id="field_<%= data.id %>_<%= widget.name %>"
+                        name="<%= widget.name %>"
+                        type="checkbox"
+                        data-id="<%= data.id %>"
+                        data-action="object_change"
+                        data-djangofield="<%= widget.djangofield %>"
+                    <% _.each(widget.attr, function(val, key) { %>
+                        <%= key %>="<%= val %>"
+                    <% }); %>
+                        <% if (data.fields[widget.name]) { %>checked<% } %>>
+                    <span> <% if (is_required) { %><strong><%= widget.label %></strong>
+                    <% } else { %><%= widget.label %><% } %></span>
+                </label>
+            </div>
+
+        <% } else if (widget.choices) { %>
             <!-- widget.choices --> 
             <% var _val = _.escape(data.fields[widget.name]) || '' %>
-            <select name="<%= widget.name %>"
+            <select name="<%= widget.name %>" class="form-control"
                 data-model="<%= widget.model %>"
                 <% _.each(widget.attr, function(val, key) { %>
                     <% if (! key in {'type':0, 'name':0}) { %>
@@ -38,7 +60,7 @@
                 <% }); %>
             </select>
 
-        <% } else if ((widget.tag == 'input') && (widget.attr['type'] in {'file':0, 'image':0})) { %>
+        <% } else if (is_file) { %>
             <!-- файл или картинка -->
             <% var _val = _.escape(data.fields[widget.name].split('/').pop()) || '' %>
             <div class="input-prepend input-append">
@@ -89,6 +111,7 @@
             <% var _val = _.escape(data.fields[widget.name]) || '' %>
             <<%= widget.tag %> id="field_<%= data.id %>_<%= widget.name %>"
                 name="<%= widget.name %>"
+                class="form-control"
                 data-id="<%= data.id %>"
                 data-action="object_change"
                 data-djangofield="<%= widget.djangofield %>"
@@ -142,7 +165,7 @@
 
         <% } else if ((widget.tag == 'select') && (widget.attr.multiple)) { %>
             <!-- select multiple -->
-            <select name="<%= widget.name %>"
+            <select name="<%= widget.name %>" class="form-control"
                 data-model="<%= widget.model %>"
                 disabled="disabled"
                 <% _.each(widget.attr, function(val, key) { %>
@@ -156,9 +179,7 @@
                 data-id="<%= data.id %>"><%= data.fields[widget.name] %>
                 </select>
         <% } %>
-        <% if (!widget.hidden) { %>
-                    </div>
-                </td>
-            </tr>
+        <% if (!widget.hidden && !is_checkbox) { %>
+            </div>
         <% } %>
     <% }); %>

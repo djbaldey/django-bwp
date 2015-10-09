@@ -183,10 +183,15 @@ WIDGETS_FOR_DBFIELD = {
 }
 
 def get_widget_from_field(field, force_visible=False):
-    try:
-        widget_class, attr = WIDGETS_FOR_DBFIELD[type(field)]
-    except:
-        widget_class, attr = (InputWidget, None)
+
+    def find_class(field):
+        for klass in field.__class__.__mro__:
+            if klass in WIDGETS_FOR_DBFIELD:
+                return WIDGETS_FOR_DBFIELD[klass]
+        return (InputWidget, None)
+
+    widget_class, attr = find_class(field)
+
     if attr is None:
         attr = {}
     else:

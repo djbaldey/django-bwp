@@ -7,6 +7,7 @@
 <div class="controls">
 <% if (type == 'isnull') { %>
     <input
+        class="form-control"
         type="checkbox"
         data-action="filter_change_values"
         data-filter_index="<%= index %>"
@@ -15,6 +16,7 @@
 
 <% } else if (type in {'icontains':0, 'istartswith':0, 'iendswith':0}) { %>
     <input
+        class="form-control"
         type="text"
         data-action="filter_change_values"
         data-filter_index="<%= index %>"
@@ -63,35 +65,35 @@
                     <%= key %>="<%= val %>"
                 <% } %>
             <% }); %>
-            class="btn <%= widget.attr['class'] || 'input-medium' %>"
+            class="btn btn-default <%= widget.attr['class'] || 'input-medium' %>"
             data-action="filter_change_values"
             data-filter_index="<%= index %>"
             data-id="<%= data.id %>"
             title=""><%= '&lt; - &gt;' %>
         </button>
         <% /* Кнопка сброса */ %>
-        <button class="btn"
+        <button class="btn btn-default"
             data-action="field_clear"
             data-filter_index="<%= index %>"
             data-id="<%= data.id %>">
-            <i class="icon-remove"></i>
+            <i class="fa fa-remove"></i>
         </button>
         <% /* Кнопка поиска */ %>
-        <button class="btn"
+        <button class="btn btn-default"
             data-action="field_select"
             data-filter_index="<%= index %>"
             data-id="<%= data.id %>">
-            <i class="icon-search"></i>
+            <i class="fa fa-search"></i>
         </button>
     </div>
 
 <% } %>
 </div>
 <% if (type == 'in') { %>
-<button class="btn btn-mini" 
+<button class="btn btn-default btn-xs" 
     data-filter_index="<%= index %>"
     data-action="filter_append_value"
     data-id="<%= data.id %>">
-    <i class="icon-plus"></i>
+    <i class="fa fa-plus"></i>
 </button>
 <% } %>

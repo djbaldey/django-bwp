@@ -1,6 +1,6 @@
 {% load static bwp_base %}
 {# Шаблон Underscore #}
 <div class="tab-pane" id="layout_<%= data.id %>" data-id="<%= data.id %>">
-    <div align="center"><img src="{% get_static_prefix %}bwp/{% SETTINGS 'BWP_VERSION' %}/img/ajax-loader.gif" /> загрузка данных...</div>
+    <div align="center"><i class="fa fa-spinner fa-pulse fa-5x"></i></div>
 </div>
 
