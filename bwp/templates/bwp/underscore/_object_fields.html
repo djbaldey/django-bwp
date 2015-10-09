@@ -4,7 +4,6 @@
         <% var is_required = widget.attr.required; %>
         <% var is_checkbox = widget.attr.type && (widget.attr.type == 'checkbox'); %>
         <% var is_file = (!is_checkbox) && (widget.attr.type == 'file' || widget.attr.type == 'image'); %>
-        <% console.log(widget.attr.type); %>
 
         <% if (is_visible && !is_checkbox) { %>
             <div class="form-group">
@@ -34,6 +33,43 @@
                 </label>
             </div>
 
+        
+        <% } else if (is_file) { %>
+            <!-- файл или картинка -->
+            <% var _url = data.fields[widget.name] || '' %>
+            <% var _val = _.escape(_url.split('/').pop()) || '' %>
+            <% /* Текст про существующий файл или картинка */ %>
+            <% if (_val) { %>
+                <% if (widget.attr.type == 'image') { %>
+                <div class="row">
+                    <div class="col-xs-3">
+                        <a href="{{ MEDIA_URL }}<%= _url %>" download="<%= _val %>">
+                            <img src="{{ MEDIA_URL }}<%= _url %>" class="img-resonsive img-thumbnail" alt="<%= _val %>">
+                        </a>
+                    </div>
+                </div>
+                <% } else { %>
+                <a href="{{ MEDIA_URL }}<%= _url %>" class="label label-success" download="<%= _val %>">
+                    <span><i class="fa fa-download"></i> <%= _val %></span>
+                </a>
+                <% } %>
+            <% } %>
+
+            <% /* Кнопка выбора файла */ %>
+                <input
+                    name="<%= widget.name %>"
+                    data-id="<%= data.id %>"
+                    type="file"
+                    <% _.each(widget.attr, function(val, key) { %>
+                        <% if (! key in {'type':0, 'name':0}) { %>
+                            <%= key %>="<%= val %>"
+                        <% } %>
+                    <% }); %>
+                    data-action="object_change"
+                    data-djangofield="<%= widget.djangofield %>">
+                </input>
+            
+
         <% } else if (widget.choices) { %>
             <!-- widget.choices --> 
             <% var _val = _.escape(data.fields[widget.name]) || '' %>
@@ -59,52 +95,6 @@
                     <% } %>
                 <% }); %>
             </select>
-
-        <% } else if (is_file) { %>
-            <!-- файл или картинка -->
-            <% var _val = _.escape(data.fields[widget.name].split('/').pop()) || '' %>
-            <div class="input-prepend input-append">
-                <% /* Кнопка названия файла */ %>
-                <button name="<%= widget.name %>"
-                    data-model="<%= widget.model %>"
-                    disabled="disabled"
-                    <% _.each(widget.attr, function(val, key) { %>
-                        <% if (! key in {'type':0, 'name':0}) { %>
-                            <%= key %>="<%= val %>"
-                        <% } %>
-                    <% }); %>
-                    class="btn <%= widget.attr['class'] || 'input-medium' %>"
-                    data-id="<%= data.id %>"
-                    title="<%= _val %>">
-                    <%= _val %>
-                </button>
-                <% /* Скрытое поле значения */ %>
-                <input
-                    name="<%= widget.name %>"
-                    data-id="<%= data.id %>"
-                    type="file"
-                    <% _.each(widget.attr, function(val, key) { %>
-                        <% if (! key in {'type':0, 'name':0}) { %>
-                            <%= key %>="<%= val %>"
-                        <% } %>
-                    <% }); %>
-                    data-action="object_change"
-                    data-djangofield="<%= widget.djangofield %>"
-                    style="display:none;">
-                </input>
-                <% /* Кнопка сброса */ %>
-                <button class="btn"
-                <% if (!_val) { %>
-                    disabled="disabled"
-                <% } %>
-                    data-action="file_field_clear">
-                    <i class="fa fa-remove"></i>
-                </button>
-                <% /* Кнопка поиска */ %>
-                <button class="btn" data-action="file_field_select">
-                    <i class="fa fa-search"></i>
-                </button>
-            </div>
 
         <% } else if ((widget.tag == 'input') || (widget.tag == 'textarea')) { %>
             <!-- input || textarea -->
@@ -180,6 +170,7 @@
                 </select>
         <% } %>
         <% if (!widget.hidden && !is_checkbox) { %>
+                <p class="help-block"><%= widget.help_text || '' %></p>
             </div>
         <% } %>
     <% }); %>

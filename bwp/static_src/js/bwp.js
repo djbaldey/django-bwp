@@ -689,6 +689,7 @@ function handlerCollectionRender(instance, just_prepare) {
         return '';
     };
     html = TEMPLATES.collection({data:instance});
+    console.log(html);
     if (!just_prepare) {
         $('#collection_'+instance.id).html(html);
     };
@@ -1114,7 +1115,7 @@ function handlerM2MSelect(m2m) {
         data  = {},
         buttons = [
             {model: model, action:'object_add',      label:'Новый',    css:'btn-warning'},
-            {model: null,  action:'modal_close',     label:'Закрыть',  css:''},
+            {model: null,  action:'modal_close',     label:'Закрыть',  css:'btn-default'},
             {model: m2m,   action:'selector_append', label:'Добавить', css:'btn-info'},
             {model: m2m,   action:'selector_submit', label:'Выбрать',  css:'btn-primary'},
         ];
@@ -1188,7 +1189,7 @@ function eventFieldSelect(event) {
         $field = $this.siblings('button[name]');
         handlerFieldSelect($field);
     };
-    return true;
+    return false;
 };
 
 /* Обработчик события добавления значений в набор с последующим

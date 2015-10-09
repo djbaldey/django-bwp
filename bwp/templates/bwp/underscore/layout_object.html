@@ -1,4 +1,3 @@
-{% load static bwp_base %}
 {# Шаблон Underscore #}
 <div class="row-fluid">
 <% if (data.composes.length > 0) { %>
@@ -42,7 +41,9 @@
         </div>
     <% }); %>
         <div class="tab-pane active" id="objectpane_<%= data.id %>">
-            <h3><%= data.label %> <small class="pull-right"><%= data.pk ? 'ID='+data.pk : '' %></small></h3>
+            <h3 class="page-header">
+                <%= data.label %> <span class="pull-right"><%= data.pk ? 'ID='+data.pk : '' %></span>
+            </h3>
             
             <form data-id="<%= data.id %>">
                 {% include "bwp/underscore/_object_fields.html" %}

@@ -60,6 +60,7 @@ class GeneralWidget(object):
     def get_dict(self):
         d = {
             'name': self.field.name,
+            'help_text': self.field.help_text,
             'hidden': self.is_hidden,
             'tag': self.tag,
             'attr': self.attr,
