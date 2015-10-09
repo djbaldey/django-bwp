@@ -60,7 +60,6 @@ class GeneralWidget(object):
     def get_dict(self):
         d = {
             'name': self.field.name,
-            'help_text': self.field.help_text,
             'hidden': self.is_hidden,
             'tag': self.tag,
             'attr': self.attr,
@@ -78,10 +77,14 @@ class GeneralWidget(object):
 
         if hasattr(self.field, 'choices') and self.field.choices:
             d['choices'] = self.field.choices
+        if hasattr(self.field, 'help_text'):
+            d['help_text'] = self.field.help_text
+    
         if hasattr(self, 'select_multiple') and 'multiple' not in self.attr:
             d['attr']['multiple'] = self.select_multiple
         if hasattr(self, 'input_type') and 'type' not in self.attr:
             d['attr']['type'] = self.input_type
+        
         if not self.field.editable:
             d['attr']['disabled'] = True
         if not getattr(self.field, 'blank', False):

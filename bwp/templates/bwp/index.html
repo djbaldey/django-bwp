@@ -30,6 +30,11 @@
                     <ul class="dropdown-menu" role="menu">
                     </ul>
                 </li>
+            {% if use_reportapi %}
+                <li id="menu-reportapi" class="dropdown">
+                    <a href="{% url "reportapi:index" %}" class="label label-warning">{% trans 'Reporting' %}</a>
+                </li>
+            {% endif %}
             </ul>
 
             <p class="navbar-text">{% DEMO %}</p>
