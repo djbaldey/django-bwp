@@ -159,7 +159,7 @@
     <script src="{% get_static_prefix %}quickapi/{% SETTINGS 'QUICKAPI_VERSION' %}/js/jquery.quickapi.min.js"></script>
 
     {% if user.is_authenticated %}
-        <script src="{% get_static_prefix %}bwp/{% SETTINGS 'BWP_VERSION' %}/js/bwp{% mini_library %}.js"></script>
+        <script src="{% get_static_prefix %}bwp/js/bwp.js"></script>
     {% endif %}
 {% endblock %}
 

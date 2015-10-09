@@ -7,9 +7,8 @@
 
         <% if (is_visible && !is_checkbox) { %>
             <div class="form-group">
-                <label class="control-label" for="field_<%= data.id %>_<%= widget.name %>">
-                    <% if (is_required) { %><strong><%= widget.label %></strong>
-                    <% } else { %><%= widget.label %><% } %>
+                <label class="control-label <% if (is_required) { %>text-danger<% } %>" for="field_<%= data.id %>_<%= widget.name %>">
+                    <%= widget.label %>
                 </label>
         <% } %>
 
@@ -80,7 +79,7 @@
                         <%= key %>="<%= val %>"
                     <% } %>
                 <% }); %>
-                class="<%= widget.attr['class'] %>"
+                class="form-control <%= widget.attr['class'] %>"
                 data-action="object_change"
                 data-djangofield="<%= widget.djangofield %>"
                 data-id="<%= data.id %>">
@@ -123,7 +122,7 @@
             <% var _val = data.fields[widget.name] || ['',''] %>
             <% var _val0 = _.escape(_val[0]) %>
             <% var _val1 = _.escape(_val[1]) %>
-            <div class="input-prepend input-append">
+            <div class="btn-group">
                 <% /* Кнопка значения и названия */ %>
                 <button name="<%= widget.name %>" value="<%= _val0 %>"
                     data-model="<%= widget.model %>"
@@ -133,14 +132,14 @@
                             <%= key %>="<%= val %>"
                         <% } %>
                     <% }); %>
-                    class="btn <%= widget.attr['class'] || 'input-medium' %>"
+                    class="btn btn-default <%= widget.attr['class'] || '' %>"
                     data-action="object_change"
                     data-djangofield="<%= widget.djangofield %>"
                     data-id="<%= data.id %>"
                     title="<%= _val1 %> (ID:<%= _val0 %>)"><%= _val1 || '&lt; - &gt;' %>
                 </button>
                 <% /* Кнопка сброса */ %>
-                <button class="btn"
+                <button class="btn btn-default"
                 <% if (!_val1) { %>
                     disabled="disabled"
                 <% } %>
@@ -148,7 +147,7 @@
                     <i class="fa fa-remove"></i>
                 </button>
                 <% /* Кнопка поиска */ %>
-                <button class="btn" data-action="field_select">
+                <button class="btn btn-default" data-action="field_select">
                     <i class="fa fa-search"></i>
                 </button>
             </div>
