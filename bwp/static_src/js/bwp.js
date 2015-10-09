@@ -731,10 +731,20 @@ function handlerCollectionGet(instance) {
     };
     var cb = function(json, status, xhr) {
         instance.paginator = json.data;
-        html = handlerCollectionRender(instance);
+        var html = handlerCollectionRender(instance);
+        handlerSearchSpinner(instance.id, false);
     };
     var jqxhr = new jsonAPI(args, cb, 'handlerCollectionGet() call jsonAPI()');
     return jqxhr;
+};
+
+/* Обработчик запуска и остановки прокрутки кнопки поиска */
+function handlerSearchSpinner(id, start) {
+    if (DEBUG) {console.log('function:'+'handlerSearchSpinner')};
+    var $spin = $('[data-action=collection_search_refresh][data-id='+ id +'] .fa');
+
+    if (start) $spin.addClass('fa-spin');
+    else $spin.removeClass('fa-spin');
 };
 
 // События
@@ -744,23 +754,43 @@ function eventCollectionSearch(e) {
     if (DEBUG) {console.log('function:'+'eventCollectionSearch')};
     var search   = this,
         data     = $(search).data(),
-        instance = REGISTER[data['id']];
+        instance = REGISTER[data['id']]
+        val = $(search).val() || null,
+        init_delay = 500,
+        len = val ? val.lenght : 0;
 
-    instance.query = $(search).val() || null;
-    var wrap = function() { return handlerCollectionGet(instance); };
-    delay(wrap, 300);
+    instance.query = val;
+    var wrap = function() {
+        handlerSearchSpinner(instance.id, true);
+        return handlerCollectionGet(instance);
+    };
+    // время отклика зависит от длины поисковой строки
+    if      (len > 8) { init_delay = 50 }
+    else if (len > 7) { init_delay = 100 }
+    else if (len > 6) { init_delay = 300 }
+    else if (len > 5) { init_delay = 500 }
+    else if (len > 4) { init_delay = 700 }
+    else if (len > 3) { init_delay = 900 }
+    else if (len > 2) { init_delay = 1100 }
+    else if (len > 1) { init_delay = 1300 }
+    else if (len > 0) { init_delay = 1500 }
+    //~ else { init_delay = 500 }
+
+    delay(wrap, init_delay);
     e.preventDefault();
 };
 
 /* Обработчик события обновления поиска по коллекции */
 function eventCollectionSearchRefresh(e) {
     if (DEBUG) {console.log('function:'+'eventCollectionSearchRefresh')};
-    var search = $(this).siblings('input[data-action=collection_search][data-id='+ $(this).data().id +']'),
+    var search = $('input[data-action=collection_search][data-id='+ $(this).data().id +']'),
         data     = $(search).data(),
         instance = REGISTER[data['id']];
-
+    
+    handlerSearchSpinner($(this).data().id, true);
     instance.query = $(search).val() || null;
     handlerCollectionGet(instance);
+    $(this).blur();
     e.preventDefault();
 };
 
@@ -1395,6 +1425,7 @@ function eventFilters(e) {
     } else {
         handlerFiltersRender(instance);
     }
+    $(this).blur();
     e.preventDefault();
 };
 

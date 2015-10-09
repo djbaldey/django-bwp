@@ -21,11 +21,11 @@
             data-filter_index="<%= index %>"
             class="form-control">
             <option <% if (is_new) { %>selected<% } %> value="">&lt;Выберите условие&gt;</option>
-    <% _.each(FILTER_TYPES, function(type, i) { %>
+        <% _.each(FILTER_TYPES, function(type, i) { %>
             <option <% if (item.type == type[0]) { %> selected<% } %> value="<%= type[0] %>">
                 <%= type[1] %>
             </option>
-    <% }); %>
+        <% }); %>
         </select>
     </div>
 
@@ -44,7 +44,7 @@
                 data-action="filter_change_active"
                 data-filter_index="<%= index %>"
                 data-id="<%= data.id %>"
-                <% if (item.not_selected) { %>disabled<% } %>
+                <% if (is_new) { %>disabled<% } %>
                 title="Активный">
                 <i class="fa fa-check"></i>
             </button>
@@ -56,7 +56,7 @@
                 data-action="filter_change_inverse"
                 data-filter_index="<%= index %>"
                 data-id="<%= data.id %>"
-                <% if (item.not_selected) { %>disabled<% } %>
+                <% if (is_new) { %>disabled<% } %>
                 title="Инверсия">
                 <i class="fa fa-random"></i>
             </button>

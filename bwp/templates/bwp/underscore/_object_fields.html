@@ -138,17 +138,17 @@
                     data-id="<%= data.id %>"
                     title="<%= _val1 %> (ID:<%= _val0 %>)"><%= _val1 || '&lt; - &gt;' %>
                 </button>
+                <% /* Кнопка поиска */ %>
+                <button class="btn btn-default" data-action="field_select">
+                    <i class="fa fa-search text-primary"></i>
+                </button>
                 <% /* Кнопка сброса */ %>
                 <button class="btn btn-default"
                 <% if (!_val1) { %>
                     disabled="disabled"
                 <% } %>
                     data-action="field_clear">
-                    <i class="fa fa-remove"></i>
-                </button>
-                <% /* Кнопка поиска */ %>
-                <button class="btn btn-default" data-action="field_select">
-                    <i class="fa fa-search"></i>
+                    <i class="fa fa-remove text-danger"></i>
                 </button>
             </div>
 

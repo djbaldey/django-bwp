@@ -6,11 +6,44 @@
 <% if (data.paginator) { var _per_page = data.paginator.per_page || data.meta.list_per_page; %>
 <% } else { var _per_page = data.meta.list_per_page;} %>
 
-    <div class="col-lg-6">
-        <div class="btn-toolbar">
+    <div class="col-sm-5 col-md-6 col-lg-7 form-search">
+        <div class="input-group">
+<!--
+        <% if (data.meta.search_fields.length) { %>
+            <span class="input-group-btn">
+                <button class="btn btn-default" data-id="<%= data.id %>" data-action="collection_searchsettings">
+                    <i class="fa fa-wrench"></i>
+                </button>
+            </span>
+        <% } %>
+-->
+
+            <input data-action="collection_search"
+                    data-id="<%= data.id %>"
+                <% if (data.meta.search_fields.length) { %>
+                    type="text"
+                <% } else { %>
+                    type="hidden"
+                <% } %>
+                    class="form-control search"
+                    placeholder="Поиск"
+                    autofocus
+                    value="<%= data.query %>">
+
+            <span class="input-group-btn">
+                <button class="btn btn-default" data-id="<%= data.id %>" title="Обновить" data-action="collection_search_refresh">
+                    <i class="fa fa-refresh"></i>
+                </button>
+            </span>
+
+        </div>
+    </div>
+
+    <div class="col-sm-7 col-md-6 col-lg-5">
+        <div class="btn-toolbar pull-right">
         <% if (data.perms.add) { %>
             <div class="btn-group">
-                <button class="btn btn-default btn-sm" data-id="<%= data.id %>" data-action="<%= _obj_add %>">
+                <button class="btn btn-default" data-id="<%= data.id %>" data-action="<%= _obj_add %>">
                 <% if (data.is_m2m) { %>
                     <i class="fa fa-plus-sign"></i>
                 <% } else { %>
@@ -22,7 +55,7 @@
         <% } %>
         <% if (data.actions) { %>
             <div class="btn-group">
-                <a  class="btn btn-default btn-sm dropdown-toggle"
+                <a  class="btn btn-default dropdown-toggle"
                     data-toggle="dropdown"
                     href="#">
                     <i class="fa fa-list"></i>
@@ -38,7 +71,7 @@
         <% } %>
         <% if (data.collection_reports) { %>
             <div class="btn-group">
-                <a  class="btn btn-default btn-sm dropdown-toggle"
+                <a  class="btn btn-default dropdown-toggle"
                     data-toggle="dropdown"
                     href="#">
                     <i class="fa fa-print"></i>
@@ -58,14 +91,14 @@
         <% } %>
             <div class="btn-group">
             <% if (!isEmpty(data.meta.filters) || DEBUG) { %>
-                <button class="btn btn-default btn-sm" data-id="<%= data.id %>"
+                <button class="btn btn-default" data-id="<%= data.id %>"
                     data-action="collection_filters"
                     data-toggle="button">
                     <i class="fa fa-filter"></i>
                     Фильтры
                 </button>
             <% } %>
-                <a  class="btn btn-default btn-sm dropdown-toggle"
+                <a  class="btn btn-default dropdown-toggle"
                     data-toggle="dropdown"
                     title="Количество на странице"
                     href="#">
@@ -81,36 +114,6 @@
             </div>
         </div>
     </div>
-
-    <div class="col-lg-6 form-search">
-        <div class="input-group">
-            <span class="input-group-btn">
-                <button class="btn btn-default btn-sm" data-id="<%= data.id %>" title="Обновить" data-action="collection_search_refresh">
-                    <i class="fa fa-refresh"></i>
-                </button>
-            </span>
-            
-            <input data-action="collection_search"
-                    data-id="<%= data.id %>"
-                <% if (data.meta.search_fields.length) { %>
-                    type="text"
-                <% } else { %>
-                    type="hidden"
-                <% } %>
-                    class="form-control search input-sm"
-                    placeholder="Поиск"
-                    value="<%= data.query %>">
-        <% if (data.meta.search_fields.length) { %>
-            <span class="input-group-btn">
-                <button class="btn btn-default btn-sm" data-id="<%= data.id %>" data-action="collection_searchsettings">
-                    <i class="fa fa-wrench"></i>
-                </button>
-            </span>
-        <% } %>
-        </div>
-    </div>
-
-
 
 </div>
 
