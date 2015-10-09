@@ -757,7 +757,7 @@ function eventCollectionSearch(e) {
         instance = REGISTER[data['id']]
         val = $(search).val() || null,
         init_delay = 500,
-        len = val ? val.lenght : 0;
+        len = val ? val.length : 0;
 
     instance.query = val;
     var wrap = function() {
@@ -765,8 +765,10 @@ function eventCollectionSearch(e) {
         return handlerCollectionGet(instance);
     };
     // время отклика зависит от длины поисковой строки
-    if      (len > 8) { init_delay = 50 }
-    else if (len > 7) { init_delay = 100 }
+    if     (len > 10) { init_delay = 100 }
+    else if (len > 9) { init_delay = 150 }
+    else if (len > 8) { init_delay = 200 }
+    else if (len > 7) { init_delay = 250 }
     else if (len > 6) { init_delay = 300 }
     else if (len > 5) { init_delay = 500 }
     else if (len > 4) { init_delay = 700 }

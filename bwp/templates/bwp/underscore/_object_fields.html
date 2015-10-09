@@ -37,37 +37,41 @@
             <!-- файл или картинка -->
             <% var _url = data.fields[widget.name] || '' %>
             <% var _val = _.escape(_url.split('/').pop()) || '' %>
+            <dl class="dl-horizontal">
             <% /* Текст про существующий файл или картинка */ %>
+                <dt>На данный момент:</dt>
             <% if (_val) { %>
+                <dd>
                 <% if (widget.attr.type == 'image') { %>
-                <div class="row">
                     <div class="col-xs-3">
                         <a href="{{ MEDIA_URL }}<%= _url %>" download="<%= _val %>">
-                            <img src="{{ MEDIA_URL }}<%= _url %>" class="img-resonsive img-thumbnail" alt="<%= _val %>">
+                            <img src="{{ MEDIA_URL }}<%= _url %>" class="img-responsive" alt="<%= _val %>">
                         </a>
                     </div>
-                </div>
                 <% } else { %>
                 <a href="{{ MEDIA_URL }}<%= _url %>" class="label label-success" download="<%= _val %>">
                     <span><i class="fa fa-download"></i> <%= _val %></span>
                 </a>
                 <% } %>
+                </dd>
             <% } %>
-
+                <dt>Изменить:</dt>
             <% /* Кнопка выбора файла */ %>
-                <input
-                    name="<%= widget.name %>"
-                    data-id="<%= data.id %>"
-                    type="file"
-                    <% _.each(widget.attr, function(val, key) { %>
-                        <% if (! key in {'type':0, 'name':0}) { %>
-                            <%= key %>="<%= val %>"
-                        <% } %>
-                    <% }); %>
-                    data-action="object_change"
-                    data-djangofield="<%= widget.djangofield %>">
-                </input>
-            
+                <dd>
+                    <input
+                        name="<%= widget.name %>"
+                        data-id="<%= data.id %>"
+                        type="file"
+                        <% _.each(widget.attr, function(val, key) { %>
+                            <% if (! key in {'type':0, 'name':0}) { %>
+                                <%= key %>="<%= val %>"
+                            <% } %>
+                        <% }); %>
+                        data-action="object_change"
+                        data-djangofield="<%= widget.djangofield %>">
+                    </input>
+                </dd>
+            </dl>
 
         <% } else if (widget.choices) { %>
             <!-- widget.choices --> 
