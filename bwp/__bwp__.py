@@ -46,16 +46,6 @@ from django.utils.translation import ugettext_lazy as _
 label_id = _('ID')
 label_pk = _('PK')
 
-class PermissionAdmin(ModelBWP):
-    list_display = ('__unicode__', 'id')
-    search_fields = (
-        'name',
-        'codename',
-        'content_type__name',
-        'content_type__app_label',
-        'content_type__model',
-    )
-site.register(Permission, PermissionAdmin)
 
 class PermissionCompose(ManyToManyBWP):
     list_display = ('__unicode__', 'name', 'codename', 'id')
@@ -67,6 +57,44 @@ class PermissionCompose(ManyToManyBWP):
         'content_type__model',
     )
     model = Permission
+
+
+class GroupCompose(ComposeBWP):
+    model = Group
+    list_display = ('__unicode__', 'id')
+
+
+class UserCompose(ComposeBWP):
+    model = User
+    list_display = ('__unicode__',
+        'is_active',
+        'is_superuser',
+        'is_staff',
+        'last_login',
+        'date_joined',
+        ('id', label_id))
+    list_display_css = {
+        'pk': 'input-micro', 'id': 'input-micro',
+        'is_superuser': 'input-mini', 'is_staff': 'input-mini',
+    }
+    ordering = ('username',)
+
+
+class PermissionAdmin(ModelBWP):
+    list_display = ('__unicode__', 'id')
+    search_fields = (
+        'name',
+        'codename',
+        'content_type__name',
+        'content_type__app_label',
+        'content_type__model',
+    )
+    compositions = [
+        ('user_set', UserCompose),
+        ('group_set', GroupCompose),
+    ]
+site.register(Permission, PermissionAdmin)
+
 
 class UserAdmin(ModelBWP):
     list_display = ('__unicode__',
@@ -87,21 +115,6 @@ class UserAdmin(ModelBWP):
         ('user_permissions', PermissionCompose),
     ]
 site.register(User, UserAdmin)
-
-class UserCompose(ComposeBWP):
-    model = User
-    list_display = ('__unicode__',
-        'is_active',
-        'is_superuser',
-        'is_staff',
-        'last_login',
-        'date_joined',
-        ('id', label_id))
-    list_display_css = {
-        'pk': 'input-micro', 'id': 'input-micro',
-        'is_superuser': 'input-mini', 'is_staff': 'input-mini',
-    }
-    ordering = ('username',)
 
 class GroupAdmin(ModelBWP):
     list_display = ('__unicode__', 'id')
