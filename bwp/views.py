@@ -446,16 +446,17 @@ def API_m2m_commit(request, model, pk, compose, action, objects, **kwargs):
     except:
         return get_http_404(request)
     else:
-        if action == 'add' and compose.has_add_permission(request):
+        if action == 'add' and compose.has_add_permission(request, instance=object, data=objects):
             result = compose.add_objects_in_m2m(object, objects)
             msg = 'add to `%s`: %s' %(compose_name, force_text(objects))
             model_bwp.log_change(request, object, message=msg)
-        elif action == 'delete' and compose.has_delete_permission(request):
+        elif action == 'delete' and compose.has_delete_permission(request, instance=object, data=objects):
             result = compose.delete_objects_in_m2m(object, objects)
             msg = 'delete from `%s`: %s' %(compose_name, force_text(objects))
             model_bwp.log_change(request, object, message=msg)
         else:
-            result = False
+            return JSONResponse(status=403)
+
         if not result:
             return JSONResponse(data=False, status=400)
 
@@ -502,7 +503,7 @@ def API_commit(request, objects, **kwargs):
             data = item['fields']
             # Новый объект
             if not item.get('pk', False):
-                if model_bwp.has_add_permission(request):
+                if model_bwp.has_add_permission(request, data=data):
                     instance = model_bwp.model()
                     instance = set_file_fields(model_bwp, instance, data)
                     instance = set_user_field(model_bwp, instance, request.user)
@@ -513,17 +514,21 @@ def API_commit(request, objects, **kwargs):
                     else:
                         transaction.rollback()
                         return JSONResponse(status=400, message=force_text(form.errors))
+                else:
+                    return JSONResponse(status=403)
             # Удаляемый объект
             elif action == 'delete':
                 instance = get_instance(request, item['pk'], item['model'])
-                if model_bwp.has_delete_permission(request, instance):
+                if model_bwp.has_delete_permission(request, instance=instance):
                     model_bwp.log_deletion(request, instance, unicode(instance))
                     instance.delete()
+                else:
+                    return JSONResponse(status=403)
             # Обновляемый объект
             elif action == 'change': # raise AttributeError()
                 instance = get_instance(request, item['pk'], item['model'])
                 instance = set_user_field(model_bwp, instance, request.user)
-                if model_bwp.has_change_permission(request, instance):
+                if model_bwp.has_change_permission(request, instance=instance, data=data):
                     instance = set_file_fields(model_bwp, instance, data)
                     form = get_form_instance(request, model_bwp, data=data, instance=instance)
                     if form.is_valid():
@@ -533,6 +538,8 @@ def API_commit(request, objects, **kwargs):
                     else:
                         transaction.rollback()
                         return JSONResponse(status=400, message=force_text(form.errors))
+                else:
+                    return JSONResponse(status=403)
 
     except Exception as e:
         #print '[ERROR] bwp.views.API_commit', e

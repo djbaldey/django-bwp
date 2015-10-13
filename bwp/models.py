@@ -777,52 +777,57 @@ class BaseModel(object):
             total['max_values'] = {}
         return total
 
-    def has_hidden_permission(self, request):
+    def has_hidden_permission(self, request, *args, **kwargs):
         """
         Returns True if the given request has permission to read an object.
         """
         opts = self.opts
         return PermissionRead.has_hidden_perm(request.user, opts)
 
-    def has_read_permission(self, request):
+    def has_read_permission(self, request, *args, **kwargs):
         """
         Returns True if the given request has permission to read an object.
         """
         opts = self.opts
         return PermissionRead.has_read_perm(request.user, opts)
 
-    def has_add_permission(self, request):
+    def has_add_permission(self, request, instance=None, data=None):
         """
-        Returns True if the given request has permission to add an object.
-        Can be overriden by the user in subclasses.
+        Возвращает True если данных запрос имеет разрешение на создание
+        экземпляра модели Django.
+        Можно переопределить этот метод в подклассах.
         """
         opts = self.opts
         return request.user.has_perm(opts.app_label + '.' + opts.get_add_permission())
 
-    def has_change_permission(self, request, object=None):
+    def has_change_permission(self, request, instance=None, data=None):
         """
-        Returns True if the given request has permission to change the given
-        Django model instance, the default implementation doesn't examine the
-        `object` parameter.
+        Возвращает True если данных запрос имеет разрешение на изменение
+        данного экземпляра модели Django. Реализация по-умолчанию, не
+        рассматривает экземпляр в параметре `instance`.
 
-        Can be overriden by the user in subclasses. In such case it should
-        return True if the given request has permission to change the `object`
-        model instance. If `object` is None, this should return True if the given
-        request has permission to change *any* object of the given type.
+        Можно переопределить этот метод в подклассах. В таком случае он 
+        должен возвратить True, если данный запрос имеет разрешение на 
+        изменение `instance`. Если параметр `instance` не передан, то 
+        метод должен возвратить True или False, как если бы данный 
+        запрос имел разрешение на изменение *любого* экземпляра данного 
+        типа.
         """
         opts = self.opts
         return request.user.has_perm(opts.app_label + '.' + opts.get_change_permission())
 
-    def has_delete_permission(self, request, object=None):
+    def has_delete_permission(self, request, instance=None, data=None):
         """
-        Returns True if the given request has permission to change the given
-        Django model instance, the default implementation doesn't examine the
-        `object` parameter.
+        Возвращает True если данных запрос имеет разрешение на удаление
+        данного экземпляра модели Django. Реализация по-умолчанию, не
+        рассматривает экземпляр в параметре `instance`.
 
-        Can be overriden by the user in subclasses. In such case it should
-        return True if the given request has permission to delete the `object`
-        model instance. If `object` is None, this should return True if the given
-        request has permission to delete *any* object of the given type.
+        Можно переопределить этот метод в подклассах. В таком случае он 
+        должен возвратить True, если данный запрос имеет разрешение на 
+        изменение `instance`. Если параметр `instance` не передан, то 
+        метод должен возвратить True или False, как если бы данный 
+        запрос имел разрешение на изменение *любого* экземпляра данного 
+        типа.
         """
         opts = self.opts
         return request.user.has_perm(opts.app_label + '.' + opts.get_delete_permission())
@@ -939,13 +944,16 @@ class ComposeBWP(BaseModel):
         """ Получает объекты согласно привилегий """
         return self.get_collection(request, pk, **kwargs)
 
+    def get_related_objects(self, object, **kwargs):
+        return getattr(object, self.related_name).select_related().all()
+
     def get_collection(self, request, pk, **kwargs):
         """ Метод получения вложенных объектов """
         try:
             object = self.related_model.queryset(request).get(pk=pk)
         except:
             return get_http_404(request)
-        qs = getattr(object, self.related_name).select_related().all()
+        qs = self.get_related_objects(object, **kwargs)
         qs = self.queryset_from_filters(qs, **kwargs)
         qs = self.filter_queryset(request, qs, **kwargs)
         qs = self.page_queryset(request, qs, **kwargs)
@@ -1025,6 +1033,12 @@ class ManyToManyBWP(ComposeBWP):
     def delete_objects_in_m2m(self, object, objects):
         m2m = getattr(object, self.related_name)
         m2m.remove(*objects)
+        return True
+
+    def has_add_permission(self, request, *args, **kwargs):
+        return True
+
+    def has_delete_permission(self, request, *args, **kwargs):
         return True
 
 class ModelBWP(BaseModel):
