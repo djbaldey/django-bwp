@@ -41,7 +41,7 @@ from types import MethodType
 from django.conf import settings
 from django.core.serializers import base
 from django.db import models, DEFAULT_DB_ALIAS
-from django.utils.encoding import smart_unicode, is_protected_type
+from django.utils.encoding import force_text, is_protected_type
 from django.core.paginator import Page
 from bwp.utils.pagers import page_range_dots
 from datetime import datetime, date, time
@@ -113,7 +113,7 @@ class SerializerWrapper(object):
             elif self.use_natural_keys and hasattr(field.rel.to, 'natural_key'):
                 m2m_value = lambda value: value.natural_key()
             else:
-                m2m_value = lambda value: smart_unicode(value._get_pk_val(), strings_only=True)
+                m2m_value = lambda value: force_text(value._get_pk_val())
             self._current[field.name] = [m2m_value(related)
                                for related in getattr(obj, field.name).iterator()]
 
@@ -190,12 +190,12 @@ class SerializerWrapper(object):
     def end_object(self, obj):
         _unicode = ""
         try:
-            _unicode = smart_unicode(obj)
+            _unicode = force_text(obj)
         except:
             pass
         self.objects.append({
-            "model"  :      smart_unicode(obj._meta),
-            "pk"     :      smart_unicode(obj._get_pk_val(), strings_only=True),
+            "model"  :      force_text(obj._meta),
+            "pk"     :      force_text(obj._get_pk_val()),
             "fields":       self._current,
             "properties":   self._properties,
             "__unicode__" : _unicode,
@@ -231,7 +231,7 @@ def Deserializer(object_list, **options):
             if field_name == Model._meta.pk.attname:
                 continue
             if isinstance(field_value, str):
-                field_value = smart_unicode(field_value, options.get("encoding", settings.DEFAULT_CHARSET), strings_only=True)
+                field_value = force_text(field_value)
 
             field = Model._meta.get_field(field_name)
             if field_value is None:
@@ -244,9 +244,9 @@ def Deserializer(object_list, **options):
                         if hasattr(value, '__iter__'):
                             return field.rel.to._default_manager.db_manager(db).get_by_natural_key(*value).pk
                         else:
-                            return smart_unicode(field.rel.to._meta.pk.to_python(value))
+                            return force_text(field.rel.to._meta.pk.to_python(value))
                 else:
-                    m2m_convert = lambda v: smart_unicode(field.rel.to._meta.pk.to_python(v))
+                    m2m_convert = lambda v: force_text(field.rel.to._meta.pk.to_python(v))
                 m2m_data[field.name] = [m2m_convert(pk) for pk in field_value]
 
             # Handle FK fields
