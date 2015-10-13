@@ -58,13 +58,33 @@ class PermissionCompose(ManyToManyBWP):
     )
     model = Permission
 
+    def has_hidden_permission(self, request, *args, **kwargs):
+        if request.user.is_superuser:
+            return True
+        return False
 
-class GroupCompose(ComposeBWP):
+    def has_read_permission(self, request, *args, **kwargs):
+        if request.user.is_superuser:
+            return True
+        return False
+
+    def has_change_permission(self, request, *args, **kwargs):
+        if request.user.is_superuser:
+            return True
+        return False
+
+    def has_delete_permission(self, request, *args, **kwargs):
+        if request.user.is_superuser:
+            return True
+        return False
+
+
+class GroupCompose(ManyToManyBWP):
     model = Group
     list_display = ('__unicode__', 'id')
 
 
-class UserCompose(ComposeBWP):
+class UserCompose(ManyToManyBWP):
     model = User
     list_display = ('__unicode__',
         'is_active',
@@ -109,11 +129,41 @@ class UserAdmin(ModelBWP):
         'is_superuser': 'input-mini', 'is_staff': 'input-mini',
     }
     ordering = ('username',)
-    exclude = ['password',]
+    exclude = ['password', 'is_superuser', 'date_joined', 'last_login']
     search_fields = ('username', 'email')
     compositions = [
         ('user_permissions', PermissionCompose),
+        ('groups', GroupCompose),
     ]
+
+    def has_change_permission(self, request, instance=None, data=None):
+        if not instance:
+            return super(UserAdmin, self).has_change_permission(request)
+        user = request.user
+
+        if user.is_superuser:
+            return True
+
+        perm = user.has_perm('auth.change_superuser')
+
+        val = data.get('is_superuser', None)
+        if val is not None and instance.is_superuser != val and not perm:
+            return False
+
+        perm = user.has_perm('auth.change_user_password')
+
+        val = data.get('password', '')
+        if val not in ('', 'is_usable_password') and not perm:
+            return False
+
+        return user.has_perm('auth.change_user')
+
+    def has_delete_permission(self, request, instance=None, data=None):
+        if request.user.is_superuser:
+            return True
+        else:
+            return False
+
 site.register(User, UserAdmin)
 
 class GroupAdmin(ModelBWP):
