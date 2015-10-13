@@ -45,6 +45,13 @@
       color: #5a5a5a;
       height: 100%;
     }
+    body,
+    input,
+    button,
+    select,
+    textarea {
+      font-family: "Open Sans", "Helvetica Neue" ,Helvetica, Arial,sans-serif !important;
+    }
 
     /* Wrapper for page content to push down footer */
     #wrap {
@@ -129,6 +136,10 @@
     min-height: 250px;
 */
     overflow: visible;
+}
+
+div.controls button {
+    overflow-x: hidden;
 }
 
 .tab-content .subnav, .modal-body .subnav {

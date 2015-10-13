@@ -51,6 +51,7 @@
     <meta name="version" content="{% SETTINGS 'BWP_VERSION' %}">
 
 <!-- START: styles -->
+    <link rel="stylesheet" href="{{ STATIC_URL }}opensans/opensans.min.css">
     <link rel="stylesheet" href="{{ STATIC_URL }}css/bootstrap/{% SETTINGS 'BOOTSTRAP_VERSION' %}/bootstrap{% mini_library %}.css">
     {% block responsive_style %}<link rel="stylesheet" href="{{ STATIC_URL }}css/bootstrap/{% SETTINGS 'BOOTSTRAP_VERSION' %}/bootstrap-responsive{% mini_library %}.css">{% endblock %}
     <link rel="stylesheet" href="{{ STATIC_URL }}css/bwp/{% SETTINGS 'BWP_VERSION' %}/bwp{% mini_library %}.css">
