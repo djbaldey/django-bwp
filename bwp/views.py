@@ -540,6 +540,8 @@ def API_commit(request, objects, **kwargs):
                         return JSONResponse(status=400, message=force_text(form.errors))
                 else:
                     return JSONResponse(status=403)
+            else:
+                return JSONResponse(status=400, data=item)
 
     except Exception as e:
         #print '[ERROR] bwp.views.API_commit', e
