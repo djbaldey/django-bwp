@@ -47,8 +47,9 @@ class ReportCompose(ComposeBWP):
 
 class DocumentBWP(ModelBWP):
     list_display = ('title', 
+        ('count_reports', _('count')),
+        ('last_report_time', _('last report')),
         'content_type',
-        'qualifier',
         'template_name',
         'id')
     ordering = ['content_type']

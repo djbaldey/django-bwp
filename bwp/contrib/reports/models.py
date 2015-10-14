@@ -142,6 +142,17 @@ class Document(AbstractGroup):
     def for_model(self):
         return bool(self.bound == Document.BOUND_MODEL)
 
+    @property
+    def count_reports(self):
+        return self.report_set.count()
+
+    @property
+    def last_report_time(self):
+        qs = self.report_set.order_by('-created')[:1]
+        if qs:
+            return qs[0].created
+        return None
+
 class Report(AbstractFile):
     """ Файл сформированного документа """
     default_label_type = u'%s' % _('report')
