@@ -41,6 +41,10 @@ from bwp.sites import site
 from bwp.models import ModelBWP, ComposeBWP
 from models import *
 
+class ReportCompose(ComposeBWP):
+    model = Report
+    list_display = ('created', 'user', 'url', 'id')
+
 class DocumentBWP(ModelBWP):
     list_display = ('title', 
         'content_type',
@@ -48,6 +52,9 @@ class DocumentBWP(ModelBWP):
         'template_name',
         'id')
     ordering = ['content_type']
+    compositions = [
+        ('report_set', ReportCompose),
+    ]
 site.register(Document, DocumentBWP)
 
 class ReportBWP(ModelBWP):
