@@ -473,8 +473,6 @@ class AbstractPathBase(models.Model):
         while root:
             if not root.parent or root == root.parent:
                 break
-            #~ elif root == root.parent:
-                #~ raise ValueError('Parent in loop')
             root = root.parent
         return root
 
