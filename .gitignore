@@ -7,6 +7,6 @@ dist/
 docs/_build/
 build/
 example/media/
-*.sqlite
+*.sqlite3
 .hg/
 .hgtags
