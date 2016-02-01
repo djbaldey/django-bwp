@@ -43,7 +43,7 @@ from models import *
 
 class PersonAdmin(ModelBWP):
     list_display = ('__unicode__', 'id')
-    search_fields = ['last_name','first_name','middle_name', 'id']
+    search_fields = ['last_name', 'first_name', 'middle_name', 'id']
     raw_id_fields = ['user']
 site.register(Person, PersonAdmin)
 

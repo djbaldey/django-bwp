@@ -174,7 +174,7 @@ function handlerShowAlert(head, msg, cls, cb) {
     html = TEMPLATES.alert({ head:head, msg: msg, cls: cls });
     $('#alert-place').css('z-index', '1000').html(html);
     $(window).scrollTop(0);
-    $('.alert').alert();
+    $('.alert').alert().on('closed.bs.alert', handlerHideAlert);
 
     if (cb) { delay(cb, timeout); }
     else { delay(handlerHideAlert, timeout); };
@@ -672,7 +672,7 @@ function eventRowClick(e) {
     if (DEBUG) {console.log('function:'+'eventRowClick')};
     var $this = $(this);
     $this.addClass('info').siblings('tr').removeClass('info');
-    e.preventDefault();
+    //~ e.preventDefault(); bug in checkbox selection
 };
 
 ////////////////////////////////////////////////////////////////////////
@@ -832,7 +832,7 @@ function eventCollectionPage(e) {
  * при втором - DESC,
  * при третьем - поле исключается из сортировки.
  */
-function eventCollectionSorted(event) {
+function eventCollectionSorted(e) {
     if (DEBUG) {console.log('function:'+'eventCollectionSorted')};
     var data = $(this).data(),
         instance = REGISTER[data['id']],
@@ -925,9 +925,10 @@ function handlerObjectChange(object, $field) {
         value = $field.val();
     if (type) { type = type.toLowerCase(); };
     if (type in {'file':0, 'image':0}) {
+        $('#filelabel_'+object.id+'_'+name).removeClass('hide').text(value);
         handlerTempUploadFile(object, $field[0]);
     } else if (type === 'datetime-local') {
-        value = $.dateParser(value, true) || value;
+        value = $.dateParser(value, true) || value || null;
     } else if ($.type(object.fields[name]) === 'array') {
         value = [value, $field.text()];
     } else if ($.type(object.fields[name]) === 'boolean') {
@@ -1043,7 +1044,7 @@ function eventObjectAdd(e) {
 /* Обработчик события копирования объекта */
 function eventObjectCopy(e) {
     if (DEBUG) {console.log('function:'+'eventObjectCopy')};
-    handlerObjectCopy();
+    handlerObjectCopy($(this).data());
     e.preventDefault();
 };
 
@@ -1415,7 +1416,7 @@ function eventFilters(e) {
     if (DEBUG) {console.log('function:'+'eventFilters')};
     var data = $(this).data(),
         instance = REGISTER[data.id];
-    if ($('#list-filters_'+data.id).size() >0) {
+    if ($('#list-filters_'+data.id).size() >0 && instance.filters) {
         $('#collection_filters_'+data.id).html('');
         var _filters = [];
         $.each(instance.filters, function(index, item) {
@@ -1798,14 +1799,19 @@ function handlerTemplates() {
 function handlerBindinds() {
     if (DEBUG) {console.log('function:'+'handlerBindinds')};
 
-    // Биндинг на сокрытие алерта
-    $('body').on('click', 'button.close[data-dismiss="alert"]', 
-        function () {$('#alert-place').css('z-index', '-1000');});
-
     $('body').on('click',  'tr[data-pk]', eventRowClick);
     // Биндинги на открытие-закрытие вкладок и их контента
     $('#menu-app li[class!=disabled]').on('click',  'a', eventTabOpen);
     $('#main-tab').on('click', 'button.close[data-id]',  eventTabClose)
+
+    $('body').on('click', '.btn-group button[data-toggle=tab]', function(e) {
+        var active = $(this).hasClass('active');
+        if (!active) {
+            $(this).blur().siblings('button').removeClass('active')
+        } else {
+            e.preventDefault()
+        }
+    });
 
     handlerTabRestore();
 

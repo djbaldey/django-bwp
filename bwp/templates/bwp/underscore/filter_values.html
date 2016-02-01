@@ -27,7 +27,7 @@
     <select
         data-model="<%= widget.model %>"
         <% _.each(widget.attr, function(val, key) { %>
-            <% if (! key in {'type':0, 'name':0}) { %>
+            <% if (! key in {'type':0, 'name':0, 'class':0}) { %>
                 <%= key %>="<%= val %>"
             <% } %>
         <% }); %>
@@ -45,11 +45,11 @@
 <% } else if (((widget.tag == 'input') && ((widget.name != 'id') || (field == 'id'))) || (widget.tag == 'textarea')) { %>
     <<%= widget.tag %>
     <% _.each(widget.attr, function(val, key) { %>
-        <% if (!(key in {'disabled':0,})) { %>
+        <% if (!(key in {'disabled':0, 'class':0})) { %>
             <%= key %>="<%= val %>"
         <% } %>
     <% }); %>
-        class="form-control"
+        class="form-control <%= widget.attr['class'] %>"
         data-action="filter_change_values"
         data-filter_index="<%= index %>"
         data-id="<%= data.id %>">

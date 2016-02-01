@@ -529,7 +529,7 @@ def API_commit(request, objects, **kwargs):
         #~ if settings.DEBUG:
             #~ return JSONResponse(status=500, message=force_text(e))
         #~ raise e
-        return JSONResponse(status=400, message=error)
+        return JSONResponse(status=400, message=error or force_text(e))
 
     #~ if error:
         #~ return JSONResponse(status=400, message=error)

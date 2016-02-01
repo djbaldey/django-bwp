@@ -1,21 +1,22 @@
 {# Шаблон Underscore #}
-<div class="row-fluid">
-<% if (data.composes.length > 0) { %>
     <div class="btn-group" data-toggle="buttons" data-id="<%= data.id %>">
         <button class="btn btn-sm btn-primary active" data-toggle="tab" data-target="#objectpane_<%= data.id %>">
             <span>Объект</span>
         </button>
-    <% _.each(data.composes, function(compose) { %>
-        <% /* Если объект не сохранён в DB, то запрещаем операции с вложениями */ %>
-        <% var _compose_btn_class = 'btn-default'; if (compose.is_m2m) { _compose_btn_class = 'btn-info'} %>
-        <button class="btn btn-sm <%= _compose_btn_class %>"
-        <% if (!data.pk) { %> disabled
-        <% } else { %>data-toggle="tab" data-loading="true"
-        <% } %> data-target="#layout_<%= compose.id %>" data-id="<%= compose.id %>">
-            <span><%= compose.label %></span>
-        </button>
-    <% }); %>
+
+    <% /* Если объект не сохранён в DB, то запрещаем операции с вложениями */ %>
+    <% if (data.pk && data.composes.length > 0) { %>
+        <% _.each(data.composes, function(compose) { %>
+            <% var _compose_btn_class = compose.is_m2m ? 'btn-info' : 'btn-default' %>
+            <button class="btn btn-sm <%= _compose_btn_class %>"
+                data-toggle="tab" data-loading="true"
+                data-target="#layout_<%= compose.id %>" data-id="<%= compose.id %>">
+                <span><%= compose.label %></span>
+            </button>
+        <% }); %>
+    <% } %>
     </div>
+
     <div class="btn-group">
     <% if ((data.model.object_reports) && (data.pk)) { %>
         <button class="btn btn-sm btn-warning dropdown-toggle" data-toggle="dropdown">
@@ -33,7 +34,7 @@
         </ul>
     <% }; %>
     </div>
-<% } %>
+
     <div class="tab-content">
     <% _.each(data.composes, function(compose) { %>
         <div class="tab-pane" id="layout_<%= compose.id %>">
@@ -45,7 +46,7 @@
                 <%= data.label %> <span class="pull-right"><%= data.pk ? 'ID='+data.pk : '' %></span>
             </h3>
             
-            <form data-id="<%= data.id %>">
+            <form data-id="<%= data.id %>" class="form row">
                 {% include "bwp/underscore/_object_fields.html" %}
             </form>
 
@@ -62,4 +63,3 @@
             </div>
         </div>
     </div>
-</div>

@@ -4,19 +4,22 @@
         <% var is_required = widget.attr.required; %>
         <% var is_checkbox = widget.attr.type && (widget.attr.type == 'checkbox'); %>
         <% var is_file = (!is_checkbox) && (widget.attr.type == 'file' || widget.attr.type == 'image'); %>
+        <% var cols = (widget.tag == 'textarea') ? 'col-xs-12' : 'col-md-6 col-lg-4'; %>
+        <% var labelabbr = (widget.help_text) ? 'abbr' : 'span'; %>
 
         <% if (is_visible && !is_checkbox) { %>
-            <div class="form-group">
+            <div class="form-group <%= cols %>">
                 <label class="control-label <% if (is_required) { %>text-danger<% } %>" for="field_<%= data.id %>_<%= widget.name %>">
-                    <%= widget.label %>
+                    <<%= labelabbr %> title="<%= widget.help_text || '' %>"><%= widget.label %></<%= labelabbr %>>
                 </label>
         <% } %>
 
         <% if (is_checkbox) { %>
             <!-- input as checkbox -->
             <% var _val = _.escape(data.fields[widget.name]) || '' %>
-            <div class="checkbox">
-                <label for="field_<%= data.id %>_<%= widget.name %>">
+            <div class="checkbox col-xs-12">
+                <label for="field_<%= data.id %>_<%= widget.name %>"
+                    class="control-label <% if (is_required) { %>text-danger<% } %>">
                     <input id="field_<%= data.id %>_<%= widget.name %>"
                         name="<%= widget.name %>"
                         type="checkbox"
@@ -27,51 +30,38 @@
                         <%= key %>="<%= val %>"
                     <% }); %>
                         <% if (data.fields[widget.name]) { %>checked<% } %>>
-                    <span> <% if (is_required) { %><strong><%= widget.label %></strong>
-                    <% } else { %><%= widget.label %><% } %></span>
+                    <<%= labelabbr %> title="<%= widget.help_text || '' %>">
+                        <strong><%= widget.label %></strong>
+                    </<%= labelabbr %>>
                 </label>
             </div>
 
-        
         <% } else if (is_file) { %>
             <!-- файл или картинка -->
             <% var _url = data.fields[widget.name] || '' %>
             <% var _val = _.escape(_url.split('/').pop()) || '' %>
-            <dl class="dl-horizontal">
-            <% /* Текст про существующий файл или картинка */ %>
-                <dt>На данный момент:</dt>
-            <% if (_val) { %>
-                <dd>
-                <% if (widget.attr.type == 'image') { %>
-                    <div class="col-xs-3">
-                        <a href="{{ MEDIA_URL }}<%= _url %>" download="<%= _val %>">
-                            <img src="{{ MEDIA_URL }}<%= _url %>" class="img-responsive" alt="<%= _val %>">
-                        </a>
-                    </div>
-                <% } else { %>
-                <a href="{{ MEDIA_URL }}<%= _url %>" class="label label-success" download="<%= _val %>">
-                    <span><i class="fa fa-download"></i> <%= _val %></span>
+            <div class="filechooser">
+                <a class='btn btn-default' href='javascript:void(0);'>
+                    Выбор...
+                <input
+                    class="fileinput"
+                    name="<%= widget.name %>"
+                    data-id="<%= data.id %>"
+                    type="file"
+                    <% _.each(widget.attr, function(val, key) { %>
+                        <% if (! key in {'type':0, 'name':0}) { %>
+                            <%= key %>="<%= val %>"
+                        <% } %>
+                    <% }); %>
+                    data-action="object_change"
+                    data-djangofield="<%= widget.djangofield %>">
+                </input>
                 </a>
-                <% } %>
-                </dd>
-            <% } %>
-                <dt>Изменить:</dt>
-            <% /* Кнопка выбора файла */ %>
-                <dd>
-                    <input
-                        name="<%= widget.name %>"
-                        data-id="<%= data.id %>"
-                        type="file"
-                        <% _.each(widget.attr, function(val, key) { %>
-                            <% if (! key in {'type':0, 'name':0}) { %>
-                                <%= key %>="<%= val %>"
-                            <% } %>
-                        <% }); %>
-                        data-action="object_change"
-                        data-djangofield="<%= widget.djangofield %>">
-                    </input>
-                </dd>
-            </dl>
+                <span id="filelabel_<%= data.id %>_<%= widget.name %>"
+                    class="filelabel <%= _val ? '' : 'hide' %>">
+                    <%= _val %></span>
+                </span>
+            </div>
 
         <% } else if (widget.choices) { %>
             <!-- widget.choices --> 
@@ -126,7 +116,7 @@
             <% var _val = data.fields[widget.name] || ['',''] %>
             <% var _val0 = _.escape(_val[0]) %>
             <% var _val1 = _.escape(_val[1]) %>
-            <div class="btn-group">
+            <div class="btn-group btn-block">
                 <% /* Кнопка значения и названия */ %>
                 <button name="<%= widget.name %>" value="<%= _val0 %>"
                     data-model="<%= widget.model %>"
@@ -136,7 +126,7 @@
                             <%= key %>="<%= val %>"
                         <% } %>
                     <% }); %>
-                    class="btn btn-default <%= widget.attr['class'] || '' %>"
+                    class="btn btn-default btn-select-label <%= widget.attr['class'] || '' %>"
                     data-action="object_change"
                     data-djangofield="<%= widget.djangofield %>"
                     data-id="<%= data.id %>"
@@ -173,7 +163,6 @@
                 </select>
         <% } %>
         <% if (!widget.hidden && !is_checkbox) { %>
-                <p class="help-block"><%= widget.help_text || '' %></p>
             </div>
         <% } %>
     <% }); %>

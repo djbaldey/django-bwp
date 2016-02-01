@@ -524,7 +524,22 @@ class BaseModel(object):
 
     def set_widgets(self):
         """ Устанавливает и возвращает виджеты. """
-        self.widgets = [ self.prepare_widget(field.name) for field in self.get_fields_objects() ]
+        widgets = []
+        norequires = []
+        checkboxes = []
+        for field in self.get_fields_objects():
+            w = self.prepare_widget(field.name)
+            if getattr(w, 'input_type', None) == 'checkbox':
+                checkboxes.append(w)
+            elif not getattr(field, 'blank', False) and field.name not in ('password', 'passwd'):
+                widgets.append(w)
+            else:
+                norequires.append(w)
+
+        widgets.extend(norequires)
+        widgets.extend(checkboxes)
+        self.widgets = widgets
+
         return self.widgets
 
     def get_widgets(self):
@@ -710,8 +725,9 @@ class BaseModel(object):
             fields = [ x for x in fields if x in search_fields ]
         else:
             fields = search_fields
-        return filterQueryset(queryset, fields,
-            query or self.get_search_query(request,**kwargs))
+        query = query or self.get_search_query(request, **kwargs)
+        queryset = filterQueryset(queryset, fields, query)
+        return queryset
 
     def get_bwp_model(self, request, model_name, **kwargs):
         """ Получает объект модели BWP согласно привилегий """

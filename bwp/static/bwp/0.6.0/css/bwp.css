@@ -262,8 +262,50 @@ table .headerSortUp:after {
     visibility: visible;
 }
 
-#main-tab {
+.collection-filters {
+    margin-top: 5px;
+}
+.collection-filters form.form-inline {
+    margin-top: 5px;
+}
+.collection-filters form.form-inline:first-child {
+    margin-top: 0px;
+}
+.collection-filters .panel-body, .collection-filters .panel-footer {
+    padding: 5px;
+    background-color: #f5f5f5;
+}
+
+div.filechooser {position:relative;}
+div.filechooser input.fileinput {
+    position: absolute;
+    z-index: 2;
+    top: 0;
+    left: 0;
+    height: 34px;
+    filter: alpha(opacity=0);
+    -ms-filter: 'progid:DXImageTransform.Microsoft.Alpha(Opacity=0)';
+    opacity: 0;
+    background-color: transparent;
+    color: transparent;
+}
+div.filechooser .filelabel {}
+
+/* Для col-md-6 col-lg-4 */
+.btn-select-label {overflow-x: hidden; max-width:87%}
+/* Medium devices (desktops, 992px and up) */
+@media (min-width: 992px) { .btn-select-label {max-width:83%} }
+/* Large devices (large desktops, 1200px and up) */
+@media (min-width: 1200px) { .btn-select-label {max-width:79%}  }
+
+.subnav {margin-top: 5px;}
+
+#main-tab, #main-tab-content {
+    margin-top: 5px;
     margin-bottom: 5px;
+} 
+#main-tab-content .page-header {
+    margin-top: 20px;
 } 
 
 #quickapi-docs code {
