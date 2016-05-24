@@ -461,8 +461,6 @@ def API_commit(request, objects, **kwargs):
     if not objects:
         return JSONResponse(data=False, status=400, message=_("List objects is blank!"))
 
-    error = None
-
     model_name = model_bwp = None
     try:
         with transaction.atomic():
@@ -520,17 +518,8 @@ def API_commit(request, objects, **kwargs):
                             if not six.PY3:
                                 error = error.encode('utf-8')
                             raise ValueError(error)
-
     except Exception as e:
-        #print '[ERROR] bwp.views.API_commit', e
-        #~ print_debug('def API_commit.objects ==', objects)
-        #~ if settings.DEBUG:
-            #~ return JSONResponse(status=500, message=force_text(e))
-        #~ raise e
-        return JSONResponse(status=400, message=error or force_text(e))
-
-    #~ if error:
-        #~ return JSONResponse(status=400, message=error)
+        return JSONResponse(status=400, message=force_text(e))
 
     return JSONResponse(data=True, message=_("Commited!"))
 
