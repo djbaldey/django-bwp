@@ -471,7 +471,7 @@ class AbstractPathBase(models.Model):
         """ Возвращаем корневого родителя """
         root = self
         while root:
-            if not root.parent:
+            if not root.parent or root == root.parent:
                 break
             root = root.parent
         return root
