@@ -37,8 +37,13 @@
 ###############################################################################
 """
 
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
+
 import json, urllib, base64, traceback
 from django.utils.encoding import force_text
+
 
 class BaseAPICleanError(Exception):
     pass
