@@ -19,12 +19,18 @@
 #  
 #  
 from __future__ import unicode_literals
+import ssl
 
 from django.utils.encoding import force_text
 from django.utils import six
 from django.http import SimpleCookie
 
 from quickapi.client import BaseClient, RemoteAPIError
+
+try:
+    ssl._create_default_https_context = ssl._create_unverified_context
+except:
+    pass
 
 
 class DeviceCookie(SimpleCookie):
