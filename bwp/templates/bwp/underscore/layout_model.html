@@ -7,7 +7,7 @@
 <% } else { var _per_page = data.meta.list_per_page;} %>
 
     <div class="col-md-5 col-lg-6 form-search">
-        <div class="input-group input-group-xs">
+        <div class="input-group input-group-sm">
 <!--
         <% if (data.meta.search_fields.length) { %>
             <span class="input-group-btn">
@@ -38,7 +38,7 @@
     <div class="col-md-7 col-lg-6">
         <div class="btn-toolbar pull-right">
         <% if (data.perms.add) { %>
-            <div class="btn-group btn-group-xs">
+            <div class="btn-group btn-group-sm">
                 <button class="btn btn-default" data-id="<%= data.id %>" data-action="<%= _obj_add %>">
                 <% if (data.is_m2m) { %>
                     <i class="fa fa-plus-sign"></i>
@@ -50,7 +50,7 @@
             </div>
         <% } %>
         <% if (data.actions && !$.isEmptyObject(data.actions)) { %>
-            <div class="btn-group btn-group-xs">
+            <div class="btn-group btn-group-sm">
                 <a  class="btn btn-default dropdown-toggle"
                     data-toggle="dropdown"
                     href="#">
@@ -66,7 +66,7 @@
             </div>
         <% } %>
         <% if (data.collection_reports) { %>
-            <div class="btn-group btn-group-xs">
+            <div class="btn-group btn-group-sm">
                 <a  class="btn btn-default dropdown-toggle"
                     data-toggle="dropdown"
                     href="#">
@@ -85,7 +85,7 @@
                 </ul>
             </div>
         <% } %>
-            <div class="btn-group btn-group-xs">
+            <div class="btn-group btn-group-sm">
             <% if (!isEmpty(data.meta.filters) || DEBUG) { %>
                 <button class="btn btn-default" data-id="<%= data.id %>"
                     data-action="collection_filters"
