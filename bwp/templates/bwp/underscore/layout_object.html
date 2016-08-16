@@ -1,6 +1,6 @@
 {# Шаблон Underscore #}
-    <div class="btn-group" data-toggle="buttons" data-id="<%= data.id %>">
-        <button class="btn btn-sm btn-primary active" data-toggle="tab" data-target="#objectpane_<%= data.id %>">
+    <div class="btn-group btn-group-xs" data-toggle="buttons" data-id="<%= data.id %>">
+        <button class="btn btn-primary active" data-toggle="tab" data-target="#objectpane_<%= data.id %>">
             <span>Объект</span>
         </button>
 
@@ -8,7 +8,7 @@
     <% if (data.pk && data.composes.length > 0) { %>
         <% _.each(data.composes, function(compose) { %>
             <% var _compose_btn_class = compose.is_m2m ? 'btn-info' : 'btn-default' %>
-            <button class="btn btn-sm <%= _compose_btn_class %>"
+            <button class="btn <%= _compose_btn_class %>"
                 data-toggle="tab" data-loading="true"
                 data-target="#layout_<%= compose.id %>" data-id="<%= compose.id %>">
                 <span><%= compose.label %></span>
@@ -17,9 +17,9 @@
     <% } %>
     </div>
 
-    <div class="btn-group">
+    <div class="btn-group btn-group-xs">
     <% if ((data.model.object_reports) && (data.pk)) { %>
-        <button class="btn btn-sm btn-default dropdown-toggle" data-toggle="dropdown">
+        <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
             <span><i class="fa fa-print"></i> Отчёты</span>
             <span class="caret"></span>
         </button>

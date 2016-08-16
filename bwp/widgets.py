@@ -71,7 +71,10 @@ class GeneralWidget(object):
         if self.field.related_model:
             opts = self.field.related_model._meta
             d['model'] = str(opts)
-            d['label'] = force_text(opts.verbose_name)
+            if hasattr(self.field, 'verbose_name'):
+                d['label'] = force_text(self.field.verbose_name)
+            else:
+                d['label'] = force_text(opts.verbose_name)
         else:
             d['label'] = force_text(self.field.verbose_name)
 

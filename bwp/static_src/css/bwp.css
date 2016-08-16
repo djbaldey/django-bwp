@@ -215,7 +215,8 @@ div.dataTables_paginate {
 }
 
 table {
-    margin: 5px 0;
+    margin-top: 5px !important;
+    margin-bottom: 5px !important; 
     clear: both;
 }
 
@@ -389,4 +390,20 @@ th.sorted-n4 {
     -webkit-border-radius:6px 0 6px 6px;
     -moz-border-radius:6px 0 6px 6px;
     border-radius:6px 0 6px 6px;
+}
+
+div .pagination {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+
+.input-group-xs>.form-control,
+.input-group-xs>.input-group-addon,
+.input-group-xs>.input-group-btn>.btn {
+    height: 22px;
+    padding: 1px 5px;
+    font-size: 12px;
+    line-height: 1.5;
+    border-radius: 3px;
 }
