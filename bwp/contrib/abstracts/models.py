@@ -38,7 +38,9 @@
 """
 from django.db import models, transaction
 from django.utils.translation import ugettext_lazy as _
-from django.utils import dateformat, timezone
+from django.utils import formats, timezone
+
+from django.utils.dateformat import format
 from django.contrib.auth.models import User
 from django.conf import settings 
 
@@ -214,57 +216,90 @@ class AbstractPerson(models.Model):
 
 class AbstractDocumentDate(models.Model):
     """ Абстрактная модель датированных документов """
-    created = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True)
-
-    date = models.DateField(
-            null=True, blank=True,
-            verbose_name = _("date"))
+    DATE_FORMAT = 'DATE_FORMAT'
+    created = models.DateTimeField(_("created"), auto_now_add=True)
+    updated = models.DateTimeField(_("updated"), auto_now=True)
+    date = models.DateField(_("date"), null=True, blank=True, db_index=True)
 
     def __unicode__(self):
         if self.pk:
-            doc = self._meta.verbose_name.split(' ')
-            doc[0] = doc[0].title()
             return _('%(document)s from %(date)s') % {
-                'document': ' '.join(doc), 'date': timezone.localtime(self.date)
+                'document': self._document_name,
+                'date': self._date_string
             }
         else:
             return _('New document')
+
+    @property
+    def _document_name(self):
+        doc = self._meta.verbose_name.split(' ')
+        doc[0] = doc[0].title()
+        return ' '.join(doc)
+
+    @property
+    def _date_string(self):
+        if not self.date:
+            return ''
+        value = timezone.localtime(self.date)
+        try:
+            return formats.date_format(value, self.DATE_FORMAT)
+        except AttributeError:
+            try:
+                return format(value, self.DATE_FORMAT)
+            except AttributeError:
+                return ''
 
     class Meta:
         ordering = ['-date',]
         abstract = True
 
     def save(self, **kwargs):
-        self.date = self.date or timezone.now().date()
+        if not self.date:
+            self.date = timezone.localtime(timezone.now()).date()
         super(AbstractDocumentDate, self).save(**kwargs)
 
 class AbstractDocumentDateTime(models.Model):
     """ Абстрактная модель датированных документов, включающих время """
-    created = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True)
-    date_time = models.DateTimeField(
-            null=True, blank=True,
-            verbose_name = _("date and time"))
-
-    def __unicode__(self):
-        if self.pk:
-            doc = self._meta.verbose_name.split(' ')
-            doc[0] = doc[0].title()
-            return _('%(document)s from %(date)s') % {
-                'document': ' '.join(doc),
-                'date': dateformat.format(timezone.localtime(self.date_time),
-                    'Y-m-d H:i:s') if self.date_time else 'None'
-            }
-        else:
-            return _('New document')
+    DATETIME_FORMAT = 'DATETIME_FORMAT'
+    created = models.DateTimeField(_("created"), auto_now_add=True)
+    updated = models.DateTimeField(_("updated"), auto_now=True)
+    date_time = models.DateTimeField(_("date and time"), null=True, blank=True, db_index=True)
 
     class Meta:
         ordering = ['-date_time']
         abstract = True
 
+    def __unicode__(self):
+        if self.pk:
+            return _('%(document)s from %(date)s') % {
+                'document': self._document_name,
+                'date': self._date_string
+            }
+        else:
+            return _('New document')
+
+    @property
+    def _document_name(self):
+        doc = self._meta.verbose_name.split(' ')
+        doc[0] = doc[0].title()
+        return ' '.join(doc)
+
+    @property
+    def _date_string(self):
+        if not self.date_time:
+            return ''
+        value = timezone.localtime(self.date_time)
+        try:
+            return formats.date_format(value, self.DATETIME_FORMAT)
+        except AttributeError:
+            try:
+                return format(value, self.DATETIME_FORMAT)
+            except AttributeError:
+                return ''
+
     def save(self, **kwargs):
-        self.date_time = self.date_time or timezone.now()
+        if not self.date_time:
+            self.date_time = timezone.now()
         super(AbstractDocumentDateTime, self).save(**kwargs)
 
 class AbstractGroup(models.Model):
