@@ -51,7 +51,6 @@ class PermissionAdmin(ModelBWP):
     search_fields = (
         'name',
         'codename',
-        'content_type__name',
         'content_type__app_label',
         'content_type__model',
     )
@@ -62,7 +61,6 @@ class PermissionCompose(ManyToManyBWP):
     search_fields = (
         'name',
         'codename',
-        'content_type__name',
         'content_type__app_label',
         'content_type__model',
     )
