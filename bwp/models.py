@@ -828,7 +828,7 @@ class BaseModel(object):
         Can be overriden by the user in subclasses.
         """
         opts = self.opts
-        perm = '%s.%s_add' % (opts.app_label, opts.model_name)
+        perm = '%s.add_%s' % (opts.app_label, opts.model_name)
         return request.user.has_perm(perm)
 
     def has_change_permission(self, request, object=None):
@@ -843,7 +843,7 @@ class BaseModel(object):
         request has permission to change *any* object of the given type.
         """
         opts = self.opts
-        perm = '%s.%s_change' % (opts.app_label, opts.model_name)
+        perm = '%s.change_%s' % (opts.app_label, opts.model_name)
         return request.user.has_perm(perm)
 
     def has_delete_permission(self, request, object=None):
@@ -858,7 +858,7 @@ class BaseModel(object):
         request has permission to delete *any* object of the given type.
         """
         opts = self.opts
-        perm = '%s.%s_delete' % (opts.app_label, opts.model_name)
+        perm = '%s.delete_%s' % (opts.app_label, opts.model_name)
         return request.user.has_perm(perm)
 
     def get_model_perms(self, request):

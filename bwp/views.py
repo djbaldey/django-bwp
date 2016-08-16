@@ -250,7 +250,7 @@ def API_get_apps(request, device=None, **kwargs):
     """
     data=site.serialize(request)
     if not data:
-        return JSONResponse(message=403)
+        return JSONResponse(message=403, data=[])
     return JSONResponse(data=data)
 
 @api_required
