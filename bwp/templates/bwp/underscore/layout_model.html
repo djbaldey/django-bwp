@@ -20,15 +20,11 @@
 
             <input data-action="collection_search"
                     data-id="<%= data.id %>"
-                <% if (data.meta.search_fields.length) { %>
                     type="text"
-                <% } else { %>
-                    type="hidden"
-                <% } %>
                     class="form-control search"
                     placeholder="Поиск"
-                    autofocus
-                    value="<%= data.query %>">
+                    value="<%= data.query %>"
+                    <%= !data.meta.search_fields.length? 'readonly' : 'autofocus' %>>
 
             <span class="input-group-btn">
                 <button class="btn btn-default" data-id="<%= data.id %>" title="Обновить" data-action="collection_search_refresh">
