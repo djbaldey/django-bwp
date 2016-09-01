@@ -40,7 +40,7 @@ import os
 from django.utils.translation import ugettext_lazy as _
 __label__ = _('platform')
 
-VERSION = (0, 5, 2)
+VERSION = (0, 5, 3)
 __version__ = '.'.join([ str(x) for x in VERSION ])
 
 def auto_remove_version_links(path):
