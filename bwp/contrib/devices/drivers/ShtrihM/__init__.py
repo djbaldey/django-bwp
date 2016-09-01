@@ -316,7 +316,21 @@ class ShtrihFRK(object):
 
         group_hash = self.make_spooler(self.reset)
 
-        return self.result_spooler(group_hash, self.kkt.x41)
+        result = self.result_spooler(group_hash, self.kkt.x41)
+
+        # Автоматическая коррекция времени после закрытия смены
+        status = self.status(False)
+        now = datetime.datetime.now()
+        cur = '%s %s' % (status['date'], status['time'])
+        try:
+            cur = datetime.datetime.strptime(cur, '%Y-%m-%d %H:%M:%S')
+        except ValueError:
+            diff = now - dt
+            if abs(diff.total_seconds()) > 60:
+                self.setup_time(now)
+                self.setup_date(now)
+
+        return result
 
     def cancel_receipt(self):
         """ Отмена чека """
@@ -332,23 +346,25 @@ class ShtrihFRK(object):
 
         return self.cancel_receipt()
 
-    def setup_date(self):
+    def setup_date(self, now=None):
         """ Установка даты как в компьютере """
         if self.is_remote:
             return self.remote("setup_date")
 
-        now = datetime.datetime.now() 
+        if not now:
+            now = datetime.datetime.now()
         error = self.kkt.x22(now.year, now.month, now.day)
         if error:
             return error
         return self.kkt.x23(now.year, now.month, now.day)
 
-    def setup_time(self):
+    def setup_time(self, now=None):
         """ Установка времени как в компьютере """
         if self.is_remote:
             return self.remote("setup_time")
 
-        now = datetime.datetime.now()
+        if not now:
+            now = datetime.datetime.now()
         return self.kkt.x21(now.hour, now.minute, now.second)
 
     def add_money(self, summa):
