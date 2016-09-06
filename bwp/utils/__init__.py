@@ -81,4 +81,8 @@ def get_slug_datetime_iso(datetime_value, as_list=False, as_os_path=False):
         return iso.split('-')
     return iso
 
+def make_list(val):
+    if val and not isinstance(val, (list, tuple)):
+        return [val]
+    return val
 
