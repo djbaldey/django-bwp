@@ -43,7 +43,7 @@ from bwp.models import TempUploadFile
 from bwp.forms import BWPAuthenticationForm, TempUploadFileForm
 from bwp import conf
 from bwp.conf import settings
-from bwp.utils import print_debug
+from bwp.utils import print_debug, make_list
 from bwp.utils.http import get_http_400, get_http_403, get_http_404
 
 import os, decimal
@@ -380,8 +380,8 @@ def API_get_collection(request, model, pk=None, compose=None, page=1,
         'query': query,
         'per_page': per_page,
         'ordering': ordering,
-        'fields': fields,
-        'filters': filters,
+        'fields': make_list(fields),
+        'filters': make_list(filters),
         'pk':pk, 
     }
 
