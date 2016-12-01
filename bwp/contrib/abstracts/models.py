@@ -36,21 +36,25 @@
 #   <http://www.gnu.org/licenses/>.
 ###############################################################################
 """
-from django.db import models, transaction
-from django.utils.translation import ugettext_lazy as _
-from django.utils import formats, timezone
-
-from django.utils.dateformat import format
-from django.contrib.auth.models import User
-from django.conf import settings 
-
-from bwp.utils.classes import upload_to
-from bwp.utils.filters import filterQueryset
-from bwp.utils import remove_file
-from bwp.db import fields
+from __future__ import unicode_literals
 import os
 from unidecode import unidecode
 
+from django.conf import settings
+from django.contrib.auth.models import User
+from django.db import models, transaction
+from django.utils import formats, timezone
+from django.utils.dateformat import format
+from django.utils.encoding import python_2_unicode_compatible
+from django.utils.translation import ugettext_lazy as _
+
+from bwp.db import fields
+from bwp.utils import remove_file
+from bwp.utils.classes import upload_to
+from bwp.utils.filters import filterQueryset
+
+
+@python_2_unicode_compatible
 class AbstractOrg(models.Model):
     """ Абстрактная модель организации """
     DOCUMENT_CHOICES = (
@@ -147,13 +151,15 @@ class AbstractOrg(models.Model):
             verbose_name = _("about"),
             help_text = _("about organization"))
 
-    def __unicode__(self):
+    def __str__(self):
         return self.title
 
     class Meta:
         ordering = ['title']
         abstract = True
 
+
+@python_2_unicode_compatible
 class AbstractPerson(models.Model):
     """ Абстрактная модель персоны """
     last_name = models.CharField(
@@ -194,8 +200,8 @@ class AbstractPerson(models.Model):
             verbose_name = _("about"),
             help_text = _("about person"))
 
-    def __unicode__(self):
-        fio = u' '.join(
+    def __str__(self):
+        fio = ' '.join(
                 [self.last_name, self.first_name, self.middle_name]
                 ).replace("  ", ' ')
         return fio
@@ -209,11 +215,13 @@ class AbstractPerson(models.Model):
         middle = self.middle_name[0] if self.middle_name else None
         res = None
         if first and middle:
-            res = u'%s %s.%s.' % (self.last_name, first, middle)
+            res = '%s %s.%s.' % (self.last_name, first, middle)
         elif first:
-            res = u'%s %s.' % (self.last_name, first)
-        return res or u'%s' % (self.last_name,)
+            res = '%s %s.' % (self.last_name, first)
+        return res or '%s' % (self.last_name,)
 
+
+@python_2_unicode_compatible
 class AbstractDocumentDate(models.Model):
     """ Абстрактная модель датированных документов """
     DATE_FORMAT = 'DATE_FORMAT'
@@ -221,7 +229,7 @@ class AbstractDocumentDate(models.Model):
     updated = models.DateTimeField(_("updated"), auto_now=True)
     date = models.DateField(_("date"), null=True, blank=True, db_index=True)
 
-    def __unicode__(self):
+    def __str__(self):
         if self.pk:
             return _('%(document)s from %(date)s') % {
                 'document': self._document_name,
@@ -258,6 +266,8 @@ class AbstractDocumentDate(models.Model):
             self.date = timezone.localtime(timezone.now()).date()
         super(AbstractDocumentDate, self).save(**kwargs)
 
+
+@python_2_unicode_compatible
 class AbstractDocumentDateTime(models.Model):
     """ Абстрактная модель датированных документов, включающих время """
     DATETIME_FORMAT = 'DATETIME_FORMAT'
@@ -269,7 +279,7 @@ class AbstractDocumentDateTime(models.Model):
         ordering = ['-date_time']
         abstract = True
 
-    def __unicode__(self):
+    def __str__(self):
         if self.pk:
             return _('%(document)s from %(date)s') % {
                 'document': self._document_name,
@@ -302,31 +312,37 @@ class AbstractDocumentDateTime(models.Model):
             self.date_time = timezone.now()
         super(AbstractDocumentDateTime, self).save(**kwargs)
 
+
+@python_2_unicode_compatible
 class AbstractGroup(models.Model):
     """ Абстрактная модель группы или категории """
     title = models.CharField(
             max_length=255,
             verbose_name = _('title'))
 
-    def __unicode__(self):
+    def __str__(self):
         return self.title
 
     class Meta:
         ordering = ['title',]
         abstract = True
 
+
+@python_2_unicode_compatible
 class AbstractGroupText(models.Model):
     """ Абстрактная модель группы или категории с длинным полем"""
     title = models.TextField(
             verbose_name = _('title'))
 
-    def __unicode__(self):
+    def __str__(self):
         return self.title
 
     class Meta:
         ordering = ['title',]
         abstract = True
 
+
+@python_2_unicode_compatible
 class AbstractGroupUnique(models.Model):
     """ Абстрактная модель уникальной группы или категории """
     title = models.CharField(
@@ -334,13 +350,15 @@ class AbstractGroupUnique(models.Model):
             unique=True,
             verbose_name = _('title'))
 
-    def __unicode__(self):
+    def __str__(self):
         return self.title
 
     class Meta:
         ordering = ['title',]
         abstract = True
 
+
+@python_2_unicode_compatible
 class AbstractHierarchy(models.Model):
     """ Абстрактная модель иерархического списка.
 
@@ -395,7 +413,7 @@ class AbstractHierarchy(models.Model):
     is_container = True
 
 
-    def __unicode__(self):
+    def __str__(self):
         return self.title
 
     class Meta:
@@ -459,13 +477,15 @@ class AbstractHierarchy(models.Model):
         self.save_path()
         super(AbstractHierarchy, self).save(**kwargs)
 
+
+@python_2_unicode_compatible
 class AbstractPathBase(models.Model):
     """ Класс для общих методов моделей иерархических путей """
     title        = ''
     parent_path  = ''
     is_container = True
 
-    def __unicode__(self):
+    def __str__(self):
         return self.title
 
     class Meta:
@@ -576,6 +596,7 @@ class AbstractPathBase(models.Model):
             ).update(is_container=True)
         super(AbstractPathBase, self).save(**kwargs)
 
+
 class AbstractPathByID(AbstractPathBase):
     """ Абстрактная модель иерархического списка, основанном на методе
         хранения родительского пути в отдельном поле.
@@ -621,6 +642,7 @@ class AbstractPathByID(AbstractPathBase):
     class Meta:
         ordering = ['parent_path', 'title']
         abstract = True
+
 
 class AbstractPathByTitle(AbstractPathBase):
     """ Абстрактная модель иерархического списка, основанном на методе
@@ -699,6 +721,8 @@ class AbstractPathByTitle(AbstractPathBase):
         self.path = self.get_object_path(from_parents=True)
         super(AbstractPathByTitle, self).save(**kwargs)
 
+
+@python_2_unicode_compatible
 class AbstractData(models.Model):
     """ Класс, предоставляющий общие методы для фото, видео-кода, файлов. """
     label = models.CharField(
@@ -706,17 +730,17 @@ class AbstractData(models.Model):
             blank=True,
             verbose_name=_('label'))
 
-    default_label_type = u'%s' % _('file')
+    default_label_type = '%s' % _('file')
 
-    def __unicode__(self):
-        return self.label or u'%s' % self.id
+    def __str__(self):
+        return self.label or '%s' % self.id
 
     def get_default_label(self):
         c = self.__class__.objects.count() + 1
         return '%s %07d' % (self.default_label_type, c)
 
     def get_default_filename(self, name=None):
-        return u'%s' % unidecode(name).lower().replace(' ', '_')
+        return '%s' % unidecode(name).lower().replace(' ', '_')
 
     def upload_to(self, filename):
         classname = self.__class__.__name__.lower()
@@ -728,14 +752,15 @@ class AbstractData(models.Model):
             'month': date.month,
             'day': date.day,
         }
-        return u'%(classname)s/%(year)s/%(month)s/%(day)s/%(filename)s' % dic
+        return '%(classname)s/%(year)s/%(month)s/%(day)s/%(filename)s' % dic
 
     class Meta:
         abstract = True
 
+
 class AbstractVideoCode(AbstractData):
     """ Абстрактная модель для видео из внешних источников (код) """
-    default_label_type = u'%s' % _('videocode')
+    default_label_type = '%s' % _('videocode')
     code = models.TextField( 
             verbose_name=_('code'),
             help_text=_("Set your code for video on the www.youtube.com"))
@@ -747,6 +772,7 @@ class AbstractVideoCode(AbstractData):
     class Meta:
         abstract = True
 
+
 class AbstractImage(AbstractData):
     """ Абстрактная модель для изображений """
     IMGAGE_SETTINGS = {
@@ -757,7 +783,7 @@ class AbstractImage(AbstractData):
         'max_width': 1024,
         'max_height': 1024,
     }
-    default_label_type = u'%s' % _('image')
+    default_label_type = '%s' % _('image')
     image = fields.ThumbnailImageField(upload_to=upload_to, 
             verbose_name=_('image'),
             **IMGAGE_SETTINGS)
@@ -793,9 +819,10 @@ class AbstractImage(AbstractData):
     class Meta:
         abstract = True
 
+
 class AbstractFile(AbstractData):
     """ Абстрактная модель для файлов """
-    default_label_type = u'%s' % _('file')
+    default_label_type = '%s' % _('file')
     file = models.FileField(upload_to=upload_to, 
             max_length=260,
             verbose_name=_('file'))
@@ -824,6 +851,8 @@ class AbstractFile(AbstractData):
     class Meta:
         abstract = True
 
+
+@python_2_unicode_compatible
 class AbstractUserSettings(models.Model):
     """ Общая модель """
     user = models.ForeignKey(
@@ -833,7 +862,7 @@ class AbstractUserSettings(models.Model):
             blank=True,
             verbose_name = _('JSON value'))
 
-    def __unicode__(self):
+    def __str__(self):
         return unicode(self.user)
 
     class Meta:
@@ -842,3 +871,5 @@ class AbstractUserSettings(models.Model):
     @property
     def value(self):
         return self.json
+
+
