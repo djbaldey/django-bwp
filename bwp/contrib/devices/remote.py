@@ -47,7 +47,7 @@ class DeviceCookie(SimpleCookie):
         cookies = self.device.cookies
         if not six.PY3:
             cookies = cookies.encode('utf-8')
-        super(DeviceCookie, self).load(s)
+        super(DeviceCookie, self).load(cookies)
 
     def save(self, **kwargs):
         """ Сохранение изменённых куков в модель """
