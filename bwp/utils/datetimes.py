@@ -101,8 +101,12 @@ def datetime_server(value=None):
     if not value:
         value = timezone.now()
 
+    if timezone.is_naive(value):
+        return value
+
     tz_curr = timezone.get_current_timezone()
     tz_serv = timezone.get_default_timezone()
+
 
     if tz_curr != tz_serv:
         timezone.activate(tz_serv)
