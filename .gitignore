@@ -2,11 +2,7 @@
 *.pot
 *.py[co]
 __pycache__
-MANIFEST
 dist/
-docs/_build/
 build/
-example/media/
-*.sqlite3
 .hg/
 .hgtags
