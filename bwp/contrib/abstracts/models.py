@@ -248,7 +248,7 @@ class AbstractDocumentDate(models.Model):
     def _date_string(self):
         if not self.date:
             return ''
-        value = timezone.localtime(self.date)
+        value = self.date
         try:
             return formats.date_format(value, self.DATE_FORMAT)
         except AttributeError:
