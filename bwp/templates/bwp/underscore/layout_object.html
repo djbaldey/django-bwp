@@ -45,13 +45,12 @@
             <h3 class="page-header">
                 <%= data.label %> <span class="pull-right"><%= data.pk ? 'ID='+data.pk : '' %></span>
             </h3>
-            
-            <form data-id="<%= data.id %>" class="form row">
+            <form data-id="<%= data.id %>" class="form-horizontal">
                 {% include "bwp/underscore/_object_fields.html" %}
             </form>
-
-            <div class="control-group">
-                <div class="controls">
+            <hr>
+            <div class="row">
+                <div class="col-sm-offset-2 col-sm-10">
                     <div class="btn-group">
                         {% include "bwp/underscore/_button_delete.html" %}
                         {% include "bwp/underscore/_button_reset.html" %}

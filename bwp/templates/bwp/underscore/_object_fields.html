@@ -1,23 +1,24 @@
 {# Шаблон Underscore #}
-    <% _.each(data.widgets, function(widget) { %>
-        <% var is_visible = !widget.hidden; %>
-        <% var is_required = widget.attr.required; %>
-        <% var is_checkbox = widget.attr.type && (widget.attr.type == 'checkbox'); %>
-        <% var is_file = (!is_checkbox) && (widget.attr.type == 'file' || widget.attr.type == 'image'); %>
-        <% var cols = (widget.tag == 'textarea') ? 'col-xs-12' : 'col-md-6 col-lg-4'; %>
-        <% var labelabbr = (widget.help_text) ? 'abbr' : 'span'; %>
+<% _.each(data.widgets, function(widget) { %>
+    <% var is_visible = !widget.hidden; %>
+    <% var is_required = widget.attr.required; %>
+    <% var is_checkbox = widget.attr.type && (widget.attr.type == 'checkbox'); %>
+    <% var is_file = (!is_checkbox) && (widget.attr.type == 'file' || widget.attr.type == 'image'); %>
+
+    <div class="form-group <%= is_visible ? '' : 'hidden' %>">
 
         <% if (is_visible && !is_checkbox) { %>
-            <div class="form-group <%= cols %>">
-                <label class="control-label <% if (is_required) { %>text-danger<% } %>" for="field_<%= data.id %>_<%= widget.name %>">
-                    <<%= labelabbr %> title="<%= widget.help_text || '' %>"><%= widget.label %></<%= labelabbr %>>
-                </label>
+            <label class="col-sm-2 control-label <% if (is_required) { %>text-danger<% } %>" for="field_<%= data.id %>_<%= widget.name %>">
+                <span><%= widget.label %></span>
+            </label>
         <% } %>
+
+        <div class="<%= is_checkbox ? 'col-sm-offset-2' : '' %> col-sm-10">
 
         <% if (is_checkbox) { %>
             <!-- input as checkbox -->
             <% var _val = _.escape(data.fields[widget.name]) || '' %>
-            <div class="checkbox col-xs-12">
+            <div class="checkbox">
                 <label for="field_<%= data.id %>_<%= widget.name %>"
                     class="control-label <% if (is_required) { %>text-danger<% } %>">
                     <input id="field_<%= data.id %>_<%= widget.name %>"
@@ -30,9 +31,9 @@
                         <%= key %>="<%= val %>"
                     <% }); %>
                         <% if (data.fields[widget.name]) { %>checked<% } %>>
-                    <<%= labelabbr %> title="<%= widget.help_text || '' %>">
+                    <span title="<%= widget.help_text || '' %>">
                         <strong><%= widget.label %></strong>
-                    </<%= labelabbr %>>
+                    </span>
                 </label>
             </div>
 
@@ -162,7 +163,10 @@
                 data-id="<%= data.id %>"><%= data.fields[widget.name] %>
                 </select>
         <% } %>
-        <% if (!widget.hidden && !is_checkbox) { %>
-            </div>
+
+        <% if (widget.help_text) { %>
+            <span class="help-block"><%= widget.help_text %></span>
         <% } %>
-    <% }); %>
+        </div>
+    </div>
+<% }); %>
