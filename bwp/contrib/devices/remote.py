@@ -19,43 +19,17 @@
 #  
 #  
 from __future__ import unicode_literals
+import os
 import ssl
+from tempfile import NamedTemporaryFile
 
-from django.utils.encoding import force_text
-from django.utils import six
-from django.http import SimpleCookie
-
-from quickapi.client import BaseClient, RemoteAPIError
+from quickapi.client import BaseClient, RemoteAPIError, MozillaCookieJar
 
 try:
     ssl._create_default_https_context = ssl._create_unverified_context
 except:
     pass
 
-
-class DeviceCookie(SimpleCookie):
-    """
-    Класс для загрузки/сохранения куков в модель устройства.
-    """
-    def __init__(self, device, **kwargs):
-        """ Инициализация """
-        self.device = device
-        super(DeviceCookie, self).__init__(**kwargs)
-
-    def load(self):
-        """ Загрузка из модели """
-        cookies = self.device.cookies
-        if not six.PY3:
-            cookies = cookies.encode('utf-8')
-        super(DeviceCookie, self).load(cookies)
-
-    def save(self, **kwargs):
-        """ Сохранение изменённых куков в модель """
-        cookies = self.output()
-        if self.device.cookies != cookies:
-            self.device.cookies = cookies
-            self.device.save()
-    
 
 class Client(BaseClient):
     """ Соединение с удалённым API, где расположено устройство """
@@ -64,14 +38,14 @@ class Client(BaseClient):
 
     def __init__(self, device=None, **kwargs):
         """ Инициализация """
-        self.device = device
-        self.set_cookiejar(device)
-        super(Client, self).__init__(**kwargs)
-
-    def set_cookiejar(self, device):
         if device and hasattr(device, 'cookies'):
-            self.cookiejar = DeviceCookie(device)
-            self.cookiejar.load()
+            if not device.cookies or not os.path.exists(device.cookies):
+                f = NamedTemporaryFile(delete=False)
+                device.cookies = f.name
+                device.save()
+                f.close()
+            kwargs['cookie_filename'] = device.cookies
+        super(Client, self).__init__(**kwargs)
 
 
 class RemoteCommand(object):
