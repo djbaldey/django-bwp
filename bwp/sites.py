@@ -19,18 +19,16 @@
 #  
 #  
 from __future__ import unicode_literals
-import copy
-from importlib import import_module
 
-from django.db.models.base import ModelBase
+from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.utils.module_loading import module_has_submodule
+from django.db.models.base import ModelBase
+from django.utils.module_loading import autodiscover_modules
 from django.utils.text import capfirst
 from django.utils.translation import ugettext as _
 
 from bwp.models import ModelBWP
 from bwp.forms import BWPAuthenticationForm
-from bwp.conf import settings
 from bwp.templatetags.bwp_locale import app_label_locale
 
 
@@ -265,29 +263,6 @@ class BWPSite(object):
 # You can instantiate BWPSite in your own code to create a custom bwp site.
 site = BWPSite()
 
+
 def autodiscover():
-    """
-    Auto-discover INSTALLED_APPS __bwp__.py modules and fail silently when
-    not present. This forces an import on them to register any bwp bits they
-    may want.
-    """
-
-    for app in settings.INSTALLED_APPS:
-        mod = import_module(app)
-        # Attempt to import the app's bwp module.
-        try:
-            before_import_registry = copy.copy(site._registry)
-            import_module('%s.__bwp__' % app)
-        except:
-            # Reset the model registry to the state before the last import as
-            # this import will have to reoccur on the next request and this
-            # could raise NotRegistered and AlreadyRegistered exceptions
-            # (see #8245).
-            site._registry = before_import_registry
-
-            # Decide whether to bubble up this error. If the app just
-            # doesn't have an bwp module, we can ignore the error
-            # attempting to import it, otherwise we want it to bubble up.
-            if module_has_submodule(mod, '__bwp__'):
-                raise
-
+    autodiscover_modules('__bwp__', register_to=site)

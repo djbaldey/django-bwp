@@ -19,18 +19,17 @@
 #   <http://www.gnu.org/licenses/>.
 #
 
-VERSION = (0, 6, 2)
+VERSION = (0, 6, 3)
+
 
 def get_version(*args, **kwargs):
     return '%d.%d.%d' % VERSION
 
+
 def get_docs_version(*args, **kwargs):
     return '%d.%d' % VERSION[:2]
 
+
 __version__ = get_version()
 
-default_app_config = 'bwp.apps.AppConfig'
-
-
-
-
+default_app_config = 'bwp.apps.BwpConfig'

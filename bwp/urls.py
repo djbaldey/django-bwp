@@ -21,11 +21,8 @@
 from django.conf import settings
 from django.conf.urls import include, url
 
-from bwp.sites import autodiscover
 from bwp.views import index, login, logout, upload, api
 
-
-autodiscover()
 
 urlpatterns = [
     url(r'^$',        index,  name='bwp_index'),
@@ -46,4 +43,3 @@ if settings.DEBUG:
 
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-

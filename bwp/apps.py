@@ -19,11 +19,15 @@
 #   <http://www.gnu.org/licenses/>.
 #
 
-from django.apps import AppConfig as BaseAppConfig
+from django.apps import AppConfig
 from django.utils.translation import ugettext_lazy as _
 
 
-class AppConfig(BaseAppConfig):
+class BwpConfig(AppConfig):
     name = 'bwp'
     verbose_name = _('Platform')
 
+    def ready(self):
+        super(BwpConfig, self).ready()
+        from bwp.sites import autodiscover
+        autodiscover()
