@@ -41,6 +41,7 @@ class ShtrihFRK(object):
     local_device = None
     kkt = None
     is_remote = False
+    is_open = False
 
     def __init__(self, remote=False, *args, **kwargs):
         if remote:
@@ -147,7 +148,16 @@ class ShtrihFRK(object):
         """ Начало работы с ККТ """
         if self.is_remote:
             return self.remote("open")
-        return True
+
+        if not self.is_open:
+            kkt_mode = self.kkt.x10()['kkt_mode']
+            if kkt_mode == 4:
+                self.kkt.xE0()
+                self.is_open = True
+            else:
+                self.is_open = True
+
+        return self.is_open
 
     def status(self, short=True):
         """ Cостояние ККТ, по-умолчанию короткое """
@@ -179,6 +189,30 @@ class ShtrihFRK(object):
         for line in text.split('\n'):
             self.append_spooler(group_hash, self.kkt.x17_loop, text=line)
         return self.result_spooler(group_hash, self.cut_tape, strict=False)
+
+    def make_discount(self, discount, cash, credit, card):
+        if cash >= discount:
+            cash -= discount
+            return discount, cash, credit, card
+        else:
+            discount -= cash
+            cash = 0
+
+        if credit >= discount:
+            credit -= discount
+            return discount, cash, credit, card
+        else:
+            discount -= credit
+            credit = 0
+
+        if card >= discount:
+            card -= discount
+            return discount, cash, credit, card
+        else:
+            discount -= card
+            card = 0
+
+        return discount, cash, credit, card
 
     def print_receipt(self, specs, cash=0, credit=0, packaging=0, card=0,
                       discount_summa=0, discount_percent=0, document_type=0,
