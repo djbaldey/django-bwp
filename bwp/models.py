@@ -1,85 +1,67 @@
 # -*- coding: utf-8 -*-
-"""
-###############################################################################
-# Copyright 2013 Grigoriy Kramarenko.
-###############################################################################
-# This file is part of BWP.
 #
-#    BWP is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation, either version 3 of the License, or
-#    (at your option) any later version.
+#  bwp/models.py
 #
-#    BWP is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
+#  Copyright 2013 Grigoriy Kramarenko <root@rosix.ru>
 #
-#    You should have received a copy of the GNU General Public License
-#    along with BWP.  If not, see <http://www.gnu.org/licenses/>.
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 3 of the License, or
+#  (at your option) any later version.
 #
-# Этот файл — часть BWP.
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
 #
-#   BWP - свободная программа: вы можете перераспространять ее и/или
-#   изменять ее на условиях Стандартной общественной лицензии GNU в том виде,
-#   в каком она была опубликована Фондом свободного программного обеспечения;
-#   либо версии 3 лицензии, либо (по вашему выбору) любой более поздней
-#   версии.
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+#  MA 02110-1301, USA.
 #
-#   BWP распространяется в надежде, что она будет полезной,
-#   но БЕЗО ВСЯКИХ ГАРАНТИЙ; даже без неявной гарантии ТОВАРНОГО ВИДА
-#   или ПРИГОДНОСТИ ДЛЯ ОПРЕДЕЛЕННЫХ ЦЕЛЕЙ. Подробнее см. в Стандартной
-#   общественной лицензии GNU.
 #
-#   Вы должны были получить копию Стандартной общественной лицензии GNU
-#   вместе с этой программой. Если это не так, см.
-#   <http://www.gnu.org/licenses/>.
-###############################################################################
-"""
 from __future__ import unicode_literals
 
-from django.db import models, transaction
-from django.db.models.fields.files import FileField, ImageField
-from django.utils.translation import ugettext, ugettext_lazy as _ 
-from django.contrib.contenttypes.models import ContentType
-from django.contrib.auth.models import User, Group
-from django.utils.encoding import force_text, python_2_unicode_compatible
-from django.utils.safestring import mark_safe
-from django.utils.html import escape
-from django.utils import six, timezone
-from django.utils.text import capfirst
-from django.utils.crypto import get_random_string
-from django.core.paginator import Paginator, Page, PageNotAnInteger, EmptyPage
-from django.shortcuts import redirect
-
-from django.http import (HttpResponseNotFound, HttpResponseBadRequest,
-    HttpResponseForbidden)
-from quickapi.http import JSONResponse
-
+import os
 from copy import deepcopy
 from datetime import timedelta
-import os
 
-from bwp.utils.convertors import serialize
-from bwp.utils.http import get_http_400, get_http_403, get_http_404
-from bwp.utils.filters import filterQueryset
-from bwp.utils.classes import upload_to
-from bwp.utils import print_debug
+from django.contrib.auth.models import User, Group
+from django.contrib.contenttypes.models import ContentType
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
+from django.db import models, transaction
+from django.db.models.fields.files import FileField, ImageField
+from django.utils import six, timezone
+from django.utils.crypto import get_random_string
+from django.utils.encoding import force_text, python_2_unicode_compatible
+from django.utils.html import escape
+from django.utils.text import capfirst
+from django.utils.translation import ugettext, ugettext_lazy as _
+
+from quickapi.http import JSONResponse
 
 from bwp import conf
-from bwp.widgets import get_widget_from_field
 from bwp.contrib.abstracts.models import AbstractUserSettings
+from bwp.utils.classes import upload_to
+from bwp.utils.convertors import serialize
+from bwp.utils.filters import filterQueryset
+from bwp.utils.http import get_http_403, get_http_404
+from bwp.widgets import get_widget_from_field
+
 
 ADDING = 1
 CHANGE = 2
 DELETE = 3
 
+
 class LogEntryManager(models.Manager):
     def log_action(self, user_id, content_type_id, object_id,
-    object_repr, action_flag, change_message=''):
-        e = self.model(None, None, user_id, content_type_id,
+                   object_repr, action_flag, change_message=''):
+        e = self.model(
+            None, None, user_id, content_type_id,
             force_text(object_id), object_repr[:200],
-            action_flag, change_message)
+            action_flag, change_message
+        )
         e.save()
 
 
@@ -87,7 +69,8 @@ class LogEntryManager(models.Manager):
 class LogEntry(models.Model):
     action_time = models.DateTimeField(_('action time'), auto_now=True)
     user = models.ForeignKey(User, related_name='bwp_log_set')
-    content_type = models.ForeignKey(ContentType, blank=True, null=True, related_name='bwp_log_set')
+    content_type = models.ForeignKey(ContentType, blank=True, null=True,
+                                     related_name='bwp_log_set')
     object_id = models.TextField(_('object id'), blank=True, null=True)
     object_repr = models.CharField(_('object repr'), max_length=200)
     action_flag = models.PositiveSmallIntegerField(_('action flag'))
@@ -105,7 +88,10 @@ class LogEntry(models.Model):
         return force_text(self.action_time)
 
     def __str__(self):
-        D = {'object': self.object_repr, 'changes': escape(self.change_message)}
+        D = {
+            'object': self.object_repr,
+            'changes': escape(self.change_message),
+        }
         if self.action_flag == ADDING:
             D['action'] = _('added').title()
         elif self.action_flag == CHANGE:
@@ -117,7 +103,6 @@ class LogEntry(models.Model):
                 return '%(action)s «%(object)s» - %(changes)s' % D
             else:
                 return '%(action)s «%(object)s»' % D
-
         return _('LogEntry Object')
 
     def is_addition(self):
@@ -136,21 +121,12 @@ class LogEntry(models.Model):
 
 @python_2_unicode_compatible
 class PermissionRead(models.Model):
-    hidden = models.BooleanField(
-            default=False,
-            verbose_name=_('as hidden'))
-    content_type = models.ForeignKey(
-            ContentType,
-            blank=True, null=True,
-            verbose_name=_('content type'))
-    users = models.ManyToManyField(
-            User,
-            blank=True,
-            verbose_name=_('users'))
-    groups = models.ManyToManyField(
-            Group,
-            blank=True,
-            verbose_name=_('groups'))
+    hidden = models.BooleanField(_('as hidden'), default=False)
+    content_type = models.ForeignKey(ContentType, blank=True, null=True,
+                                     verbose_name=_('content type'))
+    users = models.ManyToManyField(User, blank=True, verbose_name=_('users'))
+    groups = models.ManyToManyField(Group, blank=True,
+                                    verbose_name=_('groups'))
 
     class Meta:
         ordering = ('content_type',)
@@ -163,15 +139,15 @@ class PermissionRead(models.Model):
     @classmethod
     def has_hidden_perm(cls, user, opts):
         # TODO: Доработать
-        #objects = cls._default_manager.all()
-        #objects.filter(has_perm(user, opts.app_label)
+        # objects = cls._default_manager.all()
+        # objects.filter(has_perm(user, opts.app_label)
         return False
 
     @classmethod
     def has_read_perm(cls, user, opts):
         # TODO: Доработать
-        #objects = cls._default_manager.all()
-        #objects.filter(has_perm(user, opts.app_label)
+        # objects = cls._default_manager.all()
+        # objects.filter(has_perm(user, opts.app_label)
         return False
 
 
@@ -181,13 +157,10 @@ class TempUploadFile(models.Model):
         передачи в нужную модель и требуемое поле
     """
     created = models.DateTimeField(auto_now_add=True)
-    file = models.FileField(upload_to=upload_to, 
-            verbose_name=_('file'))
-    user = models.ForeignKey(
-            User,
-            null=True, blank=True,
-            verbose_name=_('user'))
-    
+    file = models.FileField(upload_to=upload_to, verbose_name=_('file'))
+    user = models.ForeignKey(User, null=True, blank=True,
+                             verbose_name=_('user'))
+
     def __str__(self):
         return self.file.name.split('/')[-1]
 
@@ -203,19 +176,19 @@ class TempUploadFile(models.Model):
             'hash': get_random_string(conf.BWP_TEMP_UPLOAD_FILE_HASH_LENGTH),
         }
         return '%(tmp)s/%(hash)s/%(filename)s' % dic
-    
+
     def save(self, **kwargs):
         now = timezone.now()
         expires = now - timedelta(seconds=conf.BWP_TEMP_UPLOAD_FILE_EXPIRES)
         with transaction.atomic():
             for x in TempUploadFile.objects.filter(created__lt=expires):
                 x.delete()
-            
+
         super(TempUploadFile, self).save(**kwargs)
-    
+
     def delete(self, **kwargs):
         filename = self.file.path
-        dirname  = os.path.dirname(filename)
+        dirname = os.path.dirname(filename)
         try:
             os.remove(filename)
             os.removedirs(dirname)
@@ -248,52 +221,53 @@ class BaseModel(object):
             'real_field',
         )
 
-        # Стили могут добавляться в специально выделенный атрибут 
-        list_display_css = {'pk': 'input-micro', 'id': 'input-micro'} # by default
+        # Стили могут добавляться в специально выделенный атрибут
+        list_display_css = {'pk': 'input-micro', 'id': 'input-micro'}
 
-        fields  = None
-        fields  = ['real_field', ...]
+        fields = None
+        fields = ['real_field', ...]
 
         exclude = []
         exclude = ['real_field', ...]
 
     """
 
-    list_display        = ('__unicode__',)
-    list_display_css    = {'pk': 'input-micro', 'id': 'input-micro'} # by default
-    list_per_page       = 10
-    list_max_show_all   = 200
-    show_column_pk      = False
+    list_display = ('__unicode__',)
+    list_display_css = {'pk': 'input-micro', 'id': 'input-micro'}
+    list_per_page = 10
+    list_max_show_all = 200
+    show_column_pk = False
 
-    fields              = None
-    exclude             = []
-    fieldsets           = None
-    widgets             = None
-    widgetsets          = None
-    search_fields       = None # для запрета поиска пустой кортеж
-    file_fields         = []
-    search_key          = 'query'
-    
-    user_field          = None  # если указано, то в это поле записывается
-                                # Пользователь, производящий действия
+    fields = None
+    exclude = []
+    fieldsets = None
+    widgets = None
+    widgetsets = None
+    # для запрета поиска пустой кортеж:
+    search_fields = None
+    file_fields = []
+    search_key = 'query'
+    # если указано, то в это поле записывается Пользователь,
+    # производящий действия
+    user_field = None
 
-    ordering            = None
-    filters             = None
-    actions             = []
+    ordering = None
+    filters = None
+    actions = []
 
-    sum_values          = []
-    avg_values          = []
-    min_values          = []
-    max_values          = []
+    sum_values = []
+    avg_values = []
+    min_values = []
+    max_values = []
 
-    paginator           = Paginator
-    form                = None
-    site                = None
-    hidden              = False
-    allow_copy          = True
-    allow_clone         = None
-    manager             = None
-    
+    paginator = Paginator
+    form = None
+    site = None
+    hidden = False
+    allow_copy = True
+    allow_clone = None
+    manager = None
+
     # Набор ключей для предоставления метаданных об этой модели.
     metakeys = ('list_display', 'list_display_css', 'list_per_page',
                 'list_max_show_all', 'show_column_pk', 'fields',
@@ -303,33 +277,40 @@ class BaseModel(object):
     @property
     def opts(self):
         if self.model is None:
-            raise NotImplementedError('Set the "model" in %s.' % self.__class__.__name__)
+            raise NotImplementedError(
+                'Set the "model" in %s.' % self.__class__.__name__)
         return self.model._meta
 
     def get_meta(self):
         """ Возвращает словарь метаданных об этой модели.
-        
+
             Этот метод можно переопределить в дочернем классе,
             например, чтобы добавить информацию из него
         """
-        return dict([ (key, getattr(self, key)) for key in self.metakeys ])
+        return dict([(key, getattr(self, key)) for key in self.metakeys])
 
     @property
     def meta(self):
         """ Регистрирует в словаре расширенную информацию о данной
             модели для клиента.
-            
+
             Это свойство можно переопределить в наследуемом классе,
             например, чтобы добавить информацию из наследуемого класса
         """
-        self.get_list_display()  # инициализация колонок списка объектов модели
-        self.get_fields()        # инициализация полей
-        self.get_search_fields() # инициализация поисковых полей
-        self.get_file_fields()   # инициализация файловых полей
-        self.get_filters()       # инициализация фильтров
+        # инициализация колонок списка объектов модели:
+        self.get_list_display()
+        # инициализация полей:
+        self.get_fields()
+        # инициализация поисковых полей:
+        self.get_search_fields()
+        # инициализация файловых полей:
+        self.get_file_fields()
+        # инициализация фильтров:
+        self.get_filters()
         if not hasattr(self, '_meta'):
             self._meta = self.get_meta()
-        self._meta['ordering'] = None # чтобы на клиенте переопределить сортировку
+        # чтобы на клиенте переопределить сортировку:
+        self._meta['ordering'] = None
         return self._meta
 
     @property
@@ -345,9 +326,12 @@ class BaseModel(object):
         if not hasattr(self, '_has_clone'):
             if self.allow_clone is None:
                 L = [bool(self.opts.unique_together)]
-                L.extend([ f.unique for f in self.opts.local_fields if not f is self.opts.pk ])
-                L.extend([ f.unique for f in self.opts.local_many_to_many ])
-                self._has_clone = not True in L
+                L.extend([
+                    f.unique for f in self.opts.local_fields
+                    if f is not self.opts.pk
+                ])
+                L.extend([f.unique for f in self.opts.local_many_to_many])
+                self._has_clone = True not in L
             else:
                 self._has_clone = self.allow_clone
         return self._has_clone
@@ -361,14 +345,14 @@ class BaseModel(object):
         """ Информация о модели """
         label = getattr(self, 'verbose_name', self.opts.verbose_name_plural)
         dic = {
-            'name':  force_text(self.opts),
+            'name': force_text(self.opts),
             'label': capfirst(force_text(label)),
             'perms': self.get_model_perms(request),
-            'meta':  self.prepare_meta(request),
+            'meta': self.prepare_meta(request),
         }
         if bwp:
             dic['bwp'] = self
-        
+
         return dic
 
     def get_list_display(self):
@@ -379,8 +363,8 @@ class BaseModel(object):
             new = []
 
             for obj in self.list_display:
-                col = {'name':None,'label':None,'css':'','sorted':False}
-                if   isinstance(obj, dict):
+                col = {'name': None, 'label': None, 'css': '', 'sorted': False}
+                if isinstance(obj, dict):
                     col.update(obj)
                 elif isinstance(obj, (tuple, list)):
                     d = dict(zip(['name', 'label', 'css', 'sorted'], obj))
@@ -394,19 +378,22 @@ class BaseModel(object):
                             label = ugettext(name.upper())
                             col['sorted'] = True
                         elif name in self.dict_all_local_fields:
-                            label = self.opts.get_field_by_name(name)[0].verbose_name
+                            label = (
+                                self.opts.get_field_by_name(name)[0]
+                            ).verbose_name
                             col['sorted'] = True
                         else:
                             label = ugettext(name)
                     col['name'] = name
                     col['label'] = label
                 # Перезапись ошибочного разрешения сортировки
-                if not col['name'] in ('pk', 'id') and not col['name'] in self.dict_all_local_fields:
+                if (col['name'] not in ('pk', 'id') and
+                        col['name'] not in self.dict_all_local_fields):
                     col['sorted'] = False
                 # Обновление значения css
                 if col['name'] in self.list_display_css:
                     col['css'] = self.list_display_css[col['name']]
-                
+
                 new.append(col)
 
             self.list_display = new
@@ -418,8 +405,8 @@ class BaseModel(object):
         """ Устанавливает и/или возвращает значение полей поиска """
         if self.search_fields is None:
             self.search_fields = [
-                x.name for x in self.get_fields_objects() if \
-                    x.rel is None
+                x.name for x in self.get_fields_objects()
+                if x.rel is None
             ]
         return self.search_fields
 
@@ -436,21 +423,26 @@ class BaseModel(object):
     def get_fields(self):
         """ Устанавливает и/или возвращает список полей объектов """
         if not self.fields:
-            fields = [ field.name for field in self.opts.local_fields if field.editable ]
-            self.fields = [ name for name in fields if name not in self.exclude ]
+            fields = [field.name for field in self.opts.local_fields
+                      if field.editable]
+            self.fields = [name for name in fields if name not in self.exclude]
         return self.fields
 
     def get_fields_objects(self):
         """ Возвращает реальные объекты полей """
-        return [ self.opts.get_field_by_name(name)[0] for name in self.get_fields() ]
+        return [
+            self.opts.get_field_by_name(name)[0] for name in self.get_fields()
+        ]
 
     def get_file_fields(self):
         """ Устанавливает и/или возвращает список полей File/Image """
         if not self.file_fields:
-            self.file_fields = [ name for name in self.get_fields() if \
-                        isinstance(self.opts.get_field_by_name(name)[0],
-                                                (FileField, ImageField))
-                    ]
+            self.file_fields = [
+                name for name in self.get_fields() if isinstance(
+                    self.opts.get_field_by_name(name)[0],
+                    (FileField, ImageField)
+                )
+            ]
         return self.file_fields
 
     def get_filters(self):
@@ -470,14 +462,14 @@ class BaseModel(object):
                     rel = getattr(field, 'related_model', None)
                     if rel:
                         opts = field.related_model._meta
-                        #~ print field, dir(field)
+                        # print field, dir(field)
                         title += force_text(opts.verbose_name) + ': '
-                        #~ field = field.field
+                        # field = field.field
                     elif hasattr(field, 'parent_model'):
                         title += force_text(field.verbose_name)
                         field = field.field
                     else:
-                        #~ print field, dir(field)
+                        # print field, dir(field)
                         title += force_text(field.verbose_name)
             else:
                 orign = field.name
@@ -487,13 +479,13 @@ class BaseModel(object):
                 'field': orign,
                 'field_title': title,
                 'widget': get_widget_from_field(field, True).get_dict(),
-                }
+            }
 
         if self.filters is None:
             fields = self.opts.fields
-            return [ _get_filter(x) for x in fields ]
+            return [_get_filter(x) for x in fields]
         if isinstance(self.filters, (list, tuple)):
-            return [ _get_filter(x) for x in self.filters ]
+            return [_get_filter(x) for x in self.filters]
         return []
 
     def get_list_reports(self):
@@ -513,11 +505,14 @@ class BaseModel(object):
         """ Возвращает виджет с заменой атрибутов, согласно настроек
             текущего класса.
         """
-        dic = dict([ (field.name, field) for field in self.get_fields_objects() ])
+        dic = dict([
+            (field.name, field) for field in self.get_fields_objects()
+        ])
         widget = get_widget_from_field(dic[field_name])
         if not widget.is_configured:
-            if self.list_display_css.has_key(field_name):
-                new_class = '%s %s' % (widget.attr.get('class', ''), self.list_display_css[field_name])
+            if field_name in self.list_display_css:
+                new_class = '%s %s' % (widget.attr.get('class', ''),
+                                       self.list_display_css[field_name])
                 widget.attr.update({'class': new_class})
                 widget.is_configured = True
         return widget
@@ -531,7 +526,8 @@ class BaseModel(object):
             w = self.prepare_widget(field.name)
             if getattr(w, 'input_type', None) == 'checkbox':
                 checkboxes.append(w)
-            elif not getattr(field, 'blank', False) and field.name not in ('password', 'passwd'):
+            elif (not getattr(field, 'blank', False) and
+                    field.name not in ('password', 'passwd')):
                 widgets.append(w)
             else:
                 norequires.append(w)
@@ -548,14 +544,14 @@ class BaseModel(object):
 
     def get_list_widgets(self):
         """ Возвращает виджеты в виде списка словарей, пригодного для JSON """
-        return [ widget.get_dict() for widget in self.get_widgets() ]
+        return [widget.get_dict() for widget in self.get_widgets()]
 
     def set_widgetsets(self):
         """ Устанавливает и возвращает наборы виджетов. """
         if self.fieldsets:
             fieldsets = self.fieldsets
         else:
-            fieldsets = (( None, { 'classes': '', 'fields': self.fields }), )
+            fieldsets = ((None, {'classes': '', 'fields': self.fields}),)
         self.widgetsets = []
         for label, dic in fieldsets:
             L = []
@@ -564,7 +560,7 @@ class BaseModel(object):
                 continue
             for group in dic['fields']:
                 if isinstance(group, (tuple, list)):
-                    L.append([ self.prepare_widget(field) for field in group ])
+                    L.append([self.prepare_widget(field) for field in group])
                 else:
                     L.append(self.prepare_widget(group))
             dic['fields'] = L
@@ -583,7 +579,7 @@ class BaseModel(object):
             dic = deepcopy(dic)
             for group in dic['fields']:
                 if isinstance(group, (tuple, list)):
-                    L.append([ widget.get_dict() for widget in group ])
+                    L.append([widget.get_dict() for widget in group])
                 else:
                     L.append(group.get_dict())
             dic['fields'] = L
@@ -605,14 +601,16 @@ class BaseModel(object):
         """
         return serialize(objects, **options)
 
-    def get_paginator(self, queryset, per_page=None, orphans=0, allow_empty_first_page=True, **kwargs):
+    def get_paginator(self, queryset, per_page=None, orphans=0,
+                      allow_empty_first_page=True, **kwargs):
         per_page = per_page or self.list_per_page
-        return self.paginator(queryset, per_page, orphans, allow_empty_first_page)
+        return self.paginator(queryset, per_page, orphans,
+                              allow_empty_first_page)
 
     def queryset_from_filters(self, queryset, filters, **kwargs):
         qs = queryset
         for f in filters:
-            #~ print f
+            # print f
             if f.get('active', False):
                 if f.get('inverse', False):
                     action = qs.exclude
@@ -646,7 +644,7 @@ class BaseModel(object):
                     if bit == '':
                         continue
                 qs = action(models.Q(**{orm_lookup: bit}),)
-        #~ print qs.query
+        # print qs.query
         return qs
 
     def get_manager(self):
@@ -664,7 +662,8 @@ class BaseModel(object):
         """
         Hook for specifying field ordering.
         """
-        return self.ordering or ()  # otherwise we might try to *None, which is bad ;)
+        # otherwise we might try to *None, which is bad ;)
+        return self.ordering or ()
 
     def order_queryset(self, request, queryset=None, ordering=None, **kwargs):
         """
@@ -682,7 +681,8 @@ class BaseModel(object):
         """
         Возвращает объект страницы паджинатора для набора объектов
         """
-        queryset = self.order_queryset(request=request, queryset=queryset, **kwargs)
+        queryset = self.order_queryset(request=request, queryset=queryset,
+                                       **kwargs)
         paginator = self.get_paginator(queryset=queryset, **kwargs)
         if request.method == 'GET':
             REQUEST = request.GET
@@ -700,7 +700,8 @@ class BaseModel(object):
             # If page is not an integer, deliver first page.
             page_queryset = paginator.page(1)
         except EmptyPage:
-            # If page is out of range (e.g. 9999), deliver last page of results.
+            # If page is out of range (e.g. 9999),
+            # deliver last page of results.
             page_queryset = paginator.page(paginator.num_pages)
         return page_queryset
 
@@ -715,14 +716,15 @@ class BaseModel(object):
         else:
             return REQUEST.get(search_key, None)
 
-    def filter_queryset(self, request, queryset=None, query=None, fields=None, **kwargs):
-        """ Возвращает отфильтрованный QuerySet для всех экземпляров модели. """
+    def filter_queryset(self, request, queryset=None, query=None, fields=None,
+                        **kwargs):
+        "Возвращает отфильтрованный QuerySet для всех экземпляров модели."
         if queryset is None:
             queryset = self.queryset(**kwargs)
 
         search_fields = self.get_search_fields()
         if fields and search_fields:
-            fields = [ x for x in fields if x in search_fields ]
+            fields = [x for x in fields if x in search_fields]
         else:
             fields = search_fields
         query = query or self.get_search_query(request, **kwargs)
@@ -758,7 +760,8 @@ class BaseModel(object):
                 object = self.queryset(request, **kwargs).get(pk=pk)
             except:
                 return get_http_404(request)
-            return self.get_copy_object_detail(request, object, clone, **kwargs)
+            return self.get_copy_object_detail(request, object, clone,
+                                               **kwargs)
         else:
             return get_http_403(request)
 
@@ -788,13 +791,15 @@ class BaseModel(object):
         qs = self.filter_queryset(request, **kwargs)
         qs = self.page_queryset(request, qs, **kwargs)
         total = self.get_queryset_total(qs)
-        properties = [ x['name'] for x in self.get_list_display()\
-            if not x['name'] in self.get_fields() ]
+        properties = [
+            x['name'] for x in self.get_list_display()
+            if x['name'] not in self.get_fields()
+        ]
         data = self.serialize(qs, use_natural_keys=True, properties=properties)
         if total:
             data['total'] = total
         return JSONResponse(data=data)
-    
+
     def get_queryset_total(self, qs):
         total = {}
         # TODO: доработать итоговые данные
@@ -839,8 +844,8 @@ class BaseModel(object):
 
         Can be overriden by the user in subclasses. In such case it should
         return True if the given request has permission to change the `object`
-        model instance. If `object` is None, this should return True if the given
-        request has permission to change *any* object of the given type.
+        model instance. If `object` is None, this should return True if the
+        given request has permission to change *any* object of the given type.
         """
         opts = self.opts
         perm = '%s.change_%s' % (opts.app_label, opts.model_name)
@@ -854,8 +859,8 @@ class BaseModel(object):
 
         Can be overriden by the user in subclasses. In such case it should
         return True if the given request has permission to delete the `object`
-        model instance. If `object` is None, this should return True if the given
-        request has permission to delete *any* object of the given type.
+        model instance. If `object` is None, this should return True if the
+        given request has permission to delete *any* object of the given type.
         """
         opts = self.opts
         perm = '%s.delete_%s' % (opts.app_label, opts.model_name)
@@ -881,18 +886,19 @@ class BaseModel(object):
 
         The default implementation creates an bwp LogEntry object.
         """
-        if isinstance(object, LogEntry): return
+        if isinstance(object, LogEntry):
+            return
         if oldobj:
             message = _('clone from #%s') % oldobj.pk
         else:
             message = ""
         LogEntry.objects.log_action(
-            user_id         = request.user.pk,
-            content_type_id = ContentType.objects.get_for_model(object).pk,
-            object_id       = object.pk,
-            object_repr     = force_text(object),
-            action_flag     = ADDING,
-            change_message  = message
+            user_id=request.user.pk,
+            content_type_id=ContentType.objects.get_for_model(object).pk,
+            object_id=object.pk,
+            object_repr=force_text(object),
+            action_flag=ADDING,
+            change_message=message
         )
 
     def log_change(self, request, object, message):
@@ -901,14 +907,15 @@ class BaseModel(object):
 
         The default implementation creates an bwp LogEntry object.
         """
-        if isinstance(object, LogEntry): return
+        if isinstance(object, LogEntry):
+            return
         LogEntry.objects.log_action(
-            user_id         = request.user.pk,
-            content_type_id = ContentType.objects.get_for_model(object).pk,
-            object_id       = object.pk,
-            object_repr     = force_text(object),
-            action_flag     = CHANGE,
-            change_message  = message
+            user_id=request.user.pk,
+            content_type_id=ContentType.objects.get_for_model(object).pk,
+            object_id=object.pk,
+            object_repr=force_text(object),
+            action_flag=CHANGE,
+            change_message=message
         )
 
     def log_deletion(self, request, object, object_repr):
@@ -918,18 +925,20 @@ class BaseModel(object):
 
         The default implementation creates an bwp LogEntry object.
         """
-        if isinstance(object, LogEntry): return
+        if isinstance(object, LogEntry):
+            return
         LogEntry.objects.log_action(
-            user_id         = request.user.id,
-            content_type_id = ContentType.objects.get_for_model(self.model).pk,
-            object_id       = object.pk,
-            object_repr     = object_repr,
-            action_flag     = DELETE
+            user_id=request.user.id,
+            content_type_id=ContentType.objects.get_for_model(self.model).pk,
+            object_id=object.pk,
+            object_repr=object_repr,
+            action_flag=DELETE
         )
 
+
 class ComposeBWP(BaseModel):
-    """ Модель для описания вложенных объектов BWP. 
-        multiply_fields = [ ('column_title', ('field_1', 'field_2')) ]
+    """ Модель для описания вложенных объектов BWP.
+        multiply_fields = [('column_title', ('field_1', 'field_2'))]
     """
 
     verbose_name = None
@@ -940,7 +949,7 @@ class ComposeBWP(BaseModel):
     def __init__(self, related_name, related_model, bwp_site, model=None):
         if model:
             self.model = model
-        self.related_name  = related_name
+        self.related_name = related_name
         self.related_model = related_model
 
         manager = getattr(related_model.model, related_name)
@@ -953,11 +962,13 @@ class ComposeBWP(BaseModel):
         self.bwp_site = bwp_site
         if self.verbose_name is None:
             # TODO: сделать установку имени из поля
-            self.verbose_name = self.opts.verbose_name_plural or self.opts.verbose_name
+            self.verbose_name = (
+                self.opts.verbose_name_plural or self.opts.verbose_name
+            )
 
     def get_meta(self):
         """ Возвращает словарь метаданных об этой модели. """
-        meta = dict([ (key, getattr(self, key)) for key in self.metakeys ])
+        meta = dict([(key, getattr(self, key)) for key in self.metakeys])
         meta['widgets'] = self.get_list_widgets()
         meta['widgetsets'] = []
         meta['related_name'] = self.related_name
@@ -966,7 +977,7 @@ class ComposeBWP(BaseModel):
         meta['is_many_to_many'] = self.is_many_to_many
         meta['reports'] = self.get_list_reports()
         meta['filters'] = self.get_filters()
-        meta['filters_dict'] = dict([ (x['field'], x) for x in meta['filters'] ])
+        meta['filters_dict'] = dict([(x['field'], x) for x in meta['filters']])
         return meta
 
     def get(self, request, pk, **kwargs):
@@ -985,8 +996,10 @@ class ComposeBWP(BaseModel):
         qs = self.page_queryset(request, qs, **kwargs)
         total = self.get_queryset_total(qs)
 
-        properties = [ x['name'] for x in self.get_list_display()\
-            if not x['name'] in self.get_fields() ]
+        properties = [
+            x['name'] for x in self.get_list_display()
+            if not x['name'] in self.get_fields()
+        ]
         # Задаём использование натуральных ключей для того, чтобы не
         # ставился автоматически use_split_keys = True
         data = self.serialize(qs, use_natural_keys=True, properties=properties)
@@ -1022,11 +1035,11 @@ class ComposeBWP(BaseModel):
         model = str(object._meta)
         compose = self.related_name
         data = {
-            'model':    model,
-            'pk':       object.pk,
-            'compose':  compose,
-            'label':    capfirst(force_text(self.verbose_name)),
-            'meta':     self.meta,
+            'model': model,
+            'pk': object.pk,
+            'compose': compose,
+            'label': capfirst(force_text(self.verbose_name)),
+            'meta': self.meta,
         }
 
         # Permissions
@@ -1044,8 +1057,9 @@ class ComposeBWP(BaseModel):
             objects = []
 
         data.update({'widgets': widgets, 'objects': objects,
-                    'permissions': permissions })
+                    'permissions': permissions})
         return data
+
 
 class ManyToManyBWP(ComposeBWP):
     """ Расширение композиций для отображения полей m2m """
@@ -1060,6 +1074,7 @@ class ManyToManyBWP(ComposeBWP):
         m2m = getattr(object, self.related_name)
         m2m.remove(*objects)
         return True
+
 
 class ModelBWP(BaseModel):
     """ Модель для регистрации в BWP.
@@ -1080,26 +1095,29 @@ class ModelBWP(BaseModel):
     """
 
     compositions = []
-    
+
     def __init__(self, model, bwp_site):
         self.model = model
         self.bwp_site = bwp_site
 
     def get_meta(self):
         """ Возвращает словарь метаданных об этой модели. """
-        meta = dict([ (key, getattr(self, key)) for key in self.metakeys ])
-        meta['compositions'] = [ x.get_meta() for x in self.compose_instances ]
+        meta = dict([(key, getattr(self, key)) for key in self.metakeys])
+        meta['compositions'] = [x.get_meta() for x in self.compose_instances]
         meta['widgets'] = self.get_list_widgets()
         meta['widgetsets'] = self.get_list_widgetsets()
         meta['reports'] = self.get_list_reports()
         meta['filters'] = self.get_filters()
-        meta['filters_dict'] = dict([ (x['field'], x) for x in meta['filters'] ])
+        meta['filters_dict'] = dict([(x['field'], x) for x in meta['filters']])
         return meta
 
     def prepare_meta(self, request):
         """ Обновляет информацию о метаданных согласно запроса """
         meta = deepcopy(self.meta)
-        meta['compositions'] = [ x.get_model_info(request, bwp=False) for x in self.get_composes(request) ]
+        meta['compositions'] = [
+            x.get_model_info(request, bwp=False) for x in
+            self.get_composes(request)
+        ]
         return meta
 
     @property
@@ -1111,9 +1129,10 @@ class ModelBWP(BaseModel):
         if not hasattr(self, '_compose_instances'):
             L = []
             D = {}
+
             def add(cls, related_name, model=None):
                 instance = cls(related_name=related_name, related_model=self,
-                    bwp_site=self.bwp_site, model=model)
+                               bwp_site=self.bwp_site, model=model)
                 D[related_name] = instance
                 L.append(instance)
 
@@ -1126,11 +1145,14 @@ class ModelBWP(BaseModel):
             for related_name, compose_class in self.compositions:
                 add(compose_class, related_name)
 
-            self._compose_instances = [ D[x.related_name] for x in L ]
+            self._compose_instances = [D[x.related_name] for x in L]
         return self._compose_instances
-    
+
     def get_all_fields(self):
-        m2m = [ x.related_name for x in self.compose_instances if x.is_many_to_many ]
+        m2m = [
+            x.related_name for x in self.compose_instances if
+            x.is_many_to_many
+        ]
         m2m.extend(self.fields or [])
         return m2m
 
@@ -1141,7 +1163,7 @@ class ModelBWP(BaseModel):
 
     def get_copy_object_detail(self, request, object, clone, **kwargs):
         """ Метод возвращает сериализованную копию объекта в JSONResponse """
-        pk = object.pk # save
+        pk = object.pk  # save
         object.pk = None
         # Клонирование с созданием нового pk и заполнением полей m2m
         if clone and self.has_clone:
@@ -1173,7 +1195,7 @@ class ModelBWP(BaseModel):
                 if _field.rel:
                     value = _field.rel.to.objects.get(pk=value)
                 setattr(object, field, value)
-        model = str(self.opts)
+        # model = str(self.opts)
         data = self.serialize(object)
         try:
             data['label'] = force_text(object)
@@ -1194,14 +1216,19 @@ class ModelBWP(BaseModel):
         for compose in self.get_composes(request):
             compositions.append(compose.get_compose(request, object, **kwargs))
 
-        data.update({'widgets':widgets, 'widgetsets':widgetsets,
-                    'permissions':permissions, 'compositions':compositions})
+        data.update({
+            'widgets': widgets,
+            'widgetsets': widgetsets,
+            'permissions': permissions,
+            'compositions': compositions,
+        })
         return data
 
     def get_composes(self, request=None):
         """ Получает список разрешённых моделей Compose. """
         compose_instances = []
-        if self.compositions is None: # запрещены принудительно
+        if self.compositions is None:
+            # запрещены принудительно
             return compose_instances
         for compose in self.compose_instances:
             if request:
@@ -1217,15 +1244,16 @@ class ModelBWP(BaseModel):
         """
         Возвращает словарь, где ключом является имя модели Compose,
         а значением - сама модель, например:
-            {'group_set': <Model Contacts.UserBWP> }
+            {'group_set': <Model Contacts.UserBWP>}
         """
         composes = self.get_composes(request)
-        return dict([ (compose.related_name, compose) for compose in composes ])
+        return dict([(compose.related_name, compose) for compose in composes])
+
 
 class GlobalUserSettings(AbstractUserSettings):
     """ Глобальные настройки пользователей """
     class Meta:
-        ordering = ['user',]
+        ordering = ['user']
         verbose_name = _('global settings')
         verbose_name_plural = _('global settings')
         unique_together = ('user',)
