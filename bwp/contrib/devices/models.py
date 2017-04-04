@@ -1,37 +1,37 @@
 # -*- coding: utf-8 -*-
 #
 #  bwp/contrib/devices/models.py
-#  
+#
 #  Copyright 2013 Grigoriy Kramarenko <root@rosix.ru>
-#  
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 3 of the License, or
 #  (at your option) any later version.
-#  
+#
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
-#  
+#
 #  You should have received a copy of the GNU General Public License
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
-#  
-#  
+#
+#
 from __future__ import unicode_literals
-
+import hashlib
+import datetime
 from django.db import models
 from django.contrib.auth.models import User, Group
 from django.utils.translation import ugettext_lazy as _
-from django.utils import six
 from django.utils.encoding import force_text, python_2_unicode_compatible
+
 from bwp.contrib.abstracts.models import AbstractGroup
 from bwp.db import fields
-import hashlib, datetime
 
-from drivers import DRIVER_CLASSES
+from .drivers import DRIVER_CLASSES
 
 
 class Register(object):
@@ -51,7 +51,7 @@ class Register(object):
             (x.pk, x) for x in LocalDevice.objects.all()
         ])
         return self._devices
-    
+
     def get_devices(self, request=None):
         data = {}
         if request:
@@ -62,55 +62,45 @@ class Register(object):
             for pk, x in self.devices.items():
                 data[pk] = x
         return data
-    
+
     def get_list(self, request):
         data = []
         for x in self.get_devices(request).values():
-            data.append({'pk': x.pk, 'title': x.title, 'driver': x.driver})
+            data.append({
+                'pk': x.pk,
+                'title': x.title,
+                'driver': x.driver
+            })
         return data
+
 
 register = Register()
 
+
 class BaseDevice(AbstractGroup):
     """ Базовый класс локального или удалённого устройства """
-    DRIVER_CHOICES = [ (x, x) for x in DRIVER_CLASSES.keys() ]
-    driver = models.CharField(
-            choices=DRIVER_CHOICES,
-            max_length=255,
-            verbose_name = _('driver'))
-
+    DRIVER_CHOICES = [(x, x) for x in DRIVER_CLASSES.keys()]
+    driver = models.CharField(_('driver'), choices=DRIVER_CHOICES,
+                              max_length=255)
     users = models.ManyToManyField(
-            User,
-            blank=True,
-            related_name='user_%(class)s_set',
-            verbose_name=_('users'))
-
+        User, blank=True, related_name='user_%(class)s_set',
+        verbose_name=_('users'),
+    )
     groups = models.ManyToManyField(
-            Group,
-            blank=True,
-            related_name='group_%(class)s_set',
-            verbose_name=_('groups'))
-
+        Group, blank=True, related_name='group_%(class)s_set',
+        verbose_name=_('groups'),
+    )
     admin_users = models.ManyToManyField(
-            User,
-            blank=True,
-            related_name='admin_user_%(class)s_set',
-            verbose_name=_('admin users'))
-
+        User, blank=True, related_name='admin_user_%(class)s_set',
+        verbose_name=_('admin users'),
+    )
     admin_groups = models.ManyToManyField(
-            Group,
-            blank=True,
-            related_name='admin_group_%(class)s_set',
-            verbose_name=_('admin groups'))
-
-    username = models.CharField(
-            max_length=100,
-            blank=True,
-            verbose_name = _('username'))
-    password = models.CharField(
-            max_length=100,
-            blank=True,
-            verbose_name = _('password'))
+        Group, blank=True,
+        related_name='admin_group_%(class)s_set',
+        verbose_name=_('admin groups'),
+    )
+    username = models.CharField(_('username'), max_length=100, blank=True)
+    password = models.CharField(_('password'), max_length=100, blank=True)
 
     class Meta:
         abstract = True
@@ -119,7 +109,6 @@ class BaseDevice(AbstractGroup):
         """ Проверка прав на использование устройства.
             Разрешено по-умолчанию, когда везде пусто.
         """
-
         if not self.users.count() and not self.groups.count():
             return True
 
@@ -133,7 +122,7 @@ class BaseDevice(AbstractGroup):
     def has_admin_permission(self, request, **kwargs):
         """ Проверка прав на использование устройства с правами
             администратора.
-            
+
             Запрещено по-умолчанию, когда везде пусто.
         """
         user = request.user
@@ -154,7 +143,7 @@ class BaseDevice(AbstractGroup):
                 cls.SpoolerDevice = SpoolerDevice
                 cls.local_device = self
 
-            D = {'remote': self.remote }
+            D = {'remote': self.remote}
             if hasattr(self, 'username') and self.username:
                 D['username'] = self.username
             if hasattr(self, 'password') and self.password:
@@ -175,26 +164,17 @@ class BaseDevice(AbstractGroup):
                 D.update(config)
 
             self._device = cls(**D)
-
         return self._device
+
 
 class LocalDevice(BaseDevice):
     """ Локальное устройство """
     remote = False
 
-    port = models.CharField(
-            max_length=50,
-            blank=True,
-            verbose_name = _('port'))
-
-    config = fields.JSONField(
-            default={}, blank=True,
-            verbose_name = _('config'))
-
-    admin_password = models.CharField(
-            max_length=100,
-            blank=True,
-            verbose_name = _('admin password'))
+    port = models.CharField(_('port'), max_length=50, blank=True)
+    config = fields.JSONField(_('config'), default={}, blank=True)
+    admin_password = models.CharField(_('admin password'), max_length=100,
+                                      blank=True)
 
     class Meta:
         ordering = ['title']
@@ -208,6 +188,7 @@ class LocalDevice(BaseDevice):
     def delete(self, **kwargs):
         super(LocalDevice, self).delete(**kwargs)
         register.load()
+
 
 class RemoteDevice(BaseDevice):
     """ Удалённое устройство """
@@ -227,37 +208,21 @@ class RemoteDevice(BaseDevice):
 @python_2_unicode_compatible
 class SpoolerDevice(models.Model):
     """ Диспетчер очереди команд для устройств """
-    created = models.DateTimeField(
-            auto_now_add=True,
-            verbose_name=_('created'))
-    updated = models.DateTimeField(
-            auto_now=True,
-            verbose_name=_('updated'))
-
     STATE_WAITING = 1
     STATE_ERROR = 2
     STATE_CHOICES = (
         (STATE_WAITING, _('waiting')),
-        (STATE_ERROR,   _('error')),
+        (STATE_ERROR, _('error')),
     )
 
-    state = models.IntegerField(
-            choices=STATE_CHOICES,
-            default=1,
-            verbose_name = _('state'))
-    local_device = models.ForeignKey(
-            LocalDevice,
-            verbose_name = _('local device'))
-    method = models.CharField(
-            max_length=50,
-            verbose_name = _('method'))
-    kwargs = fields.JSONField(
-            default={}, blank=True,
-            verbose_name = _('config'))
-    group_hash = models.CharField(
-            max_length=32,
-            blank=True,
-            verbose_name = _('method'))
+    created = models.DateTimeField(_('created'), auto_now_add=True)
+    updated = models.DateTimeField(_('updated'), auto_now=True)
+    state = models.IntegerField(_('state'), choices=STATE_CHOICES, default=1)
+    local_device = models.ForeignKey(LocalDevice,
+                                     verbose_name=_('local device'))
+    method = models.CharField(_('method'), max_length=50)
+    kwargs = fields.JSONField(_('config'), default={}, blank=True)
+    group_hash = models.CharField(_('method'), max_length=32, blank=True)
 
     def __str__(self):
         return force_text(self.local_device)

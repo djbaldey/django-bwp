@@ -1,23 +1,25 @@
 # -*- coding: utf-8 -*-
 #
+#  bwp/contrib/reports/views.py
+#
 #  Copyright 2013 Grigoriy Kramarenko <root@rosix.ru>
-#  
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 3 of the License, or
 #  (at your option) any later version.
-#  
+#
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
-#  
+#
 #  You should have received a copy of the GNU General Public License
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
-#  
-#  
+#
+#
 from __future__ import unicode_literals
 
 from django.http import HttpResponseBadRequest
@@ -28,10 +30,12 @@ from quickapi.decorators import login_required, api_required
 from bwp.contrib.reports.models import Document as Report
 from bwp.sites import site
 
+
 @api_required
 @login_required
-def API_get_collection_report_url(request, model, report,
-    query=None, order_by=None, fields=None, filters=None, **kwargs):
+def API_get_collection_report_url(request, model, report, query=None,
+                                  order_by=None, fields=None, filters=None,
+                                  **kwargs):
     """ *Формирование отчёта для коллекции.*
 
         ##### ЗАПРОС
@@ -60,12 +64,13 @@ def API_get_collection_report_url(request, model, report,
     }
 
     qs = model_bwp.filter_queryset(**options)
-    
+
     filters = filters or []
 
-    ctx = {'data': qs, 'filters': [ x for x in filters if x['active']]}
+    ctx = {'data': qs, 'filters': [x for x in filters if x['active']]}
     url = report.render_to_media_url(context=ctx, user=request.user)
     return JSONResponse(data=url)
+
 
 @api_required
 @login_required
@@ -89,16 +94,8 @@ def API_get_object_report_url(request, model, pk, report, **kwargs):
     if pk is None:
         return HttpResponseBadRequest()
 
-    options = {
-        'request': request,
-        'pk': pk,
-        'as_lookup': True,
-    }
-
     obj = model_bwp.queryset(request, **kwargs).get(pk=pk)
 
     ctx = {'data': obj}
     url = report.render_to_media_url(context=ctx, user=request.user)
     return JSONResponse(data=url)
-
-

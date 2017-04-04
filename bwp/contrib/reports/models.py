@@ -1,63 +1,50 @@
 # -*- coding: utf-8 -*-
-"""
-###############################################################################
-# Copyright 2013 Grigoriy Kramarenko.
-###############################################################################
-# This file is part of BWP.
 #
-#    BWP is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation, either version 3 of the License, or
-#    (at your option) any later version.
+#  bwp/contrib/reports/models.py
 #
-#    BWP is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
+#  Copyright 2013 Grigoriy Kramarenko <root@rosix.ru>
 #
-#    You should have received a copy of the GNU General Public License
-#    along with BWP.  If not, see <http://www.gnu.org/licenses/>.
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 3 of the License, or
+#  (at your option) any later version.
 #
-# Этот файл — часть BWP.
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
 #
-#   BWP - свободная программа: вы можете перераспространять ее и/или
-#   изменять ее на условиях Стандартной общественной лицензии GNU в том виде,
-#   в каком она была опубликована Фондом свободного программного обеспечения;
-#   либо версии 3 лицензии, либо (по вашему выбору) любой более поздней
-#   версии.
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+#  MA 02110-1301, USA.
 #
-#   BWP распространяется в надежде, что она будет полезной,
-#   но БЕЗО ВСЯКИХ ГАРАНТИЙ; даже без неявной гарантии ТОВАРНОГО ВИДА
-#   или ПРИГОДНОСТИ ДЛЯ ОПРЕДЕЛЕННЫХ ЦЕЛЕЙ. Подробнее см. в Стандартной
-#   общественной лицензии GNU.
 #
-#   Вы должны были получить копию Стандартной общественной лицензии GNU
-#   вместе с этой программой. Если это не так, см.
-#   <http://www.gnu.org/licenses/>.
-###############################################################################
-"""
-from django.db import models
-from django.utils.translation import ugettext_lazy as _
+import os
+import hashlib
+
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import User
+from django.core.files.base import ContentFile
+from django.db import models
 from django.template import Context
 from django.template.loader import get_template
-from django.core.files.base import ContentFile
 from django.utils import timezone
+from django.utils.translation import ugettext_lazy as _
 
-from bwp.contrib.abstracts.models import AbstractGroup, AbstractFile
-from bwp.contrib.qualifiers.models import Document as GeneralDocument
 from bwp import conf
 from bwp.conf import settings
+from bwp.contrib.abstracts.models import AbstractGroup, AbstractFile
+from bwp.contrib.qualifiers.models import Document as GeneralDocument
 from bwp.utils import remove_file, remove_dirs
 
-import os, hashlib
 
 if conf.REPORT_FILES_UNIDECODE:
     from unidecode import unidecode
     prep_filename = lambda x: unidecode(x).replace(' ', '_').replace("'", "")
 else:
     prep_filename = lambda x: x
+
 
 class Document(AbstractGroup):
     """ Документ.
@@ -83,25 +70,29 @@ class Document(AbstractGroup):
     )
 
     content_type = models.ForeignKey(
-            ContentType,
-            verbose_name = _('content type'))
+        ContentType, verbose_name=_('content type'),
+    )
     bound = models.IntegerField(
-            choices=BOUND_CHOICES,
-            default=BOUND_OBJECT,
-            verbose_name = _('bound'))
+        _('bound'),
+        choices=BOUND_CHOICES,
+        default=BOUND_OBJECT,
+    )
     template_name = models.CharField(
-            max_length=255,
-            verbose_name = _('HTML template name'))
+        _('HTML template name'),
+        max_length=255,
+    )
     format_out = models.CharField(
-            max_length=4,
-            choices=FORMAT_CHOICES,
-            default=FORMAT_CHOICES[0][0],
-            verbose_name = _('format out'))
+        _('format out'),
+        max_length=4,
+        choices=FORMAT_CHOICES,
+        default=FORMAT_CHOICES[0][0],
+    )
     qualifier = models.ForeignKey(
-            GeneralDocument,
-            blank=True, null=True,
-            related_name='reports_document_set',
-            verbose_name = _('qualifier'))
+        GeneralDocument,
+        blank=True, null=True,
+        verbose_name=_('qualifier'),
+        related_name='reports_document_set',
+    )
 
     class Meta:
         ordering = ['qualifier', 'title']
@@ -116,11 +107,11 @@ class Document(AbstractGroup):
     def render(self, context):
         """ Return rendered instance of ContentFile """
         template = get_template(self.template_name)
-        content  = template.render(Context(context)).encode('utf-8')
+        content = template.render(Context(context)).encode('utf-8')
         return ContentFile(content)
 
     def render_to_media_url(self, context={}, user=None):
-        filename = self.title+'.'+self.format_out
+        filename = self.title + '.' + self.format_out
         filename = prep_filename(filename)
         context['DOCUMENT'] = self
         context['user'] = user
@@ -142,19 +133,22 @@ class Document(AbstractGroup):
     def for_model(self):
         return bool(self.bound == Document.BOUND_MODEL)
 
+
 class Report(AbstractFile):
     """ Файл сформированного документа """
     default_label_type = u'%s' % _('report')
-    created = models.DateTimeField(auto_now_add=True, verbose_name=_('created'))
+    created = models.DateTimeField(_('created'), auto_now_add=True)
     document = models.ForeignKey(
-            Document,
-            editable=False,
-            verbose_name = _('document'))
+        Document,
+        editable=False,
+        verbose_name=_('document'),
+    )
     user = models.ForeignKey(
-            User,
-            null=True, blank=True,
-            editable=False,
-            verbose_name = _('user'))
+        User,
+        null=True, blank=True,
+        editable=False,
+        verbose_name=_('user'),
+    )
 
     class Meta:
         ordering = ['-created']
@@ -165,7 +159,7 @@ class Report(AbstractFile):
         dt = timezone.now()
         date = dt.date()
         dic = {
-            'filename':filename,
+            'filename': filename,
             'date': date.isoformat(),
         }
         sha1 = hashlib.new('md5')
@@ -177,11 +171,12 @@ class Report(AbstractFile):
 
     @property
     def url(self):
-        return '<a href="%s" target="_blank">download</a>' % (self.file.url.encode('utf-8'),)
+        return (
+            '<a href="%s" target="_blank">'
+            'download</a>' % self.file.url.encode('utf-8')
+        )
 
     def delete(self):
         remove_file(self.file.path)
         remove_dirs(os.path.dirname(self.file.path))
         super(Report, self).delete()
-
-

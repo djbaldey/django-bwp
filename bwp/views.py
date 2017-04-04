@@ -1,29 +1,31 @@
 # -*- coding: utf-8 -*-
 #
+#  bwp/views.py
+#
 #  Copyright 2013 Grigoriy Kramarenko <root@rosix.ru>
-#  
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 3 of the License, or
 #  (at your option) any later version.
-#  
+#
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
-#  
+#
 #  You should have received a copy of the GNU General Public License
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
-#  
-#  
+#
+#
 from __future__ import unicode_literals
 
 from django.http import HttpResponseBadRequest, HttpResponseForbidden
 from django.utils.translation import ugettext_lazy as _
 from django.template import RequestContext
-from django.shortcuts import render_to_response, get_object_or_404, redirect
+from django.shortcuts import render_to_response, redirect
 from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.contrib.auth.views import login as _login, logout as _logout
 from django.views.decorators.cache import never_cache
@@ -32,9 +34,9 @@ from django.db import transaction, models
 
 from django.forms.models import modelform_factory
 from django.utils.encoding import force_text
-from django.utils import six, timezone, dateparse
+from django.utils import six, dateparse
 
-from quickapi.http import JSONResponse, JSONRedirect, MESSAGES, JSONEncoder
+from quickapi.http import JSONResponse, MESSAGES
 from quickapi.views import index as quickapi_index, get_methods
 from quickapi.decorators import login_required, api_required
 
@@ -44,13 +46,14 @@ from bwp.forms import BWPAuthenticationForm, TempUploadFileForm
 from bwp import conf
 from bwp.conf import settings
 from bwp.utils import print_debug, make_list
-from bwp.utils.http import get_http_400, get_http_403, get_http_404
+from bwp.utils.http import get_http_404
 
-import os, decimal
 
 ########################################################################
 #                               PAGES                                  #
 ########################################################################
+
+
 @never_cache
 def index(request, extra_context={}):
     """
@@ -59,13 +62,14 @@ def index(request, extra_context={}):
     """
 
     ctx = {'DEBUG': settings.DEBUG, 'title': _('bwp')}
-    
+
     user = request.user
     if not user.is_authenticated():
         return redirect('bwp.views.login')
     ctx.update(extra_context)
     return render_to_response('bwp/index.html', ctx,
-                            context_instance=RequestContext(request,))
+                              context_instance=RequestContext(request,))
+
 
 @never_cache
 def login(request, extra_context={}):
@@ -84,6 +88,7 @@ def login(request, extra_context={}):
     }
     return _login(request, **defaults)
 
+
 @never_cache
 def logout(request, extra_context={}):
     """ Logs out the user for the given HttpRequest.
@@ -94,6 +99,7 @@ def logout(request, extra_context={}):
         'template_name': 'bwp/logout.html',
     }
     return _logout(request, **defaults)
+
 
 @csrf_exempt
 def upload(request, model, **kwargs):
@@ -136,9 +142,12 @@ def upload(request, model, **kwargs):
             return HttpResponseBadRequest(MESSAGES[400])
     return JSONResponse(data=None)
 
+
 ########################################################################
 #                             END PAGES                                #
 ########################################################################
+
+
 def get_form_instance(request, bwp_model, data=None, files={}, instance=None):
     """
     Возвращает экземпляр формы, которая используются для добавления
@@ -147,7 +156,7 @@ def get_form_instance(request, bwp_model, data=None, files={}, instance=None):
     Аргумент `instance` является экземпляром модели `model_name`
     (принимается только если эта форма будет использоваться для
     редактирования существующего объекта).
-    
+
     files = {'field': ('фото.jpg', 'path/in/bwp_tmp_upload/фото.jpg'}
     """
     model = bwp_model.model
@@ -158,12 +167,15 @@ def get_form_instance(request, bwp_model, data=None, files={}, instance=None):
         defaults['fields'] = bwp_model.fields
 
     print_debug('defaults:', defaults, '\ndata:', data, '\nfiles:', files)
-    return modelform_factory(model, **defaults)(data=data, files=files, instance=instance)
+    factory = modelform_factory(model, **defaults)
+    return factory(data=data, files=files, instance=instance)
+
 
 def get_instance(request, pk, model_name):
     """ Возвращает зкземпляр указаной модели """
     model = site.model_dict(request).get(model_name)
     return model.objects.get(pk=pk)
+
 
 def set_file_fields(bwp_model, instance, data):
     """ Устанавливает файловые поля и возвращает зкземпляр указаной
@@ -174,17 +186,18 @@ def set_file_fields(bwp_model, instance, data):
         if temp_id in (0, ''):
             real_field = getattr(instance, field)
             real_field.delete(save=False)
-        elif not temp_id is None:
+        elif temp_id is not None:
             try:
-                upl = TempUploadFile.objects.get(pk=temp_id) 
-            except Exception as e:
-                #print '[ERROR] bwp.views.set_file_fields', e
+                upl = TempUploadFile.objects.get(pk=temp_id)
+            except Exception:
+                # print '[ERROR] bwp.views.set_file_fields', e
                 continue
             else:
                 real_field = getattr(instance, field)
                 real_field.save(upl.file.name, upl.file.file, save=False)
 
     return instance
+
 
 def set_user_field(model_bwp, instance, user, save=False):
     """ Устанавливает пользователя, изменившего объект """
@@ -194,64 +207,69 @@ def set_user_field(model_bwp, instance, user, save=False):
         instance.save()
     return instance
 
+
 def numberparse(val):
     if isinstance(val, (str, unicode)):
         val = force_text(val)
         val = val.replace(' ', '').replace('\xa0', '').split('.')
-        if len(val) == 1 and not ',' in val[0]:
+        if len(val) == 1 and ',' not in val[0]:
             val = val[0].replace(',', '')
             return int(val)
-        elif len(val) == 2 and not ',' in val[1]:
+        elif len(val) == 2 and ',' not in val[1]:
             val = '%s.%s' % (val[0].replace(',', ''), val[1])
         elif ',' in val[-1]:
             val = val[0].replace(',', '.')
         return float(val)
     return val
 
+
 ########################################################################
 #                               API                                    #
 ########################################################################
+
 
 @api_required
 @login_required
 def API_get_settings(request):
     """ *Возвращает настройки пользователя.*
-        
+
         ##### ЗАПРОС
         Без параметров.
-        
+
         ##### ОТВЕТ
         Формат ключа **"data"**:
         `
         - возвращается словарь с ключами из установленных настроек.
         `
     """
-    user = request.user
-    session = request.session
+    # user = request.user
+    # session = request.session
     us = {}
     return JSONResponse(data=us)
+
 
 @api_required
 @login_required
 def API_get_apps(request, device=None, **kwargs):
     """ *Возвращает список из доступных приложений и их моделей.*
-        
+
         ##### ЗАПРОС
         Параметры:
-        
+
         1. **"device"** - название устройства для которого есть
             доступные приложения (нереализовано).
-        
+
         ##### ОТВЕТ
         Формат ключа **"data"**:
         `{
             TODO: написать
         }`
     """
-    data=site.serialize(request)
+    data = site.serialize(request)
     if not data:
         return JSONResponse(message=403, data=[])
     return JSONResponse(data=data)
+
 
 @api_required
 @login_required
@@ -260,7 +278,7 @@ def API_get_objects(request, model, list_pk, **kwargs):
 
         ##### ЗАПРОС
         Параметры:
-        
+
         1. **"model"** - уникальное название модели, например:
                         "auth.user".
         2. **"list_pk"** - список первичных ключей объектов.
@@ -273,18 +291,20 @@ def API_get_objects(request, model, list_pk, **kwargs):
     """
 
     # Получаем модель BWP со стандартной проверкой прав
-    model_bwp = site.bwp_dict(request).get(model)
+    # model_bwp = site.bwp_dict(request).get(model)
 
     return []
 
+
 @api_required
 @login_required
-def API_get_object(request, model, pk=None, copy=None, clone=None, filler={}, **kwargs):
+def API_get_object(request, model, pk=None, copy=None, clone=None, filler={},
+                   **kwargs):
     """ *Возвращает экземпляр указанной модели.*
 
         ##### ЗАПРОС
         Параметры:
-        
+
         1. **"model"** - уникальное название модели, например:
                         "auth.user".
         2. **"pk"**    - первичный ключ объекта, если отсутствует, то
@@ -293,7 +313,7 @@ def API_get_object(request, model, pk=None, copy=None, clone=None, filler={}, **
                         объекта (без pk).
         4. **"clone"**  - если задано и допустимо выполнять такую
                         операцию, то возвращается абсолютная копия
-                        объекта (включая новый pk и копии m2m полей). 
+                        объекта (включая новый pk и копии m2m полей).
         5. **"filler"** - словарь полей для заполнения нового объекта.
 
         ##### ОТВЕТ
@@ -312,8 +332,9 @@ def API_get_object(request, model, pk=None, copy=None, clone=None, filler={}, **
         print_debug(kwargs)
         fil = {}
         fields = model_bwp.get_fields()
-        fil = dict([(key, val) for key, val in filler.items() \
-                                            if key in fields])
+        fil = dict([
+            (key, val) for key, val in filler.items() if key in fields
+        ])
         return model_bwp.new(request, filler=fil)
     else:
         if copy or clone:
@@ -322,27 +343,30 @@ def API_get_object(request, model, pk=None, copy=None, clone=None, filler={}, **
         # Существующий
         return model_bwp.get(request, pk)
 
+
 @api_required
 @login_required
 def API_get_collection(request, model, pk=None, compose=None, page=1,
-    per_page=None, query=None, ordering=None, fields=None, filters=None, **kwargs):
+                       per_page=None, query=None, ordering=None, fields=None,
+                       filters=None, **kwargs):
     """ *Возвращает коллекцию экземпляров указанной модели.*
-        
+
         ##### ЗАПРОС
         Параметры:
-        
+
         1. **"model"** - уникальное название модели, например: "auth.user";
         2. **"pk"** - ключ объекта модели, по умолчанию == None;
-        3. **"compose"** - уникальное название модели Compose, 
+        3. **"compose"** - уникальное название модели Compose,
             объекты которой должны быть возвращены: "group_set",
             по-умолчанию не используется;
         4. **"page"** -  номер страницы, по-умолчанию == 1;
-        5. **"per_page"** - количество на странице, по-умолчанию определяется BWP;
+        5. **"per_page"** - количество на странице, по-умолчанию определяется
+                            BWP;
         6. **"query"** - поисковый запрос;
         7. **"order_by"** - сортировка объектов.
         8. **"fields"** - поля объектов для поиска.
         9. **"filters"** - дополнительные фильтры.
-        
+
         ##### ОТВЕТ
         Формат ключа **"data"**:
         `{
@@ -382,7 +406,7 @@ def API_get_collection(request, model, pk=None, compose=None, page=1,
         'ordering': ordering,
         'fields': make_list(fields),
         'filters': make_list(filters),
-        'pk':pk, 
+        'pk': pk,
     }
 
     # Возвращаем коллекцию композиции, если указано
@@ -394,26 +418,29 @@ def API_get_collection(request, model, pk=None, compose=None, page=1,
     # Возвращаем коллекцию в JSONResponse
     return model_bwp.get(**options)
 
+
 @api_required
 @login_required
 def API_m2m_commit(request, model, pk, compose, action, objects, **kwargs):
     """ *Добавление или удаление объектов в M2M полях.*
-        
+
         ##### ЗАПРОС
         Параметры:
-        
+
         1. **"model"** - модель объекта, которому принадлежит поле;
         2. **"pk"**    - ключ объекта, которому принадлежит поле;
         3. **"compose"** - композиция(поле);
         4. **"action"** - действие, которое необходимо выполнить;
         5. **"objects"** - список идентификаторов объектов;
-        
+
         ##### ОТВЕТ
         Формат ключа **"data"**:
         `Boolean`
     """
     if not objects:
-        return JSONResponse(data=False, status=400, message=_("List objects is blank!"))
+        return JSONResponse(
+            data=False, status=400, message=_("List objects is blank!")
+        )
 
     # Получаем модель BWP и композиции со стандартной проверкой прав
     model_bwp = site.bwp_dict(request).get(model)
@@ -427,11 +454,11 @@ def API_m2m_commit(request, model, pk, compose, action, objects, **kwargs):
     else:
         if action == 'add' and compose.has_add_permission(request):
             result = compose.add_objects_in_m2m(object, objects)
-            msg = 'add to `%s`: %s' %(compose_name, force_text(objects))
+            msg = 'add to `%s`: %s' % (compose_name, force_text(objects))
             model_bwp.log_change(request, object, message=msg)
         elif action == 'delete' and compose.has_delete_permission(request):
             result = compose.delete_objects_in_m2m(object, objects)
-            msg = 'delete from `%s`: %s' %(compose_name, force_text(objects))
+            msg = 'delete from `%s`: %s' % (compose_name, force_text(objects))
             model_bwp.log_change(request, object, message=msg)
         else:
             result = False
@@ -447,19 +474,21 @@ def API_m2m_commit(request, model, pk, compose, action, objects, **kwargs):
 @login_required
 def API_commit(request, objects, **kwargs):
     """ *Сохрание и/или удаление переданных объектов.*
-        
+
         ##### ЗАПРОС
         Параметры:
-        
+
         1. **"objects"** - список объектов для изменения;
-        
+
         ##### ОТВЕТ
         Формат ключа **"data"**:
         `Boolean`
     """
 
     if not objects:
-        return JSONResponse(data=False, status=400, message=_("List objects is blank!"))
+        return JSONResponse(
+            data=False, status=400, message=_("List objects is blank!")
+        )
 
     model_name = model_bwp = None
     try:
@@ -470,14 +499,17 @@ def API_commit(request, objects, **kwargs):
                 if model_name != item['model']:
                     model_name = item['model']
                     model_bwp = site.bwp_dict(request).get(model_name)
-                action = item['action'] # raise AttributeError()
+                action = item['action']  # raise AttributeError()
                 for name, val in item['fields'].items():
                     field = model_bwp.opts.get_field_by_name(name)[0]
                     if field.rel and isinstance(val, list) and len(val) == 2:
                         item['fields'][name] = val[0]
                     elif isinstance(field, models.DateTimeField) and val:
                         item['fields'][name] = dateparse.parse_datetime(val)
-                    elif isinstance(field, (models.DecimalField, models.FloatField, models.IntegerField)) and val:
+                    elif (isinstance(field, (models.DecimalField,
+                                             models.FloatField,
+                                             models.IntegerField)
+                                     ) and val):
                         item['fields'][name] = numberparse(val)
                 data = item['fields']
                 # Новый объект
@@ -485,8 +517,10 @@ def API_commit(request, objects, **kwargs):
                     if model_bwp.has_add_permission(request):
                         instance = model_bwp.model()
                         instance = set_file_fields(model_bwp, instance, data)
-                        instance = set_user_field(model_bwp, instance, request.user)
-                        form = get_form_instance(request, model_bwp, data=data, instance=instance)
+                        instance = set_user_field(model_bwp, instance,
+                                                  request.user)
+                        form = get_form_instance(request, model_bwp,
+                                                 data=data, instance=instance)
                         if form.is_valid():
                             object = form.save()
                             model_bwp.log_addition(request, object)
@@ -500,19 +534,23 @@ def API_commit(request, objects, **kwargs):
                 elif action == 'delete':
                     instance = get_instance(request, item['pk'], item['model'])
                     if model_bwp.has_delete_permission(request, instance):
-                        model_bwp.log_deletion(request, instance, unicode(instance))
+                        model_bwp.log_deletion(request, instance,
+                                               unicode(instance))
                         instance.delete()
                 # Обновляемый объект
-                elif action == 'change': # raise AttributeError()
+                elif action == 'change':  # raise AttributeError()
                     instance = get_instance(request, item['pk'], item['model'])
-                    instance = set_user_field(model_bwp, instance, request.user)
+                    instance = set_user_field(model_bwp, instance,
+                                              request.user)
                     if model_bwp.has_change_permission(request, instance):
                         instance = set_file_fields(model_bwp, instance, data)
-                        form = get_form_instance(request, model_bwp, data=data, instance=instance)
+                        form = get_form_instance(request, model_bwp, data=data,
+                                                 instance=instance)
                         if form.is_valid():
                             object = form.save()
                             fix = item.get('fix', {})
-                            model_bwp.log_change(request, object, ', '.join(fix.keys()))
+                            model_bwp.log_change(request, object,
+                                                 ', '.join(fix.keys()))
                         else:
                             error = force_text(form.errors)
                             if not six.PY3:
@@ -523,14 +561,15 @@ def API_commit(request, objects, **kwargs):
 
     return JSONResponse(data=True, message=_("Commited!"))
 
+
 @api_required
 @login_required
 def API_device_list(request, **kwargs):
     """ *Получение списка доступных устройств.*
-        
+
         ##### ЗАПРОС
         Без параметров.
-        
+
         ##### ОТВЕТ
         Формат ключа **"data"**:
         список устройств
@@ -540,18 +579,19 @@ def API_device_list(request, **kwargs):
         data = site.devices.get_list(request)
     return JSONResponse(data=data)
 
+
 @api_required
 @login_required
 def API_device_command(request, device, command, params={}, **kwargs):
     """ *Выполнение команды на устройстве.*
-        
+
         ##### ЗАПРОС
         Параметры:
-        
+
         1. **"device"** - идентификатор устройства;
         2. **"command"** - команда(метод) устройства;
         3. **"params"** - параметры к команде (по-умолчанию == {});
-        
+
         ##### ОТВЕТ
         Формат ключа **"data"**:
         результат выполнения команды
@@ -569,12 +609,12 @@ def API_device_command(request, device, command, params={}, **kwargs):
 
 
 _methods = [
-    ('get_apps',       API_get_apps),
-    ('get_settings',   API_get_settings),
-    ('get_object',     API_get_object),
+    ('get_apps', API_get_apps),
+    ('get_settings', API_get_settings),
+    ('get_object', API_get_object),
     ('get_collection', API_get_collection),
-    ('m2m_commit',     API_m2m_commit),
-    ('commit',         API_commit),
+    ('m2m_commit', API_m2m_commit),
+    ('commit', API_commit),
 ]
 
 if 'bwp.contrib.devices' in settings.INSTALLED_APPS:
@@ -585,17 +625,21 @@ if 'bwp.contrib.devices' in settings.INSTALLED_APPS:
 
 if 'bwp.contrib.reports' in settings.INSTALLED_APPS:
     _methods.extend([
-        ('get_collection_report_url', 'bwp.contrib.reports.views.API_get_collection_report_url'),
-        ('get_object_report_url', 'bwp.contrib.reports.views.API_get_object_report_url'),
+        ('get_collection_report_url', 'bwp.contrib.reports.views.'
+                                      'API_get_collection_report_url'),
+        ('get_object_report_url', 'bwp.contrib.reports.views.'
+                                  'API_get_object_report_url'),
     ])
 
 
 # store prepared methods
 METHODS = get_methods(_methods)
 
+
 @csrf_exempt
 def api(request):
     return quickapi_index(request, METHODS)
+
 
 ########################################################################
 #                             END API                                  #

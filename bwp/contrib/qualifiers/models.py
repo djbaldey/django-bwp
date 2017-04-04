@@ -1,94 +1,61 @@
 # -*- coding: utf-8 -*-
-"""
-###############################################################################
-# Copyright 2012 Grigoriy Kramarenko.
-###############################################################################
-# This file is part of BWP.
 #
-#    BWP is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation, either version 3 of the License, or
-#    (at your option) any later version.
+#  bwp/contrib/qualifiers/models.py
 #
-#    BWP is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
+#  Copyright 2012 Grigoriy Kramarenko <root@rosix.ru>
 #
-#    You should have received a copy of the GNU General Public License
-#    along with BWP.  If not, see <http://www.gnu.org/licenses/>.
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 3 of the License, or
+#  (at your option) any later version.
 #
-# Этот файл — часть BWP.
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
 #
-#   BWP - свободная программа: вы можете перераспространять ее и/или
-#   изменять ее на условиях Стандартной общественной лицензии GNU в том виде,
-#   в каком она была опубликована Фондом свободного программного обеспечения;
-#   либо версии 3 лицензии, либо (по вашему выбору) любой более поздней
-#   версии.
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+#  MA 02110-1301, USA.
 #
-#   BWP распространяется в надежде, что она будет полезной,
-#   но БЕЗО ВСЯКИХ ГАРАНТИЙ; даже без неявной гарантии ТОВАРНОГО ВИДА
-#   или ПРИГОДНОСТИ ДЛЯ ОПРЕДЕЛЕННЫХ ЦЕЛЕЙ. Подробнее см. в Стандартной
-#   общественной лицензии GNU.
 #
-#   Вы должны были получить копию Стандартной общественной лицензии GNU
-#   вместе с этой программой. Если это не так, см.
-#   <http://www.gnu.org/licenses/>.
-###############################################################################
-"""
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from bwp.contrib.abstracts.models import AbstractGroup, AbstractGroupText
 
+
 class Country(AbstractGroup):
     """ Общероссийский классификатор стран мира (ОКСМ) """
-    code = models.CharField(
-            max_length=3,
-            primary_key=True,
-            verbose_name = _('code'))
-    symbol2 = models.CharField(
-            max_length=2,
-            unique=True,
-            verbose_name = _('code 2 symbol'))
-    symbol3 = models.CharField(
-            max_length=3,
-            unique=True,
-            verbose_name = _('code 3 symbol'))
-    full_title = models.CharField(
-            max_length=512,
-            blank=True,
-            verbose_name = _('full title'))
+    code = models.CharField(_('code'), max_length=3, primary_key=True)
+    symbol2 = models.CharField(_('code 2 symbol'), max_length=2, unique=True)
+    symbol3 = models.CharField(_('code 3 symbol'), max_length=3, unique=True)
+    full_title = models.CharField(_('full title'), max_length=512, blank=True)
 
     def __unicode__(self):
         return self.title
 
     class Meta:
-        ordering = ['title',]
+        ordering = ['title']
         verbose_name = _('country')
         verbose_name_plural = _('countries')
 
+
 class Currency(AbstractGroup):
     """ Общероссийский классификатор валют (ОКB) """
-    code = models.CharField(
-            max_length=3,
-            primary_key=True,
-            verbose_name = _('code'))
-    symbol3 = models.CharField(
-            max_length=3,
-            unique=True,
-            verbose_name = _('code 3 symbol'))
-    countries = models.ManyToManyField(
-            Country,
-            blank=True,
-            verbose_name = _('countries'))
+    code = models.CharField(_('code'), max_length=3, primary_key=True)
+    symbol3 = models.CharField(_('code 3 symbol'), max_length=3, unique=True)
+    countries = models.ManyToManyField(Country, blank=True,
+                                       verbose_name=_('countries'))
 
     def __unicode__(self):
         return self.title
 
     class Meta:
-        ordering = ['title',]
+        ordering = ['title']
         verbose_name = _('currency')
         verbose_name_plural = _('currencies')
+
 
 class Document(AbstractGroupText):
     """ Общероссийский классификатор управленческой документации (ОКУД)
@@ -115,42 +82,35 @@ class Document(AbstractGroupText):
         Федерации — разработчиками унифицированных систем документации
         (УСД).
     """
-    code = models.CharField(
-            max_length=7,
-            primary_key=True,
-            verbose_name = _('code'))
-    control = models.SmallIntegerField(
-            null=True, blank=True,
-            verbose_name = _('control number'))
-    parent = models.ForeignKey(
-            "Document",
-            null=True, blank=True,
-            verbose_name = _('document parent'))
-    document_index = models.CharField(
-            max_length=64,
-            blank=True, null=True,
-            verbose_name = _('document index'))
-    period = models.CharField(
-            max_length=128,
-            blank=True, null=True,
-            verbose_name = _('periodic'))
+    code = models.CharField(_('code'), max_length=7, primary_key=True)
+    control = models.SmallIntegerField(_('control number'),
+                                       null=True, blank=True)
+    parent = models.ForeignKey("Document", null=True, blank=True,
+                               verbose_name=_('document parent'))
+    document_index = models.CharField(_('document index'), max_length=64,
+                                      blank=True, null=True)
+    period = models.CharField(_('periodic'), max_length=128,
+                              blank=True, null=True)
 
     class Meta:
-        ordering = ['title',]
+        ordering = ['title']
         verbose_name = _('document')
         verbose_name_plural = _('documents')
 
+
 class MeasureUnitCategory(AbstractGroup):
     class Meta:
-        ordering = ['title',]
+        ordering = ['title']
         verbose_name = _('category')
         verbose_name_plural = _('categories of measure units')
 
+
 class MeasureUnitGroup(AbstractGroup):
     class Meta:
-        ordering = ['title',]
+        ordering = ['title']
         verbose_name = _('group')
         verbose_name_plural = _('groups of measure units')
+
 
 class MeasureUnit(AbstractGroup):
     """ Общероссийский классификатор единиц измерения (ОКЕИ)
@@ -188,40 +148,23 @@ class MeasureUnit(AbstractGroup):
         ОКЕИ являются единицы измерения, используемые в этих сферах
         деятельности.
     """
-    code = models.CharField(
-            max_length=3,
-            primary_key=True,
-            verbose_name = _('code'))
-    note_ru = models.CharField(
-            max_length=50,
-            blank=True, null=True,
-            verbose_name = _('RU'),
-            help_text = _('notation RU'))
-    note_iso = models.CharField(
-            max_length=50,
-            blank=True, null=True,
-            verbose_name = _('ISO'),
-            help_text = _('notation ISO'))
-    symbol_ru = models.CharField(
-            max_length=50,
-            blank=True, null=True,
-            verbose_name = _('symbol RU'),
-            help_text = _('symbolic notation RU'))
-    symbol_iso = models.CharField(
-            max_length=50,
-            blank=True, null=True,
-            verbose_name = _('symbol ISO'),
-            help_text = _('symbolic notation ISO'))
-    category = models.ForeignKey(
-            MeasureUnitCategory,
-            null=True, blank=True,
-            verbose_name = _('category'))
-    group = models.ForeignKey(
-            MeasureUnitGroup,
-            null=True, blank=True,
-            verbose_name = _('group'))
+    code = models.CharField(_('code'), max_length=3, primary_key=True)
+    note_ru = models.CharField(_('RU'), max_length=50, blank=True, null=True,
+                               help_text=_('notation RU'))
+    note_iso = models.CharField(_('ISO'), max_length=50, blank=True, null=True,
+                                help_text=_('notation ISO'))
+    symbol_ru = models.CharField(_('symbol RU'), max_length=50,
+                                 blank=True, null=True,
+                                 help_text=_('symbolic notation RU'))
+    symbol_iso = models.CharField(_('symbol ISO'), max_length=50,
+                                  blank=True, null=True,
+                                  help_text=_('symbolic notation ISO'))
+    category = models.ForeignKey(MeasureUnitCategory, null=True, blank=True,
+                                 verbose_name=_('category'))
+    group = models.ForeignKey(MeasureUnitGroup, null=True, blank=True,
+                              verbose_name=_('group'))
 
     class Meta:
-        ordering = ['title',]
+        ordering = ['title']
         verbose_name = _('unit')
         verbose_name_plural = _('measure units')

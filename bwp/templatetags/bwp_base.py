@@ -1,58 +1,42 @@
 # -*- coding: utf-8 -*-
-"""
-###############################################################################
-# Copyright 2013 Grigoriy Kramarenko.
-###############################################################################
-# This file is part of BWP.
 #
-#    BWP is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation, either version 3 of the License, or
-#    (at your option) any later version.
+#  bwp/templatetags/bwp_base.py
 #
-#    BWP is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
+#  Copyright 2013 Grigoriy Kramarenko <root@rosix.ru>
 #
-#    You should have received a copy of the GNU General Public License
-#    along with BWP.  If not, see <http://www.gnu.org/licenses/>.
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 3 of the License, or
+#  (at your option) any later version.
 #
-# Этот файл — часть BWP.
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
 #
-#   BWP - свободная программа: вы можете перераспространять ее и/или
-#   изменять ее на условиях Стандартной общественной лицензии GNU в том виде,
-#   в каком она была опубликована Фондом свободного программного обеспечения;
-#   либо версии 3 лицензии, либо (по вашему выбору) любой более поздней
-#   версии.
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+#  MA 02110-1301, USA.
 #
-#   BWP распространяется в надежде, что она будет полезной,
-#   но БЕЗО ВСЯКИХ ГАРАНТИЙ; даже без неявной гарантии ТОВАРНОГО ВИДА
-#   или ПРИГОДНОСТИ ДЛЯ ОПРЕДЕЛЕННЫХ ЦЕЛЕЙ. Подробнее см. в Стандартной
-#   общественной лицензии GNU.
 #
-#   Вы должны были получить копию Стандартной общественной лицензии GNU
-#   вместе с этой программой. Если это не так, см.
-#   <http://www.gnu.org/licenses/>.
-###############################################################################
-"""
-
 from django import VERSION
 from django.core.urlresolvers import reverse
-from django.db.models import Q
 from django.template import Library, TemplateSyntaxError
-from django.template.defaulttags import kwarg_re, SsiNode, URLNode
+from django.template.defaulttags import kwarg_re, URLNode
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
 from bwp import conf
-from bwp.utils.datetimes import timezone, datetime_server_naive
+from bwp.utils.datetimes import datetime_server_naive
 
 register = Library()
+
 
 @register.simple_tag
 def SETTINGS(key):
     return getattr(conf, key, getattr(conf.settings, key, ''))
+
 
 @register.simple_tag
 def DEMO():
@@ -61,11 +45,13 @@ def DEMO():
         return '<span class="label label-important">DEMO</span>'
     return ''
 
+
 @register.simple_tag
 def mini_library():
     if conf.settings.DEBUG:
         return ''
     return '.min'
+
 
 @register.simple_tag
 def AUTHORS():
@@ -74,17 +60,19 @@ def AUTHORS():
     except:
         return ''
 
+
 @register.simple_tag
 def COPYRIGHT_YEARS():
     end = timezone.now().date().year
     try:
-        start =  conf.COPYRIGHT_YEAR
+        start = conf.COPYRIGHT_YEAR
     except:
-        start = date.today().year
+        start = end
     if str(start) != str(end):
         return "%s-%s" % (start, end)
     else:
         return "%s" % end
+
 
 @register.simple_tag
 def SERVER_TZ_OFFSET_JS():
@@ -92,21 +80,23 @@ def SERVER_TZ_OFFSET_JS():
     Offset from UTC as JavaScript style
     """
     offset = SETTINGS('SERVER_TZ_OFFSET_JS') or None
-    if not offset is None:
+    if offset is not None:
         return offset
     tz = timezone.get_current_timezone()
     sec = tz.utcoffset(datetime_server_naive()).total_seconds()
-    return int(sec/60) * -1
+    return int(sec / 60) * -1
+
 
 @register.simple_tag
 def navactive(request, urls):
-    if request.path in ( reverse(url) for url in urls.split() ):
+    if request.path in [reverse(url) for url in urls.split()]:
         return "active"
     return ""
 
+
 @register.simple_tag
 def subnavactive(request, key, val=None):
-    if val == None and (key in request.GET):
+    if val is None and (key in request.GET):
         return "active"
     if (val in ('', 0)) and (key not in request.GET):
         return "active"
@@ -122,8 +112,9 @@ def subnavactive(request, key, val=None):
             except:
                 get_val = None
         if get_val == val:
-                return "active"
+            return "active"
     return ""
+
 
 @register.simple_tag
 def addGET(request, key, val=''):
@@ -135,8 +126,9 @@ def addGET(request, key, val=''):
             del dic[key]
         except:
             pass
-    L = ['%s=%s' % (k, v) for k,v in dic.items()] 
+    L = ['%s=%s' % (k, v) for k, v in dic.items()]
     return "?" + '&'.join(L)
+
 
 @register.simple_tag
 def short_username(user):
@@ -146,6 +138,7 @@ def short_username(user):
         return user.username
     return u'%s %s.' % (user.last_name, unicode(user.first_name)[0])
 
+
 @register.simple_tag
 def full_username(user):
     if user.is_anonymous():
@@ -154,6 +147,7 @@ def full_username(user):
         return user.username
     return u'%s %s' % (user.last_name, user.first_name)
 
+
 @register.filter
 def is_active(qs):
     try:
@@ -161,9 +155,11 @@ def is_active(qs):
     except:
         return qs
 
+
 @register.filter
 def split(obj, string):
     return obj.split(string)
+
 
 @register.simple_tag
 def pagination(request, paginator):
@@ -192,15 +188,15 @@ def pagination(request, paginator):
         if number > (ON_EACH_SIDE + ON_ENDS):
             page_range.extend(range(1, ON_EACH_SIDE))
             page_range.append(DOT)
-            page_range.extend(range(number +1 - ON_EACH_SIDE, number + 1))
+            page_range.extend(range(number + 1 - ON_EACH_SIDE, number + 1))
         else:
             page_range.extend(range(1, number + 1))
         if number < (num_pages - ON_EACH_SIDE - ON_ENDS + 1):
             page_range.extend(range(number + 1, number + ON_EACH_SIDE))
             page_range.append(DOT)
-            page_range.extend(range(num_pages - ON_ENDS +1, num_pages+1))
+            page_range.extend(range(num_pages - ON_ENDS + 1, num_pages + 1))
         else:
-            page_range.extend(range(number + 1, num_pages+1))
+            page_range.extend(range(number + 1, num_pages + 1))
     L = []
     for num in page_range:
         css = ""
@@ -215,6 +211,7 @@ def pagination(request, paginator):
         L.append(temp % (css, link, num))
     return u''.join(L)
 
+
 @register.filter
 def multiply(obj, digit):
     if obj is None:
@@ -223,6 +220,7 @@ def multiply(obj, digit):
         return obj * digit
     except:
         return 'filter error'
+
 
 @register.filter
 def divide(obj, digit):
@@ -234,7 +232,7 @@ def divide(obj, digit):
         return 'filter error'
 
 
-if VERSION[1] <=5:
+if VERSION[1] <= 5:
     @register.tag
     def feature_url(parser, token):
         """
@@ -327,6 +325,3 @@ if VERSION[1] <=5:
             return URLNode(viewname, args, kwargs, asvar, legacy_view_name=False)
         except:
             return URLNode(viewname, args, kwargs, asvar)
-
-
-

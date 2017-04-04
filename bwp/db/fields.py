@@ -1,54 +1,38 @@
 # -*- coding: utf-8 -*-
-"""
-###############################################################################
-# Copyright 2012 Grigoriy Kramarenko.
-###############################################################################
-# This file is part of BWP.
 #
-#    BWP is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation, either version 3 of the License, or
-#    (at your option) any later version.
+#  bwp/db/fields.py
 #
-#    BWP is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
+#  Copyright 2012 Grigoriy Kramarenko <root@rosix.ru>
 #
-#    You should have received a copy of the GNU General Public License
-#    along with BWP.  If not, see <http://www.gnu.org/licenses/>.
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 3 of the License, or
+#  (at your option) any later version.
 #
-# Этот файл — часть BWP.
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
 #
-#   BWP - свободная программа: вы можете перераспространять ее и/или
-#   изменять ее на условиях Стандартной общественной лицензии GNU в том виде,
-#   в каком она была опубликована Фондом свободного программного обеспечения;
-#   либо версии 3 лицензии, либо (по вашему выбору) любой более поздней
-#   версии.
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+#  MA 02110-1301, USA.
 #
-#   BWP распространяется в надежде, что она будет полезной,
-#   но БЕЗО ВСЯКИХ ГАРАНТИЙ; даже без неявной гарантии ТОВАРНОГО ВИДА
-#   или ПРИГОДНОСТИ ДЛЯ ОПРЕДЕЛЕННЫХ ЦЕЛЕЙ. Подробнее см. в Стандартной
-#   общественной лицензии GNU.
 #
-#   Вы должны были получить копию Стандартной общественной лицензии GNU
-#   вместе с этой программой. Если это не так, см.
-#   <http://www.gnu.org/licenses/>.
-###############################################################################
-"""
+import os
+import json as simplejson
+from PIL import Image
+from PIL.ExifTags import TAGS
+
 from django.db.models import SubfieldBase, TextField
 from django.db.models.fields.files import ImageField, ImageFieldFile
 from django.forms.widgets import Textarea
 from django.template.defaultfilters import slugify
 
-import json as simplejson
-
 from quickapi.http import JSONEncoder
 
-from bwp.conf import settings  
-
-from PIL import Image
-from PIL.ExifTags import TAGS
+from bwp.conf import settings
 
 try:
     from unidecode import unidecode
@@ -56,12 +40,12 @@ try:
 except:
     use_unidecode = False
 
-import os
 
 try:
-    from tinymce.models import HTMLField
+    from tinymce.models import HTMLField  # NOQA
 except ImportError:
-    from django.db.models.fields import TextField as HTMLField
+    from django.db.models.fields import TextField as HTMLField  # NOQA
+
 
 class JSONField(TextField):
     __metaclass__ = SubfieldBase
@@ -89,16 +73,17 @@ class JSONField(TextField):
             return None
 
         if isinstance(value, (list, dict)):
-            value = simplejson.dumps(value, cls=JSONEncoder,
-                    ensure_ascii=False,
-                    indent=4)
+            value = simplejson.dumps(
+                value, cls=JSONEncoder, ensure_ascii=False, indent=4
+            )
             try:
                 value = value.encode('utf-8')
             except:
                 pass
 
         return super(JSONField, self).get_db_prep_save(
-                            value, connection=connection, **kwargs)
+            value, connection=connection, **kwargs
+        )
 
     def to_python(self, value, **kwargs):
         """Convert our string value to JSON after we load it from the DB"""
@@ -111,7 +96,7 @@ class JSONField(TextField):
 
         try:
             return simplejson.loads(value, encoding=settings.DEFAULT_CHARSET)
-        except ValueError, e:
+        except ValueError:
             # If string could not parse as JSON it's means that it's Python
             # string saved to JSONField.
             return value
@@ -123,6 +108,7 @@ class JSONField(TextField):
         else:
             return self.get_db_prep_save(self.get_default(), connection=None)
 
+
 class JSONWidget(Textarea):
     """ Prettify dumps of all non-string JSON data. """
     def render(self, name, value, attrs=None):
@@ -130,13 +116,14 @@ class JSONWidget(Textarea):
             value = simplejson.dumps(value, indent=4, sort_keys=True)
         return super(JSONWidget, self).render(name, value, attrs)
 
+
 def _add_thumb(s):
-    """ Изменяет строку (имя файла или URL), содержащую имя файла 
+    """ Изменяет строку (имя файла или URL), содержащую имя файла
         изображения, добавляя '.thumb' в конец и приводя к слагу,
         если это возможно.
     """
     # Что-то не так с сохранением путей
-    s = [ x for x in os.path.split(s) ] # from tuple to list
+    s = [x for x in os.path.split(s)]  # from tuple to list
     name, ext = os.path.splitext(s[-1])
     if use_unidecode:
         name = unidecode(unicode(name))
@@ -145,47 +132,63 @@ def _add_thumb(s):
     s = '.'.join(s)
     return '%s.thumb' % s
 
-def maxSize(image, maxSize, method = 3):
-    if image.size[0] > maxSize[0] and image.size[0] > maxSize[1] or \
-       image.size[1] > maxSize[0] and image.size[1] > maxSize[1]:
 
-            imAspect = float(image.size[0])/float(image.size[1])
-            outAspect = float(maxSize[0])/float(maxSize[1])
-            if imAspect >= outAspect:
-                return image.resize((maxSize[0], int((float(maxSize[0])/imAspect) + 0.5)), method)
-            else:
-                return image.resize((int((float(maxSize[1])*imAspect) + 0.5), maxSize[1]), method)
+def maxSize(image, maxSize, method=3):
+    if (image.size[0] > maxSize[0] and image.size[0] > maxSize[1] or
+            image.size[1] > maxSize[0] and image.size[1] > maxSize[1]):
+        imAspect = float(image.size[0]) / float(image.size[1])
+        outAspect = float(maxSize[0]) / float(maxSize[1])
+        if imAspect >= outAspect:
+            return image.resize(
+                (maxSize[0], int((float(maxSize[0]) / imAspect) + 0.5)),
+                method,
+            )
+        else:
+            return image.resize(
+                (int((float(maxSize[1]) * imAspect) + 0.5), maxSize[1]),
+                method,
+            )
     else:
         return image
+
 
 def get_square_image(img):
     width, height = img.size
     if width > height:
-       delta = width - height
-       left = int(delta/2)
-       upper = 0
-       right = height + left
-       lower = height
+        delta = width - height
+        left = int(delta / 2)
+        upper = 0
+        right = height + left
+        lower = height
     else:
-       delta = height - width
-       left = 0
-       upper = int(delta/2)
-       right = width
-       lower = width + upper
+        delta = height - width
+        left = 0
+        upper = int(delta / 2)
+        right = width
+        lower = width + upper
     img = img.crop((left, upper, right, lower))
     return img
+
 
 class ThumbnailImageFieldFile(ImageFieldFile):
     @property
     def thumb_path(self):
         return _add_thumb(self.path)
+
     @property
     def thumb_url(self):
-        end = self.thumb_path.replace(os.path.abspath(settings.MEDIA_ROOT), '').lstrip('/')
+        end = self.thumb_path.replace(
+            os.path.abspath(settings.MEDIA_ROOT),
+            '',
+        ).lstrip('/')
         return settings.MEDIA_URL + end
+
     @property
     def url(self):
-        end = self.path.replace(os.path.abspath(settings.MEDIA_ROOT), '').lstrip('/')
+        end = self.path.replace(
+            os.path.abspath(settings.MEDIA_ROOT),
+            '',
+        ).lstrip('/')
         return settings.MEDIA_URL + end
 
     def save(self, name, content, save=True):
@@ -196,29 +199,34 @@ class ThumbnailImageFieldFile(ImageFieldFile):
             exif = img._getexif()
         except:
             exif = None
-        if exif != None:
+        if exif is not None:
             for tag, value in exif.items():
                 decoded = TAGS.get(tag, tag)
                 if decoded == 'Orientation':
-                    if value == 3: img = img.rotate(180)
-                    if value == 6: img = img.rotate(270)
-                    if value == 8: img = img.rotate(90)
+                    if value == 3:
+                        img = img.rotate(180)
+                    if value == 6:
+                        img = img.rotate(270)
+                    if value == 8:
+                        img = img.rotate(90)
                     break
         if self.field.square:
             img = get_square_image(img)
         if self.field.resize:
-            img = maxSize(img, 
-                (self.field.max_width, self.field.max_height), 
-                Image.ANTIALIAS
-                )
+            img = maxSize(
+                img,
+                (self.field.max_width, self.field.max_height),
+                Image.ANTIALIAS,
+            )
             img.save(self.path)
         if self.field.thumb_square and not self.field.square:
             img = get_square_image(img)
         img.thumbnail(
             (self.field.thumb_width, self.field.thumb_height),
-            Image.ANTIALIAS
-            )
+            Image.ANTIALIAS,
+        )
         img.save(self.thumb_path, 'JPEG')
+
 
 class ThumbnailImageField(ImageField):
     """ Ведёт себя также как и класс ImageField, но дополнительно
@@ -226,19 +234,19 @@ class ThumbnailImageField(ImageField):
         get_FIELD_thumb_url() и get_FIELD_thumb_filename().
 
         Принимает два дополнительных, необязательных аргумента:
-        thumb_width и thumb_height, каждый из которых имеет значение 
-        по умолчанию 128 пикселей. При изсенении размеров, отношение 
-        ширины к высоте сохраняется, обеспечивая пропорциональность 
+        thumb_width и thumb_height, каждый из которых имеет значение
+        по умолчанию 128 пикселей. При изсенении размеров, отношение
+        ширины к высоте сохраняется, обеспечивая пропорциональность
         изображения.
 
         Также см. Image.thumbnail() библиотеки PIL.
     """
     attr_class = ThumbnailImageFieldFile
 
-    def __init__(self, thumb_width=256, thumb_height=256, 
-                max_width=1024, max_height=1024, resize=True, 
-                square=False, thumb_square=False,
-                *args, **kwargs):
+    def __init__(self, thumb_width=256, thumb_height=256,
+                 max_width=1024, max_height=1024, resize=True,
+                 square=False, thumb_square=False,
+                 *args, **kwargs):
 
         self.resize = resize
         self.square = square

@@ -1,43 +1,27 @@
 # -*- coding: utf-8 -*-
-"""
-###############################################################################
-# Copyright 2013 Grigoriy Kramarenko.
-###############################################################################
-# This file is part of BWP.
 #
-#    BWP is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation, either version 3 of the License, or
-#    (at your option) any later version.
+#  bwp/contrib/devices/drivers/helpers.py
 #
-#    BWP is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
+#  Copyright 2013 Grigoriy Kramarenko <root@rosix.ru>
 #
-#    You should have received a copy of the GNU General Public License
-#    along with BWP.  If not, see <http://www.gnu.org/licenses/>.
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 3 of the License, or
+#  (at your option) any later version.
 #
-# Этот файл — часть BWP.
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
 #
-#   BWP - свободная программа: вы можете перераспространять ее и/или
-#   изменять ее на условиях Стандартной общественной лицензии GNU в том виде,
-#   в каком она была опубликована Фондом свободного программного обеспечения;
-#   либо версии 3 лицензии, либо (по вашему выбору) любой более поздней
-#   версии.
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+#  MA 02110-1301, USA.
 #
-#   BWP распространяется в надежде, что она будет полезной,
-#   но БЕЗО ВСЯКИХ ГАРАНТИЙ; даже без неявной гарантии ТОВАРНОГО ВИДА
-#   или ПРИГОДНОСТИ ДЛЯ ОПРЕДЕЛЕННЫХ ЦЕЛЕЙ. Подробнее см. в Стандартной
-#   общественной лицензии GNU.
 #
-#   Вы должны были получить копию Стандартной общественной лицензии GNU
-#   вместе с этой программой. Если это не так, см.
-#   <http://www.gnu.org/licenses/>.
-###############################################################################
-"""
-from django.utils.translation import ugettext_lazy as _
 import struct
+
 
 class Struct(struct.Struct):
     """ Преобразователь """
@@ -52,28 +36,29 @@ class Struct(struct.Struct):
     def pack(self, value):
         value = super(Struct, self).pack(value)
         return self.post_value(value)
-    
+
     def pre_value(self, value):
         """ Обрезает или добавляет нулевые байты """
         if self.size:
-            if self.format in ('h','i','I','l','L','q','Q'):
+            if self.format in ('h', 'i', 'I', 'l', 'L', 'q', 'Q'):
                 _len = len(value)
                 if _len < self.size:
                     value = value.ljust(self.size, chr(0x0))
                 elif _len > self.size:
                     value = value[:self.size]
         return value
-    
+
     def post_value(self, value):
         """ Обрезает или добавляет нулевые байты """
         if self.length:
-            if self.format in ('h','i','I','l','L','q','Q'):
+            if self.format in ('h', 'i', 'I', 'l', 'L', 'q', 'Q'):
                 _len = len(value)
                 if _len < self.length:
                     value = value.ljust(self.length, chr(0x0))
                 elif _len > self.length:
                     value = value[:self.length]
         return value
+
 
 # Объекты класса Struct
 # Формат short по длинне 2 байта
@@ -91,6 +76,7 @@ int7 = Struct('q', length=7)
 # Формат "long long" для 8-ти байтовых чисел
 int8 = Struct('q', length=8)
 
+
 def string2bits(string):
     """ Convert string to bit array """
     result = []
@@ -100,11 +86,13 @@ def string2bits(string):
         result.extend([int(b) for b in bits])
     return result
 
+
 def bits2string(bits):
     """ Convert bit array to string """
     chars = []
     for b in range(len(bits) / 8):
-        byte = bits[b*8:(b+1)*8]
+        start = b * 8
+        end = (b + 1) * 8
+        byte = bits[start:end]
         chars.append(chr(int(''.join([str(bit) for bit in byte]), 2)))
     return ''.join(chars)
-

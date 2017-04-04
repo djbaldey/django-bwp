@@ -1,48 +1,32 @@
 # -*- coding: utf-8 -*-
-"""
-###############################################################################
-# Copyright 2014 Grigoriy Kramarenko.
-###############################################################################
-# This file is part of BWP.
 #
-#    BWP is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation, either version 3 of the License, or
-#    (at your option) any later version.
+#  bwp/management/commands/sqlscript.py
 #
-#    BWP is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
+#  Copyright 2014 Grigoriy Kramarenko <root@rosix.ru>
 #
-#    You should have received a copy of the GNU General Public License
-#    along with BWP.  If not, see <http://www.gnu.org/licenses/>.
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 3 of the License, or
+#  (at your option) any later version.
 #
-# Этот файл — часть BWP.
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
 #
-#   BWP - свободная программа: вы можете перераспространять ее и/или
-#   изменять ее на условиях Стандартной общественной лицензии GNU в том виде,
-#   в каком она была опубликована Фондом свободного программного обеспечения;
-#   либо версии 3 лицензии, либо (по вашему выбору) любой более поздней
-#   версии.
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+#  MA 02110-1301, USA.
 #
-#   BWP распространяется в надежде, что она будет полезной,
-#   но БЕЗО ВСЯКИХ ГАРАНТИЙ; даже без неявной гарантии ТОВАРНОГО ВИДА
-#   или ПРИГОДНОСТИ ДЛЯ ОПРЕДЕЛЕННЫХ ЦЕЛЕЙ. Подробнее см. в Стандартной
-#   общественной лицензии GNU.
 #
-#   Вы должны были получить копию Стандартной общественной лицензии GNU
-#   вместе с этой программой. Если это не так, см.
-#   <http://www.gnu.org/licenses/>.
-###############################################################################
-"""
 import os
 from django.utils.importlib import import_module
 from django.core.management.base import LabelCommand
-from django.utils.translation import ugettext_lazy as _
-from django.db import connections, transaction, DEFAULT_DB_ALIAS
+from django.db import DEFAULT_DB_ALIAS
 
 from bwp.conf import settings
+
 
 def prepare_engine(engine):
     engine = engine.split('.')[-1]
@@ -51,15 +35,19 @@ def prepare_engine(engine):
             return e
     return engine
 
-DATABASE_ENGINES = [ (x,prepare_engine(y['ENGINE'])) for x,y in settings.DATABASES.items() ]
+
+DATABASE_ENGINES = [
+    (x, prepare_engine(y['ENGINE'])) for x, y in settings.DATABASES.items()
+]
+
 
 def _prepare_sql(lines):
     L = []
     for line in lines:
-        l = line.lstrip(' ')
-        if not l or l == '\n':
+        line = line.lstrip(' ')
+        if not line or line == '\n':
             continue
-        elif l.startswith('--'):
+        elif line.startswith('--'):
             continue
         L.append(line)
     L[-1] = L[-1].replace(';\n', ';')
@@ -68,12 +56,19 @@ def _prepare_sql(lines):
 
 
 def sql_custom(db):
-    "Returns a list of the custom table modifying SQL statements for the given db alias."
+    """Returns a list of the custom table modifying SQL statements for
+    the given db alias."""
     output = []
     D = dict(DATABASE_ENGINES)
     for app in settings.INSTALLED_APPS:
         mod = import_module(app)
-        _dir = os.path.normpath(os.path.join(os.path.dirname(mod.__file__), 'sql', 'bases'))
+        _dir = os.path.normpath(
+            os.path.join(
+                os.path.dirname(mod.__file__),
+                'sql',
+                'bases'
+            )
+        )
         custom_files = [os.path.join(_dir, "all.sql")]
         custom_files.append(os.path.join(_dir, "%s.sql" % D.get(db, '')))
         custom_files.append(os.path.join(_dir, db, "all.sql"))
@@ -86,12 +81,15 @@ def sql_custom(db):
 
     return output
 
+
 class Command(LabelCommand):
-    help = ("Prints the joined all custom SQL scripts for the given database alias.\n"
-           "\nExample direct run script in database:\n"
-           "./manage.py sqlscript | ./manage.py dbshell\n"
-           "OR\n"
-           "./manage.py sqlscript master | ./manage.py dbshell --database=master"
+    help = (
+        "Prints the joined all custom SQL scripts for the given "
+        "database alias.\n"
+        "\nExample direct run script in database:\n"
+        "./manage.py sqlscript | ./manage.py dbshell\n"
+        "OR\n"
+        "./manage.py sqlscript master | ./manage.py dbshell --database=master"
     )
     args = '<db_alias_1 db_alias_2 ...>'
     label = 'db_alias'

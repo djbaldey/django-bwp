@@ -1,46 +1,28 @@
 # -*- coding: utf-8 -*-
-"""
-###############################################################################
-# Copyright 2012 Grigoriy Kramarenko.
-###############################################################################
-# This file is part of BWP.
 #
-#    BWP is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation, either version 3 of the License, or
-#    (at your option) any later version.
+#  bwp/utils/datetimes.py
 #
-#    BWP is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
+#  Copyright 2012 Grigoriy Kramarenko <root@rosix.ru>
 #
-#    You should have received a copy of the GNU General Public License
-#    along with BWP.  If not, see <http://www.gnu.org/licenses/>.
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 3 of the License, or
+#  (at your option) any later version.
 #
-# Этот файл — часть BWP.
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
 #
-#   BWP - свободная программа: вы можете перераспространять ее и/или
-#   изменять ее на условиях Стандартной общественной лицензии GNU в том виде,
-#   в каком она была опубликована Фондом свободного программного обеспечения;
-#   либо версии 3 лицензии, либо (по вашему выбору) любой более поздней
-#   версии.
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+#  MA 02110-1301, USA.
 #
-#   BWP распространяется в надежде, что она будет полезной,
-#   но БЕЗО ВСЯКИХ ГАРАНТИЙ; даже без неявной гарантии ТОВАРНОГО ВИДА
-#   или ПРИГОДНОСТИ ДЛЯ ОПРЕДЕЛЕННЫХ ЦЕЛЕЙ. Подробнее см. в Стандартной
-#   общественной лицензии GNU.
 #
-#   Вы должны были получить копию Стандартной общественной лицензии GNU
-#   вместе с этой программой. Если это не так, см.
-#   <http://www.gnu.org/licenses/>.
-###############################################################################
-"""
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
-from datetime import timedelta
 
-# Округление времени:
 
 def datetime_round(dt=None, minute=True, hour=False, day=False):
     """
@@ -50,7 +32,7 @@ def datetime_round(dt=None, minute=True, hour=False, day=False):
         до часа:    rounded(hour=True)
         до минуты:  rounded()
         до секунды: rounded(minute=False)
-        
+
     Если нужно округлить заданное время,то оно передаётся в
     параметре `dt`.
 
@@ -73,10 +55,10 @@ def datetime_round(dt=None, minute=True, hour=False, day=False):
 
     return dt
 
+
 # Deprecated:
 dt_rounded = datetime_round
 
-# Получение или преобразование времени в локальную или серверную зоны:
 
 def datetime_local(value=None):
     """
@@ -89,6 +71,7 @@ def datetime_local(value=None):
     if not value:
         value = timezone.now()
     return timezone.localtime(value, True)
+
 
 def datetime_server(value=None):
     """
@@ -107,7 +90,6 @@ def datetime_server(value=None):
     tz_curr = timezone.get_current_timezone()
     tz_serv = timezone.get_default_timezone()
 
-
     if tz_curr != tz_serv:
         timezone.activate(tz_serv)
         value = timezone.localtime(value, tz_serv)
@@ -117,7 +99,6 @@ def datetime_server(value=None):
 
     return value
 
-# Принудительные преобразования в локальную или серверную зоны:
 
 def datetime_naive(value=None):
     """
@@ -126,12 +107,14 @@ def datetime_naive(value=None):
     """
     return datetime_local(value).replace(tzinfo=None)
 
+
 def datetime_aware(value=None):
     """
     Переводит значение (даже простое) в текущую зону локального времени.
     Возвращает aware c текущей временной зоной.
     """
     return datetime_local(value).replace(tzinfo=timezone.get_current_timezone())
+
 
 def datetime_server_naive(value=None):
     """
@@ -140,6 +123,7 @@ def datetime_server_naive(value=None):
     """
     return datetime_server(value).replace(tzinfo=None)
 
+
 def datetime_server_aware(value=None):
     """
     Переводит значение (даже простое) в зону серверного времени.
@@ -147,7 +131,6 @@ def datetime_server_aware(value=None):
     """
     return datetime_server(value).replace(tzinfo=timezone.get_default_timezone())
 
-# Получение текущего локального или серверного времени:
 
 def current_date():
     """
@@ -155,11 +138,13 @@ def current_date():
     """
     return datetime_naive().date()
 
+
 def current_time():
     """
     Возвращает текущее время локальной зоны.
     """
     return datetime_naive().time()
+
 
 def server_date():
     """
@@ -167,13 +152,13 @@ def server_date():
     """
     return datetime_server_naive().date()
 
+
 def server_time():
     """
     Возвращает текущее время сервера по settings.TIME_ZONE.
     """
     return datetime_server_naive().time()
 
-# Парсеры с принудительным преобразованием времени в локальную или серверную зоны:
 
 def parse_datetime_to_naive(value):
     """
@@ -184,6 +169,7 @@ def parse_datetime_to_naive(value):
         return datetime_naive(value)
     return None
 
+
 def parse_datetime_to_aware(value):
     """
     Парсер строкового значения (naive или aware) в локальное aware.
@@ -192,6 +178,7 @@ def parse_datetime_to_aware(value):
     if value:
         return datetime_aware(value)
     return None
+
 
 def parse_datetime_to_server_naive(value):
     """
@@ -202,6 +189,7 @@ def parse_datetime_to_server_naive(value):
         return datetime_server_naive(value)
     return None
 
+
 def parse_datetime_to_server_aware(value):
     """
     Парсер строкового значения (naive или aware) в серверное aware.
@@ -210,4 +198,3 @@ def parse_datetime_to_server_aware(value):
     if value:
         return datetime_server_aware(value)
     return None
-
