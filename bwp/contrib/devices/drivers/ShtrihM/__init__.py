@@ -24,9 +24,10 @@ from __future__ import unicode_literals
 import datetime
 import time
 
+from django.utils.encoding import force_text
 from django.utils.translation import ugettext as _
 
-from shtrihmfr.kkt import KKT, KktError, int2
+from shtrihmfr.kkt import KKT, KktError, int2, force_bytes
 from shtrihmfr.protocol import *  # NOQA
 
 from bwp.contrib.devices.remote import RemoteCommand
@@ -42,12 +43,20 @@ class ShtrihFRK(object):
     kkt = None
     is_remote = False
     is_open = False
+    payments = {}
 
     def __init__(self, remote=False, *args, **kwargs):
         if remote:
             self.is_remote = True
             self.remote = RemoteCommand(*args, **kwargs)
         else:
+            if 'payments' in kwargs:
+                self.payments = kwargs.pop('payments')
+            # Тестируем правильность установки типов оплат
+            assert isinstance(self.payments, dict), \
+                'Типы оплат должны быть словарём.'
+            self.route_payments(0, 0, 0, 0)
+            # После этого подключаем KKT
             self.kkt = KKT(*args, **kwargs)
 
     def get_method_name(self, method):
@@ -153,10 +162,8 @@ class ShtrihFRK(object):
             kkt_mode = self.kkt.x10()['kkt_mode']
             if kkt_mode == 4:
                 self.kkt.xE0()
-                self.is_open = True
-            else:
-                self.is_open = True
-
+                time.sleep(5)
+            self.is_open = True
         return self.is_open
 
     def status(self, short=True):
@@ -190,52 +197,51 @@ class ShtrihFRK(object):
             self.append_spooler(group_hash, self.kkt.x17_loop, text=line)
         return self.result_spooler(group_hash, self.cut_tape, strict=False)
 
-    def make_discount(self, discount, cash, credit, card):
-        if cash >= discount:
-            cash -= discount
-            return discount, cash, credit, card
-        else:
-            discount -= cash
-            cash = 0
-
-        if credit >= discount:
-            credit -= discount
-            return discount, cash, credit, card
-        else:
-            discount -= credit
-            credit = 0
-
-        if card >= discount:
-            card -= discount
-            return discount, cash, credit, card
-        else:
-            discount -= card
-            card = 0
-
-        return discount, cash, credit, card
+    def route_payments(self, cash, credit, packaging, card):
+        "Возвращает направление типов оплат для закрытия чека."
+        payments = [0 for x in range(16)]
+        payments[self.payments.get('cash', 0)] = cash
+        # Клубная карта клиента (дебетовая)
+        payments[self.payments.get('card', 1)] = card
+        # Банковская карта
+        payments[self.payments.get('credit', 2)] = credit
+        # Любая другая форма оплаты
+        payments[self.payments.get('packaging', 15)] = packaging
+        assert len(payments) == 16, \
+            'Количество типов оплат должно быть равно 16.'
+        return payments
 
     def print_receipt(self, specs, cash=0, credit=0, packaging=0, card=0,
                       discount_summa=0, discount_percent=0, document_type=0,
-                      nds=0, header='', comment='', buyer=''):
-        """ Печать чека.
+                      nds=0, header='', comment='', buyer='',
+                      mail_or_phone=''):
+        """ Печать чека. Новый метод продаж и возвратов для онлайн-касс.
+
             specs - Это список словарей проданных позиций:
-                [{'title':'Хлеб',
-                 'price':'10.00', 'count':'3', 'summa':'30.00'},
-                 {'title':'',
-                 'price':'10.00', 'count':'3', 'summa':'30.00'},
-                ]
+            [
+                {
+                    'title': 'Хлеб',
+                    'price': '10.00',
+                    'count': '3',
+                    'summa': '30.00',
+                    'discount_summa': 1.0,
+                },
+            ]
             Типы оплат:
                 cash      - наличными
                 credit    - кредитом
                 packaging - тарой
                 card      - платёжной картой
             Тип документа:
-                0 – продажа;
-                1 – покупка;
-                2 – возврат продажи;
-                3 – возврат покупки
+                0 – продажа -->> (1 – Приход);
+                1 – покупка -->> (3 – Расход);
+                2 – возврат продажи --> (2 – Возврат прихода);
+                3 – возврат покупки --> (4 – Возврат расхода);
 
         """
+        # print(specs, cash, credit, packaging, card)
+        # print(discount_summa, discount_percent)
+        # print(document_type, nds, header, comment, buyer)
         if self.is_remote:
             return self.remote(
                 "print_receipt",
@@ -245,7 +251,11 @@ class ShtrihFRK(object):
                 discount_percent=discount_percent,
                 document_type=document_type, nds=nds,
                 header=header, comment=comment, buyer=buyer,
+                mail_or_phone=mail_or_phone,
             )
+
+        self.open()
+        kkt = self.kkt  # short link
 
         group_hash = self.make_spooler(self.reset)
 
@@ -253,79 +263,123 @@ class ShtrihFRK(object):
         if nds > 0:
             taxes[0] = 2
             # Включаем начисление налогов на ВСЮ операцию чека
-            self.append_spooler(
-                group_hash,
-                self.kkt.x1E, table=1, row=1, field=17, value=chr(0x1),
-            )
+            # self.append_spooler(
+            #     group_hash,
+            #     self.kkt.x1E, table=1, row=1, field=17, value=chr(0x1),
+            # )
             # Включаем печатать налоговые ставки и сумму налога
-            self.append_spooler(
-                group_hash,
-                self.kkt.x1E, table=1, row=1, field=19, value=chr(0x2),
-            )
-            self.append_spooler(
-                group_hash,
-                self.kkt.x1E, table=6, row=2, field=1,
-                value=int2.pack(nds * 100),
-            )
-        # Открыть чек
-        self.append_spooler(
-            group_hash, self.kkt.x8D, document_type=document_type
-        )
+            # self.append_spooler(
+            #     group_hash,
+            #     self.kkt.x1E, table=1, row=1, field=19, value=chr(0x2),
+            # )
+            # self.append_spooler(
+            #     group_hash,
+            #     self.kkt.x1E, table=6, row=2, field=1,
+            #     value=int2.pack(nds * 100),
+            # )
 
-        for line in header.split('\n'):
-            self.append_spooler(group_hash, self.kkt.x17_loop, text=line)
+        # Открыть чек
+        # self.append_spooler(
+            # group_hash, self.kkt.x8D, document_type=document_type
+        # )
+
+        if header:
+            for line in header.split('\n'):
+                self.append_spooler(group_hash, self.kkt.x17_loop, text=line)
 
         if document_type == 0:
-            text_buyer = 'Принято от %s'
-            method = self.kkt.x80
-        elif document_type == 1:
-            text_buyer = 'Принято от %s'
-            method = self.kkt.x81
+            text_buyer = 'Приход от %s'
+            operation = 1
         elif document_type == 2:
-            text_buyer = 'Возвращено %s'
-            method = self.kkt.x82
+            text_buyer = 'Возврат прихода %s'
+            operation = 2
+        elif document_type == 1:
+            text_buyer = 'Расход к %s'
+            operation = 3
         elif document_type == 3:
-            text_buyer = 'Возвращено %s'
-            method = self.kkt.x83
+            text_buyer = 'Возврат расхода %s'
+            operation = 4
         else:
             raise KktError(_('Type of document must be 0..3'))
 
-        text_buyer = text_buyer % buyer if buyer else ''
+        text_buyer = (text_buyer % buyer if buyer else '').strip()
+
+        total_summa = 0
+        total_discount = 0
 
         for spec in specs:
-            title = '' + spec['title']
-            title = title[:40]
+            text = spec['title']
+            barcode = spec.get('barcode') or 0
+            if barcode and not isinstance(barcode, int):
+                try:
+                    barcode = int(barcode)
+                except ValueError:
+                    barcode = 0
+            count = int(spec['count'])
+            price = round(float(spec['price']), 2)
+            src_summ = count * price
+            discount = round(float(spec.get('discount_summa', 0)), 2)
+            if discount:
+                price -= round(1.0 * discount / count, 2)
+            new_summ = count * price
+            total_summa += new_summ
+            # Пересчитываем скидку для того чтобы вывести правильные
+            # копейки
+            discount = src_summ - new_summ
+            total_discount += discount
+
             self.append_spooler(
                 group_hash,
-                method, count=spec['count'], price=spec['price'],
-                text=title, taxes=taxes,
+                kkt.xFF0D,
+                operation=operation,
+                count=count,
+                price=price,
+                discount=0,
+                increment=0,
+                department=0,
+                tax=0,
+                barcode=barcode,
+                text=text,
             )
-            spec_discount_summa = spec.get('discount_summa', 0)
-            if spec_discount_summa:
-                line = '{0:>36}'.format('скидка: -%s' % spec_discount_summa)
-                self.append_spooler(
-                    group_hash, self.kkt.x17_loop, text=line,
-                )
+            if discount:
+                line = '{0:>36}'.format('включая скидку: %.2f' % discount)
+                self.append_spooler(group_hash, kkt.x17_loop, text=line)
 
-        for line in text_buyer.split('\n'):
-            self.append_spooler(group_hash, self.kkt.x17_loop, text=line)
-
-        for line in comment.split('\n'):
-            self.append_spooler(group_hash, self.kkt.x17_loop, text=line)
-
-        self.append_spooler(group_hash, self.kkt.x17_loop, text='=' * 36)
-
-        if discount_summa:
+        if mail_or_phone:
+            text_buyer += ' (%s)' % mail_or_phone
+            # Передача TLV для ОФД
             self.append_spooler(
                 group_hash,
-                self.kkt.x86, summa=discount_summa, taxes=taxes,
+                kkt.xFF0C,
+                tlv_dict={1008: mail_or_phone},
             )
 
-        # _text = '-' * 18
-        summs = [cash, credit, packaging, card]
+        if text_buyer:
+            for line in text_buyer.split('\n'):
+                self.append_spooler(group_hash, kkt.x17_loop, text=line)
+        if comment:
+            for line in comment.split('\n'):
+                self.append_spooler(group_hash, kkt.x17_loop, text=line)
+
+        if total_discount:
+            self.append_spooler(group_hash, kkt.x17_loop, text='-' * 36)
+            line = '{0:>36}'.format('общая скидка: %.2f' % total_discount)
+            self.append_spooler(group_hash, kkt.x17_loop, text=line)
+        self.append_spooler(group_hash, kkt.x17_loop, text='=' * 36)
+
+        assert total_summa <= cash + credit + packaging + card, force_bytes(
+            'Сумма спецификаций больше, чем сумма типов оплат: '
+            '%.2f != %.2f' % (total_summa, cash + credit + packaging + card)
+        )
+
+        payments = self.route_payments(cash, credit, packaging, card)
+
         return self.result_spooler(
             group_hash,
-            self.kkt.x85, summs=summs, taxes=taxes, discount=discount_percent
+            kkt.x8E,
+            payments=payments,
+            taxes=taxes,
+            discount_percent=0,  # Очень важно теперь ничего не передавать!
         )
 
     def print_copy(self):
@@ -416,3 +470,78 @@ class ShtrihFRK(object):
         if self.is_remote:
             return self.remote("cut_tape", fullcut=fullcut)
         return self.kkt.x25(fullcut=fullcut)
+
+
+def run_tests(port='/dev/ttyUSB0', bod=115200):
+    dev = ShtrihFRK(port=port, bod=bod)
+    print('status:')
+    status = dev.status()
+    print(status)
+    if status['kkt_mode'] == 4:
+        print('setup_date:')
+        print(dev.setup_date())
+        print('setup_time:')
+        print(dev.setup_time())
+    print('print_document:')
+    header = 'Заголовок документа'
+    text = (
+        'Текст документа с переводом первой строки и большой второй строкой:\n'
+        'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do '
+        'eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim '
+        'ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut '
+        'aliquip ex ea commodo consequat. Duis aute irure dolor in '
+        'reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla '
+        'pariatur. Excepteur sint occaecat cupidatat non proident, sunt in '
+        'culpa qui officia deserunt mollit anim id est laborum.'
+        ' \n \n \n \n \n \n \n \n \n \n'
+    )
+    # print(dev.print_document(text=text, header=header))
+
+    specs = [
+        {
+            'title': 'Хлеб чёрный Бородинский',
+            'price': '30.00',
+            'count': '2',
+            'summa': '60.00',
+            'discount_summa': '1.00',
+        },
+        {
+            'title': 'Молоко',
+            'price': '54.00',
+            'count': '3',
+            'summa': '162.00',
+            'discount_summa': 4.50,
+        },
+        {
+            'title': 'Водка Беленькая',
+            'price': '390.00',
+            'count': '2',
+            'summa': '780.00',
+            'discount_summa': 30.0,
+            'barcode': 999999999999,
+        },
+    ]
+    summa = 60 - 1 + 162 - 4.50 + 780 - 30
+    cash = 0
+    credit = 0
+    packaging = summa
+    card = 0
+    header = 'Продажа товаров'
+    comment = 'Комментарий к продаже товаров'
+    buyer = 'Иван Иванов'
+    mail_or_phone = '89997776655'
+
+    print('print_receipt:')
+    print(dev.print_receipt(
+        specs, cash=cash, credit=credit, packaging=packaging, card=card,
+        discount_summa=0, discount_percent=0, document_type=0, nds=0,
+        header=header, comment=comment, buyer=buyer,
+        mail_or_phone=mail_or_phone
+    ))
+
+    # time.sleep(10)
+    # print(dev.print_copy())
+    # time.sleep(10)
+    # print(dev.print_report())
+    # time.sleep(10)
+    # print(dev.close_session())
