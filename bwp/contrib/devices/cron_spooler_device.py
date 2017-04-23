@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import os, sys
+import os
+import sys
 
 # Set name directory of environ
 ENV = 'env-django1.4'
+
 
 def getenv():
     """ Find full path for name directory of environ """
@@ -20,10 +22,12 @@ def getenv():
     else:
         return None
 
+
 if __name__ == "__main__":
     env = getenv()
     if env:
-        python = 'python%s.%s' % ( str(sys.version_info[0]),  str(sys.version_info[1]) )
+        python = 'python%s.%s' % (str(sys.version_info[0]),
+                                  str(sys.version_info[1]))
         packages = os.path.join(env, 'lib', python, 'site-packages')
         sys.path.insert(2, packages)
 
@@ -40,31 +44,27 @@ if __name__ == "__main__":
         first = spoolers[0]
         self_sps = spoolers.filter(group_hash=first.group_hash)
         self_sps.update(state=WAITING)
-        self = first.local_device.device
+        first.local_device.device
         for s in self_sps:
-            method = eval('self.'+ s.method)
+            method = eval('self.' + s.method)
             kwargs = s.kwargs
             try:
                 result = method(**kwargs)
-            except Exception as e:
+            except Exception:
                 self_sps.update(state=ERROR)
                 return u'Queued'
         self_sps.all().delete()
         return result
 
-    
     spoolers = SpoolerDevice.objects.all().order_by('pk')
     now = timezone.now()
     # Зависшие более 1минуты по какой либо причине тоже обрабатываем
     new = now - timedelta(seconds=60)
     # Если есть моложе 1минуты - где-то уже запущен процесс их обработки
     if spoolers.filter(state=WAITING, created__gt=new).count():
-        pass
-        print "Где-то уже запущен процесс обработки"
+        print("Где-то уже запущен процесс обработки")
     elif not spoolers.count():
-        pass
-        print "Пусто"
+        print("Пусто")
     else:
-        print "Запуск"
+        print("Запуск")
         run(spoolers)
-

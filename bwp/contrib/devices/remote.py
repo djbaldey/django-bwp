@@ -1,46 +1,32 @@
 # -*- coding: utf-8 -*-
-"""
-###############################################################################
-# Copyright 2013 Grigoriy Kramarenko.
-###############################################################################
-# This file is part of BWP.
 #
-#    BWP is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation, either version 3 of the License, or
-#    (at your option) any later version.
+#  bwp/contrib/devices/remote.py
 #
-#    BWP is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
+#  Copyright 2013 Grigoriy Kramarenko <root@rosix.ru>
 #
-#    You should have received a copy of the GNU General Public License
-#    along with BWP.  If not, see <http://www.gnu.org/licenses/>.
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 3 of the License, or
+#  (at your option) any later version.
 #
-# Этот файл — часть BWP.
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
 #
-#   BWP - свободная программа: вы можете перераспространять ее и/или
-#   изменять ее на условиях Стандартной общественной лицензии GNU в том виде,
-#   в каком она была опубликована Фондом свободного программного обеспечения;
-#   либо версии 3 лицензии, либо (по вашему выбору) любой более поздней
-#   версии.
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+#  MA 02110-1301, USA.
 #
-#   BWP распространяется в надежде, что она будет полезной,
-#   но БЕЗО ВСЯКИХ ГАРАНТИЙ; даже без неявной гарантии ТОВАРНОГО ВИДА
-#   или ПРИГОДНОСТИ ДЛЯ ОПРЕДЕЛЕННЫХ ЦЕЛЕЙ. Подробнее см. в Стандартной
-#   общественной лицензии GNU.
 #
-#   Вы должны были получить копию Стандартной общественной лицензии GNU
-#   вместе с этой программой. Если это не так, см.
-#   <http://www.gnu.org/licenses/>.
-###############################################################################
-"""
-
+from __future__ import unicode_literals
+import os
 import ssl
-import json, urllib, base64, traceback
+from tempfile import NamedTemporaryFile
 
-from django.utils.encoding import force_text
+from quickapi.client import BaseClient
+from quickapi.client import RemoteAPIError  # NOQA
 
 try:
     ssl._create_default_https_context = ssl._create_unverified_context
@@ -48,107 +34,35 @@ except:
     pass
 
 
-class BaseAPICleanError(Exception):
-    pass
-
-class BaseAPI(object):
+class Client(BaseClient):
     """ Соединение с удалённым API, где расположено устройство """
 
-    username = 'admin'
-    password = 'admin'
-    url      = 'http://localhost:8000/api/'
-    timeout  = 60000
-    error    = None
+    timeout = 60000
 
-    def __init__(self, **kwargs):
+    def __init__(self, device=None, **kwargs):
         """ Инициализация """
-        for key, val in kwargs.items():
-            setattr(self, key, val)
+        if device and hasattr(device, 'cookies'):
+            if not device.cookies or not os.path.exists(device.cookies):
+                f = NamedTemporaryFile(delete=False)
+                device.cookies = f.name
+                device.save()
+                f.close()
+            kwargs['cookie_filename'] = device.cookies
+        super(Client, self).__init__(**kwargs)
 
-    @property
-    def format_error(self):
-        """ Выводит ошибку в презентабельном виде """
-        try:
-            return force_text(traceback.format_exc(self.error))
-        except:
-            return 'Undefined Error'
-
-    def get_request(self, data, **kwargs):
-        """ Возвращает новый объект запроса. """
-        params = urllib.urlencode({'jsonData': data})
-        return urllib.urlopen(url=self.url, data=params)
-
-    def get_result(self, data, **kwargs):
-        """ Запрашивает данные из API """
-        jsondata = json.dumps(data, ensure_ascii=True)
-        try:
-            jsondata = jsondata.encode('utf-8')
-        except:
-            pass
-        request = self.get_request(jsondata)
-        try:
-            data = request.read()
-        except Exception as e:
-            self.error = e
-            print self.format_error
-            data = None
-        return data
-
-    def json_loads(self, data, **kwargs):
-        """ Переобразовывает JSON в объекты Python, учитывая кодирование"""
-        try:
-            data = json.loads(data.decode('zlib'))
-        except:
-            try:
-                data = json.loads(data)
-            except:
-                data = None
-        return data
-
-    def prepare_data(self, data, **kwargs):
-        """ Переопределяемый метод в наследуемых классах.
-            Предварительно конвентирует отправляемые данные.
-        """
-        data['username'] = self.username 
-        data['password'] = self.password 
-        return data
-
-    def clean(self, data, **kwargs):
-        """ Преобразует полученные данные """
-        data = self.json_loads(data)
-        if data is None:
-            return data
-        status = data.get('status', None)
-        if status != 200:
-            msg = data.get('message')
-            msg = force_text(msg)
-            try:
-                msg = msg.encode('utf-8')
-            except:
-                pass
-            raise BaseAPICleanError(msg)
-
-        return data['data']
-
-    def method(self, method, **kwargs):
-        """ Вызывает метод API и возвращает чистые данные """
-        data = {'method': method, 'kwargs': kwargs}
-        data = self.prepare_data(data)
-        data = self.get_result(data)
-        data = self.clean(data)
-        return data
 
 class RemoteCommand(object):
     """ Выполнение команды на удалённом устройстве """
-    def __init__(self, remote_url, remote_id, **kwargs):
+
+    def __init__(self, remote_url, remote_id, device=None, **kwargs):
         self.remote_url = remote_url
-        self.device     = remote_id
-        self.api        = BaseAPI(url=remote_url, **kwargs)
+        self.remote_id = remote_id
+        self.api = Client(url=self.remote_url, device=device, **kwargs)
 
     def __call__(self, command, *args, **kwargs):
         if args:
             raise ValueError('Support only named arguments.')
-
-        return self.api.method('device_command', device=self.device,
-                                command=command, params=kwargs)
-
+        return self.api.method(
+            'device_command', device=self.remote_id, command=command,
+            params=kwargs
+        )
