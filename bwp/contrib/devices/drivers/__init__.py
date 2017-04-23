@@ -20,12 +20,13 @@
 #  MA 02110-1301, USA.
 #
 #
-from ShtrihM import ShtrihFRK
+from ShtrihM import ShtrihFRK, ShtrihFRK2
 from ICPDAS import ICPi7000
 from Zonerich import ZonerichIP
 
 DRIVER_CLASSES = {
     'Shtrih-M Fiscal Register': ShtrihFRK,
+    'Shtrih-M Fiscal Register v2': ShtrihFRK2,
     'Zonerich TCP/IP Printer': ZonerichIP,
     'ICP DAS I-7000/M-7000 DIO': ICPi7000,
 }
