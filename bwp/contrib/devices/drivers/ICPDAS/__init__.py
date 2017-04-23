@@ -24,18 +24,19 @@ from django.utils.translation import ugettext_lazy as _
 
 from bwp.contrib.devices.remote import RemoteCommand
 
-from dcon import ICP
+from dcon import ICP, ICPDummy
 
 
 class ICPi7000(object):
     is_remote = False
+    driver = ICP
 
     def __init__(self, remote=False, *args, **kwargs):
         if remote:
             self.is_remote = True
             self.remote = RemoteCommand(*args, **kwargs)
         else:
-            self.icp = ICP(*args, **kwargs)
+            self.icp = self.driver(*args, **kwargs)
 
     def status(self, module=1):
         if self.is_remote:
@@ -50,7 +51,7 @@ class ICPi7000(object):
         self.icp.on(module=module, channel=channel)
         status = self.status(module=module)
         try:
-            return bool(status[module])
+            return bool(status[channel])
         except:
             raise RuntimeError(unicode(_('Device is not responding.')))
 
@@ -61,6 +62,10 @@ class ICPi7000(object):
         self.icp.off(module=module, channel=channel)
         status = self.status(module=module)
         try:
-            return bool(not status[module])
+            return bool(not status[channel])
         except:
             raise RuntimeError(unicode(_('Device is not responding.')))
+
+
+class ICPi7000Dummy(ICPi7000):
+    driver = ICPDummy

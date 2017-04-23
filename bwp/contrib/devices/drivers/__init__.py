@@ -21,7 +21,7 @@
 #
 #
 from ShtrihM import ShtrihFRK, ShtrihFRK2
-from ICPDAS import ICPi7000
+from ICPDAS import ICPi7000, ICPi7000Dummy
 from Zonerich import ZonerichIP
 
 DRIVER_CLASSES = {
@@ -29,4 +29,5 @@ DRIVER_CLASSES = {
     'Shtrih-M Fiscal Register v2': ShtrihFRK2,
     'Zonerich TCP/IP Printer': ZonerichIP,
     'ICP DAS I-7000/M-7000 DIO': ICPi7000,
+    'ICP DAS I-7000/M-7000 DIO Dummy': ICPi7000Dummy,
 }

@@ -36,15 +36,15 @@ CR = chr(0x0D)
 
 
 class BaseDCON(object):
-    """ Базовый класс включает методы непосредственного общения с
-        устройством.
-    """
+    "Базовый класс включает методы непосредственного общения с устройством."
     error = u''
 
     def __init__(self, port=DEFAULT_PORT, **kwargs):
-        """ Пароли можно передавать в виде набора шестнадцатеричных
-            значений, либо в виде обычной ASCII строки. Длина пароля 4
-            ASCII символа.
+        """
+        Пароли можно передавать в виде набора шестнадцатеричных
+        значений, либо в виде обычной ASCII строки. Длина пароля 4
+        ASCII символа.
+
         """
         self.port = port
         self.bod = kwargs.get('bod', DEFAULT_BOD)
@@ -55,26 +55,26 @@ class BaseDCON(object):
 
     @property
     def is_connected(self):
-        """ Возвращает состояние соединение """
+        "Возвращает состояние соединение."
         return bool(self._conn and self.conn.isOpen())
 
     @property
     def conn(self):
-        """ Возвращает соединение """
+        "Возвращает соединение."
         if hasattr(self, '_conn') and self._conn is not None:
             return self._conn
         self.connect()
         return self._conn
 
     def check(self):
-        """ Проверка на готовность """
+        "Проверка на готовность."
         if not self.conn.isOpen():
             self.disconnect()
             raise RuntimeError(_(u'Serial port closed unexpectedly'))
         return True
 
     def connect(self):
-        """ Устанавливает соединение """
+        "Устанавливает соединение."
         try:
             self._conn = serial.Serial(
                 self.port, self.bod,
@@ -91,33 +91,33 @@ class BaseDCON(object):
         return self.check()
 
     def disconnect(self):
-        """ Закрывает соединение """
+        "Закрывает соединение."
         if self.conn:
             self._conn.close()
             self._conn = None
         return True
 
     def write(self, write):
-        """ Высокоуровневый метод записи в соединение """
+        "Высокоуровневый метод записи в соединение."
         if not self.conn:
             raise RuntimeError(self.error)
         return self.conn.write(write)
 
     def flush(self):
-        """ Высокоуровневый метод слива в ККТ """
+        "Высокоуровневый метод слива в ККТ."
         if not self.conn:
             raise RuntimeError(self.error)
         return self.conn.flush()
 
     def read(self):
-        """ Высокоуровневый метод считывания соединения """
+        "Высокоуровневый метод считывания соединения."
         if not self.conn:
             raise RuntimeError(self.error)
         result = self.conn.readline()
         return result.strip(CR)
 
     def send(self, command):
-        """ Стандартная обработка команды """
+        "Стандартная обработка команды."
         if not self.conn:
             raise RuntimeError(self.error)
 
@@ -127,10 +127,12 @@ class BaseDCON(object):
         return True
 
     def ask(self, command, sleep=0, disconnect=True):
-        """ Высокоуровневый метод получения ответа. Состоит из
-            последовательной цепочки действий.
+        """
+        Высокоуровневый метод получения ответа. Состоит из последовательной
+        цепочки действий.
 
-            Возвращает позиционные параметры: (error, data)
+        Возвращает позиционные параметры: (error, data).
+
         """
         data = [None, None]
         self.send(command)
@@ -158,22 +160,22 @@ def channels_status(data):
 
 
 class ICP(BaseDCON):
-    """ Класс с командами, исполняемыми согласно протокола DCON """
+    "Класс с командами, исполняемыми согласно протокола DCON."
 
     def valid_module(self, module):
-        """ Проверка числа модуля. """
-        if 0 > int(module) > 255:
+        "Проверка числа модуля."
+        if 0 < int(module) > 255:
             raise RuntimeError(unicode(_('Module must be 0..255')))
         return True
 
     def valid_channel(self, channel):
-        """ Проверка числа канала. """
-        if 0 > int(channel) > 7:
+        "Проверка числа канала."
+        if 0 < int(channel) > 7:
             raise RuntimeError(unicode(_('Channel must be 0..7')))
         return True
 
     def status(self, module=1):
-        """ Возвращает статус устойства. """
+        "Возвращает статус устройства."
         self.valid_module(module)
 
         error, data = self.ask('@%s' % int2hex(int(module)))
@@ -184,7 +186,7 @@ class ICP(BaseDCON):
         return data
 
     def on(self, module, channel):
-        """ Команда включения канала на заданном модуле. """
+        "Команда включения канала на заданном модуле."
         self.valid_module(module)
         self.valid_channel(channel)
 
@@ -193,10 +195,52 @@ class ICP(BaseDCON):
         return False if error else True
 
     def off(self, module, channel):
-        """ Команда выключения канала на заданном модуле. """
+        "Команда выключения канала на заданном модуле."
         self.valid_module(module)
         self.valid_channel(channel)
 
         command = '#%s1%d00' % (int2hex(int(module)), int(channel))
         error, data = self.ask(command)
         return False if error else True
+
+
+class ICPDummy(object):
+    "Класс фиктивного устройства."
+
+    def __init__(self, *args, **kwargs):
+        self.modules = [[0, 0, 0, 0, 0, 0, 0, 0] for x in range(255)]
+
+    def valid_module(self, module):
+        "Проверка числа модуля."
+        if 0 < int(module) > 255:
+            raise RuntimeError(unicode(_('Module must be 0..255')))
+        return True
+
+    def valid_channel(self, channel):
+        "Проверка числа канала."
+        if 0 < int(channel) > 7:
+            raise RuntimeError(unicode(_('Channel must be 0..7')))
+        return True
+
+    def status(self, module=1):
+        "Возвращает статус устройства."
+        self.valid_module(module)
+        return self.modules[module]
+
+    def on(self, module, channel):
+        "Команда включения канала на заданном модуле."
+        self.valid_module(module)
+        self.valid_channel(channel)
+        if self.modules[module][channel]:
+            return False
+        self.modules[module][channel] = 1
+        return True
+
+    def off(self, module, channel):
+        "Команда выключения канала на заданном модуле."
+        self.valid_module(module)
+        self.valid_channel(channel)
+        if not self.modules[module][channel]:
+            return False
+        self.modules[module][channel] = 0
+        return True
