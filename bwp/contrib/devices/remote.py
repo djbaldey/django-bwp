@@ -26,7 +26,7 @@ import ssl
 from tempfile import NamedTemporaryFile
 
 from quickapi.client import BaseClient
-from quickapi.client import RemoteAPIError  # NOQA
+# from quickapi.client import RemoteAPIError  # NOQA
 
 try:
     ssl._create_default_https_context = ssl._create_unverified_context

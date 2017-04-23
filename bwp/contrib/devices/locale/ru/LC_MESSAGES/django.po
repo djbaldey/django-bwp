@@ -7,235 +7,142 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 0.1.7\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-09-07 22:54+1000\n"
+"POT-Creation-Date: 2017-04-23 18:54+1000\n"
 "PO-Revision-Date: 2015-09-07 22:54+1000\n"
 "Last-Translator: Григорий Крамаренко <root@rosix.ru>\n"
+"Language-Team: \n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
-"Language-Team: \n"
 "X-Generator: Poedit 1.6.10\n"
 
-#: __bwp__.py:51 models.py:98
+#: __bwp__.py:36 models.py:95
 msgid "admin users"
 msgstr "администраторы"
 
-#: __bwp__.py:58 models.py:104
+#: __bwp__.py:45 models.py:100
 msgid "admin groups"
 msgstr "группы администраторов"
 
-#: apps.py:28
+#: apps.py:29
 msgid "Devices"
 msgstr "Устройства"
 
-#: drivers/ICPDAS/__init__.py:71 drivers/ICPDAS/__init__.py:82
+#: drivers/ICPDAS/__init__.py:56 drivers/ICPDAS/__init__.py:67
 msgid "Device is not responding."
 msgstr "Устройство не отвечает"
 
-#: drivers/ICPDAS/dcon.py:89
+#: drivers/ICPDAS/dcon.py:82
 msgid "Serial port closed unexpectedly"
 msgstr "Последовательный порт закрыт неожиданно"
 
-#: drivers/ICPDAS/dcon.py:182
+#: drivers/ICPDAS/dcon.py:177 drivers/ICPDAS/dcon.py:225
 msgid "Module must be 0..255"
 msgstr "Модуль должен быть 0..255"
 
-#: drivers/ICPDAS/dcon.py:188
+#: drivers/ICPDAS/dcon.py:183 drivers/ICPDAS/dcon.py:231
 msgid "Channel must be 0..7"
 msgstr "Канал должен быть 0..7"
 
-#: drivers/ICPDAS/dcon.py:197
+#: drivers/ICPDAS/dcon.py:192
 msgid "Unknown error"
 msgstr "Неизвестная ошибка"
 
-#: drivers/ShtrihM/__init__.py:122
+#: drivers/ShtrihM/__init__.py:126
 msgid "The device is busy large queue"
 msgstr "Устройство занято большой очередью"
 
-#: drivers/ShtrihM/__init__.py:254
+#: drivers/ShtrihM/__init__.py:277 drivers/ShtrihM/__init__.py:520
 msgid "Type of document must be 0..3"
 msgstr "Тип документа должен быть 0..3"
 
-#: models.py:80
+#: models.py:83
 msgid "driver"
 msgstr "драйвер"
 
-#: models.py:86
+#: models.py:87
 msgid "users"
 msgstr "пользователи"
 
-#: models.py:92
+#: models.py:91
 msgid "groups"
 msgstr "группы"
 
-#: models.py:109
+#: models.py:102
 msgid "username"
 msgstr "имя пользователя"
 
-#: models.py:113
+#: models.py:103
 msgid "password"
 msgstr "пароль"
 
-#: models.py:188
+#: models.py:174
 msgid "port"
 msgstr "порт"
 
-#: models.py:192 models.py:256
+#: models.py:175 models.py:224
 msgid "config"
 msgstr "конфигурация"
 
-#: models.py:197
+#: models.py:176
 msgid "admin password"
 msgstr "пароль администратора"
 
-#: models.py:201 models.py:250
+#: models.py:181 models.py:222
 msgid "local device"
 msgstr "локальное устройство"
 
-#: models.py:202
+#: models.py:182
 msgid "local devices"
 msgstr "локальные устройства"
 
-#: models.py:216
+#: models.py:197
 msgid "url"
 msgstr "url"
 
-#: models.py:217
+#: models.py:198
 msgid "identifier"
 msgstr "идентификатор"
 
-#: models.py:218
+#: models.py:199
 msgid "cookies"
 msgstr "куки"
 
-#: models.py:222
+#: models.py:203
 msgid "remote device"
 msgstr "удалённое устройство"
 
-#: models.py:223
+#: models.py:204
 msgid "remote devices"
 msgstr "удалённые устройства"
 
-#: models.py:232
-msgid "created"
-msgstr "создано"
-
-#: models.py:235
-msgid "updated"
-msgstr "обновлено"
-
-#: models.py:240
+#: models.py:214
 msgid "waiting"
 msgstr "ожидание"
 
-#: models.py:241
+#: models.py:215
 msgid "error"
 msgstr "ошибка"
 
-#: models.py:247
+#: models.py:218
+msgid "created"
+msgstr "создано"
+
+#: models.py:219
+msgid "updated"
+msgstr "обновлено"
+
+#: models.py:220
 msgid "state"
 msgstr "статус"
 
-#: models.py:253 models.py:260
+#: models.py:223 models.py:225
 msgid "method"
 msgstr "метод"
 
-#: models.py:267 models.py:268
+#: models.py:232 models.py:233
 msgid "spooler device"
 msgstr "очередь устройства"
-
-#~ msgid "Error in receiving data"
-#~ msgstr "Ошибка в получении данных"
-
-#~ msgid "The device does not respond, check the network connection."
-#~ msgstr "Устройство не отвечает, проверьте сетевое подключение."
-
-#~ msgid "Connection error"
-#~ msgstr "Ошибка соединения"
-
-#~ msgid "Wrong value"
-#~ msgstr "Неверное значение"
-
-#~ msgid "Wrong type of value"
-#~ msgstr "Неверный тип значения"
-
-#~ msgid "Wrong value type in the password"
-#~ msgstr "Неверный тип значения пароля"
-
-#~ msgid "Password type not identify"
-#~ msgstr "Тип пароля не определён"
-
-#~ msgid "Password must be 0..9999 or string from 4 chars"
-#~ msgstr "Пароль должен быть 0..9999 или строкой из 4 символов"
-
-#~ msgid "Port %s is busy or the device is not connected to it"
-#~ msgstr "Порт %s занят или устройство не подключено к нему"
-
-#~ msgid "No communication with the device"
-#~ msgstr "Нет связи с устройством"
-
-#~ msgid "Length (%(lehgth)i) not equal length of data (%(data)i)"
-#~ msgstr "Длина (%(lehgth)i) не равна днине данных (%(data)i)"
-
-#~ msgid "Wrong crc %(summ)i must be %(read)i"
-#~ msgstr "Неправильная crc %(summ)i, a должна быть %(read)i"
-
-#~ msgid "Length of string must be less or equal %s chars"
-#~ msgstr "Длина строки должна быть меньше или равна %s символов"
-
-#~ msgid "Line count must be in 1..255 range"
-#~ msgstr "Длина строки должна быть в диапазоне 1..255"
-
-#~ msgid "Cash must be in range 0..9999999999"
-#~ msgstr "Наличные должны быть в диапазоне 0..9999999999"
-
-#~ msgid "Payment 2 must be in range 0..9999999999"
-#~ msgstr "Оплата 2 должна быть в диапазоне 0..9999999999"
-
-#~ msgid "Payment 3 must be in range 0..9999999999"
-#~ msgstr "Оплата 3 должна быть в диапазоне 0..9999999999"
-
-#~ msgid "Payment 4 must be in range 0..9999999999"
-#~ msgstr "Оплата 4 должна быть в диапазоне 0..9999999999"
-
-#~ msgid "Discount must be in range -9999..9999"
-#~ msgstr "Скидка должна быть в диапазоне от -9999..9999"
-
-#~ msgid "Text must be less than 40 chars"
-#~ msgstr "Текст должен быть меньше, чем 40 символов"
-
-#~ msgid "Count of taxes must be 4"
-#~ msgstr "Количество налогов должно быть 4"
-
-#~ msgid "Taxes must be list or tuple"
-#~ msgstr "Налоги должны быть списком или кортежем"
-
-#~ msgid "taxes must be only 0,1,2,3,4"
-#~ msgstr "налоги должы быть только 0,1,2,3,4"
-
-#~ msgid "Count must be in range 0..9999999999"
-#~ msgstr "Количество должно быть в диапазоне 0..9999999999"
-
-#~ msgid "Price must be in range 0..9999999999"
-#~ msgstr "Цена должна быть в диапазоне 0..9999999999"
-
-#~ msgid "Department must be in range 0..16"
-#~ msgstr "Отдел должен быть в диапазоне 0..16"
-
-#~ msgid "Variable `summa%d` must be in range 0..9999999999"
-#~ msgstr "Переменная `summa%d` должна быть в диапазоне 0..9999999999"
-
-#~ msgid "Summa must be in range 0..9999999999"
-#~ msgstr "Сумма должна быть в диапазоне 0..9999999999"
-
-#~ msgid "Check type may be only 0,1,2,3 value"
-#~ msgstr "Проверочный тип может быть только значениями: 0,1,2,3"
-
-#~ msgid "Abstract error"
-#~ msgstr "Абстрактная ошибка"
-
-#~ msgid "Printer is not responding"
-#~ msgstr "Принтер не отвечает"

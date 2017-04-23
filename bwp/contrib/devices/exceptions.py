@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 #
-#  bwp/contrib/devices/drivers/__init__.py
+#  bwp/contrib/devices/exceptions.py
 #
-#  Copyright 2013 Grigoriy Kramarenko <root@rosix.ru>
+#  Copyright 2017 Grigoriy Kramarenko <root@rosix.ru>
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -20,15 +20,18 @@
 #  MA 02110-1301, USA.
 #
 #
-from ShtrihM import ShtrihFRK, ShtrihFRK2
-from ICPDAS import ICPi7000, ICPi7000Dummy
-from Zonerich import ZonerichIP, ZonerichIPDummy
+import sys
 
-DRIVER_CLASSES = {
-    'Shtrih-M Fiscal Register': ShtrihFRK,
-    'Shtrih-M Fiscal Register v2': ShtrihFRK2,
-    'Zonerich TCP/IP Printer': ZonerichIP,
-    'Zonerich TCP/IP Printer Dummy': ZonerichIPDummy,
-    'ICP DAS I-7000/M-7000 DIO': ICPi7000,
-    'ICP DAS I-7000/M-7000 DIO Dummy': ICPi7000Dummy,
-}
+PY2 = sys.version_info[0] == 2
+
+
+class DriverError(Exception):
+
+    def __init__(self, message):
+        msg = message
+        if PY2:
+            try:
+                msg = msg.encode('utf-8')
+            except UnicodeError:
+                pass
+        super(DriverError, self).__init__(msg)

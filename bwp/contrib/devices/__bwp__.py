@@ -47,11 +47,13 @@ class AdminGroupCompose(ManyToManyBWP):
 
 class SpoolerDeviceCompose(ManyToManyBWP):
     model = SpoolerDevice
-    list_display = ('state', 'method', 'group_hash', 'id')
+    list_display = ('state', 'method', 'group_hash', 'created', 'id')
 
 
 class SpoolerDeviceAdmin(ModelBWP):
-    list_display = ('local_device', 'state', 'method', 'group_hash', 'id')
+    list_display = (
+        'local_device', 'state', 'method', 'group_hash', 'created', 'id',
+    )
 site.register(SpoolerDevice, SpoolerDeviceAdmin)
 
 

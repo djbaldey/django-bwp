@@ -24,7 +24,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from bwp.contrib.devices.remote import RemoteCommand
 
-from dcon import ICP, ICPDummy
+from .dcon import ICP, ICPDummy, ICPError
 
 
 class ICPi7000(object):
@@ -53,7 +53,7 @@ class ICPi7000(object):
         try:
             return bool(status[channel])
         except:
-            raise RuntimeError(unicode(_('Device is not responding.')))
+            raise ICPError(_('Device is not responding.'))
 
     def off(self, module=1, channel=0):
         if self.is_remote:
@@ -64,7 +64,7 @@ class ICPi7000(object):
         try:
             return bool(not status[channel])
         except:
-            raise RuntimeError(unicode(_('Device is not responding.')))
+            raise ICPError(_('Device is not responding.'))
 
 
 class ICPi7000Dummy(ICPi7000):
