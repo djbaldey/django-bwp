@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 
 from django.core.management.base import BaseCommand
 from django.utils import timezone
+from django.utils.encoding import force_text
 
 from bwp.contrib.devices.models import SpoolerDevice
 
@@ -46,7 +47,7 @@ class Command(BaseCommand):
                 method = deep_getattr(dev, s.method)
                 kwargs = s.kwargs
                 try:
-                    result = method(**kwargs)
+                    method(**kwargs)
                 except Exception as e:
                     queue.update(state=ERROR)
                     self.stderr.write('Ошибка')

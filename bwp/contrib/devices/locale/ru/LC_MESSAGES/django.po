@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 0.1.7\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-07-14 03:36+1100\n"
+"POT-Creation-Date: 2017-04-23 18:55+1000\n"
 "PO-Revision-Date: 2013-04-16 01:00+1100\n"
 "Last-Translator: Grigoriy Kramarenko <root@rosix.ru>\n"
 "Language: RU\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
 
-#: __bwp__.py:51 models.py:109
+#: __bwp__.py:36 models.py:95
 msgid "admin users"
 msgstr "администраторы"
 
-#: __bwp__.py:58 models.py:115
+#: __bwp__.py:45 models.py:100
 msgid "admin groups"
 msgstr "группы администраторов"
 
@@ -29,130 +29,118 @@ msgstr "группы администраторов"
 msgid "devices"
 msgstr "устройства"
 
-#: models.py:91
+#: models.py:83
 msgid "driver"
 msgstr "драйвер"
 
-#: models.py:97
+#: models.py:87
 msgid "users"
 msgstr "пользователи"
 
-#: models.py:103
+#: models.py:91
 msgid "groups"
 msgstr "группы"
 
-#: models.py:120
+#: models.py:102
 msgid "username"
 msgstr "имя пользователя"
 
-#: models.py:124
+#: models.py:103
 msgid "password"
 msgstr "пароль"
 
-#: models.py:197
+#: models.py:174
 msgid "port"
 msgstr "порт"
 
-#: models.py:201 models.py:265
+#: models.py:175 models.py:224
 msgid "config"
 msgstr "конфигурация"
 
-#: models.py:206
+#: models.py:176
 msgid "admin password"
 msgstr "пароль администратора"
 
-#: models.py:210 models.py:259
+#: models.py:181 models.py:222
 msgid "local device"
 msgstr "локальное устройство"
 
-#: models.py:211
+#: models.py:182
 msgid "local devices"
 msgstr "локальные устройства"
 
-#: models.py:227
+#: models.py:197
 msgid "url"
-msgstr ""
+msgstr "url"
 
-#: models.py:229
+#: models.py:198
 msgid "identifier"
 msgstr "идентификатор"
 
-#: models.py:233
+#: models.py:199
+msgid "cookies"
+msgstr "куки"
+
+#: models.py:203
 msgid "remote device"
 msgstr "удалённое устройство"
 
-#: models.py:234
+#: models.py:204
 msgid "remote devices"
 msgstr "удалённые устройства"
 
-#: models.py:241
-msgid "created"
-msgstr "создано"
-
-#: models.py:244
-msgid "updated"
-msgstr "обновлено"
-
-#: models.py:249
+#: models.py:214
 msgid "waiting"
 msgstr "ожидание"
 
-#: models.py:250
+#: models.py:215
 msgid "error"
 msgstr "ошибка"
 
-#: models.py:256
+#: models.py:218
+msgid "created"
+msgstr "создано"
+
+#: models.py:219
+msgid "updated"
+msgstr "обновлено"
+
+#: models.py:220
 msgid "state"
 msgstr "статус"
 
-#: models.py:262 models.py:269
+#: models.py:223 models.py:225
 msgid "method"
 msgstr "метод"
 
-#: models.py:276 models.py:277
+#: models.py:232 models.py:233
 msgid "spooler device"
 msgstr "очередь устройства"
 
-#: drivers/ICPDAS/__init__.py:71 drivers/ICPDAS/__init__.py:82
+#: drivers/ICPDAS/__init__.py:56 drivers/ICPDAS/__init__.py:67
 msgid "Device is not responding."
 msgstr "Устройство не отвечает"
 
-#: drivers/ICPDAS/dcon.py:89 drivers/ShtrihM/kkt.py:221
+#: drivers/ICPDAS/dcon.py:82
 msgid "Serial port closed unexpectedly"
 msgstr "Последовательный порт закрыт неожиданно"
 
-#: drivers/ICPDAS/dcon.py:182
+#: drivers/ICPDAS/dcon.py:177 drivers/ICPDAS/dcon.py:225
 msgid "Module must be 0..255"
 msgstr "Модуль должен быть 0..255"
 
-#: drivers/ICPDAS/dcon.py:188
+#: drivers/ICPDAS/dcon.py:183 drivers/ICPDAS/dcon.py:231
 msgid "Channel must be 0..7"
 msgstr "Канал должен быть 0..7"
 
-#: drivers/ICPDAS/dcon.py:197
+#: drivers/ICPDAS/dcon.py:192
 msgid "Unknown error"
 msgstr "Неизвестная ошибка"
 
-#: drivers/ShtrihM/__init__.py:136
+#: drivers/ShtrihM/__init__.py:126
 msgid "The device is busy large queue"
 msgstr "Устройство занято большой очередью"
 
-#: drivers/ShtrihM/__init__.py:268
+#: drivers/ShtrihM/__init__.py:277 drivers/ShtrihM/__init__.py:520
 msgid "Type of document must be 0..3"
 msgstr "Тип документа должен быть 0..3"
-
-#: drivers/ShtrihM/kkt.py:235 drivers/ShtrihM/kkt.py:253
-#: drivers/ShtrihM/kkt.py:307 drivers/ShtrihM/kkt.py:310
-#: drivers/ShtrihM/kkt.py:316
-msgid "No communication with the device"
-msgstr "Нет связи с устройством"
-
-#: drivers/ShtrihM/kkt.py:326
-#, python-format
-msgid "Length (%(lehgth)i) not equal length of data (%(data)i)"
-msgstr "Длина (%(lehgth)i) не равна днине данных (%(data)i)"
-
-#: drivers/Zonerich/__init__.py:141
-msgid "Printer is not responding"
-msgstr "Принтер не отвечает"
-

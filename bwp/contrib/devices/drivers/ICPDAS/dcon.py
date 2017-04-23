@@ -24,6 +24,7 @@ import serial
 import time
 from django.utils.translation import ugettext_lazy as _
 
+from bwp.contrib.devices.exceptions import DriverError
 from .helpers import string2bits, int2hex
 from . import conf
 
@@ -33,6 +34,14 @@ DEFAULT_BOD = conf.DEFAULT_BOD
 MIN_TIMEOUT = conf.MIN_TIMEOUT
 
 CR = chr(0x0D)
+
+
+class DCONError(DriverError):
+    pass
+
+
+class ICPError(DCONError):
+    pass
 
 
 class BaseDCON(object):
@@ -70,7 +79,7 @@ class BaseDCON(object):
         "Проверка на готовность."
         if not self.conn.isOpen():
             self.disconnect()
-            raise RuntimeError(_(u'Serial port closed unexpectedly'))
+            raise DCONError(_('Serial port closed unexpectedly'))
         return True
 
     def connect(self):
@@ -100,26 +109,26 @@ class BaseDCON(object):
     def write(self, write):
         "Высокоуровневый метод записи в соединение."
         if not self.conn:
-            raise RuntimeError(self.error)
+            raise DCONError(self.error)
         return self.conn.write(write)
 
     def flush(self):
         "Высокоуровневый метод слива в ККТ."
         if not self.conn:
-            raise RuntimeError(self.error)
+            raise DCONError(self.error)
         return self.conn.flush()
 
     def read(self):
         "Высокоуровневый метод считывания соединения."
         if not self.conn:
-            raise RuntimeError(self.error)
+            raise DCONError(self.error)
         result = self.conn.readline()
         return result.strip(CR)
 
     def send(self, command):
         "Стандартная обработка команды."
         if not self.conn:
-            raise RuntimeError(self.error)
+            raise DCONError(self.error)
 
         self.flush()
         self.write(command + CR)
@@ -165,13 +174,13 @@ class ICP(BaseDCON):
     def valid_module(self, module):
         "Проверка числа модуля."
         if 0 < int(module) > 255:
-            raise RuntimeError(unicode(_('Module must be 0..255')))
+            raise ICPError(_('Module must be 0..255'))
         return True
 
     def valid_channel(self, channel):
         "Проверка числа канала."
         if 0 < int(channel) > 7:
-            raise RuntimeError(unicode(_('Channel must be 0..7')))
+            raise ICPError(_('Channel must be 0..7'))
         return True
 
     def status(self, module=1):
@@ -180,7 +189,7 @@ class ICP(BaseDCON):
 
         error, data = self.ask('@%s' % int2hex(int(module)))
         if error:
-            raise RuntimeError(self.error.encode('utf-8') or _('Unknown error'))
+            raise ICPError(self.error.encode('utf-8') or _('Unknown error'))
         else:
             data = channels_status(data)
         return data
@@ -213,13 +222,13 @@ class ICPDummy(object):
     def valid_module(self, module):
         "Проверка числа модуля."
         if 0 < int(module) > 255:
-            raise RuntimeError(unicode(_('Module must be 0..255')))
+            raise ICPError(_('Module must be 0..255'))
         return True
 
     def valid_channel(self, channel):
         "Проверка числа канала."
         if 0 < int(channel) > 7:
-            raise RuntimeError(unicode(_('Channel must be 0..7')))
+            raise ICPError(_('Channel must be 0..7'))
         return True
 
     def status(self, module=1):

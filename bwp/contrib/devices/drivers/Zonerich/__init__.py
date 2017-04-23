@@ -23,7 +23,8 @@
 from __future__ import unicode_literals
 import subprocess
 
-from bwp.contrib.devices.remote import RemoteCommand, RemoteAPIError
+from bwp.contrib.devices.exceptions import DriverError
+from bwp.contrib.devices.remote import RemoteCommand
 
 
 DEFAULT_PORT = '192.168.1.10 9100'
@@ -32,7 +33,7 @@ GS = 0x1D
 ESC = 0x1B
 
 
-class ZonerichError(RemoteAPIError):
+class ZonerichError(DriverError):
     pass
 
 
@@ -128,4 +129,47 @@ class ZonerichIP(object):
         if self.status():
             self._send(doc)
             return True  # self.cut_tape()
+        raise ZonerichError(value=self.port)
+
+
+class ZonerichIPDummy(ZonerichIP):
+
+    def __init__(self, remote=False, *args, **kwargs):
+        if remote:
+            self.is_remote = True
+            self.remote = RemoteCommand(*args, **kwargs)
+        else:
+            self.port = kwargs.get('port', 'DUMMY 9100')
+
+    def _send(self, doc='Текст документа не передан'):
+        "Отправка на печать, ответа не существует."
+        if self.is_remote:
+            return self.remote("status", doc=doc)
+        print(doc)
+        return True
+
+    def cut_tape(self, fullcut=True):
+        "Отрез чековой ленты."
+        if self.is_remote:
+            return self.remote("cut_tape", fullcut=fullcut)
+        if self.status():
+            return True
+        return False
+
+    def status(self):
+        "Cостояние, по-умолчанию короткое."
+        if self.is_remote:
+            return self.remote("status")
+        return True
+
+    def print_document(self, text='Текст документа не передан', header=''):
+        """ Печать предварительного чека или чего-либо другого. """
+        if self.is_remote:
+            return self.remote("print_document", header=header, text=text)
+
+        if self.status():
+            if header:
+                self._send(header + '\n')
+            self._send(self._prepare_text(text))
+            return True
         raise ZonerichError(value=self.port)
