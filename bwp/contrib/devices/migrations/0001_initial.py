@@ -1,9 +1,19 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.db import migrations, models
-import bwp.db.fields
 from django.conf import settings
+from django.db import migrations, models
+from bwp.db.fields import JSONField
+
+
+DRIVER_CHOICES = [
+    (b'ICP DAS I-7000/M-7000 DIO', b'ICP DAS I-7000/M-7000 DIO'),
+    (b'Shtrih-M Fiscal Register v2', b'Shtrih-M Fiscal Register v2'),
+    (b'ICP DAS I-7000/M-7000 DIO Dummy', b'ICP DAS I-7000/M-7000 DIO Dummy'),
+    (b'Shtrih-M Fiscal Register', b'Shtrih-M Fiscal Register'),
+    (b'Zonerich TCP/IP Printer Dummy', b'Zonerich TCP/IP Printer Dummy'),
+    (b'Zonerich TCP/IP Printer', b'Zonerich TCP/IP Printer')
+]
 
 
 class Migration(migrations.Migration):
@@ -19,11 +29,11 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('title', models.CharField(max_length=255, verbose_name='title')),
-                ('driver', models.CharField(max_length=255, verbose_name='driver', choices=[(b'ICP DAS I-7000/M-7000 DIO', b'ICP DAS I-7000/M-7000 DIO'), (b'Zonerich TCP/IP Printer', b'Zonerich TCP/IP Printer'), (b'Shtrih-M Fiscal Register', b'Shtrih-M Fiscal Register')])),
+                ('driver', models.CharField(max_length=255, verbose_name='driver', choices=DRIVER_CHOICES)),
                 ('username', models.CharField(max_length=100, verbose_name='username', blank=True)),
                 ('password', models.CharField(max_length=100, verbose_name='password', blank=True)),
                 ('port', models.CharField(max_length=50, verbose_name='port', blank=True)),
-                ('config', bwp.db.fields.JSONField(default={}, verbose_name='config', blank=True)),
+                ('config', JSONField(default='{}', verbose_name='config', blank=True)),
                 ('admin_password', models.CharField(max_length=100, verbose_name='admin password', blank=True)),
                 ('admin_groups', models.ManyToManyField(related_name='admin_group_localdevice_set', verbose_name='admin groups', to='auth.Group', blank=True)),
                 ('admin_users', models.ManyToManyField(related_name='admin_user_localdevice_set', verbose_name='admin users', to=settings.AUTH_USER_MODEL, blank=True)),
@@ -41,7 +51,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('title', models.CharField(max_length=255, verbose_name='title')),
-                ('driver', models.CharField(max_length=255, verbose_name='driver', choices=[(b'ICP DAS I-7000/M-7000 DIO', b'ICP DAS I-7000/M-7000 DIO'), (b'Zonerich TCP/IP Printer', b'Zonerich TCP/IP Printer'), (b'Shtrih-M Fiscal Register', b'Shtrih-M Fiscal Register')])),
+                ('driver', models.CharField(max_length=255, verbose_name='driver', choices=DRIVER_CHOICES)),
                 ('username', models.CharField(max_length=100, verbose_name='username', blank=True)),
                 ('password', models.CharField(max_length=100, verbose_name='password', blank=True)),
                 ('remote_url', models.CharField(max_length=200, verbose_name='url')),
@@ -66,7 +76,7 @@ class Migration(migrations.Migration):
                 ('updated', models.DateTimeField(auto_now=True, verbose_name='updated')),
                 ('state', models.IntegerField(default=1, verbose_name='state', choices=[(1, 'waiting'), (2, 'error')])),
                 ('method', models.CharField(max_length=50, verbose_name='method')),
-                ('kwargs', bwp.db.fields.JSONField(default={}, verbose_name='config', blank=True)),
+                ('kwargs', JSONField(default='{}', verbose_name='config', blank=True)),
                 ('group_hash', models.CharField(max_length=32, verbose_name='method', blank=True)),
                 ('local_device', models.ForeignKey(verbose_name='local device', to='devices.LocalDevice')),
             ],

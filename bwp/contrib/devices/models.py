@@ -172,7 +172,7 @@ class LocalDevice(BaseDevice):
     remote = False
 
     port = models.CharField(_('port'), max_length=50, blank=True)
-    config = fields.JSONField(_('config'), default={}, blank=True)
+    config = fields.JSONField(_('config'), default='{}', blank=True)
     admin_password = models.CharField(_('admin password'), max_length=100,
                                       blank=True)
 
@@ -221,7 +221,7 @@ class SpoolerDevice(models.Model):
     local_device = models.ForeignKey(LocalDevice,
                                      verbose_name=_('local device'))
     method = models.CharField(_('method'), max_length=50)
-    kwargs = fields.JSONField(_('config'), default={}, blank=True)
+    kwargs = fields.JSONField(_('config'), default='{}', blank=True)
     group_hash = models.CharField(_('method'), max_length=32, blank=True)
 
     def __str__(self):
