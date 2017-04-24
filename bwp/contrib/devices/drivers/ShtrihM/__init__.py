@@ -25,8 +25,9 @@ import datetime
 import time
 
 from django.utils.translation import ugettext as _
+from django.utils.encoding import force_bytes
 
-from shtrihmfr.kkt import KKT, KktError, int2, force_bytes
+from shtrihmfr.kkt import KKT, KktError, int2
 from shtrihmfr.protocol import *  # NOQA
 
 from bwp.contrib.devices.remote import RemoteCommand
