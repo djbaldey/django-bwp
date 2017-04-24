@@ -38,7 +38,8 @@ class Command(BaseCommand):
             if verbosity > 1:
                 self.stdout.write('Пусто\n')
         else:
-            self.stdout.write('Запуск\n')
+            if verbosity > 1:
+                self.stdout.write('Запуск\n')
             first = spoolers[0]
             queue = spoolers.filter(group_hash=first.group_hash)
             queue.update(state=WAITING)
