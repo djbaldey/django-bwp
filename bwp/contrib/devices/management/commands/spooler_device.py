@@ -50,8 +50,6 @@ class Command(BaseCommand):
                     method(**kwargs)
                 except Exception as e:
                     queue.update(state=ERROR)
-                    self.stderr.write('Ошибка')
-                    if verbosity > 1:
-                        self.stderr.write(force_text(e))
+                    self.stderr.write('Ошибка: %s' % force_text(e))
                     return
             queue.all().delete()
