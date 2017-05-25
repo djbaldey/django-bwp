@@ -349,6 +349,7 @@ class ShtrihFRK(object):
             if abs(diff.total_seconds()) > 60:
                 self.setup_time(now)
                 self.setup_date(now)
+        self.is_open = False
         return result
 
     def cancel_receipt(self):
