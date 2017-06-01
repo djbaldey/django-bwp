@@ -70,7 +70,7 @@ def datetime_local(value=None):
     """
     if not value:
         value = timezone.now()
-    return timezone.localtime(value, True)
+    return timezone.localtime(value, value.tzinfo)
 
 
 def datetime_server(value=None):
