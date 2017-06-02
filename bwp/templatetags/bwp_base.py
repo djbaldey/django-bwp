@@ -149,6 +149,11 @@ def full_username(user):
 
 
 @register.filter
+def has_perm(user, perm):
+    return user.has_perm(perm)
+
+
+@register.filter
 def is_active(qs):
     try:
         return qs.filter(is_active=True)

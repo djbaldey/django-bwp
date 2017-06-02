@@ -24,8 +24,7 @@ from __future__ import unicode_literals
 
 from django.http import HttpResponseBadRequest, HttpResponseForbidden
 from django.utils.translation import ugettext_lazy as _
-from django.template import RequestContext
-from django.shortcuts import render_to_response, redirect
+from django.shortcuts import render, redirect
 from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.contrib.auth.views import login as _login, logout as _logout
 from django.views.decorators.cache import never_cache
@@ -67,8 +66,7 @@ def index(request, extra_context={}):
     if not user.is_authenticated():
         return redirect('bwp.views.login')
     ctx.update(extra_context)
-    return render_to_response('bwp/index.html', ctx,
-                              context_instance=RequestContext(request,))
+    return render(request, 'bwp/index.html', ctx)
 
 
 @never_cache
