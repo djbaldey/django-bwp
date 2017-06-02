@@ -463,7 +463,7 @@ class BaseModel(object):
                     if rel:
                         opts = field.related_model._meta
                         # print field, dir(field)
-                        title += force_text(opts.verbose_name) + ': '
+                        title += force_text(getattr(field, 'verbose_name', opts.verbose_name)) + ': '
                         # field = field.field
                     elif hasattr(field, 'parent_model'):
                         title += force_text(field.verbose_name)
