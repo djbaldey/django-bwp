@@ -534,7 +534,7 @@ class ShtrihFRK2(ShtrihFRK):
                     barcode = int(barcode)
                 except ValueError:
                     barcode = 0
-            count = int(spec['count'])
+            count = round(float(spec['count']), 3)
             price = round(float(spec['price']), 2)
             src_summ = count * price
             discount = round(float(spec.get('discount_summa', 0)), 2)
@@ -635,9 +635,9 @@ def run_tests(version=1, port='/dev/ttyUSB0', bod=115200):
         {
             'title': 'Хлеб чёрный Бородинский',
             'price': '30.00',
-            'count': '2',
-            'summa': '60.00',
-            'discount_summa': '1.00',
+            'count': '0.5',
+            'summa': '15.00',
+            'discount_summa': '0.33',
         },
         {
             'title': 'Молоко',
@@ -655,7 +655,7 @@ def run_tests(version=1, port='/dev/ttyUSB0', bod=115200):
             'barcode': 999999999999,
         },
     ]
-    summa = 60 - 1 + 162 - 4.50 + 780 - 30
+    summa = 15 - 0.33 + 162 - 4.50 + 780 - 30
     cash = summa
     card = summa / 3
     credit = summa / 3
