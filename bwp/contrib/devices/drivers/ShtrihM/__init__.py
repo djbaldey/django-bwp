@@ -434,6 +434,7 @@ class ShtrihFRK2(ShtrihFRK):
                       discount_summa=0, discount_percent=0, document_type=0,
                       nds=0, header='', comment='', buyer='',
                       mail_or_phone='',
+                      seller_name='',
                       **kwargs):
         """ Печать чека.
             Новый метод продаж и возвратов для онлайн-касс.
@@ -521,6 +522,7 @@ class ShtrihFRK2(ShtrihFRK):
         else:
             raise KktError(_('Type of document must be 0..3'))
 
+        text_seller = ('Кассир: %s' % seller_name if seller else '').strip()
         text_buyer = (text_buyer % buyer if buyer else '').strip()
 
         total_summa = 0
@@ -564,15 +566,25 @@ class ShtrihFRK2(ShtrihFRK):
                 line = '{0:>36}'.format('включая скидку: %.2f' % discount)
                 self.append_spooler(group_hash, kkt.x17_loop, text=line)
 
+        tlv_dict = {}
+
+        if seller_name:
+            tlv_dict[1021] = seller_name
         if mail_or_phone:
             text_buyer += ' (%s)' % mail_or_phone
+            tlv_dict[1008] = mail_or_phone
+
+        if tlv_dict:
             # Передача TLV для ОФД
             self.append_spooler(
                 group_hash,
                 kkt.xFF0C,
-                tlv_dict={1008: mail_or_phone},
+                tlv_dict=tlv_dict,
             )
 
+        if text_seller:
+            for line in text_seller.split('\n'):
+                self.append_spooler(group_hash, kkt.x17_loop, text=line)
         if text_buyer:
             for line in text_buyer.split('\n'):
                 self.append_spooler(group_hash, kkt.x17_loop, text=line)
