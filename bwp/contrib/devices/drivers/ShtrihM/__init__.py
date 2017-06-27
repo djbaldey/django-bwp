@@ -345,7 +345,9 @@ class ShtrihFRK(object):
         try:
             cur = datetime.datetime.strptime(cur, '%Y-%m-%d %H:%M:%S')
         except ValueError:
-            diff = now - dt
+            pass
+        else:
+            diff = now - cur
             if abs(diff.total_seconds()) > 60:
                 self.setup_time(now)
                 self.setup_date(now)
@@ -522,7 +524,7 @@ class ShtrihFRK2(ShtrihFRK):
         else:
             raise KktError(_('Type of document must be 0..3'))
 
-        text_seller = ('Кассир: %s' % seller_name if seller else '').strip()
+        text_seller = ('Кассир: %s' % seller_name if seller_name else '').strip()
         text_buyer = (text_buyer % buyer if buyer else '').strip()
 
         total_summa = 0
