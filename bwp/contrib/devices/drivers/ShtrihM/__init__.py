@@ -348,7 +348,10 @@ class ShtrihFRK(object):
             pass
         else:
             diff = now - cur
-            if abs(diff.total_seconds()) > 60:
+            ts = diff.total_seconds()
+            # Если разбежка более двух часов, то скорее всего слетело время
+            # на компьютере или в фискальнике
+            if 7200 > abs(ts) > 60:
                 self.setup_time(now)
                 self.setup_date(now)
         self.is_open = False
