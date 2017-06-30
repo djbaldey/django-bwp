@@ -650,6 +650,27 @@ class ShtrihFRK2(ShtrihFRK):
             discount_percent=0,  # Очень важно теперь ничего не передавать!
         )
 
+    def status_display(self):
+        "Cостояние ККТ в читаемом виде."
+        text = super(ShtrihFRK2, self).status_display()
+
+        info = self.result_spooler(None, self.kkt.xFF39)
+        text += 'Состояние чтения сообщения: %s\n' % info['is_read']
+        text += 'Количество сообщений для ОФД: %s\n' % info['messages']
+        text += 'Документ для ОФД в очереди: %(number)d от %(date)s\n' % (
+            info['first']
+        )
+        status = (
+            '\tТранспортное соединение установлено: %(connection)s\n'
+            '\tЕсть сообщение для передачи в ОФД: %(message)s\n'
+            '\tОжидание ответного сообщения от ОФД: %(wait_message)s\n'
+            '\tЕсть команда от ОФД: %(command)s\n'
+            '\tИзменились настройки соединения с ОФД: %(changed)s\n'
+            '\tОжидание ответа на команду от ОФД: %(wait_command)s\n'
+        ) % info['status']
+        text += 'Статус информационного обмена:\n%s' % status
+        return text
+
 
 def run_tests(version=1, port='/dev/ttyUSB0', bod=115200):
     if version == 1:
