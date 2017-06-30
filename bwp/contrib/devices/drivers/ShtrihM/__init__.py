@@ -178,8 +178,11 @@ class ShtrihFRK(object):
             return self.remote("status_display")
 
         status = self.result_spooler(None, self.kkt.x11)
+        mode, submodes = KKT_MODES[status['kkt_mode']]
+        if submodes:
+            mode += ' %s' % submodes[status['kkt_submode']]
         text = 'ИНН: %s\n' % status['inn']
-        text += 'Режим: %s\n' % KKT_MODES[status['kkt_mode']]
+        text += 'Режим: %s\n' % mode
         text += 'Дата: %s\n' % status['date']
         text += 'Время: %s\n' % status['time']
         text += 'Заводской номер: %s\n' % status['serial_number']
