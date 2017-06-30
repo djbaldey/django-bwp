@@ -28,7 +28,7 @@ from django.utils.translation import ugettext as _
 from django.utils.encoding import force_bytes
 
 from shtrihmfr.kkt import KKT, KktError, int2
-from shtrihmfr.protocol import *  # NOQA
+from shtrihmfr.protocol import KKT_MODES
 
 from bwp.contrib.devices.remote import RemoteCommand
 
@@ -172,6 +172,23 @@ class ShtrihFRK(object):
             self.is_open = False
         return data
 
+    def status_display(self):
+        "Cостояние ККТ в читаемом виде."
+        if self.is_remote:
+            return self.remote("status_display")
+
+        status = self.result_spooler(None, self.kkt.x11)
+        text = 'ИНН: %s\n' % status['inn']
+        text += 'Режим: %s\n' % KKT_MODES[status['kkt_mode']]
+        text += 'Дата: %s\n' % status['date']
+        text += 'Время: %s\n' % status['time']
+        text += 'Заводской номер: %s\n' % status['serial_number']
+        text += 'Последняя закрытая смена: %s\n' % status['last_closed_session']
+        text += 'Порт ККТ: %s\n' % status['kkt_port']
+        text += 'Порт устройства: %s\n' % self.kkt.port
+        text += 'Скорость устройства: %s\n' % self.kkt.bod
+        return text
+
     def reset(self):
         """ Сброс предыдущей ошибки или остановки печати """
         try:
@@ -183,7 +200,7 @@ class ShtrihFRK(object):
                 pass
         return True
 
-    def print_document(self, text='Текст документа не передан', header=''):
+    def print_document(self, text='', header=''):
         """ Печать предварительного чека или чего-либо другого. """
         if self.is_remote:
             return self.remote("print_document", text=text, header=header)
@@ -191,6 +208,9 @@ class ShtrihFRK(object):
         if header:
             for line in header.split('\n'):
                 self.append_spooler(group_hash, self.kkt.x12_loop, text=line)
+        if not text:
+            text = 'Текст документа не передан\n' * 10
+            text += ' \n' * 10
         for line in text.split('\n'):
             self.append_spooler(group_hash, self.kkt.x17_loop, text=line)
         return self.result_spooler(group_hash, self.cut_tape, strict=False)
