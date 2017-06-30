@@ -164,8 +164,13 @@ class ShtrihFRK(object):
         if self.is_remote:
             return self.remote("status", short=short)
         if short:
-            return self.result_spooler(None, self.kkt.x10)
-        return self.result_spooler(None, self.kkt.x11)
+            data = self.result_spooler(None, self.kkt.x10)
+        else:
+            data = self.result_spooler(None, self.kkt.x11)
+        kkt_mode = data['kkt_mode']
+        if kkt_mode == 4:
+            self.is_open = False
+        return data
 
     def reset(self):
         """ Сброс предыдущей ошибки или остановки печати """
@@ -336,8 +341,12 @@ class ShtrihFRK(object):
         """ Закрытие смены с печатью Z-отчета """
         if self.is_remote:
             return self.remote("close_session")
-        group_hash = self.make_spooler(self.reset)
-        result = self.result_spooler(group_hash, self.kkt.x41)
+
+        result = self.status(False)
+        if self.is_open:
+            group_hash = self.make_spooler(self.reset)
+            result = self.result_spooler(group_hash, self.kkt.x41)
+
         # Автоматическая коррекция времени после закрытия смены
         status = self.status(False)
         now = datetime.datetime.now()
@@ -354,7 +363,7 @@ class ShtrihFRK(object):
             if 7200 > abs(ts) > 60:
                 self.setup_time(now)
                 self.setup_date(now)
-        self.is_open = False
+
         return result
 
     def cancel_receipt(self):
