@@ -156,6 +156,11 @@ class ShtrihFRK(object):
             if kkt_mode == 4:
                 self.kkt.xE0()
                 time.sleep(5)
+            elif kkt_mode != 2:
+                self.kkt.x41()
+                time.sleep(5)
+                self.kkt.xE0()
+                time.sleep(5)
             self.is_open = True
         return self.is_open
 
@@ -168,7 +173,7 @@ class ShtrihFRK(object):
         else:
             data = self.result_spooler(None, self.kkt.x11)
         kkt_mode = data['kkt_mode']
-        if kkt_mode == 4:
+        if kkt_mode != 2:
             self.is_open = False
         return data
 
@@ -366,7 +371,7 @@ class ShtrihFRK(object):
             return self.remote("close_session")
 
         result = self.status(False)
-        if self.is_open:
+        if result['kkt_mode'] != 4:
             group_hash = self.make_spooler(self.reset)
             result = self.result_spooler(group_hash, self.kkt.x41)
 
@@ -511,7 +516,10 @@ class ShtrihFRK2(ShtrihFRK):
                 **kwargs
             )
 
+        self.status()
         self.open()
+        assert self.is_open, 'Невозможно начать смену на регистраторе.'
+
         kkt = self.kkt  # short link
 
         group_hash = self.make_spooler(self.reset)
