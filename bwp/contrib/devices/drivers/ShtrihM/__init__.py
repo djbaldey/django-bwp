@@ -643,9 +643,9 @@ class ShtrihFRK2(ShtrihFRK):
             self.append_spooler(group_hash, kkt.x17_loop, text=line)
         self.append_spooler(group_hash, kkt.x17_loop, text=('=' * 36))
 
-        assert total_summa <= cash + credit + packaging + card, force_bytes(
+        assert round(total_summa, 5) <= round(cash + credit + packaging + card, 5), force_bytes(
             'Сумма спецификаций больше, чем сумма типов оплат: '
-            '%.2f != %.2f' % (total_summa, cash + credit + packaging + card)
+            '%.5f != %.5f' % (total_summa, cash + credit + packaging + card)
         )
 
         payments = self.route_payments(cash, credit, packaging, card)
