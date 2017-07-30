@@ -597,12 +597,9 @@ def API_device_command(request, device, command, params={}, **kwargs):
     # Получение устройства согласно привилегий
     device = site.devices.get_devices(request).get(device)
     if device.device:
-        try:
-            attr = getattr(device.device, command)
-            data = attr(**params)
-            return JSONResponse(data=data)
-        except Exception as e:
-            return JSONResponse(status=400, message=force_text(e))
+        attr = getattr(device.device, command)
+        data = attr(**params)
+        return JSONResponse(data=data)
     return JSONResponse(status=400)
 
 
