@@ -643,10 +643,18 @@ class ShtrihFRK2(ShtrihFRK):
             self.append_spooler(group_hash, kkt.x17_loop, text=line)
         self.append_spooler(group_hash, kkt.x17_loop, text=('=' * 36))
 
-        assert round(total_summa, 5) <= round(cash + credit + packaging + card, 5), force_bytes(
-            'Сумма спецификаций больше, чем сумма типов оплат: '
-            '%.5f != %.5f' % (total_summa, cash + credit + packaging + card)
-        )
+        test_total_summa = round(total_summa, 5)
+        test_payment_sums = round(cash + credit + packaging + card, 5)
+        if test_payment_sums - test_total_summa >= 0:
+            pass
+        elif 0 < test_total_summa - test_payment_sums < 1:
+            # Погрешность приведения скидок ставим в наличные
+            cash += test_total_summa - test_payment_sums
+        else:
+            assert test_total_summa <= test_payment_sums, force_bytes(
+                'Сумма спецификаций больше, чем сумма типов оплат: '
+                '%.5f != %.5f' % (test_total_summa, test_payment_sums)
+            )
 
         payments = self.route_payments(cash, credit, packaging, card)
 
