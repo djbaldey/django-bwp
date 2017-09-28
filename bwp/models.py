@@ -378,9 +378,7 @@ class BaseModel(object):
                             label = ugettext(name.upper())
                             col['sorted'] = True
                         elif name in self.dict_all_local_fields:
-                            label = (
-                                self.opts.get_field_by_name(name)[0]
-                            ).verbose_name
+                            label = self.opts.get_field(name).verbose_name
                             col['sorted'] = True
                         else:
                             label = ugettext(name)
@@ -431,7 +429,7 @@ class BaseModel(object):
     def get_fields_objects(self):
         """ Возвращает реальные объекты полей """
         return [
-            self.opts.get_field_by_name(name)[0] for name in self.get_fields()
+            self.opts.get_field(name) for name in self.get_fields()
         ]
 
     def get_file_fields(self):
@@ -439,7 +437,7 @@ class BaseModel(object):
         if not self.file_fields:
             self.file_fields = [
                 name for name in self.get_fields() if isinstance(
-                    self.opts.get_field_by_name(name)[0],
+                    self.opts.get_field(name),
                     (FileField, ImageField)
                 )
             ]
@@ -458,7 +456,7 @@ class BaseModel(object):
                 fields = field.split('__')
                 title = ''
                 for f in fields:
-                    field = opts.get_field_by_name(f)[0]
+                    field = opts.get_field(f)
                     rel = getattr(field, 'related_model', None)
                     if rel:
                         opts = field.related_model._meta
@@ -1191,7 +1189,7 @@ class ModelBWP(BaseModel):
             object = self.model()
             # TODO: made and call autofiller
             for field, value in filler.items():
-                _field = self.opts.get_field_by_name(field)[0]
+                _field = self.opts.get_field(field)
                 if _field.rel:
                     value = _field.rel.to.objects.get(pk=value)
                 setattr(object, field, value)

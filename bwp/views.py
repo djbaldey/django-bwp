@@ -64,7 +64,7 @@ def index(request, extra_context={}):
 
     user = request.user
     if not user.is_authenticated():
-        return redirect('bwp.views.login')
+        return redirect(login)
     ctx.update(extra_context)
     return render(request, 'bwp/index.html', ctx)
 
@@ -75,7 +75,7 @@ def login(request, extra_context={}):
     context = {
         'title': _('Log in'),
         'app_path': request.get_full_path(),
-        REDIRECT_FIELD_NAME: redirect('bwp.views.index').get('Location', '/'),
+        REDIRECT_FIELD_NAME: redirect(index).get('Location', '/'),
     }
     context.update(extra_context)
     defaults = {
@@ -113,7 +113,7 @@ def upload(request, model, **kwargs):
     user = request.user
 
     if not user.is_authenticated() and not conf.BWP_TMP_UPLOAD_ANONYMOUS:
-        return redirect('bwp.views.login')
+        return redirect(login)
 
     # Получаем модель BWP со стандартной проверкой прав
     model_bwp = site.bwp_dict(request).get(model)
@@ -499,7 +499,7 @@ def API_commit(request, objects, **kwargs):
                     model_bwp = site.bwp_dict(request).get(model_name)
                 action = item['action']  # raise AttributeError()
                 for name, val in item['fields'].items():
-                    field = model_bwp.opts.get_field_by_name(name)[0]
+                    field = model_bwp.opts.get_field(name)
                     if field.rel and isinstance(val, list) and len(val) == 2:
                         item['fields'][name] = val[0]
                     elif isinstance(field, models.DateTimeField) and val:

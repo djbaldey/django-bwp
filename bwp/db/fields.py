@@ -21,11 +21,12 @@
 #
 #
 import os
-import json as simplejson
+import json
+import six
 from PIL import Image
 from PIL.ExifTags import TAGS
 
-from django.db.models import SubfieldBase, TextField
+from django.db.models import TextField
 from django.db.models.fields.files import ImageField, ImageFieldFile
 from django.forms.widgets import Textarea
 from django.template.defaultfilters import slugify
@@ -47,8 +48,16 @@ except ImportError:
     from django.db.models.fields import TextField as HTMLField  # NOQA
 
 
+class JSONWidget(Textarea):
+    """ Prettify dumps of all non-string JSON data. """
+    def render(self, name, value, attrs=None):
+        if not isinstance(value, basestring) and value is not None:
+            value = json.dumps(value, indent=4, sort_keys=True)
+        return super(JSONWidget, self).render(name, value, attrs)
+
+
 class JSONField(TextField):
-    __metaclass__ = SubfieldBase
+    form_class = JSONWidget
 
     def contribute_to_class(self, cls, name):
         super(JSONField, self).contribute_to_class(cls, name)
@@ -66,6 +75,15 @@ class JSONField(TextField):
         defaults.update(kwargs)
         return super(JSONField, self).formfield(**defaults)
 
+    # def from_db_value(self, value, expression, connection, context):
+    #     """
+    #     When the data is loaded from the database, including in
+    #     aggregates and values() calls.
+    #     """
+    #     if value is None or not isinstance(value, six.string_types):
+    #         return value
+    #     return json.loads(value)
+
     def get_db_prep_save(self, value, connection, **kwargs):
         """Convert our JSON object to a string before we save"""
 
@@ -73,7 +91,7 @@ class JSONField(TextField):
             return None
 
         if isinstance(value, (list, dict)):
-            value = simplejson.dumps(
+            value = json.dumps(
                 value, cls=JSONEncoder, ensure_ascii=False, indent=4
             )
             try:
@@ -95,7 +113,7 @@ class JSONField(TextField):
             return value
 
         try:
-            return simplejson.loads(value, encoding=settings.DEFAULT_CHARSET)
+            return json.loads(value, encoding=settings.DEFAULT_CHARSET)
         except ValueError:
             # If string could not parse as JSON it's means that it's Python
             # string saved to JSONField.
@@ -107,14 +125,6 @@ class JSONField(TextField):
             return self.get_db_prep_save(value, connection=None)
         else:
             return self.get_db_prep_save(self.get_default(), connection=None)
-
-
-class JSONWidget(Textarea):
-    """ Prettify dumps of all non-string JSON data. """
-    def render(self, name, value, attrs=None):
-        if not isinstance(value, basestring) and value is not None:
-            value = simplejson.dumps(value, indent=4, sort_keys=True)
-        return super(JSONWidget, self).render(name, value, attrs)
 
 
 def _add_thumb(s):
