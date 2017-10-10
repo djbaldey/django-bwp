@@ -22,6 +22,7 @@
 #
 from __future__ import unicode_literals
 import datetime
+import logging
 import time
 
 from django.utils.translation import ugettext as _
@@ -31,6 +32,8 @@ from shtrihmfr.kkt import KKT, KktError, int2
 from shtrihmfr.protocol import KKT_MODES
 
 from bwp.contrib.devices.remote import RemoteCommand
+
+logger = logging.getLogger('bwp.contrib.devices.drivers.ShtrihM')
 
 
 SPOOLER_TIMEOUT = 1
@@ -168,14 +171,18 @@ class ShtrihFRK(object):
         """ Cостояние ККТ, по-умолчанию короткое """
         if self.is_remote:
             return self.remote("status", short=short)
-        if short:
-            data = self.result_spooler(None, self.kkt.x10)
-        else:
-            data = self.result_spooler(None, self.kkt.x11)
-        kkt_mode = data['kkt_mode']
-        if kkt_mode != 2:
-            self.is_open = False
-        return data
+        method = self.kkt.x10 if short else self.kkt.x11
+        for i in range(15):
+            try:
+                data = method()
+                kkt_mode = data['kkt_mode']
+            except Exception as e:
+                logger.error(e)
+                time.sleep(1)
+            else:
+                self.is_open = False if kkt_mode != 2 else True
+                return data
+        return None
 
     def status_display(self):
         "Cостояние ККТ в читаемом виде."
