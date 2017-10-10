@@ -75,14 +75,12 @@ class JSONField(TextField):
         defaults.update(kwargs)
         return super(JSONField, self).formfield(**defaults)
 
-    # def from_db_value(self, value, expression, connection, context):
-    #     """
-    #     When the data is loaded from the database, including in
-    #     aggregates and values() calls.
-    #     """
-    #     if value is None or not isinstance(value, six.string_types):
-    #         return value
-    #     return json.loads(value)
+    def from_db_value(self, value, expression, connection, context):
+        """
+        When the data is loaded from the database, including in
+        aggregates and values() calls.
+        """
+        return self.to_python(value)
 
     def get_db_prep_save(self, value, connection, **kwargs):
         """Convert our JSON object to a string before we save"""
@@ -109,7 +107,7 @@ class JSONField(TextField):
         if value == "":
             return None
 
-        if not isinstance(value, basestring):
+        if not isinstance(value, six.string_types):
             return value
 
         try:
