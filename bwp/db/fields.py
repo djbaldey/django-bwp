@@ -51,7 +51,7 @@ except ImportError:
 class JSONWidget(Textarea):
     """ Prettify dumps of all non-string JSON data. """
     def render(self, name, value, attrs=None):
-        if not isinstance(value, basestring) and value is not None:
+        if not isinstance(value, six.string_types) and value is not None:
             value = json.dumps(value, indent=4, sort_keys=True)
         return super(JSONWidget, self).render(name, value, attrs)
 
