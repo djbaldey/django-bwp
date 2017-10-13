@@ -652,11 +652,22 @@ class ShtrihFRK2(ShtrihFRK):
 
         test_total_summa = round(total_summa, 5)
         test_payment_sums = round(cash + credit + packaging + card, 5)
-        if test_payment_sums - test_total_summa >= 0:
+        # Сумма оплат равна сумме чека
+        if test_payment_sums - test_total_summa == 0:
             pass
+        # Сумма оплат больше суммы чека
+        elif test_payment_sums - test_total_summa > 0:
+            # Фикс оплаты клубной картой
+            if card and round(card - credit - cash - packaging, 5) > test_total_summa:
+                card = test_total_summa - credit - cash - packaging
+            # Фикс оплаты банковской картой
+            elif credit and round(credit - cash - card - packaging, 5) > test_total_summa:
+                credit = test_total_summa - cash - card - packaging
+        # Сумма чека в пределах рубля больше суммы оплат из-за пересчёта скидки
         elif 0 < test_total_summa - test_payment_sums < 1:
             # Погрешность приведения скидок ставим в наличные
             cash += test_total_summa - test_payment_sums
+        # Сумма чека сильно больше суммы оплат
         else:
             assert test_total_summa <= test_payment_sums, force_bytes(
                 'Сумма спецификаций больше, чем сумма типов оплат: '
