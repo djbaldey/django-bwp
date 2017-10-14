@@ -588,17 +588,20 @@ class ShtrihFRK2(ShtrihFRK):
                     barcode = int(barcode)
                 except ValueError:
                     barcode = 0
-            count = round(float(spec['count']), 3)
+            count = round(float(spec['count']), 2)
             price = round(float(spec['price']), 2)
-            src_summ = count * price
+            summa = round(float(spec['summa']), 2)
             discount = round(float(spec.get('discount_summa', 0)), 2)
             if discount:
-                price -= round(1.0 * discount / count, 2)
-            new_summ = count * price
-            total_summa += new_summ
-            # Пересчитываем скидку для того чтобы вывести правильные
-            # копейки
-            discount = src_summ - new_summ
+                # При скидке 5% переменная равна 95.
+                _percent = round(summa / 100.0 * discount, 2)
+                # Цена за единицу со скидкой
+                price = round(price * _percent / 100, 2)
+                # Реальная скидка
+                discount = summa - (price * count)
+
+            summa = round(count * price, 2)
+            total_summa += summa
             total_discount += discount
 
             self.append_spooler(
