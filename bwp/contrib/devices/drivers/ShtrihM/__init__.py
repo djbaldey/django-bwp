@@ -593,12 +593,12 @@ class ShtrihFRK2(ShtrihFRK):
             summa = round(float(spec['summa']), 2)
             discount = round(float(spec.get('discount_summa', 0)), 2)
             if discount:
-                # При скидке 5% переменная равна 95.
-                _percent = round(summa / 100.0 * discount, 2)
+                # При скидке 5% переменная равна 0.5.
+                _percent = round(1.0 * discount / summa, 2)
                 # Цена за единицу со скидкой
-                price = round(price * _percent / 100, 2)
+                price = round(price - (price * _percent), 2)
                 # Реальная скидка
-                discount = summa - (price * count)
+                discount = summa - round(price * count, 2)
 
             summa = round(count * price, 2)
             total_summa += summa
