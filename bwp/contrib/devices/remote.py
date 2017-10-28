@@ -37,7 +37,7 @@ except:
 class Client(BaseClient):
     """ Соединение с удалённым API, где расположено устройство """
 
-    timeout = 60000
+    timeout = 120000
 
     def __init__(self, device=None, **kwargs):
         """ Инициализация """
