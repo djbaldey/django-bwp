@@ -41,11 +41,17 @@ SPOOLER_MAX_ATTEMPT = 30
 
 
 class ShtrihFRK(object):
+    "Для онлайн-касс второй версии протокола."
+
     SpoolerDevice = None
     local_device = None
     kkt = None
     is_remote = False
     is_open = False
+    is_ready = False
+    payments = {}
+    _status = None
+    _status_display = None
 
     def __init__(self, remote=False, *args, **kwargs):
         if remote:
@@ -53,6 +59,26 @@ class ShtrihFRK(object):
             self.remote = RemoteCommand(*args, **kwargs)
         else:
             self.kkt = KKT(*args, **kwargs)
+            if 'payments' in kwargs:
+                self.payments = kwargs.pop('payments')
+            # Тестируем правильность установки типов оплат
+            assert isinstance(self.payments, dict), \
+                'Типы оплат должны быть словарём.'
+            self.route_payments(0, 0, 0, 0)
+
+    def route_payments(self, cash, credit, packaging, card):
+        "Возвращает направление типов оплат для закрытия чека."
+        payments = [0 for x in range(16)]
+        payments[self.payments.get('cash', 0)] = cash
+        # Клубная карта клиента (дебетовая)
+        payments[self.payments.get('card', 1)] = card
+        # Банковская карта
+        payments[self.payments.get('credit', 2)] = credit
+        # Любая другая форма оплаты
+        payments[self.payments.get('packaging', 15)] = packaging
+        assert len(payments) == 16, \
+            'Количество типов оплат должно быть равно 16.'
+        return payments
 
     def get_method_name(self, method):
         if method.im_self == self:
@@ -65,14 +91,12 @@ class ShtrihFRK(object):
             return method(**kwargs)
 
         method = self.get_method_name(method)
-
         spooler = self.SpoolerDevice(
             local_device=self.local_device,
             method=method,
             kwargs=kwargs,
         )
         spooler.save()
-
         return spooler.group_hash
 
     def append_spooler(self, group_hash, method, **kwargs):
@@ -150,12 +174,12 @@ class ShtrihFRK(object):
             return result
 
     def open(self):
-        """ Начало работы с ККТ """
+        "Начало работы с ККТ."
         if self.is_remote:
             return self.remote("open")
 
         if not self.is_open:
-            kkt_mode = self.kkt.x10()['kkt_mode']
+            kkt_mode = self.status()['kkt_mode']
             if kkt_mode == 4:
                 self.kkt.xE0()
                 time.sleep(5)
@@ -168,28 +192,40 @@ class ShtrihFRK(object):
         return self.is_open
 
     def status(self, short=True):
-        """ Cостояние ККТ, по-умолчанию короткое """
+        "Cостояние ККТ, по-умолчанию короткое."
         if self.is_remote:
-            return self.remote("status", short=short)
+            self._status = self.remote("status", short=short)
+            return self._status
+
+        logger.debug('status %s' % ('short' if short else 'long'))
         method = self.kkt.x10 if short else self.kkt.x11
-        for i in range(15):
+        self._status = {}
+
+        def set_status():
+            self._status = method()
+            kkt_mode = self._status['kkt_mode']
+            self.is_open = False if kkt_mode != 2 else True
+            self.is_ready = True if kkt_mode == 2 else False
+
+        for i in range(10):
             try:
-                data = method()
-                kkt_mode = data['kkt_mode']
+                set_status()
             except Exception as e:
                 logger.error(e)
                 time.sleep(1)
             else:
-                self.is_open = False if kkt_mode != 2 else True
-                return data
-        return None
+                return self._status
+        set_status()
+        return self._status
 
     def status_display(self):
         "Cостояние ККТ в читаемом виде."
         if self.is_remote:
-            return self.remote("status_display")
+            self._status_display = self.remote("status_display")
+            return self._status_display
 
-        status = self.result_spooler(None, self.kkt.x11)
+        status = self.status(short=False)
+
         mode, submodes = KKT_MODES[status['kkt_mode']]
         if submodes:
             mode += ' %s' % submodes[status['kkt_submode']]
@@ -202,10 +238,29 @@ class ShtrihFRK(object):
         text += 'Порт ККТ: %s\n' % status['kkt_port']
         text += 'Порт устройства: %s\n' % self.kkt.port
         text += 'Скорость устройства: %s\n' % self.kkt.bod
+
+        info = self.kkt.xFF39()
+
+        text += 'Состояние чтения сообщения: %s\n' % info['is_read']
+        text += 'Количество сообщений для ОФД: %s\n' % info['messages']
+        text += 'Документ для ОФД в очереди: %(number)d от %(date)s\n' % (
+            info['first']
+        )
+        info_status = (
+            '\tТранспортное соединение установлено: %(connection)s\n'
+            '\tЕсть сообщение для передачи в ОФД: %(message)s\n'
+            '\tОжидание ответного сообщения от ОФД: %(wait_message)s\n'
+            '\tЕсть команда от ОФД: %(command)s\n'
+            '\tИзменились настройки соединения с ОФД: %(changed)s\n'
+            '\tОжидание ответа на команду от ОФД: %(wait_command)s\n'
+        ) % info['status']
+        text += 'Статус информационного обмена:\n%s' % info_status
+        logger.debug('\n' + text)
         return text
 
     def reset(self):
-        """ Сброс предыдущей ошибки или остановки печати """
+        "Сброс предыдущей ошибки или остановки печати."
+        logger.debug('reset')
         try:
             self.print_continue()  # предварительный вывод неоконченных
         except:
@@ -215,11 +270,17 @@ class ShtrihFRK(object):
                 pass
         return True
 
-    def print_document(self, text='', header=''):
-        """ Печать предварительного чека или чего-либо другого. """
+    def print_document(self, text='', header='', quick=False):
+        "Печать предварительного чека или чего-либо другого."
         if self.is_remote:
             return self.remote("print_document", text=text, header=header)
-        group_hash = self.make_spooler(self.reset)
+
+        if quick:
+            group_hash = None
+            self.reset()
+        else:
+            group_hash = self.make_spooler(self.reset)
+
         if header:
             for line in header.split('\n'):
                 self.append_spooler(group_hash, self.kkt.x12_loop, text=line)
@@ -230,150 +291,29 @@ class ShtrihFRK(object):
             self.append_spooler(group_hash, self.kkt.x17_loop, text=line)
         return self.result_spooler(group_hash, self.cut_tape, strict=False)
 
-    def print_receipt(self, specs, cash=0, credit=0, packaging=0, card=0,
-                      discount_summa=0, discount_percent=0, document_type=0,
-                      nds=0, header='', comment='', buyer='',
-                      **kwargs):
-        """ Печать чека.
-            specs - Это список словарей проданных позиций:
-            [
-                {
-                    'title': 'Хлеб',
-                    'price': '10.00',
-                    'count': '3',
-                    'summa': '30.00',
-                    'discount_summa': 1.0,
-                },
-            ]
-            Типы оплат:
-                cash      - наличными
-                credit    - кредитом
-                packaging - тарой
-                card      - платёжной картой
-            Тип документа:
-                0 – продажа;
-                1 – покупка;
-                2 – возврат продажи;
-                3 – возврат покупки
-
-        """
-        if self.is_remote:
-            return self.remote(
-                "print_receipt",
-                specs=specs, cash=cash, credit=credit,
-                packaging=packaging, card=card,
-                discount_summa=discount_summa,
-                discount_percent=discount_percent,
-                document_type=document_type, nds=nds,
-                header=header, comment=comment, buyer=buyer,
-                **kwargs
-            )
-
-        # self.open()
-        kkt = self.kkt  # short link
-
-        group_hash = self.make_spooler(self.reset)
-
-        taxes = [0, 0, 0, 0]
-        if nds > 0:
-            taxes[0] = 2
-            # Включаем начисление налогов на ВСЮ операцию чека
-            self.append_spooler(
-                group_hash, kkt.x1E,
-                table=1, row=1, field=17, value=chr(0x1),
-            )
-            # Включаем печатать налоговые ставки и сумму налога
-            self.append_spooler(
-                group_hash, kkt.x1E,
-                table=1, row=1, field=19, value=chr(0x2),
-            )
-            self.append_spooler(
-                group_hash, kkt.x1E,
-                table=6, row=2, field=1, value=int2.pack(nds * 100),
-            )
-
-        # Открыть чек
-        self.append_spooler(
-            group_hash, kkt.x8D,
-            document_type=document_type
-        )
-
-        if header:
-            for line in header.split('\n'):
-                self.append_spooler(group_hash, kkt.x17_loop, text=line)
-
-        if document_type == 0:
-            text_buyer = 'Принято от %s'
-            method = kkt.x80
-        elif document_type == 2:
-            text_buyer = 'Возвращено %s'
-            method = kkt.x82
-        elif document_type == 1:
-            text_buyer = 'Принято от %s'
-            method = kkt.x81
-        elif document_type == 3:
-            text_buyer = 'Возвращено %s'
-            method = kkt.x83
-        else:
-            raise KktError(_('Type of document must be 0..3'))
-
-        text_buyer = (text_buyer % buyer if buyer else '').strip()
-
-        for spec in specs:
-            title = '' + spec['title']
-            title = title[:40]
-            self.append_spooler(
-                group_hash, method,
-                count=spec['count'], price=spec['price'],
-                text=title, taxes=taxes,
-            )
-            spec_discount_summa = spec.get('discount_summa', 0)
-            if spec_discount_summa:
-                line = '{0:>36}'.format('скидка: -%s' % spec_discount_summa)
-                self.append_spooler(group_hash, kkt.x17_loop, text=line)
-
-        for line in text_buyer.split('\n'):
-            self.append_spooler(group_hash, kkt.x17_loop, text=line)
-
-        for line in comment.split('\n'):
-            self.append_spooler(group_hash, kkt.x17_loop, text=line)
-
-        self.append_spooler(group_hash, kkt.x17_loop, text=('=' * 36))
-
-        if discount_summa:
-            self.append_spooler(
-                group_hash, kkt.x86,
-                summa=discount_summa, taxes=taxes,
-            )
-
-        summs = [cash, credit, packaging, card]
-        return self.result_spooler(
-            group_hash, kkt.x85,
-            summs=summs, taxes=taxes, discount=discount_percent,
-        )
-
     def print_copy(self):
-        """ Печать копии последнего документа """
+        "Печать копии последнего документа."
         if self.is_remote:
             return self.remote("print_copy")
+
         group_hash = self.make_spooler(self.reset)
         return self.result_spooler(group_hash, self.kkt.x8C)
 
     def print_continue(self):
-        """ Продолжение печати, прерванной из-за сбоя """
+        "Продолжение печати, прерванной из-за сбоя."
         if self.is_remote:
             return self.remote("print_continue")
         return self.kkt.xB0()
 
     def print_report(self):
-        """ Печать X-отчета """
+        "Печать X-отчета."
         if self.is_remote:
             return self.remote("print_report")
         group_hash = self.make_spooler(self.reset)
         return self.result_spooler(group_hash, self.kkt.x40)
 
     def close_session(self):
-        """ Закрытие смены с печатью Z-отчета """
+        "Закрытие смены с печатью Z-отчета."
         if self.is_remote:
             return self.remote("close_session")
 
@@ -398,23 +338,22 @@ class ShtrihFRK(object):
             if 7200 > abs(ts) > 60:
                 self.setup_time(now)
                 self.setup_date(now)
-
         return result
 
     def cancel_receipt(self):
-        """ Отмена чека """
+        "Отмена чека."
         if self.is_remote:
             return self.remote("cancel_receipt")
         return self.kkt.x88()
 
     def cancel(self):
-        """ Отмена операции """
+        "Отмена операции."
         if self.is_remote:
             return self.remote("cancel")
         return self.cancel_receipt()
 
     def setup_date(self, now=None):
-        """ Установка даты как в компьютере """
+        "Установка даты как в компьютере."
         if self.is_remote:
             return self.remote("setup_date")
         if not now:
@@ -425,7 +364,7 @@ class ShtrihFRK(object):
         return self.kkt.x23(now.year, now.month, now.day)
 
     def setup_time(self, now=None):
-        """ Установка времени как в компьютере """
+        "Установка времени как в компьютере."
         if self.is_remote:
             return self.remote("setup_time")
         if not now:
@@ -433,51 +372,22 @@ class ShtrihFRK(object):
         return self.kkt.x21(now.hour, now.minute, now.second)
 
     def add_money(self, summa):
-        """ Внесение денег в кассу """
+        "Внесение денег в кассу."
         if self.is_remote:
             return self.remote("add_money", summa=summa)
         return self.kkt.x50(summa)
 
     def get_money(self, summa):
-        """ Инкассация """
+        "Инкассация."
         if self.is_remote:
             return self.remote("get_money", summa=summa)
         return self.kkt.x51(summa)
 
     def cut_tape(self, fullcut=True):
-        """ Отрез чековой ленты """
+        "Отрез чековой ленты."
         if self.is_remote:
             return self.remote("cut_tape", fullcut=fullcut)
         return self.kkt.x25(fullcut=fullcut)
-
-
-class ShtrihFRK2(ShtrihFRK):
-    "Для онлайн-касс второй версии протокола."
-    payments = {}
-
-    def __init__(self, remote=False, *args, **kwargs):
-        if not remote:
-            if 'payments' in kwargs:
-                self.payments = kwargs.pop('payments')
-            # Тестируем правильность установки типов оплат
-            assert isinstance(self.payments, dict), \
-                'Типы оплат должны быть словарём.'
-            self.route_payments(0, 0, 0, 0)
-        super(ShtrihFRK2, self).__init__(remote, *args, **kwargs)
-
-    def route_payments(self, cash, credit, packaging, card):
-        "Возвращает направление типов оплат для закрытия чека."
-        payments = [0 for x in range(16)]
-        payments[self.payments.get('cash', 0)] = cash
-        # Клубная карта клиента (дебетовая)
-        payments[self.payments.get('card', 1)] = card
-        # Банковская карта
-        payments[self.payments.get('credit', 2)] = credit
-        # Любая другая форма оплаты
-        payments[self.payments.get('packaging', 15)] = packaging
-        assert len(payments) == 16, \
-            'Количество типов оплат должно быть равно 16.'
-        return payments
 
     def print_receipt(self, specs, cash=0, credit=0, packaging=0, card=0,
                       discount_summa=0, discount_percent=0, document_type=0,
@@ -523,9 +433,12 @@ class ShtrihFRK2(ShtrihFRK):
                 **kwargs
             )
 
-        self.status()
+        self.reset()
+
+        status = self.status()
         self.open()
         assert self.is_open, 'Невозможно начать смену на регистраторе.'
+        assert self.is_ready, 'Регистратор не готов к приёму чека (занят).'
 
         kkt = self.kkt  # short link
 
@@ -630,6 +543,7 @@ class ShtrihFRK2(ShtrihFRK):
             tlv_dict[1008] = mail_or_phone
 
         if tlv_dict:
+            logger.debug('TLV: %s' % tlv_dict)
             # Передача TLV для ОФД
             self.append_spooler(
                 group_hash,
@@ -679,51 +593,30 @@ class ShtrihFRK2(ShtrihFRK):
 
         payments = self.route_payments(cash, credit, packaging, card)
 
-        return self.result_spooler(
-            group_hash,
-            kkt.x8E,
-            payments=payments,
-            taxes=taxes,
-            discount_percent=0,  # Очень важно теперь ничего не передавать!
-        )
-
-    def status_display(self):
-        "Cостояние ККТ в читаемом виде."
-        text = super(ShtrihFRK2, self).status_display()
-
-        info = self.result_spooler(None, self.kkt.xFF39)
-        text += 'Состояние чтения сообщения: %s\n' % info['is_read']
-        text += 'Количество сообщений для ОФД: %s\n' % info['messages']
-        text += 'Документ для ОФД в очереди: %(number)d от %(date)s\n' % (
-            info['first']
-        )
-        status = (
-            '\tТранспортное соединение установлено: %(connection)s\n'
-            '\tЕсть сообщение для передачи в ОФД: %(message)s\n'
-            '\tОжидание ответного сообщения от ОФД: %(wait_message)s\n'
-            '\tЕсть команда от ОФД: %(command)s\n'
-            '\tИзменились настройки соединения с ОФД: %(changed)s\n'
-            '\tОжидание ответа на команду от ОФД: %(wait_command)s\n'
-        ) % info['status']
-        text += 'Статус информационного обмена:\n%s' % status
-        return text
+        data = None
+        try:
+            data = self.result_spooler(
+                group_hash,
+                kkt.x8E,
+                payments=payments,
+                taxes=taxes,
+                discount_percent=0,  # Очень важно теперь ничего не передавать!
+            )
+        except Exception as e:
+            logger.error(e)
+            raise e
+        finally:
+            return data
 
 
-def run_tests(version=1, port='/dev/ttyUSB0', bod=115200):
-    if version == 1:
-        DevClass = ShtrihFRK
-    elif version == 2:
-        DevClass = ShtrihFRK2
-    dev = DevClass(port=port, bod=bod)
-    print('status:')
-    status = dev.status()
-    print(status)
-    if status['kkt_mode'] == 4:
-        print('setup_date:')
-        print(dev.setup_date())
-        print('setup_time:')
-        print(dev.setup_time())
-    # print('print_document:')
+ShtrihFRK2 = ShtrihFRK
+
+
+def run_tests(port='/dev/ttyACM0', bod=115200):
+    dev = ShtrihFRK(port=port, bod=bod)
+    dev.status_display()
+
+    # logger.debug('print_document:')
     # header = 'Заголовок документа'
     # text = (
     #     'Текст документа с переводом первой строки и большой второй строкой:\n'
@@ -736,49 +629,125 @@ def run_tests(version=1, port='/dev/ttyUSB0', bod=115200):
     #     'culpa qui officia deserunt mollit anim id est laborum.'
     #     ' \n \n \n \n \n \n \n \n \n \n'
     # )
-    # print(dev.print_document(text=text, header=header))
+    # logger.debug(dev.print_document(text=text, header=header))
 
-    specs = [
-        {
-            'title': 'Хлеб чёрный Бородинский',
-            'price': '30.00',
-            'count': '0.5',
-            'summa': '15.00',
-            'discount_summa': '0.33',
-        },
-        {
-            'title': 'Молоко',
-            'price': '54.00',
-            'count': '3',
-            'summa': '162.00',
-            'discount_summa': 4.50,
-        },
-        {
-            'title': 'Водка Беленькая',
-            'price': '390.00',
-            'count': '2',
-            'summa': '780.00',
-            'discount_summa': 30.0,
-            'barcode': 999999999999,
-        },
-    ]
-    summa = 15 - 0.33 + 162 - 4.50 + 780 - 30
-    cash = summa
-    card = summa / 3
-    credit = summa / 3
-    packaging = 0
-    header = 'Продажа товаров'
-    comment = 'Комментарий к продаже товаров'
-    buyer = 'Иван Иванов'
-    mail_or_phone = '89997776655'
+    # order = {
+    #     'comment': '',
+    #     'mail_or_phone': '',
+    #     'discount_summa': 1178.15,
+    #     'credit': 0,
+    #     'cash': 0.0,
+    #     'packaging': 0,
+    #     'card': 11.9,
+    #     'header': 'POS: Смотровая',
+    #     'discount_percent': 0,
+    #     'buyer': 'Иванов И.И. ЗК-195',
+    #     'nds': 0,
+    #     'document_type': 0,
+    #     'specs': [
+    #         {
+    #             'count': 1.0,
+    #             'discount_summa': 99.0,
+    #             'price': 100.0,
+    #             'summa': 100.0,
+    #             'title': 'Доставка пиццы',
+    #         },
+    #         {
+    #             'count': 2.0,
+    #             'discount_summa': 0.02,
+    #             'price': 0.01,
+    #             'summa': 0.02,
+    #             'title': 'АКЦИЯ Кока-Кола 1 литр.',
+    #         },
+    #         {
+    #             'count': 3.0,
+    #             'discount_summa': 0.03,
+    #             'price': 0.01,
+    #             'summa': 0.03,
+    #             'title': 'АКЦИЯ Сок Яблоко',
+    #         },
+    #         {
+    #             'count': 1.0,
+    #             'discount_summa': 237.6,
+    #             'price': 240.0,
+    #             'summa': 240.0,
+    #             'title': 'Мини-пицца Пышная "Вегетарианская"',
+    #         },
+    #         {
+    #             'count': 1.0,
+    #             'discount_summa': 227.7,
+    #             'price': 230.0,
+    #             'summa': 230.0,
+    #             'title': 'Мини-пицца ПЫШНАЯ "Гавайская"',
+    #         },
+    #         {
+    #             'count': 2.0,
+    #             'discount_summa': 613.8,
+    #             'price': 310.0,
+    #             'summa': 620.0,
+    #             'title': 'Мини-пицца ПЫШНАЯ "Грибная"',
+    #         },
+    #     ]
+    # }
+    # logger.debug('print_receipt:')
+    # logger.debug(dev.print_receipt(**order))
 
-    print('print_receipt:')
-    print(dev.print_receipt(
-        specs, cash=cash, credit=credit, packaging=packaging, card=card,
-        discount_summa=0, discount_percent=0, document_type=0, nds=0,
-        header=header, comment=comment, buyer=buyer,
-        mail_or_phone=mail_or_phone
-    ))
+    # specs = [
+    #     {
+    #         'title': 'Хлеб чёрный Бородинский',
+    #         'price': '30.00',
+    #         'count': '0.5',
+    #         'summa': '15.00',
+    #         'discount_summa': '0.33',
+    #     },
+    #     {
+    #         'title': 'Молоко',
+    #         'price': '54.00',
+    #         'count': '3',
+    #         'summa': '162.00',
+    #         'discount_summa': 4.50,
+    #     },
+    #     {
+    #         'title': 'Водка Беленькая',
+    #         'price': '390.00',
+    #         'count': '2',
+    #         'summa': '780.00',
+    #         'discount_summa': 30.0,
+    #         'barcode': 999999999999,
+    #     },
+    # ]
+    # summa = 15 - 0.33 + 162 - 4.50 + 780 - 30
+    # cash = summa
+    # card = summa / 3
+    # credit = summa / 3
+    # packaging = 0
+    # header = 'Продажа товаров'
+    # comment = 'Комментарий к продаже товаров'
+    # buyer = 'Иван Иванов'
+    # mail_or_phone = '89997776655'
+
+    # logger.debug('print_receipt:')
+    # logger.debug(dev.print_receipt(
+    #     specs, cash=cash, credit=credit, packaging=packaging, card=card,
+    #     discount_summa=0, discount_percent=0, document_type=0, nds=0,
+    #     header=header, comment=comment, buyer=buyer,
+    #     mail_or_phone=mail_or_phone
+    # ))
+
+    # logger.debug('print_document:')
+    # header = 'Заголовок документа'
+    # text = (
+    #     'Текст документа с переводом первой строки и большой второй строкой:\n'
+    #     'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do '
+    #     'eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim '
+    #     'ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut '
+    #     'aliquip ex ea commodo consequat. Duis aute irure dolor in '
+    #     'reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla '
+    #     'pariatur. Excepteur sint occaecat cupidatat non proident, sunt in '
+    #     'culpa qui officia deserunt mollit anim id est laborum.'
+    #     ' \n \n \n \n \n \n \n \n \n \n'
+    # )
+    # logger.debug(dev.print_document(text=text, header=header))
 
     # time.sleep(10)
     # print(dev.print_copy())
@@ -786,3 +755,14 @@ def run_tests(version=1, port='/dev/ttyUSB0', bod=115200):
     # print(dev.print_report())
     # time.sleep(10)
     # print(dev.close_session())
+    return
+
+
+if __name__ == '__main__':
+    logger.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(message)s')
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+    console_handler.setLevel(logging.DEBUG)
+    logger.addHandler(console_handler)
+    run_tests()
