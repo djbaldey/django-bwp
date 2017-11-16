@@ -188,7 +188,8 @@ class ShtrihFRK(object):
                 time.sleep(5)
                 self.kkt.xE0()
                 time.sleep(5)
-            self.is_open = True
+            # снова проверяем статус
+            self.status()
         return self.is_open
 
     def status(self, short=True):
