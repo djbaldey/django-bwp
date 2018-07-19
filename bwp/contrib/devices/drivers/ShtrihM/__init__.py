@@ -231,6 +231,16 @@ class ShtrihFRK(object):
         if submodes:
             mode += ' %s' % submodes[status['kkt_submode']]
         text = 'ИНН: %s\n' % status['inn']
+        numbers = self.kkt.x0F()
+        text += 'Номер KKT: %s\n' % numbers['serial_number']
+        text += 'Номер РНМ: %s\n' % numbers['rnm_number']
+        text += 'Номер ФН: %s\n' % self.kkt.xFF02()
+        text += 'Срок действия ФН: %(day)s.%(month)s.%(year)sг.\n' % self.kkt.xFF03()
+        fn_version = self.kkt.xFF04()
+        if fn_version['is_serial']:
+            text += 'Серийная версия ФН: %(version)s\n' % fn_version
+        else:
+            text += 'Отладочная версия ФН: %(version)s\n' % fn_version
         text += 'Режим: %s\n' % mode
         text += 'Дата: %s\n' % status['date']
         text += 'Время: %s\n' % status['time']
@@ -239,14 +249,6 @@ class ShtrihFRK(object):
         text += 'Порт ККТ: %s\n' % status['kkt_port']
         text += 'Порт устройства: %s\n' % self.kkt.port
         text += 'Скорость устройства: %s\n' % self.kkt.bod
-
-        text += 'Номер ФН: %s\n' % self.kkt.xFF02()
-        text += 'Срок действия ФН: %(day)s.%(month)s.%(year)sг.\n' % self.kkt.xFF03()
-        fn_version = self.kkt.xFF04()
-        if fn_version['is_serial']:
-            text += 'Серийная версия ФН: %(version)s\n' % fn_version
-        else:
-            text += 'Отладочная версия ФН: %(version)s\n' % fn_version
 
         info = self.kkt.xFF39()
 
