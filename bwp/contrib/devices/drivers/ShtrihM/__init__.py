@@ -240,6 +240,14 @@ class ShtrihFRK(object):
         text += 'Порт устройства: %s\n' % self.kkt.port
         text += 'Скорость устройства: %s\n' % self.kkt.bod
 
+        text += 'Номер ФН: %s\n' % self.kkt.xFF02()
+        text += 'Срок действия ФН: %(day)s.%(month)s.%(year)sг.\n' % self.kkt.xFF03()
+        fn_version = self.kkt.xFF04()
+        if fn_version['is_serial']:
+            text += 'Серийная версия ФН: %(version)s\n' % fn_version
+        else:
+            text += 'Отладочная версия ФН: %(version)s\n' % fn_version
+
         info = self.kkt.xFF39()
 
         text += 'Состояние чтения сообщения: %s\n' % info['is_read']
